@@ -113,10 +113,16 @@ Rebol [
 
 ===start-group=== "REMOVE"
 --test-- "remove"
-	;--assert parse v: "yx" [some [remove #"y" | #"x"] ]
-	;--assert v = "x"
-	;--assert parse "yx" [copy v any [ remove #"y" | #"x" ] ]
-	;--assert v = "x"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2452
+	--assert parse v: "yx" [some [remove #"y" | #"x"]]
+	--assert v = "x"
+	--assert parse "yx" [copy v any [ remove #"y" | #"x" ]]
+	--assert v = "x"
+	--assert parse v: "yx" [some [change #"y" "" | #"x"]]
+	--assert v = "x"
+	--assert parse v: "ab" [any [s: 1 skip e: (e: remove/part s e) :e | skip]]
+	--assert empty? v
+--test-- "while .. remove"
 	remove-any-y: [while [remove #"y" | #"x"]] 
 	--assert parse v: "" remove-any-y
 	--assert parse v: "yx" remove-any-y
