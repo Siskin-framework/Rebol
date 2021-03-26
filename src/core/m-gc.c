@@ -383,6 +383,7 @@ mark_obj:
 		case REB_SET_PATH:
 		case REB_GET_PATH:
 		case REB_LIT_PATH:
+		case REB_HASH:
 			ser = VAL_SERIES(val);
 			ASSERT(ser != 0, RP_NULL_SERIES);
 			if (IS_BARE_SERIES(ser)) {

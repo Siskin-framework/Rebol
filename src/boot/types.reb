@@ -64,7 +64,8 @@ REBOL [
 	set-path    path        block       *        *       *      *   [series block path]    
 	get-path    path        block       *        *       *      *   [series block path]  
 	lit-path    lit-path    block       *        *       *      *   [series block path]  
-
+	
+	hash        self        block       +        f*      *      *   [series block]
 	map         self        map         +        f*      *      *   -  
 
 	datatype    self        datatype    +        f*      -      *   -  

@@ -945,6 +945,15 @@ STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	Remove_Last(MOLD_LOOP);
 }
 
+STOID Mold_Hash(REBVAL *value, REB_MOLD *mold, REBFLG molded) {
+	Pre_Mold(value, mold); // #[hash! part
+	Mold_Block_Series(mold, VAL_SERIES(value), VAL_INDEX(value), 0);
+	if (GET_MOPT(mold, MOPT_MOLD_ALL))
+		Post_Mold(value, mold);
+	else
+		End_Mold(mold);
+}
+
 STOID Form_Object(REBVAL *value, REB_MOLD *mold)
 {
 	REBSER *wser = VAL_OBJ_WORDS(value);
@@ -1353,6 +1362,10 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_MAP:
 		Mold_Map(value, mold, molded);
+		break;
+
+	case REB_HASH:
+		Mold_Hash(value, mold, molded);
 		break;
 
 	case REB_GOB:
