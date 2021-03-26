@@ -979,13 +979,17 @@ bad_target:
 			if (i != NOT_FOUND) {
 				count++; // may overflow to negative
 				if (count < 0) count = MAX_I32; // the forever case
-				// If input did not advance:
 
+				// If input did not advance:
 				if (i == index) {
+					// check if there was processed some _modifying_ rule, which should advance
+					// even if index was not changed (https://github.com/Oldes/Rebol-issues/issues/2452)
 					if (GET_FLAG(parse->flags, PF_ADVANCE)) {
-						CLR_FLAG(parse->flags, PF_ADVANCE);
+						// clear the state in case, that there are other rules to be processed
+						// keep it in case that we were at the last one
+						if(count < maxcount) CLR_FLAG(parse->flags, PF_ADVANCE);
 					}
-					else if (!GET_FLAG(flags, PF_WHILE) && !GET_FLAG(parse->flags, PF_REMOVE)) {
+					else if (!GET_FLAG(flags, PF_WHILE)) {
 						if (count < mincount) index = NOT_FOUND; // was not enough
 						break;
 					}
