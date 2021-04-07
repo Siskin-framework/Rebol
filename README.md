@@ -1,5 +1,4 @@
-[![Travis build](https://travis-ci.org/Oldes/Rebol3.svg?branch=master)](https://travis-ci.org/Oldes/Rebol3)
-[![AppVeyor build](https://ci.appveyor.com/api/projects/status/70wh8i8o61d6hipu?svg=true)](https://ci.appveyor.com/project/Oldes/r3)
+[![Rebol CI](https://github.com/Siskin-framework/Rebol/actions/workflows/main.yml/badge.svg)](https://github.com/Siskin-framework/Rebol/actions/workflows/main.yml)
 [![Gitter](https://badges.gitter.im/rebol3/community.svg)](https://gitter.im/rebol3/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Chocolatey](https://raw.githubusercontent.com/Oldes/media/master/install-from-choco.svg)](https://chocolatey.org/packages/rebol3)
 

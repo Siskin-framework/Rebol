@@ -122,6 +122,13 @@ Rebol [
 	--assert v = "x"
 	--assert parse v: "ab" [any [s: 1 skip e: (e: remove/part s e) :e | skip]]
 	--assert empty? v
+	; and also:
+	lr: [s: #L integer! e: (s: remove/part s 2) :s]
+	--assert parse v: [#L 1 "a" #L 2 "b"][some [lr | string!]]
+	--assert v = ["a" "b"]
+	--assert parse v: [#L 1 "a" #L 2 "b"][some [string! | lr]]
+	--assert v = ["a" "b"]
+
 --test-- "while .. remove"
 	remove-any-y: [while [remove #"y" | #"x"]] 
 	--assert parse v: "" remove-any-y

@@ -1,5 +1,6 @@
 ;~ Siskin project nest file ~;
 name:     %Rebol
+product:  Base    ; default product.. the others are by include: Core or Bulk
 group:    %rebol
 compiler: clang
 strip:    on
@@ -11,7 +12,7 @@ include:  %src/include/
 temp:     %make/tmp/
 ;output:   %build/
 
-stack-size: 4194300
+stack-size: 4194304
 optimize:   2
 
 version: 3.5.2
@@ -358,7 +359,11 @@ include-midi: [
 		library:    %winmm
 	]
 	#if macOS? [
+		core-files: %core/p-midi.c
+		host-files: %os/posix/dev-midi-osx.c
 		config:     INCLUDE_MIDI_DEVICE
+		frameworks: [CoreServices CoreMIDI]
+
 	]
 	#if Linux? [
 		; there is no support yet
@@ -368,7 +373,7 @@ include-midi: [
 ;- native utilities:                                                            
 include-bincode:    [core-files: %core/u-bincode.c]
 include-dialecting: [core-files: %core/u-dialect.c config: INCLUDE_DELECT]
-include-iconv:      [core-files: %core/u-iconv.c]
+include-iconv:      [core-files: %core/u-iconv.c #if macOS? [library: %iconv]]
 
 ;- native cryptography:                                                         
 include-cryptography: [
@@ -384,6 +389,11 @@ include-cryptography: [
 		%core/u-rsa.c
 		%core/u-uECC.c
 	]
+	:include-codec-crt
+	:include-codec-der
+	:include-codec-pkix
+	:include-codec-ppk
+	:include-codec-ssh-key
 ]
 
 ;- native additional checksums:                                                 
@@ -440,7 +450,16 @@ include-native-wav-codec: [
 ]
 
 ;- Mezzanine level includes                                                     
-
+; crypto codecs:
+include-codec-crt:           [
+	:include-codec-pkix
+	:include-codec-der
+	mezz-lib-files:  %mezz/codec-crt.reb
+]
+include-codec-der:           [mezz-lib-files:  %mezz/codec-der.reb          ]
+include-codec-pkix:          [mezz-lib-files:  %mezz/codec-pkix.reb         ]
+include-codec-ppk:           [mezz-lib-files:  %mezz/codec-ppk.reb          ]
+include-codec-ssh-key:       [mezz-lib-files:  %mezz/codec-ssh-key.reb      ]
 ; compression codecs:
 include-codec-gzip:          [mezz-lib-files:  %mezz/codec-gzip.reb         ]
 include-codec-zip:           [mezz-lib-files:  %mezz/codec-zip.reb          ]
@@ -470,6 +489,8 @@ include-prot-mysql:          [mezz-prot-files: %mezz/prot-mysql.reb         ]
 include-prebol:              [mezz-lib-files: %modules/prebol.reb           ]
 
 include-https: [
+	:include-bincode
+	:include-cryptography
 	mezz-lib-files: [
 		%mezz/codec-utc-time.reb
 		%mezz/codec-der.reb
@@ -497,6 +518,8 @@ include-rebol-core: [
 	:include-codec-unixtime
 	config: INCLUDE_SHA224
 	config: INCLUDE_SHA384
+
+	product: Core
 ]
 
 include-rebol-bulk: [
@@ -534,6 +557,8 @@ include-rebol-bulk: [
 	;:include-test-extension
 	;- not recommanded:
 	;:include-native-wav-codec
+
+	product: Bulk
 ]
 
 common: [
@@ -563,6 +588,7 @@ common: [
 		library: %m
 		defines: ENDIAN_LITTLE
 		defines: USE_OLD_PIPE
+		cflags:  -Wno-pointer-sign
 	]
 	#if Linux? [
 		library: %m
@@ -596,8 +622,12 @@ arch-x64: [
 	#if Windows? [
 		defines: TO_WIN32_X64
 		defines: _WIN32
-		defines: __LLP64__
+		defines: __LLP64__ ; 64-bit, long (integer) has 32 bits and 'void *' is sizeof(long long)
 	]
+	#if macOS? [
+		defines: TO_OSX_X64
+		defines: __LP64__ ; same like LLP64, but long (integer) has 64 bits instead of 32
+	] 
 ]
 arch-x86: [
 	arch: x86
@@ -664,7 +694,7 @@ make-dll: [
 	defines: [REB_API]
 	flags:   [-O2 shared]
 	#if Posix? [ flag: fPIC upx: off ]
-	#if macOS? [ flag: fno-common ]
+	#if macOS? [ flag: fno-common strip: off]
 	do %make/pre-make.r3 "$NEST_SPEC"
 ]
 make-x86-dll: [:arch-x86 :make-dll #if Windows? [target: x86-win32]]
@@ -678,8 +708,18 @@ make-host: [
 	#if Posix? [upx: off]
 	do %make/pre-make.r3 "$NEST_SPEC"
 ]
-make-x86-host: [:arch-x86 :make-host #if Windows? [target: x86-win32]]
-make-x64-host: [:arch-x64 :make-host #if Windows? [target: x64-win32]]
+make-x86-host: [
+	:arch-x86 :make-host
+	#if Windows? [target: x86-win32]
+	#if Linux?   [target: x86-libc ]
+	#if macOS?   [target: x86-osx  ]
+]
+make-x64-host: [
+	:arch-x64 :make-host
+	#if Windows? [target: x64-win32]
+	#if Linux?   [target: x64-libc ]
+	#if macOS?   [target: x64-osx  ]
+]
 
 eggs: [
 	#if Windows? [
@@ -692,20 +732,17 @@ eggs: [
 ;		]
 		"Rebol/Base x86-win32 (gcc)" [
 			name:     %rebol3-base-x86-gcc
-			product:  Base
 			compiler: gcc
 			:make-x86-exe
 		]
 		"Rebol/Core x86-win32 (gcc)" [
 			name:     %rebol3-core-x86-gcc
-			product:  Core
 			compiler: gcc
 			:include-rebol-core
 			:make-x86-exe
 		]
 		"Rebol/Bulk x86-win32 (clang)" [
 			name:     %rebol3-bulk-x86-clang
-			product:  Bulk
 			compiler: clang
 			:include-rebol-bulk
 			:make-x86-exe
@@ -713,20 +750,17 @@ eggs: [
 
 		"Rebol/Base x64-win32 (gcc)" [
 			name:     %rebol3-base-x64-gcc
-			product:  Base
 			compiler: gcc
 			:make-x64-exe
 		]
 		"Rebol/Core x64-win32 (gcc)" [
 			name:     %rebol3-core-x64-gcc
-			product:  Core
 			compiler: gcc
 			:include-rebol-core
 			:make-x64-exe
 		]
 		"Rebol/Bulk x64-win32 (clang)" [
 			name:     %rebol3-bulk-x64-clang
-			product:  Bulk
 			compiler: clang
 			:include-rebol-bulk
 			:make-x64-exe
@@ -734,15 +768,13 @@ eggs: [
 
 		"Rebol/Core x86-win32 shared library (gcc)" [
 			name:     %lib-rebol3-core-x86-gcc
-			product:  Core
 			compiler: gcc
-			upx:      off ; library compiled using MSVC seems to make problems when UPXed  
 			:include-rebol-core
 			:make-x86-dll
+			upx:      off ; library compiled using MSVC seems to make problems when UPXed  
 		]
 		"Rebol/Core x86-win32 host application (gcc)" [
 			name:     %host-core-x86-gcc
-			product:  Core
 			compiler: gcc
 			:include-rebol-core
 			:make-x86-host
@@ -751,14 +783,12 @@ eggs: [
 
 		"Rebol/Core x64-win32 shared library (gcc)" [
 			name:     %lib-rebol3-core-x64-gcc
-			product:  Core
 			compiler: gcc
 			:include-rebol-core
 			:make-x64-dll
 		]
 		"Rebol/Core x64-win32 host application (gcc)" [
 			name:     %host-core-x64-gcc
-			product:  Core
 			compiler: gcc
 			:include-rebol-core
 			:make-x64-host
@@ -768,73 +798,89 @@ eggs: [
 	#if Linux? [
 		"Rebol/Base x64-libc (gcc)" [
 			name:     %rebol3-base-x64-libc-gcc
-			product:  Base
 			compiler: gcc
 			target:   x64-libc
 			:make-x64-exe
-			upx: off
 		]
 		"Rebol/Core x64-libc (gcc)" [
 			name:     %rebol3-core-x64-libc-gcc
-			product:  Core
 			compiler: gcc
-			target:   x64-libc
 			:include-rebol-core
 			:make-x64-exe
-			upx: off
 		]
 		"Rebol/Bulk x64-libc (gcc)" [
 			name:     %rebol3-bulk-x64-libc-gcc
-			product:  Bulk
 			compiler: gcc
-			target:   x64-libc
 			:include-rebol-bulk
 			:make-x64-exe
-			upx: off
 		]
 
 		;@@TODO: find a way for using one egg spec for multiple targets
 		"Rebol/Base x64-libc (clang)" [
 			name:     %rebol3-base-x64-libc-clang
-			product:  Base
 			compiler: clang
-			target:   x64-libc
 			:make-x64-exe
-			upx: off
 		]
 		"Rebol/Core x64-libc (clang)" [
 			name:     %rebol3-core-x64-libc-clang
-			product:  Core
 			compiler: clang
-			target:   x64-libc
 			:include-rebol-core
 			:make-x64-exe
-			upx: off
 		]
 		"Rebol/Bulk x64-libc (clang)" [
 			name:     %rebol3-bulk-x64-libc-clang
-			product:  Bulk
 			compiler: clang
-			target:   x64-libc
 			:include-rebol-bulk
 			:make-x64-exe
-			upx: off
 		]
 
 		"Rebol/Core x64-libc shared library (gcc)" [
 			name:     %lib-rebol3-core-x64-gcc
-			product:  Core
 			compiler: gcc
 			:include-rebol-core
 			:make-x64-dll
 		]
 		"Rebol/Core x64-libc host application (gcc)" [
 			name:     %host-core-x64-gcc
-			product:  Core
 			compiler: gcc
 			:include-rebol-core
 			:make-x64-host
 			shared:   %lib-rebol3-core-x64-gcc
+		]
+	]
+	#if macOS? [
+		"Rebol/Base x64-osx (clang)" [
+			name:     %rebol3-base-x64-osx
+			compiler: clang
+			target:   x64-osx
+			:make-x64-exe
+		]
+		"Rebol/Core x64-osx (clang)" [
+			name:     %rebol3-core-x64-osx
+			compiler: clang
+			target:   x64-osx
+			:include-rebol-core
+			:make-x64-exe
+		]
+		"Rebol/Bulk x64-osx (clang)" [
+			name:     %rebol3-bulk-x64-osx
+			compiler: clang
+			:include-rebol-bulk
+			:make-x64-exe
+		]
+
+		"Rebol/Core x64-osx shared library (clang)" [
+			name:     %lib-rebol3-core-x64-osx
+			compiler: clang
+			:include-rebol-core
+			:make-x64-dll
+		]
+		"Rebol/Core x64-libc host application (clang)" [
+			name:     %host-core-x64-osx
+			compiler: clang
+			:include-rebol-core
+			:make-x64-host
+			shared:   %lib-rebol3-core-x64-osx
 		]
 	]
 ]
