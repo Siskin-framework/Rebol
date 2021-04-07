@@ -95,7 +95,7 @@ core-files: [
 	%core/t-event.c
 	%core/t-function.c
 	%core/t-gob.c
-	%core/t-hash.c
+;	%core/t-hash.c
 	%core/t-image.c
 	%core/t-integer.c
 	%core/t-logic.c
@@ -286,6 +286,8 @@ config: [ ;- this is list of configuration (optional) defines
 	;	 else:
 	;		[a b]       = keys-of make map! [a 1 b: 2]
 	;		[a: 1 b: 2] = body-of make map! [a 1 b: 2]
+
+	ALLOW_MAKE_OF_ANY_WORD ;<-- allows word creation without any validity check (like in Rebol2)
 
 	;FORCE_ANSI_ESC_EMULATION_ON_WINDOWS  ; would not try to use MS' built-in VIRTUAL_TERMINAL_PROCESSING
 	;EXCLUDE_VECTOR_MATH  ; don't include vector math support (like: 3 * #[vector! integer! 8 3 [1 2 3]]); Used in t-vector.c file

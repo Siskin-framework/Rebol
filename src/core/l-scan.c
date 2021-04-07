@@ -825,9 +825,9 @@ new_line:
 {
     REBCNT flags;
     const REBYTE *cp;
-	const REBYTE *np;
     REBINT type;
-	
+	REBYTE *np = NULL;
+
     flags = Prescan(scan_state);
     cp = scan_state->begin;
 
@@ -1895,7 +1895,13 @@ exit_block:
 **
 ***********************************************************************/
 {
-    SCAN_STATE scan_state;
+#ifdef ALLOW_MAKE_OF_ANY_WORD
+	// this should be used only for special builds where is needed compatibility with Rebol2
+	if (len > 0) {
+		return Make_Word(cp, len);
+	}
+#else
+	SCAN_STATE scan_state;
 
 	Init_Scan_State(&scan_state, cp, len);
 
@@ -1905,6 +1911,7 @@ exit_block:
 		// (space and tab chars at tail are truncated and so accepted)
 		&& scan_state.end == scan_state.limit) 
 			return Make_Word(cp, len);
+#endif
 	return 0;
 }
 
