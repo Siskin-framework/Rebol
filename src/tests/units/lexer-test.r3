@@ -37,7 +37,233 @@ Rebol [
 			e/id = 'invalid
 		]
 
+	--test-- "Invalid path"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1319
+		--assert all [
+			error? e: try [load {a/b<}]
+			e/id = 'invalid
+			e/arg1 = "word"
+		]
+		--assert all [
+			error? e: try [load {a/3<}]
+			e/id = 'invalid
+			e/arg1 = "integer"
+		]
+
+	--test-- "Invalid time"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/698
+		--assert all [
+			error? e: try [load {--1:23}]
+			e/id = 'invalid
+		]
+
+	--test-- "Invalid date"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/698
+		--assert all [error? e: try [load {19-Jan-2010<}] e/id = 'invalid]
+
+	--test-- "Invalid % escape"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1443
+		--assert all [error? e: try [load {a@%2h}] e/id = 'invalid]
+		--assert all [error? e: try [load {%a%2h}] e/id = 'invalid]
+		--assert all [error? e: try [load {url:a%2h}] e/id = 'invalid]
+
+	--test-- "Invalid serialized value"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1429
+		--assert all [error? e: try [load {1#[logic! 1]}] e/id = 'invalid]
+		--assert all [error? e: try [load {a#[logic! 1]}] e/id = 'invalid]
+
+	--test-- "Invalid char"
+		--assert all [error? e: try [load {2#"a"}] e/id = 'invalid]
+
 ===end-group===
+
+===start-group=== "Special % word"
+	--test-- "valid % word cases"
+		--assert word? try [load {%}]
+		--assert word? try [load {% }]
+		--assert word? try [load {%^-}]
+		--assert word? try [first load {[%]}]
+	--test-- "valid % lit-word cases"
+		--assert lit-word? try [load {'%}]
+		--assert lit-word? try [load {'% }]
+		--assert lit-word? try [load {'%^-}]
+		--assert lit-word? try [first load {['%]}]
+	--test-- "valid % get-word cases"
+		--assert get-word? try [load {:%}]
+		--assert get-word? try [load {:% }]
+		--assert get-word? try [load {:%^-}]
+		--assert get-word? try [first load {[:%]}]
+	--test-- "invalid % lit-word cases"
+		--assert all [error? e: try [load {'%""}] e/id = 'invalid e/arg1 = "word-lit"]
+		--assert all [error? e: try [load {'%/}]  e/id = 'invalid e/arg1 = "word-lit"]
+	--test-- "invalid % get-word cases"
+		--assert all [error? e: try [load {:%""}] e/id = 'invalid e/arg1 = "word-get"]
+		--assert all [error? e: try [load {:%/}]  e/id = 'invalid e/arg1 = "word-get"]
+	--test-- "% used in object"
+		--assert all [
+			not error? try [o: make object! [%: 1]]
+			1 = o/%
+		]
+
+===end-group===
+
+===start-group=== "Special arrow-like words"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1302
+;@@ https://github.com/Oldes/Rebol-issues/issues/1318
+;@@ https://github.com/Oldes/Rebol-issues/issues/1342
+;@@ https://github.com/Oldes/Rebol-issues/issues/1461
+;@@ https://github.com/Oldes/Rebol-issues/issues/1478
+
+	--test-- "valid arrow-like words"
+		--assert word? try [load {<-->}]
+		--assert word? try [load {<==>}]
+		--assert word? try [load {<-==->}]
+		--assert word? try [load {<~~~>}]
+
+	--test-- "valid left-arrow-like words"
+		--assert word? try [load {<<}]
+		--assert word? try [load {<<<}]
+		--assert word? try [load {<<<<}]
+		--assert word? try [load {<<==}]
+		--assert word? try [load {<===}]
+		--assert word? try [load {<---}]
+		--assert word? try [load {<~~~}]
+		--assert all [block? b: try [load {<<<""}] parse b [word! string!]]
+
+	--test-- "valid right-arrow-like words"
+		--assert word? try [load {>>}]
+		--assert word? try [load {>>>}]
+		--assert word? try [load {>>>>}]
+		--assert word? try [load {==>>}]
+		--assert word? try [load {===>}] 
+		--assert word? try [load {--->}]
+		--assert word? try [load {~~~>}] 
+		--assert all [block? b: try [load {>>>""}] parse b [word! string!]]
+
+	--test-- "invalid cases"
+		--assert error? try [load {a<}]
+		--assert error? try [load {a>}]
+		--assert error? try [load {a-->}]
+
+	--test-- "special cases"
+		--assert all [block? b: try [load {a<--}] parse b [word! word!]]
+		--assert all [block? b: try [load {a<a>}] parse b [word! tag!]]
+
+	--test-- "valid arrow-like lit-words"
+		--assert lit-word? try [load {'<>}]
+		--assert lit-word? try [load {'<-->}]
+		--assert lit-word? try [load {'<==>}]
+		--assert lit-word? try [load {'<-==->}]
+		--assert lit-word? try [load {'<~~~>}]
+
+	--test-- "valid left-arrow-like lit-words"
+		--assert lit-word? try [load {'<} ]
+		--assert lit-word? try [load {'<<}]
+		--assert lit-word? try [load {'<=}]
+		--assert lit-word? try [load {'<<<}]
+		--assert lit-word? try [load {'<<<<}]
+		--assert all [block? b: try [load {'<<<""}] parse b [lit-word! string!]]
+
+	--test-- "valid right-arrow-like lit-words"
+		--assert lit-word? try [load {'>} ]
+		--assert lit-word? try [load {'>>}]
+		--assert lit-word? try [load {'>=}]
+		--assert lit-word? try [load {'>>>}]
+		--assert lit-word? try [load {'>>>>}]
+		--assert lit-word? try [load {'==>>}]
+		--assert lit-word? try [load {'===>}]
+		--assert lit-word? try [load {'--->}]
+		--assert lit-word? try [load {'~~~>}]
+		--assert all [block? b: try [load {'>>>""}] parse b [lit-word! string!]]
+
+	--test-- "valid arrow-like get-words"
+		--assert get-word? try [load {:<-->}]
+		--assert get-word? try [load {:<==>}]
+		--assert get-word? try [load {:<-==->}]
+		--assert get-word? try [load {:<~~~>}]
+
+	--test-- "valid left-arrow-like get-words"
+		--assert get-word? try [load {:<<}]
+		--assert get-word? try [load {:<<<}]
+		--assert get-word? try [load {:<<<<}]
+		--assert all [block? b: try [load {:<<<""}] parse b [get-word! string!]]
+
+	--test-- "valid right-arrow-like get-words"
+		--assert get-word? try [load {:>>}]
+		--assert get-word? try [load {:>>>}]
+		--assert get-word? try [load {:>>>>}]
+		--assert get-word? try [load {:==>>}]
+		--assert get-word? try [load {:===>}]
+		--assert get-word? try [load {:--->}]
+		--assert get-word? try [load {:~~~>}]
+		--assert all [block? b: try [load {:>>>""}] parse b [get-word! string!]]
+
+	--test-- "valid arrow-like set-words"
+		--assert set-word? try [load {<-->:}]
+		--assert set-word? try [load {<==>:}]
+		--assert set-word? try [load {<-==->:}]
+		--assert set-word? try [load {<~~~>:}]
+
+	--test-- "valid left-arrow-like set-words"
+		--assert set-word? try [load {<<:}]
+		--assert set-word? try [load {<<<:}]
+		--assert set-word? try [load {<<<<:}]
+		--assert all [block? b: try [load {<<<:""}] parse b [set-word! string!]]
+
+	--test-- "valid right-arrow-like set-words"
+		--assert set-word? try [load {>>:}]
+		--assert set-word? try [load {>>>:}]
+		--assert set-word? try [load {>>>>:}]
+		--assert set-word? try [load {==>>:}]
+		--assert set-word? try [load {===>:}]
+		--assert set-word? try [load {--->:}]
+		--assert set-word? try [load {~~~>:}]
+		--assert all [block? b: try [load {>>>:""}] parse b [set-word! string!]]
+
+	--test-- "valid arrow-like refinements"
+		--assert refinement? try [load {/<-->}]
+		--assert refinement? try [load {/<==>}]
+		--assert refinement? try [load {/<-==->}]
+		--assert refinement? try [load {/<~~~>}]
+
+	--test-- "valid left-arrow-like refinements"
+		--assert refinement? try [load {/<<}]
+		--assert refinement? try [load {/<<<}]
+		--assert refinement? try [load {/<<<<}]
+		--assert all [block? b: try [load {/<<<""}] parse b [refinement! string!]]
+
+	--test-- "valid right-arrow-like refinements"
+		--assert refinement? try [load {/>>}]
+		--assert refinement? try [load {/>>>}]
+		--assert refinement? try [load {/>>>>}]
+		--assert refinement? try [load {/==>>}]
+		--assert refinement? try [load {/===>}]
+		--assert refinement? try [load {/--->}]
+		--assert refinement? try [load {/~~~>}]
+		--assert all [block? b: try [load {/>>>""}] parse b [refinement! string!]]
+
+===end-group===
+
+===start-group=== "Special slash words"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1477
+	--test-- "valid slash words"
+		--assert word? try [load {/}]
+		--assert word? try [load {//}]
+		--assert word? try [load {///}]
+	--test-- "valid slash lit-words"
+		--assert lit-word? try [load {'/}]
+		--assert lit-word? try [load {'//}]
+		--assert lit-word? try [load {'///}]
+	--test-- "valid slash get-words"
+		--assert get-word? try [load {:/}]
+		--assert get-word? try [load {://}]
+		--assert get-word? try [load {:///}]
+	--test-- "valid slash set-words"
+		--assert set-word? try [load {/:}]
+		--assert set-word? try [load {//:}]
+		--assert set-word? try [load {///:}]
+===end-group===
+
 
 ===start-group=== "Email"
 	--test-- "valid `emails`"
@@ -73,9 +299,9 @@ Rebol [
 
 ===end-group===
 
-===start-group=== "Set-word"
+===start-group=== "Get-word"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2437
-	--test-- "invalid `set-word!`"
+	--test-- "invalid `get-word!`"
 		--assert error? try [load {:2nd}]
 		--assert error? try [load {::foo}]
 		--assert error? try [load {:@foo}]
@@ -84,13 +310,17 @@ Rebol [
 
 ===start-group=== "Refinement"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/980
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1856
 	--test-- "valid `refinement!`"
 		--assert refinement? try [load {/foo}]
 		--assert refinement? try [load {/+}]
 		--assert refinement? try [load {/!}]
 		--assert refinement? try [load {/111}]
 		--assert refinement? try [load {/+1}]
-		
+		--assert refinement? load "/+123"
+		--assert refinement? load "/-"
+		--assert refinement? load "/."
+		--assert refinement? load "/.123"
 
 ===end-group===
 
@@ -98,18 +328,17 @@ Rebol [
 	--test-- "valid `tags`"
 		--assert tag? load {<a '"'>} ;@@ https://github.com/Oldes/Rebol-issues/issues/1873
 
-===end-group===
+	--test-- "issue-1919"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1919
+		--assert all  [
+			block? b: try [load "<a<b b>>"]
+			b/1 = <a<b b>
+			b/2 = '>
+		]
 
-===start-group=== "Lit"
-	--test-- "quote arrow-based words"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/1461
-		--assert lit-word? try [load {'<} ]
-		--assert lit-word? try [load {'>} ]
-		--assert lit-word? try [load {'<>}]
-		--assert lit-word? try [load {'<=}]
-		--assert lit-word? try [load {'>=}]
 
 ===end-group===
+
 
 ===start-group=== "Integer"
 	--test-- "-0"
@@ -117,16 +346,6 @@ Rebol [
 
 ===end-group===
 
-===start-group=== "Refinement" 
-	--test-- "/+"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/1856
-		--assert refinement? load "/+"
-		--assert refinement? load "/+123"
-		--assert refinement? load "/-"
-		--assert refinement? load "/."
-		--assert refinement? load "/.123"
-
-===end-group===
 
 ===start-group=== "Char"
 	--test-- {#"^(1)"}
@@ -160,6 +379,7 @@ Rebol [
 		--assert  "b" = load {#[string! "ab" 2]}
 		--assert %ab  = load {#[file! "ab"]}
 		--assert  %b  = load {#[file! "ab" 2]}
+		--assert struct? load {#[struct! []]}
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1034
 		--assert error? try [load {#[string! "ab" 2 x]}]
 		--assert error? try [load {#[file! "ab" x]}]
@@ -168,6 +388,13 @@ Rebol [
 		--assert error? try [load {#[string! "ab" 2 x]}]
 		--assert error? try [load {#[file! "ab" x]}]
 		--assert error? try [load {#[file! "ab" 2 x]}]
+	--test-- {object!}
+		;@@ https://github.com/Oldes/Rebol-issues/issues/864
+		--assert block? try [transcode      to-binary "#[object! [a: 1 b: 2]]"]
+		--assert block? try [transcode/only to-binary "#[object! [a: 1 b: 2]]"]
+	--test-- {function!}
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1114
+		--assert function? first transcode to binary! {#[function! [[a [series!]][print a]]]}
 
 ===end-group===
 
@@ -192,6 +419,10 @@ Rebol [
 		--assert #{0003} = first transcode/only/error to binary! "#{^(30)^(30)03}"
 	--test-- {binary! with unicode char} ; is handled early
 		--assert error? first transcode/only/error to binary! "#{0č}"
+	--test-- "Invalid binary"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1431
+		--assert all [error? e: try [load {000016#{FF}}] e/id = 'invalid e/arg1 = "integer"]
+		--assert all [error? e: try [load {+2#{}}] e/id = 'invalid e/arg1 = "integer"]
 
 ===end-group===
 
@@ -210,21 +441,15 @@ Rebol [
 			data: make string! 40000
 			insert/dup data "ABCD" 10000
 
-			any [
-				exists? dir: join system/options/path %r3/src/tests/units/files/
-				exists? dir: join system/options/path %../r3/src/tests/units/files/
-				exists? dir: join system/options/path %../../src/tests/units/files/
-			]
-			probe dir: clean-path dir
-			probe save %units/files/tmp.data reduce [1 data]
-			probe exe: system/options/boot
-
+			dir: clean-path %units/files/
+			save dir/tmp.data reduce [1 data]
+			exe: system/options/boot
 			;@@ CALL seems not to work same on all OSes :-(
-			either system/version/4 = 3 [
-				call/wait/output probe rejoin [to-local-file exe { -s } to-local-file dir/bug-load-null.r3] out
-			][	call/wait/output probe reduce [exe "-s" dir/bug-load-null.r3] out ]
+			either system/platform = 'Windows [
+				call/wait/output rejoin [to-local-file exe { -s } to-local-file dir/bug-load-null.r3] out
+			][	call/wait/output reduce [exe "-s" dir/bug-load-null.r3] out ]
 
-			probe out
+			;probe out
 			parse out [thru "Test OK" to end]
 		][
 			probe system/state/last-error

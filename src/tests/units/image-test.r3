@@ -31,6 +31,15 @@ Rebol [
 			error? e: try [make image! 65536x65536]
 			e/id = 'size-limit
 		]
+	--test-- "to image from binary"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1048
+		--assert all [error? e: try [to image! #{0000}]   e/id = 'bad-make-arg]
+		--assert all [error? e: try [to image! #{000000}] e/id = 'bad-make-arg]
+		--assert all [image? img: to image! #{00000000}          img/size = 1x1]
+		--assert all [image? img: to image! #{0000000011}        img/size = 1x1]
+		--assert all [image? img: to image! #{000000001111}      img/size = 1x1]
+		--assert all [image? img: to image! #{0000000011111111}  img/size = 2x1]
+
 ===end-group===
 
 ===start-group=== "construct image"
@@ -69,7 +78,62 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "INDEX? / INDEXZ? / AT / ATZ"
+	img: make image! 2x2
+	--test-- "index? image!"
+		--assert 1 = index? img
+		--assert 2 = index? next img
+		--assert 5 = index? tail img
+		--assert 4 = index? skip tail img -1
+	--test-- "index? at image!"
+		--assert 1 = index? at img -1
+		--assert 1 = index? at img 0
+		--assert 1 = index? at img 1
+		--assert 2 = index? at img 2
+		--assert 5 = index? at img 6
+		--assert 1 = index? skip at img 2 -1
+	--test-- "index?/xy image!"
+		--assert 1x1 = index?/xy img
+		--assert 2x1 = index?/xy next img
+		--assert 1x3 = index?/xy tail img
+		--assert 2x2 = index?/xy skip tail img -1
+	--test-- "index?/xy at image!"
+		--assert 1x1 = index?/xy at img 1x1
+		--assert 1x2 = index?/xy at img 1x2
+		--assert 2x2 = index?/xy at img 2x2
+		--assert 1x3 = index?/xy at img 20x2
+		--assert 1x2 = index?/xy skip at img 2x2 -1x0
+	--test-- "indexz? image!"
+		--assert 0 = indexz? img
+		--assert 1 = indexz? next img
+		--assert 4 = indexz? tail img
+		--assert 3 = indexz? skip tail img -1
+	--test-- "indexz? atz image!"
+		--assert 0 = indexz? atz img -1
+		--assert 0 = indexz? atz img 0
+		--assert 2 = indexz? atz img 2
+		--assert 4 = indexz? atz img 6
+		--assert 3 = indexz? skip atz img 6 -1
+		--assert 1 = indexz? skip atz img 2 -1
+	--test-- "indexz?/xy image!"
+		--assert 0x0 = indexz?/xy img
+		--assert 1x0 = indexz?/xy next img
+		--assert 0x2 = indexz?/xy tail img
+		--assert 1x1 = indexz?/xy skip tail img -1x0
+	--test-- "indexz?/xy atz image!"
+		--assert 0x0 = indexz?/xy atz img 0x0
+		--assert 0x1 = indexz?/xy atz img 0x1
+		--assert 1x1 = indexz?/xy atz img 1x1
+		--assert 0x2 = indexz?/xy atz img 2x2
+		--assert 0x2 = indexz?/xy atz img 20x2
+		--assert 0x1 = indexz?/xy skip atz img 1x1 -1x0
+===end-group===
+
 ===start-group=== "FOREACH"
+	--test-- "issue-1008"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1008
+	--assert tuple? foreach x make image! 1x1 [break/return x]
+	
 	--test-- "issue-1479"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1479
 	pix: copy []
@@ -232,26 +296,26 @@ Rebol [
 000000000000FFFFFFFFFFFF
 FFFFFFFFFFFFFFFFFFFFFFFF
 FFFFFFFFFFFFFFFFFFFFFFFF}
-		change at img 1x1 make image! [2x2 220.22.22]
+		change at img 2x2 make image! [2x2 220.22.22]
 		--assert img/rgb = #{
 000000000000FFFFFFFFFFFF
 000000DC1616DC1616FFFFFF
 FFFFFFDC1616DC1616FFFFFF
 FFFFFFFFFFFFFFFFFFFFFFFF}
-		change at img 2x2 make image! [3x3 33.33.33]
+		change at img 3x3 make image! [3x3 33.33.33]
 		--assert img/rgb = #{
 000000000000FFFFFFFFFFFF
 000000DC1616DC1616FFFFFF
 FFFFFFDC1616212121212121
 FFFFFFFFFFFF212121212121}
-		change at img 0x3 make image! [4x4 66.166.66]
+		change at img 1x4 make image! [4x4 66.166.66]
 		--assert img/rgb = #{
 000000000000FFFFFFFFFFFF
 000000DC1616DC1616FFFFFF
 FFFFFFDC1616212121212121
 42A64242A64242A64242A642}
 
-		change at img 3x0 make image! [2x1 #{AAAAAABBBBBB}]
+		change at img 4x1 make image! [2x1 #{AAAAAABBBBBB}]
 		--assert img/rgb = #{
 000000000000FFFFFFAAAAAA
 000000DC1616DC1616FFFFFF
@@ -330,6 +394,33 @@ FFFFFFDC1616212121212121
 ===end-group===
 
 
+===start-group=== "BLUR"
+if value? 'blur [
+--test--  "blur"
+	i: load %units/files/flower.png
+	c: checksum to binary! i 'crc32
+	t: copy i
+	--assert all [
+		image? blur t 0
+		c = checksum to binary! t 'crc32
+	]
+	--assert all [
+		image? blur t 5
+		-1700743341 = checksum to binary! t 'crc32
+	]
+	--assert all [
+		image? blur t 5
+		-583506697  = checksum to binary! t 'crc32
+	]
+	--assert all [
+		image? blur i 100000
+		1523895462  = checksum to binary! i 'crc32
+	]
+	t: i: none
+]
+===end-group===
+
+
 ===start-group=== "Save/load image"
 	if find codecs 'png [
 		--test-- "save/load PNG"
@@ -373,7 +464,8 @@ FFFFFFDC1616212121212121
 	--assert   2 = index? find/only img 66.66.66
 	--assert   2 = index? find/only img 66.66.66.22
 	--assert none? find img 66.66.66.22
-	--assert   2 = index? find/match img 255.255.255
+	--assert   1 = index? find/match img 255.255.255
+	--assert   2 = index? find/match/tail img 255.255.255
 
 --test-- "FIND integer on image (alpha)"
 	img: make image! 2x2 img/2: 66.66.66.66

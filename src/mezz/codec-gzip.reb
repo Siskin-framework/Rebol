@@ -8,15 +8,16 @@ REBOL [
 
 register-codec [
 	name:  'gzip
+	type:  'compression
 	title: "Lossless compressed data format compatible with GZIP utility."
 	suffixes: [%.gz]
 	decode: function[data [binary!]] [
 		if verbose > 0 [ identify data ]
-		decompress/gzip data
+		decompress data 'gzip
 	]
 
 	encode: function [data [binary!]][
-		compress/gzip/level data level
+		compress/level data 'gzip level
 	]
 
 	identify: function [data [binary!]][

@@ -8,6 +8,23 @@ Rebol [
 
 ~~~start-file~~~ "Parse"
 
+===start-group=== "Basic string based parsing"
+--test-- "parse string! using any-string!"
+;@@ https://github.com/Oldes/Rebol-wishes/issues/36
+	--assert      parse "ab"   ["ab"]
+	--assert      parse "abc"  [%abc]
+	--assert      parse "a@bc" [a@bc]
+	--assert try [parse "abc"  [@abc]]
+	--assert try [parse "a:bc" [a:bc]]
+	--assert      parse "<a>"  [<a> ]
+
+--test-- "changing input"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1263
+	b: "this"
+	--assert parse "test" ["test" :b "this"]
+===end-group===
+
+
 ===start-group=== "TO/THRU"
 --test-- "TO/THRU with bitset!"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1457
@@ -29,11 +46,88 @@ Rebol [
 		e: try [parse "foo" [thru 1.2]]
 		e/id = 'parse-rule
 	]
+--test-- "TO/THRU with tag!"
+	--assert parse "<a>" [thru <a>]
+	--assert parse "a<a>" [thru [<a>]]
+	--assert parse "a<a>" [to <a> 3 skip]
+	--assert parse "a<a>" [to [<a>] to end]
+	--assert parse "a<a>" [thru [<b> | <a>]]
+	--assert all [parse "11<b>xx</b>22" [thru <b> copy x to </b> to end] x = "xx"]
 
+--test-- "TO/THRU datatype"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1282
+	--assert parse [1 2 a] [thru word!]
+	--assert parse [1 2 a] [to word! 1 skip]
 
+--test-- "TO/THRU end"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/295
+	--assert all [parse "xyz" [copy f to   end]  f = "xyz"]
+	--assert all [parse "xyz" [copy f thru end]  f = "xyz"]
+	--assert error? try [parse "xyz" [copy f thru to end]]
+	--assert error? try [parse "xyz" [copy f thru thru end]]
 ===end-group===
 
+
+===start-group=== "NOT"
+--test-- "not not"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1246
+	--assert parse "1" [not not "1" "1"]
+	--assert parse "1" [not [not "1"] "1"]
+	--assert not parse "" [not 0 "a"]
+	--assert not parse "" [not [0 "a"]]
+===end-group===
+
+===start-group=== "AND / AHEAD"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2095
+--test-- "and"
+	--assert parse "a" [and #"a" skip]
+	--assert all [parse "abc" [#"a" and #"b" copy x to end]  x = "bc"]
+	--assert parse [1] [and integer! skip]
+	--assert parse [1 hi] [integer! and word! skip]
+	--assert all [parse [hi @bob] ['hi and ref! set x skip] x = @bob]
+	--assert not parse "a" [and #"b" skip]
+	--assert not parse [1] [and word! skip]
+--test-- "ahead"
+	--assert parse "a" [ahead #"a" skip]
+	--assert all [parse "abc" [#"a" ahead #"b" copy x to end]  x = "bc"]
+	--assert parse [1] [ahead integer! skip]
+	--assert parse [1 hi] [integer! ahead word! skip]
+	--assert all [parse [hi @bob] ['hi ahead ref! set x skip] x = @bob]
+	--assert not parse "a" [ahead #"b" skip]
+	--assert not parse [1] [ahead word! skip]
+--test-- "issue-1238"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1238
+	--assert not parse "ab" [and "ab" "ac"]
+	--assert not parse "ac" [and "ab" "ac"]
+	--assert not parse "ab" [ahead "ab" "ac"]
+	--assert not parse "ac" [ahead "ab" "ac"]
+===end-group===
+
+
+===start-group=== "THEN"
+--test-- "then"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1394
+	--assert parse "ab" ["a" then "b" | "c"]
+	--assert parse "c"  ["a" then "b" | "c"]
+===end-group===
+
+
+===start-group=== "LIMIT"
+--test-- "limit"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1300
+	--assert all [
+		error? e: try [limit: ["123"] parse "123" [limit]]
+		e/id = 'not-done
+	]
+===end-group===
+
+
 ===start-group=== "CHANGE"
+
+--test-- "CHANGE string"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1245
+	--assert parse s: "(1)" [change "(1)" "()"]
+	--assert s = "()"
 
 --test-- "CHANGE rule value (same size)"
 	r: ["b"]
@@ -54,12 +148,14 @@ Rebol [
 	--assert s = "aXXc"
 
 --test-- "CHANGE rule (expression)"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1279
 	--assert parse s: "abc" [some ["a" change copy v r (uppercase v) | skip]]
 	--assert v = "B"
 	--assert s = "aBc"
 	--assert parse s: "abc" [some ["a" change copy v ["b" "c"] (reverse copy v) | skip]]
 	--assert v = "bc"
 	--assert s = "acb"
+	--assert all [parse s: [1] [change set n integer! (n * 10)]  s = [10]]
 
 --test-- "CHANGE block"
 	--assert parse b: [1] [change integer! (1 + 1) to end]
@@ -72,6 +168,21 @@ Rebol [
 		e/id = 'no-value
 	]
 
+--test-- "CHANGE into"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1266
+	--assert all [parse s: [[a b]][change  into ['a 'b]  [z p]]  s = [z p]]
+	--assert all [parse s: [[a b]][change [into ['a 'b]] [z p]]  s = [z p]]
+	--assert all [parse s:  [a b] [change  some word!    [z p]]  s = [z p]]
+
+--test-- "CHANGE lit-word"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1265
+	--assert all [parse s: [a][change 'a 'z]  s = [z]]
+
+--test-- "CHANGE only"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1264
+	--assert error? try [parse s: [a b][change only ['a 'b] [z p]]]
+	--assert all [parse s: [a b][change ['a 'b] only [z p]]  s = [[z p]]]
+
 ===end-group===
 
 ===start-group=== "INSERT"
@@ -83,6 +194,7 @@ Rebol [
 	--assert s = "aXbYYc"
 
 --test-- "INSERT expresion"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1279
 	--assert parse s: "abc" [some ["a" insert (uppercase "x") | skip]]
 	--assert s = "aXbc"
 
@@ -94,16 +206,49 @@ Rebol [
 
 ===start-group=== "REMOVE"
 --test-- "remove"
-	;--assert parse v: "yx" [some [remove #"y" | #"x"] ]
-	;--assert v = "x"
-	;--assert parse "yx" [copy v any [ remove #"y" | #"x" ] ]
-	;--assert v = "x"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2452
+	--assert parse v: "yx" [some [remove #"y" | #"x"]]
+	--assert v = "x"
+	--assert parse "yx" [copy v any [ remove #"y" | #"x" ]]
+	--assert v = "x"
+	--assert parse v: "yx" [some [change #"y" "" | #"x"]]
+	--assert v = "x"
+	--assert parse v: "ab" [any [s: 1 skip e: (e: remove/part s e) :e | skip]]
+	--assert empty? v
+	; and also:
+	lr: [s: #L integer! e: (s: remove/part s 2) :s]
+	--assert parse v: [#L 1 "a" #L 2 "b"][some [lr | string!]]
+	--assert v = ["a" "b"]
+	--assert parse v: [#L 1 "a" #L 2 "b"][some [string! | lr]]
+	--assert v = ["a" "b"]
+
+--test-- "while .. remove"
 	remove-any-y: [while [remove #"y" | #"x"]] 
 	--assert parse v: "" remove-any-y
 	--assert parse v: "yx" remove-any-y
 	--assert v = "x"
 	--assert parse v: "yxxyyx" remove-any-y
 	--assert v = "xxx"
+
+--test-- "remove & insert"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1251
+	--assert parse v: "a" [remove skip insert "xxx"]
+	--assert v = "xxx"
+	--assert parse v: "a" [[remove skip] insert "xxx"]
+	--assert v = "xxx"
+
+--test-- "remove copy"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1244
+	--assert not parse a: "12" [remove copy v skip]
+	--assert a = "2"
+	--assert v = "1"
+	--assert not parse a: "12" [remove [copy v skip]]
+	--assert a = "2"
+	--assert v = "1"
+
+--test-- "remove into"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1266
+	--assert all [parse s: [[a b]][remove into ['a 'b]]  s = []]
 
 ===end-group===
 
@@ -151,9 +296,18 @@ Rebol [
 	--assert ["a" "b" "c"] = parse/all "a/b/c" #"/"
 	--assert ["a" "b" "c"] = parse/all "a/b/c"  "/"
 
+--test-- "issue-367"
+;@@ https://github.com/Oldes/Rebol-issues/issues/367
+	--assert error? try [parse [1 2 3] [(1 / 0)] false]
+	
 --test-- "issue-394"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/394
 	--assert parse #{001122} [#{00} #{11} #{22}]
+
+--test-- "issue-529"
+;@@ https://github.com/Oldes/Rebol-issues/issues/529
+	a: context [b: string!]
+	--assert parse ["test"] [a/b]
 
 --test-- "issue-591"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/591
@@ -162,6 +316,25 @@ Rebol [
 		e/id = 'parse-end
 		e/arg1 = 0
 	]
+
+--test-- "issue-753"
+;@@ https://github.com/Oldes/Rebol-issues/issues/753
+	ws: to-bitset rejoin[ tab newline cr sp ]
+	abc: charset [ "a" "b" "c" ]
+	rls: [ "a" some ws copy b some abc some ws "c" ]
+	rla: [ "a"  any ws copy b some abc  any ws "c" ]
+	--assert     parse/all "a b c" rls
+	--assert     parse/all "a b c" rla
+	--assert not parse/all "a b"   rls
+	--assert not parse/all "a b"   rla
+
+
+--test-- "issue-967"
+;@@ https://github.com/Oldes/Rebol-issues/issues/967
+	x: 0
+	--assert all [parse "" [some [(x: 1) break]]  x = 1]
+	--assert all [parse "" [any  [(x: 2) break]]  x = 2]
+
 
 --test-- "issue-2130"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/2130
@@ -292,6 +465,29 @@ Rebol [
 --test-- "issue-1614"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1614
 	--assert not parse "a b c" ["a" "b" "c"]
+
+--test-- "issue-1068"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1068
+	foreach x [[a b] (a b) a/b 'a/b :a/b a/b:] [
+		parse x [y:]
+		--assert same? x y
+	]
+
+--test-- "issue-1298"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1298
+	cset: charset [#"^(01)" - #"^(FF)"]
+	--assert parse "a" ["a" any cset]
+	cset: charset [#"^(00)" - #"^(FE)"]
+	--assert parse "a" ["a" any cset]
+	cset: charset [#"^(00)" - #"^(FF)"]
+	--assert parse "a" ["a" any cset]
+
+--test-- "integer! repeat"
+;@@ https://github.com/Oldes/Rebol-issues/issues/1237
+	--assert     parse [a] [1 'a]
+	--assert not parse [a] [9 'a]
+	--assert     parse [a] [1 3 'a]
+	--assert not parse [a] [2 3 'a]
 
 ===end-group===
 

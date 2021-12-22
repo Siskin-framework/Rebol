@@ -25,7 +25,9 @@ dp: delta-profile: func [
 	block [block!]
 	/local start end adjust
 ][
-	; first count adjustments for empty code
+	; first force GC
+	recycle recycle
+	; than count adjustments for empty code
 	adjust: copy end: stats/profile 
 	do [] 
 	stats/profile 
@@ -65,7 +67,7 @@ speed?: function [
 			insert/dup tmp "abcdefghij" 50000
 			loop 10 [
 				random tmp
-				decompress compress tmp
+				decompress compress tmp 'zlib 'zlib
 			]
 			calc: [(length? tmp) * 10 / secs / 1900]
 		][

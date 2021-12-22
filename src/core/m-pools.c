@@ -411,11 +411,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #endif
 	} else {
 		if (powerof2) {
-			// !!! WHO added this and why??? Just use a left shift and mask!
-			REBCNT len=2048;
-			while(len<length)
-				len*=2;
-			length=len;
+			U32_ROUND_UP_POWER_OF_2(length);
 		} else
 			length = ALIGN(length, 2048);
 #ifdef DEBUGGING
@@ -610,10 +606,10 @@ clear_header:
 	REBHSP spec;
 	REBCNT idx = hob->index;
 
-	if( idx == 0 || !IS_USED_HOB(hob) || hob->data == NULL) return;
+	if( !IS_USED_HOB(hob) || hob->data == NULL ) return;
 
-	spec = PG_Handles[idx-1];
-	//printf("HOB free mem: %0x\n", hob->data);
+	spec = PG_Handles[idx];
+	//printf("HOB free mem: %p\n", hob->data);
 
 	if (spec.free)
 		spec.free(hob->data);
@@ -696,8 +692,10 @@ clear_header:
 					goto crash;
 				// Does the size match a known pool?
 				pool_num = FIND_POOL(SERIES_TOTAL(series));
-				// Just to be sure the pool matches the allocation:
-				if (pool_num < SERIES_POOL && Mem_Pools[pool_num].wide != SERIES_TOTAL(series))
+				// Just to be sure the pool size is enough to hold total series length
+				// Originaly it was expecting exact size match, but there may be cases
+				// where series' total size may be lower than pool wide.
+				if (pool_num < SERIES_POOL && Mem_Pools[pool_num].wide < SERIES_TOTAL(series))
 					goto crash;
 			}
 			series++;
@@ -715,7 +713,8 @@ clear_header:
 			for (seg = Mem_Pools[pool_num].segs; seg; seg = seg->next) {
 				if ((REBUPT)node > (REBUPT)seg && (REBUPT)node < (REBUPT)seg + (REBUPT)seg->size) break;
 			}
-			if (!seg) goto crash;
+			if (!seg)
+				goto crash;
 			//pnode = node; // for debugger
 		}
 		// The number of free nodes must agree with header:
@@ -1009,7 +1008,6 @@ crash:
 {
 	REBSEG	*seg, *next;
 	REBHOB *hob;
-	REBCNT  used;
 	REBCNT  n;
 
 	//Dump_Pools();

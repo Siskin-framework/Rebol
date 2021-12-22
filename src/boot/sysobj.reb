@@ -22,7 +22,7 @@ product:  'core
 ; Next four fields are updated during build:
 platform: none
 version:  0.0.0
-build:    0
+build:    object [os: arch: vendor: sys: abi: compiler: target: date: git: none]
 license: none
 
 catalog: object [
@@ -34,12 +34,12 @@ catalog: object [
 	errors:  none
 	; Reflectors are used on boot to create *-of functions
 	reflectors: [
-		spec   [any-function! any-object! vector! datatype!]
+		spec   [any-function! any-object! vector! datatype! struct!]
 		body   [any-function! any-object! map!]
-		words  [any-function! any-object! map! date!]
-		values [any-object! map!]
+		words  [any-function! any-object! map! date! handle!]
+		values [any-object! map! struct!]
 		types  [any-function!]
-		title  [any-function! datatype!]
+		title  [any-function! datatype! module!]
 	]
 	; Official list of system/options/flags that can appear.
 	; Must match host reb-args.h enum!
@@ -60,6 +60,7 @@ catalog: object [
 		uri-component: #[bitset! #{0000000041E6FFC07FFFFFE17FFFFFE2}] ;A-Z a-z 0-9 !'()*-._~
 	]
 	checksums: [adler32 crc24 crc32 tcp md4 md5 sha1 sha224 sha256 sha384 sha512 ripemd160]
+	compressions: [gzip deflate zlib lzma crush]
 ]
 
 contexts: construct [
@@ -86,10 +87,11 @@ state: object [
 			0.0.0
 		extension: 2.2.2 ; execute only
 	]
-	last-error: none ; used by WHY?
+	last-error:  none ; used by WHY?
+	last-result: none ; used to store last console result
 ]
 
-modules: []
+modules: object []
 
 codecs: object []
 
@@ -148,6 +150,7 @@ options: object [  ; Options supplied to REBOL during startup
 
 	binary-base: 16    ; Default base for FORMed binary values (64, 16, 2)
 	decimal-digits: 15 ; Max number of decimal digits to print.
+	probe-limit: 16000 ; Max probed output size
 	module-paths: [%./]
 	default-suffix: %.reb ; Used by IMPORT if no suffix is provided
 	file-types: []
@@ -156,6 +159,7 @@ options: object [  ; Options supplied to REBOL during startup
 	; verbosity of logs per service (codecs, schemes)
 	; 0 = nothing; 1 = info; 2 = more; 3 = debug
 	log: #[map! [
+		rebol: 1
 		http: 1
 		tls:  1
 		zip:  1
@@ -175,6 +179,7 @@ standard: object [
 
 	codec: construct [
 		name:       ;word!
+		type:       ;word!
 		title:      ;string!
 		suffixes:   ;block!
 		decode:     ;[any-function! none!]
@@ -204,10 +209,10 @@ standard: object [
 	]
 
 	header: construct [
+		version: 0.0.0
 		title: {Untitled}
 		name:
 		type:
-		version:
 		date:
 		file:
 		author:
@@ -313,6 +318,9 @@ standard: object [
 		;isoweek:
 		utc:
 		julian:
+	]
+	handle-info: construct [
+		type:
 	]
 
 	midi-info: construct [

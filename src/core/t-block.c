@@ -330,9 +330,9 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 			return;
 		}
 		
-	} else if (type == REB_BLOCK || type == REB_PAREN) {
+	} else if (ANY_BLOCK_TYPE(type)) {
 		// to block!/paren! typset!
-		if (IS_TYPESET(arg)) {
+		if (IS_TYPESET(arg) && (type == REB_BLOCK || type == REB_PAREN)) {
 			Set_Block(value, Typeset_To_Block(arg));
 			return;
 		}
@@ -754,7 +754,7 @@ zero_blk:
 			Set_Series(
 				VAL_TYPE(value), D_RET,
 				D_REF(ARG_TAKE_DEEP)
-					? Copy_Block_Values(ser, 0, len, CP_DEEP | TS_STD_SERIES)
+					? Copy_Block_Values(ser, 0, len, CP_DEEP | TS_DEEP_COPIED)
 					: Copy_Block_Len(ser, index, len)
 			);
 		}
@@ -800,7 +800,7 @@ zero_blk:
 		if (ret >= (REBCNT)tail) goto is_none;
 		if (args & AM_FIND_ONLY) len = 1;
 		if (action == A_FIND) {
-			if (args & (AM_FIND_TAIL | AM_FIND_MATCH)) ret += len;
+			if (args & AM_FIND_TAIL) ret += len;
 			VAL_INDEX(value) = ret;
 		}
 		else {
@@ -847,7 +847,7 @@ zero_blk:
 	{
 		REBU64 types = 0;
 		if (D_REF(ARG_COPY_DEEP)) {
-			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? 0 : TS_STD_SERIES);
+			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? 0 : TS_DEEP_COPIED);
 		}
 		if D_REF(ARG_COPY_TYPES) {
 			arg = D_ARG(ARG_COPY_KINDS);

@@ -69,8 +69,19 @@
 
 REBARGS Main_Args;
 
-#define PROMPT_STR (REBYTE*)"\x1B[1;31;49m>>\x1B[1;33;49m "
-#define RESULT_STR (REBYTE*)"\x1B[32m==\x1B[1;32;49m "
+#ifdef COLOR_CONSOLE
+#define PROMPT_STR (REBYTE*)"\x1B[1;31m>>\x1B[1;33m "
+#define RESULT_STR (REBYTE*)"\x1B[32m==\x1B[1;32m "
+#define CONTIN_STR "\x1B[1;31;49m  \x1B[1;33;49m "
+#define CONTIN_POS 11
+#define RESET_COLOR Put_Str(b_cast("\x1B[0m"))
+#else
+#define PROMPT_STR (REBYTE*)">> "
+#define RESULT_STR (REBYTE*)"== "
+#define CONTIN_STR "  "
+#define CONTIN_POS 0
+#define RESET_COLOR
+#endif
 
 #ifdef TO_WINDOWS
 #define MAX_TITLE_LENGTH  1024
@@ -96,7 +107,7 @@ extern void Init_Ext_Test(void);	// see: host-ext-test.c
 #endif
 
 // Host bare-bones stdio functs:
-extern REBREQ *Open_StdIO();
+extern REBREQ *Open_StdIO(void);
 extern void Close_StdIO(void);
 extern void Put_Str(REBYTE *buf);
 extern REBYTE *Get_Str(void);
@@ -105,11 +116,11 @@ void Host_Crash(char *reason) {
 	OS_Crash(cb_cast("REBOL Host Failure"), cb_cast(reason));
 }
 
-void Host_Repl() {
-	REBOOL why_alert = TRUE;
+void Host_Repl(void) {
+//	REBOOL why_alert = TRUE;
 
 #define MAX_CONT_LEVEL 1024
-	REBYTE cont_str[] = "\x1B[1;31;49m  \x1B[1;33;49m ";
+	REBYTE cont_str[] = CONTIN_STR;
 	REBCNT cont_level = 0;
 	REBYTE cont_stack[MAX_CONT_LEVEL] = { 0 };
 
@@ -117,6 +128,7 @@ void Host_Repl() {
 	int input_len = 0;
 	REBYTE *input = OS_Make(input_max);
 
+	REBYTE *tmp;
 	REBYTE *line;
 	int line_len;
 
@@ -126,7 +138,7 @@ void Host_Repl() {
 
 	while (TRUE) {
 		if (cont_level > 0) {
-			cont_str[11] = cont_level <= MAX_CONT_LEVEL ? cont_stack[cont_level - 1] : '-';
+			cont_str[CONTIN_POS] = cont_level <= MAX_CONT_LEVEL ? cont_stack[cont_level - 1] : '-';
 			Put_Str(cont_str);
 		} else {
 			Put_Str(PROMPT_STR);
@@ -143,7 +155,7 @@ void Host_Repl() {
 				input[0] = 0;
 				continue;
 			}
-			Put_Str(b_cast("\x1B[0m")); //reset console color before leaving
+			RESET_COLOR;
 			goto cleanup_and_return;
 		}
 
@@ -191,15 +203,19 @@ void Host_Repl() {
 		inside_short_str = FALSE;
 
 		if (input_len + line_len > input_max) {
-			REBYTE *tmp = OS_Make(2 * input_max);
+			// limit maximum input size to 2GB (it should be more than enough)
+			if (input_max >= 0x80000000) goto crash_buffer;
+			input_max *= 2;
+			tmp = OS_Make(input_max);
 			if (!tmp) {
-				Put_Str(b_cast("\x1B[0m")); //reset console color;
+				crash_buffer:
+				RESET_COLOR;
 				Host_Crash("Growing console input buffer failed!");
+				return; // make VS compiler happy
 			}
 			memcpy(tmp, input, input_len);
 			OS_Free(input);
 			input = tmp;
-			input_max *= 2;
 		}
 
 		memcpy(&input[input_len], line, line_len);
@@ -214,7 +230,7 @@ void Host_Repl() {
 		input_len = 0;
 		cont_level = 0;
 
-		Put_Str(b_cast("\x1B[0m")); //reset color
+		RESET_COLOR;
 
 		RL_Do_String(input, 0, 0);
 		RL_Print_TOS(TRUE, RESULT_STR);
@@ -265,7 +281,7 @@ int main(int argc, char **argv) {
 	argv = (char**)CommandLineToArgvW(GetCommandLineW(), &argc);
 	// Use title string as defined in resources file (.rc) with hardcoded ID 101
 	LoadStringW(App_Instance, 101, App_Title, MAX_TITLE_LENGTH);
-#ifdef USE_NATIVE_IMAGE_CODECS 
+#ifdef INCLUDE_IMAGE_OS_CODEC 
 	CoInitialize(0);
 #endif
 
@@ -330,7 +346,8 @@ int main(int argc, char **argv) {
 		)
 	){
 		if (n < 0 && !(Main_Args.options & RO_HALT)) {
-			RL_Do_String(b_cast("unless system/options/quiet [print {^[[mClosing in 3s!} wait 3] quit/return -1"), 0, 0);
+			RL_Do_String(b_cast("unless system/options/quiet [print {^[[mClosing in 3s!} wait 3]"), 0, 0);
+			OS_Exit(-n);
 		}
 		Host_Repl();
 	}

@@ -29,6 +29,11 @@ Rebol [
 		url: decode-url http://host?query
 		--assert url/host = "host"
 		--assert url/path = "?query"
+	--test-- "decode-url tcp://:9000"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1275
+		url: decode-url tcp://:9000
+		--assert url/scheme = 'tcp
+		--assert url/port-id = 9000
 
 ===end-group===
 
@@ -120,6 +125,14 @@ Rebol [
 		--assert error? e: try [read %carl-for-president/]
 		--assert e/id = 'cannot-open
 
+	--test-- "READ dir with single file"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/611
+		make-dir %dir-611/
+		write %dir-611/foo "foo"
+		--assert [%foo] = read  %dir-611/
+		delete %dir-611/foo
+		delete %dir-611/
+
 	--test-- "READ wildcard"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/158
 		--assert all [block? b: try [read %*.r3]             not empty? b]
@@ -135,6 +148,12 @@ Rebol [
 			not error?      delete-dir %units/temp-dir/
 			not exists? %units/temp-dir/
 		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2447
+		--assert all [
+			logic? v: try [delete %not-exists/]
+			not v
+		]
+		--assert error? try [delete %/]
 if system/platform = 'Windows [
 ;@@ it looks that on Linux there is no lock on opened file
 		--assert all [
@@ -155,6 +174,21 @@ if system/platform = 'Windows [
 			]
 		]
 ]
+
+	--test-- "CHANGE-DIR"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2446
+		--assert what-dir = change-dir %.
+		--assert all [
+			error? e: try [change-dir %issues/2446]
+			e/id = 'cannot-open
+			e/arg1 = join what-dir %issues/2446/
+		]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2448
+		dir: pwd
+		--assert pwd = to-rebol-file get-env "PWD"
+		change-dir %../
+		--assert pwd = to-rebol-file get-env "PWD"
+		change-dir dir
 
 	--test-- "RENAME dir"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1533
@@ -202,7 +236,13 @@ if system/platform = 'Windows [
 		--assert [file 51732] = query/mode file [type size]
 		--assert [type: file size: 51732] = query/mode file [type: size:]
 
+	--test-- "query file name"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2442
+		file: %units/files/čeština.txt
+		--assert not none? find (query/mode file 'name) file
+
 	--test-- "query file info (port)"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2008
 		file: open %units/files/alice29.txt.gz
 		--assert [name size date type] = query/mode file none
 		--assert 'file = query/mode file 'type
@@ -278,19 +318,144 @@ if system/platform = 'Windows [
 		--assert 10873462 = checksum read %zeroes-445.txt 'crc24
 		delete %zeroes-445.txt
 
+	--test-- "write/append"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/443
+		--assert all [
+			not error? try [write %issue-443 "test"]
+			not error? try [write/append %issue-443 "443"]
+			"test443" = read/string %issue-443
+			not error? try [delete %issue-443]
+		]
+
+	--test-- "write/seek"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/552
+		--assert file? write %file-552 to-binary "Hello World!"
+		--assert port? f: open/seek %file-552
+		--assert "Hello World!" = to-string read/seek f 0
+		--assert file? write/seek f to-binary "a" 4  ; In range
+		--assert file? write/seek f to-binary " Goodbye World!" 12  ; Out of range
+		--assert "Hella World! Goodbye World!" = to-string read/seek f 0
+		--assert port? close f
+		try [delete %file-552]
+		--assert all [
+			port? p: open/new %file-552
+			file? write p "a"
+			0 = length? p
+			1 = size? p
+			tail? read p
+			file? write p "b"
+			0 = length? p
+			2 = size? p
+			tail? read p
+			#{6162} = read/seek p 0
+			tail? read p
+			file? write back p "xy"
+			#{617879} = read head p
+			#{617879} = read/seek p 0
+			0 = length? p
+			3 = size? p
+			port? close p
+			not error? try [delete %file-552]
+		]
+		
+
+	--test-- "CLEAR file port"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/812
+		--assert all [
+			file? write %file-812 "Hello World!"
+			port? f: open %file-812
+			"Hello World!" = read/string f
+			13 = index? f
+			port? clear f ; this actually does not clear the file as we are at the end of the stream
+			0  = length? f
+			12 =   size? f
+			"Hello" = read/seek/string/part f 0 5
+			6  =  index? f
+			7  = length? f
+			12 =   size? f
+			port? clear f ; this should truncate the file
+			0 = length? f
+			5 =   size? f
+			port? close f
+			5 = length? f ; because there is still "Hello" left and we are counting from head again (port is closed)
+			all [         ; it is not allowed to clear not opened port
+				error? e: try [clear f]
+				e/id = 'not-open
+			]
+			port? f: open %file-812
+			port? clear f ; this should clear the file completely, because the position is at its head
+			0 = size? f
+			port? close f
+			0 = size? %file-812
+			not error? try [delete %file-812]
+		]
+		--assert all [
+			file? write %file-812-b "Hello World!"
+			port? f: skip open %file-812-b 5
+			6 = index? f
+			port? clear f ; this should truncate the file
+			0 = length? f
+			5 = size? f   ; becase that is number of all bytes in the file
+			port? close f
+			5 = size? %file-812-b
+			not error? try [delete %file-812-b]
+		]
+
+
+	--test-- "RENAME file"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/446
+		--assert all [
+			not error? try [write %issue-446 "test"]
+			not error? try [rename %issue-446 %issue-446.txt]
+			"test" = read/string %issue-446.txt
+			not error? try [delete %issue-446.txt]
+		]
+	--test-- "DELETE file"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2447
+		--assert all [
+			logic? v: try [delete %not-exists]
+			not v
+		]
+		; create locked file...
+		p: open %issue-2447
+
+		either system/platform = 'Windows [
+		; should not be possible to delete it on Windows..
+			--assert error? try [delete %issue-2447]
+		][
+		; on Posix it can be deleted
+			--assert not error? try [delete %issue-2447]
+		]
+		; close the file handle...
+		close p
+		if system/platform = 'Windows [
+			; now it may be deleted..
+			--assert  port? try [delete %issue-2447]
+		]
+		; validate...
+		--assert not exists? %issue-2447
+
 ===end-group===
 
 if system/platform = 'Windows [
 	===start-group=== "CLIPBOARD"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1968
 		--test-- "Clipboard port test"
-			p: open clipboard://
-			write p c: "Clipboard port test"
-			--assert strict-equal? c read p
+			c: "Clipboard port test"
+			--assert all [
+				port? p: try [open clipboard://]
+				not error? try [write p c]
+				strict-equal? c try [read p]
+			]
 			close p
 		--test-- "Clipboard scheme test"
-			write clipboard:// c: "Clipboard scheme test"
-			--assert strict-equal? c read clipboard://
+			c: "Clipboard scheme test"
+			; this tests now seems to be failing when done from a run-tests script
+			; but is ok when done in console :-/
+			--assert all [
+				not error? try [write clipboard:// c]
+				strict-equal? c try [read clipboard://]
+			]
 	===end-group===
 ]
 
@@ -332,7 +497,10 @@ if system/platform = 'Windows [
 ===end-group===
 
 
-if "true" <> get-env "CONTINUOUS_INTEGRATION" [
+if all [
+	"true" <> get-env "CONTINUOUS_INTEGRATION"
+	"true" <> get-env "CI" ; for GitHub workflows
+][
 	;- don't do these tests on Travis CI
 	===start-group=== "console port"	
 		--test-- "query input port"

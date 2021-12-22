@@ -44,6 +44,51 @@ Rebol [
 		obj: object []
 		--assert 1 = extend obj 'a 1
 		--assert 1 = obj/a
+	;@@ https://github.com/Oldes/Rebol-issues/issues/789
+		--assert object? append obj [b 2]
+		--assert 2 = obj/b
+		--assert object? insert obj [c 3]
+		--assert 3 = obj/c
+	--test-- "extend object with hidden value"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1140
+		obj: object [a: 1 protect/hide 'a]
+		--assert all [
+			error? e: try [extend obj 'a 2]
+			e/id = 'hidden
+		]
+		--assert all [
+			error? e: try [append obj [a: 2]]
+			e/id = 'hidden
+		]
+===end-group===
+
+
+===start-group=== "RESOLVE object"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1107
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1108
+	src: object [a: 10 b: 20 c: 30]
+	--test-- "resolve object"
+		append o1: object [a: 1] 'b
+		--assert o1 = resolve o1 src
+		--assert all [o1/a: 1 o1/b = 20]
+		--assert none? find o1 'c
+	--test-- "resolve/all object"
+		append o2: object [a: 1] 'b
+		--assert o2 = resolve/all o2 src
+		--assert all [o2/a: 10 o2/b = 20]
+		--assert none? find o2 'c
+	--test-- "resolve/extend object"
+		append o3: object [a: 1] 'b
+		--assert o3 = resolve/extend o3 src
+		--assert all [o3/a: 1 o3/b = 20 o3/c = 30]
+	--test-- "resolve/all/extend object"
+		append o4: object [a: 1] 'b
+		--assert o4 = resolve/all/extend o4 src
+		--assert all [o4/a: 10 o4/b = 20 o4/c = 30]
+	--test-- "resolve/all/only object"
+		o5: object [a: 1 b: 2 c: 3]
+		--assert o5 = resolve/all/only o5 src [b]
+		--assert all [o5/a: 1 o5/b = 20 o5/c = 3]
 ===end-group===
 
 
@@ -216,8 +261,15 @@ Rebol [
 ===end-group===
 
 
-===start-group=== "UNSET in object"
-	--test-- "unset ctx"
+===start-group=== "IN object"
+	--test-- "in ctx paren!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/566
+	--assert "(1 + 1)" = mold in context [] to paren! [1 + 1] ;- no crash
+	--assert 10 = do in context [a: 1 b: 9] to paren! [a + b]
+	a: 500
+	--assert 1500 = do in context [b: 1000] to paren! [a + b]
+
+	--test-- "unset in ctx"
 	ctx: context [a: 1 b: 2 c: 3]
 	--assert unset? unset in ctx 'a
 	--assert unset? unset bind [b c] ctx
@@ -234,14 +286,15 @@ Rebol [
 
 
 ===start-group=== "APPEND on OBJECT"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/551
 	;@@ https://github.com/Oldes/Rebol-issues/issues/708
 	--test-- "issue-708"
 		o: object []
 		append o 'x
-		--assert none? o/x
+		--assert unset? o/x
 		append o [y]
-		--assert none? o/y
-		append o [x: 1 y: 2]
+		--assert unset? o/y
+		--assert object? append o [x: 1 y: 2]
 		--assert o/x = 1
 		--assert o/y = 2
 

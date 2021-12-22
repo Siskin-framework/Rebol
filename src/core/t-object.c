@@ -84,7 +84,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 				Trap0(RE_SELF_PROTECTED);
 			Expand_Frame(obj, 1, 1); // copy word table also
 			val = Append_Frame(obj, 0, VAL_WORD_SYM(arg));
-			SET_NONE(val);
+			SET_UNSET(val);
 		}
 		return;
 	}
@@ -150,7 +150,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 			Trap0(RE_HIDDEN);
 		}
 
-		if (IS_END(word + 1)) SET_NONE(val);
+		if (IS_END(word + 1)) SET_UNSET(val);
 		else *val = word[1];
 
 		if (IS_END(word + 1)) break; // fix bug#708
@@ -432,6 +432,7 @@ static REBSER *Trim_Object(REBSER *obj)
 		Trap_Make(type, arg);
 
 	case A_APPEND:
+	case A_INSERT:
 		TRAP_PROTECT(VAL_SERIES(value));
 		if (IS_OBJECT(value)) {
 			Append_Obj(VAL_OBJ_FRAME(value), arg);
@@ -453,7 +454,7 @@ static REBSER *Trim_Object(REBSER *obj)
 		REBU64 types = 0;
 		if (D_REF(ARG_COPY_PART)) Trap0(RE_BAD_REFINES);
 		if (D_REF(ARG_COPY_DEEP)) {
-			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? 0 : TS_STD_SERIES);
+			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? 0 : TS_DEEP_COPIED);
 		}
 		if D_REF(ARG_COPY_TYPES) {
 			arg = D_ARG(ARG_COPY_KINDS);
@@ -481,10 +482,15 @@ static REBSER *Trim_Object(REBSER *obj)
 
 	case A_REFLECT:
 		action = What_Reflector(arg); // zero on error
-		if (action == OF_SPEC) {
+		if (action == OF_SPEC || action == OF_TITLE) {
 			if (!VAL_MOD_SPEC(value)) return R_NONE;
 			VAL_OBJ_FRAME(value) = VAL_MOD_SPEC(value);
 			VAL_SET(value, REB_OBJECT);
+			if (action == OF_TITLE) {
+				REBCNT n = Find_Word_Index(VAL_OBJ_FRAME(value), SYM_TITLE, FALSE);
+				if(!n) return R_NONE;
+				value = VAL_OBJ_VALUE(value, n);
+			}
 			break;
 		}
 		// Adjust for compatibility with PICK:

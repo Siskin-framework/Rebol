@@ -431,7 +431,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 /***********************************************************************
 **
-*/	REBOOL OS_Get_Boot_Path(REBCHR *name)
+*/	REBOOL OS_Get_Boot_Path(REBCHR **path)
 /*
 **		Used to determine the program file path for REBOL.
 **		This is the path stored in system->options->boot and
@@ -439,7 +439,28 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 **
 ***********************************************************************/
 {
-	return FALSE; // not yet used
+#ifdef TO_OSX
+	REBCNT size = 0;
+	REBINT rv;
+	REBCHR *buf;
+	*path = NULL;
+	_NSGetExecutablePath(NULL, &size); // get size of the result
+	buf = MAKE_STR(size);
+	if (!buf) return FALSE;
+	if (0 == _NSGetExecutablePath(buf, &size)) {
+		// result from above still may be a relative path!
+		*path = realpath(buf, NULL); // needs FREE once not used!!
+	}
+	FREE_MEM(buf);
+#else
+	// Linux version...
+	*path = MAKE_STR(PATH_MAX);            // needs FREE once not used!!
+	CLEAR(*path, PATH_MAX*sizeof(REBCHR)); // readlink does not null terminate!
+	if (readlink("/proc/self/exe", *path, PATH_MAX) == -1) {
+		return FALSE;
+	}
+#endif
+	return TRUE;
 }
 
 
@@ -555,6 +576,8 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 **
 */	REBCHR *OS_List_Env(void)
 /*
+**		Returns NULL on error.
+**
 ***********************************************************************/
 {
 	extern char **environ;
@@ -565,6 +588,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 	for (n = 0; environ[n]; n++) len += 1 + LEN_STR(environ[n]);
 
 	cp = str = OS_Make(len + 1); // +terminator
+	if(!cp) return NULL;
 	*cp = 0;
 
 	// combine all strings into one:
@@ -643,14 +667,37 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 /***********************************************************************
 **
-*/	REBOOL OS_Set_Current_Dir(REBCHR *path)
+*/	int OS_Set_Current_Dir(REBCHR *path)
 /*
-**		Set the current directory to local path. Return FALSE
-**		on failure.
+**		Set the current directory to local path.
+**		Return 0 on success else error number.
 **
 ***********************************************************************/
 {
-	return chdir(path) == 0;
+	if (chdir(path) == 0) {
+		// directory changed... update PWD
+		// https://github.com/Oldes/Rebol-issues/issues/2448
+		setenv("PWD", path, 1);
+		return 0;
+	} else
+		return errno;
+}
+
+
+/***********************************************************************
+**
+*/	char* OS_Real_Path(const char *path)
+/*
+**		Returns a null-terminated string containing the canonicalized
+**		absolute pathname corresponding to path. In the returned string,
+**		symbolic links are resolved, as are . and .. pathname components.
+**		Consecutive slash (/) characters are replaced by a single slash.
+**
+**		The result should be freed after copy/conversion.
+**
+***********************************************************************/
+{
+	return realpath(path, NULL); // Be sure to call free() after usage
 }
 
 
@@ -734,8 +781,8 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 **
 ***********************************************************************/
 {
-	REBINT thread;
 /*
+	REBINT thread;
 	Task_Ready = CreateEvent(NULL, TRUE, FALSE, "REBOL_Task_Launch");
 	if (!Task_Ready) return -1;
 
@@ -979,11 +1026,7 @@ static inline REBOOL Open_Pipe_Fails(int pipefd[2]) {
 			const char ** argv_new = NULL;
 			sh = getenv("SHELL");
 			if (sh == NULL) {
-				int err = 2; /* shell does not exist */
-				if(write(info_pipe[W], &err, sizeof(err)) == -1) {
-					//nothing there... just to avoid "unused-result" compiler warning
-				}
-				exit(EXIT_FAILURE);
+				sh = "/bin/sh"; // if $SHELL is not defined
 			}
 			argv_new = OS_Make((argc + 3) * sizeof(char*));
 			argv_new[0] = sh;
@@ -1010,7 +1053,6 @@ child_error:
 		off_t input_size = 0;
 		off_t output_size = 0;
 		off_t err_size = 0;
-		int exited = 0;
 
 		/* initialize outputs */
 		if (output_type != NONE_TYPE
@@ -1133,7 +1175,7 @@ child_error:
 					char **buffer = NULL;
 					u32 *offset;
 					size_t to_read = 0;
-					size_t *size = NULL;
+					off_t *size = NULL;
 					if (pfds[i].fd == stdout_pipe[R]) {
 						buffer = (char**)output;
 						offset = output_len;
@@ -1325,12 +1367,5 @@ static int Try_Browser(char *browser, REBCHR *url)
 	return FALSE;
 }
 
-/***********************************************************************
-**
-*/	REBOOL OS_Request_Dir(REBRFR *fr)
-/*
-***********************************************************************/
-{
-	return FALSE;
-}
+
 

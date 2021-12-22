@@ -80,7 +80,7 @@
 	REBINT	part1, part2, part3 = -1;
 	REBINT	part4 = -1;
 
-	if (*cp == '-') cp++, neg = TRUE;
+	if (*cp == '-') {cp++; neg = TRUE;}
 	else if (*cp == '+') cp++;
 
 	if (*cp == '-' || *cp == '+') return 0; // small hole: --1:23
@@ -532,7 +532,7 @@
 				Set_Random(secs);
 				return R_UNSET;
 			}
-			secs = Random_Range(secs / SEC_SEC, D_REF(3)) * SEC_SEC;
+			secs = Random_Range(secs, D_REF(3));
 			goto fixTime;
 
 		case A_PICK:

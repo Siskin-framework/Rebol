@@ -66,6 +66,7 @@ Rebol [
 
 	--test-- "do/next"
 		--assert 1 = do/next {1 2} 'n
+		;@@ https://github.com/Oldes/Rebol-issues/issues/901
 		--assert n = [2]
 		--assert 2 = do/next n 'n
 		--assert n = []
@@ -74,7 +75,10 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1951
 		--assert 2 = do/next 2 'n
 		--assert n = none
-
+		;@@ https://github.com/Oldes/Rebol-issues/issues/960
+		--assert unset? do/next a: [] 'b
+		--assert same? a b
+		--assert 1 = index? b
 		
 ===end-group===
 
@@ -248,6 +252,18 @@ Rebol [
 		--assert native? second reduce/only [1 now 2] none
 		--assert word?   second reduce/only [1 now 2] [now]
 
+	--test-- "reduce/into"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/506
+		a: 1 b: 2 x: copy []
+		--assert tail? reduce/into a x
+		--assert x = [1]
+		--assert [1] = reduce/into b x
+		--assert x = [2 1]
+		--assert [2 1] = reduce/into [a b] x
+		--assert x = [1 2 2 1]
+		--assert tail? reduce/into [b a] tail x
+		--assert x = [1 2 2 1 2 1]
+
 ===end-group===
 
 ===start-group=== "compose"
@@ -361,8 +377,15 @@ Rebol [
 	--assert [1 no 7 8 9 20 5 6 2] = head b
 
 	--test-- "compose/into"
-	;@@ https://github.com/rebol/rebol-issues/issues/2062
-	--assert ["a"] = head compose/into "a" []
+	;@@ https://github.com/Oldes/Rebol-issues/issues/506
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2062
+	a: 1 b: 2 x: copy []
+	--assert tail? compose/into "a" x
+	--assert x = ["a"]
+	--assert ["a"] = compose/into [a b] x
+	--assert x = [a b "a"]
+	--assert tail? compose/into [a (b)] tail x
+	--assert x = [a b "a" a 2]
 	
 ===end-group===
 
@@ -503,7 +526,18 @@ Rebol [
 		--assert error? try [set [#f][6]]
 		--assert error? try [set /a 1]
 		
-
+	--test-- "set path"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2275
+	;Parenthesized expressions on left for SET-PATH! evaluate after right hand expressions 
+		obj: make object! [x: 10 y: 20]
+		some-func: does [var: 'y]
+		var: 'x
+		obj/(var): (some-func 30)
+		--assert all [obj/x = 10 obj/y = 30]
+	--test-- "set path 2"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/396
+		c: 0 b: [1 2 3]
+		--assert 1 = b/(c: 2): c + 1
 
 
 ===end-group===
@@ -543,7 +577,18 @@ Rebol [
 ===end-group===
 
 
-===start-group=== "TRY/except"
+===start-group=== "TRY"
+	--test-- "try [do..]"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1361
+		--assert error? try [do {"}]
+		--assert error? try [do "1" do {"}]
+	--test-- "try [catch..]"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/851
+		--assert error? try [do [1] do make error! "try failure"]
+		--assert error? try [do "1" do make error! "try failure"]
+		--assert error? try [catch/quit [1] do make error! "Hello"]
+		--assert error? try [try [catch/quit []] 1 / 0]
+
 	--test-- "try/except [1 / 0] block!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2419
 		system/state/last-error: none
@@ -673,6 +718,13 @@ Rebol [
 		--assert :a =? 1
 		a: 1 loop 1 [a: compose [(break)]]
 		--assert :a =? 1
+
+===end-group===
+
+===start-group=== "RETURN"
+	--test-- "return value"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/771
+		--assert 1 == do does [type? return 1 2]
 
 ===end-group===
 

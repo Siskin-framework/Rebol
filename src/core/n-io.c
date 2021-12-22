@@ -131,14 +131,14 @@ static REBSER *Read_All_File(char *fname)
 {
 	REBVAL *val = D_ARG(1);
 	REB_MOLD mo = {0};
-	REBINT  len = -1; // no limit
+	REBINT  len = NO_LIMIT;
 
 	if (D_REF(3)) SET_FLAG(mo.opts, MOPT_MOLD_ALL);
 	if (D_REF(4)) SET_FLAG(mo.opts, MOPT_INDENT);
 	if (D_REF(5)) {
 		if (VAL_INT64(D_ARG(6)) > (i64)MAX_I32)
 			len = MAX_I32;
-		else if (VAL_INT64(D_ARG(6)) < 0)
+		else if (VAL_INT64(D_ARG(6)) <= 0)
 			len = 0;
 		else
 			len = VAL_INT32(D_ARG(6));
@@ -166,7 +166,7 @@ static REBSER *Read_All_File(char *fname)
 	REBVAL *value = D_ARG(1);
 
 	if (IS_BLOCK(value)) Reduce_Block(VAL_SERIES(value), VAL_INDEX(value), 0);
-	Print_Value(DS_TOP, NO_LIMIT, 0);
+	Print_Value(DS_TOP, NO_LIMIT, 0, FALSE);
 	return R_UNSET; // reloads ds
 }
 
@@ -180,7 +180,7 @@ static REBSER *Read_All_File(char *fname)
 	REBVAL *value = D_ARG(1);
 
 	if (IS_BLOCK(value)) Reduce_Block(VAL_SERIES(value), VAL_INDEX(value), 0);
-	Prin_Value(DS_TOP, 0, 0);
+	Prin_Value(DS_TOP, 0, 0, FALSE);
 	return R_UNSET; // reloads ds
 }
 
@@ -468,6 +468,42 @@ chk_neg:
 	return R_RET;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(to_real_file)
+/*
+//	to-real-file: native [
+//		"Returns canonicalized absolute pathname. On Posix resolves symbolic links and returns NONE if file does not exists!"
+//		path [file! string!]
+//	]
+***********************************************************************/
+{
+	REBVAL *path = D_ARG(1);
+	REBSER *ser = NULL;
+	REBSER *new;
+	REBCHR *tmp;
+	// First normalize to OS native wide string
+	ser = Value_To_OS_Path(path, FALSE);
+	// Above function does . and .. pre-processing, which does also the OS_REAL_PATH.
+	// So it could be replaced with version, which just prepares the input to required OS wide! 
+	if (!ser) {
+		FREE_SERIES(ser);
+		return R_NONE;
+	}
+	// Try to call realpath on posix or _fullpath on Windows
+	// Returned string must be released once done!
+	tmp = OS_REAL_PATH(SERIES_DATA(ser));
+	if (!tmp) return R_NONE;
+
+	// Convert OS native wide string back to Rebol file type
+	new = To_REBOL_Path(tmp, 0, OS_WIDE, FALSE);
+	OS_FREE(tmp);
+	if (!new) return R_NONE;
+	
+	Set_Series(REB_FILE, D_RET, new);
+	return R_RET;
+}
+
 // Blog: http://www.rebol.net/cgi-bin/r3blog.r?view=0319
 /***********************************************************************
 **
@@ -551,17 +587,26 @@ chk_neg:
 	REBVAL *arg = D_ARG(1);
 	REBSER *ser;
 	REBINT n;
-	REBVAL val;
+	REBVAL val, reason;
 
 	ser = Value_To_OS_Path(arg, TRUE);
-	if (!ser) Trap_Arg(arg); // !!! ERROR MSG
+	// it should be safe not to check result from Value_To_OS_Path (it always succeeds)
+	//if (!ser) Trap_Arg(arg); // !!! ERROR MSG
 
 	Set_String(&val, ser); // may be unicode or utf-8
 	Check_Security(SYM_FILE, POL_EXEC, &val);
 
 	n = OS_SET_CURRENT_DIR((void*)ser->data);  // use len for bool
-	if (!n) Trap_Arg(arg); // !!! ERROR MSG
 
+	// convert the full OS path back to Rebol format
+	// used in error or as a result
+	ser = Value_To_REBOL_Path(&val, TRUE);
+	SET_FILE(arg, ser);
+
+	if (NZ(n)) {
+		SET_INTEGER(&reason, n);
+		Trap2(RE_CANNOT_OPEN, arg, &reason);
+	}
 	return R_ARG1;
 }
 
@@ -886,7 +931,7 @@ chk_neg:
 	blk = Make_Block(len*2);
 
 	str = start;
-	while (NZ(eq = FIND_CHR(str+1, '=')) && NZ(n = (REBCNT)LEN_STR(str))) {
+	while (NZ(n = (REBCNT)LEN_STR(str)) && NZ(eq = FIND_CHR(str+1, '='))) {
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(str, eq-str));
 		Set_Series(REB_STRING, Append_Value(blk), Copy_OS_Str(eq+1, n-(eq-str)-1));
 		str += n + 1; // next
@@ -1169,8 +1214,10 @@ chk_neg:
 {
 	REBCHR *result = OS_LIST_ENV();
 
-	Set_Series(REB_MAP, D_RET, String_List_To_Block(result));
+	if(result == NULL) Trap0(RE_NO_MEMORY);
 
+	Set_Series(REB_MAP, D_RET, String_List_To_Block(result));
+	FREE_MEM(result);
 	return R_RET;
 }
 

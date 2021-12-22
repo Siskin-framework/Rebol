@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -205,7 +206,9 @@ char *evoke_help = "Evoke values:\n"
 		if (IS_WORD(arg)) {
 			switch (VAL_WORD_CANON(arg)) {
 			case SYM_DELECT:
+#ifdef INCLUDE_DELECT
 				Trace_Delect(1);
+#endif
 				break;
 			case SYM_CRASH_DUMP:
 				Reb_Opts->crash_dump = TRUE;
@@ -224,7 +227,7 @@ char *evoke_help = "Evoke values:\n"
 				Crash(9999);
 				break;
 			default:
-				Out_Str(cb_cast(evoke_help), 1);
+				Out_Str(cb_cast(evoke_help), 1, FALSE);
 			}
 		}
 		if (IS_INTEGER(arg)) {
@@ -243,7 +246,7 @@ char *evoke_help = "Evoke values:\n"
 				Check_Bind_Table();
 				break;
 			default:
-				Out_Str(cb_cast(evoke_help), 1);
+				Out_Str(cb_cast(evoke_help), 1, FALSE);
 			}
 		}
 	}

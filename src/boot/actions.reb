@@ -165,13 +165,25 @@ skip: action [
 ]
 
 at: action [
-	{Returns the series at the specified index.}
+	{Returns the series at the specified index, relative to the current position.}
+	series [series! gob! port!]
+	index [number! logic! pair!]
+]
+
+atz: action [
+	{Returns the series at the specified 0-based index, relative to the current position.}
 	series [series! gob! port!]
 	index [number! logic! pair!]
 ]
 
 index?: action [
 	{Returns the current position (index) of the series.}
+	series [series! gob! port! none!]
+	/xy {Returns index as an XY pair offset}
+]
+
+indexz?: action [
+	{Returns the current 0-based position (index) of the series.}
 	series [series! gob! port! none!]
 	/xy {Returns index as an XY pair offset}
 ]
@@ -208,12 +220,12 @@ find: action [
 	/last {Backwards from end of series}
 	/reverse {Backwards from the current position}
 	/tail {Returns the end of the series}
-	/match {Performs comparison and returns the tail of the match}
+	/match {Performs comparison and returns the head of the match (not imply /tail)}
 ]
 
 select: action [
 	{Searches for a value; returns the value that follows, else none.}
-	series [series! port! map! object! none!]
+	series [series! port! map! object! module! none!]
 	value [any-type!]
 	/part {Limits the search to a given length or position}
 	length [number! series! pair!]
@@ -253,7 +265,7 @@ to: action [
 
 copy: action [
 	{Copies a series, object, or other value.}
-	value [series! port! map! object! bitset! any-function!] {At position}
+	value [series! port! map! object! bitset! any-function! error!] {At position}
 	/part {Limits to a given length or position}
 	length [number! series! pair!]
 	/deep {Also copies series values within the block}
@@ -311,7 +323,7 @@ remove: action [
 
 change: action [
 	{Replaces element(s); returns just past the change.}
-	series [series! gob! port!]{At position (modified)}
+	series [series! gob! port! struct!]{At position (modified)}
 	value [any-type!] {The new value}
 	/part {Limits the amount to change to a given length or position}
 	length [number! series! pair!]
@@ -329,7 +341,7 @@ poke: action [
 
 clear: action [
 	{Removes elements from current position to tail; returns at new tail.}
-	series [series! port! map! gob! bitset! none!] {At position (modified)}
+	series [series! port! map! gob! bitset! none!] {At position, if ordered collection (modified)}
 ]
 
 trim: action [
@@ -436,7 +448,7 @@ open?: action [
 
 query: action [
 	{Returns information about target if possible.}
-	target [port! file! url! block! vector! date!]
+	target [port! file! url! block! vector! date! handle!]
 	/mode "Get mode information"
 	field [word! block! none!] "NONE will return valid modes for target type"
 ]

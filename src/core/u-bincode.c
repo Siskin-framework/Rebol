@@ -163,6 +163,29 @@ typedef union {
 	} while (0)
 #define STORE_IN_BIT(val, inBit)  SET_INT32(VAL_OBJ_VALUE(val, BINCODE_READ_BITMASK), inBit);
 
+#ifdef ENDIAN_LITTLE
+#define WRITE_BE_2(cp, bp)  cp[0] = bp[1]; cp[1] = bp[0];
+#define WRITE_BE_3(cp, bp)  cp[0] = bp[2]; cp[1] = bp[1]; cp[2] = bp[0];
+#define WRITE_BE_4(cp, bp)  cp[0] = bp[3]; cp[1] = bp[2]; cp[2] = bp[1]; cp[3] = bp[0];
+#define WRITE_BE_8(cp, bp)  cp[0] = bp[7]; cp[1] = bp[6]; cp[2] = bp[5]; cp[3] = bp[4]; \
+                            cp[4] = bp[3]; cp[5] = bp[2]; cp[6] = bp[1]; cp[7] = bp[0];
+#define WRITE_LE_2(cp, bp)  memcpy(cp, bp, 2);
+#define WRITE_LE_3(cp, bp)  memcpy(cp, bp, 3);
+#define WRITE_LE_4(cp, bp)  memcpy(cp, bp, 4);
+#define WRITE_LE_8(cp, bp)  memcpy(cp, bp, 8);
+#else
+#define WRITE_BE_2(cp, bp)  memcpy(cp, bp, 2);
+#define WRITE_BE_3(cp, bp)  memcpy(cp, bp, 3);
+#define WRITE_BE_4(cp, bp)  memcpy(cp, bp, 4);
+#define WRITE_BE_8(cp, bp)  memcpy(cp, bp, 8);
+#define WRITE_LE_2(cp, bp)  cp[0] = bp[1]; cp[1] = bp[0];
+#define WRITE_LE_3(cp, bp)  cp[0] = bp[2]; cp[1] = bp[1]; cp[2] = bp[0];
+#define WRITE_LE_4(cp, bp)  cp[0] = bp[3]; cp[1] = bp[2]; cp[2] = bp[1]; cp[3] = bp[0];
+#define WRITE_LE_8(cp, bp)  cp[0] = bp[7]; cp[1] = bp[6]; cp[2] = bp[5]; cp[3] = bp[4]; \
+                            cp[4] = bp[3]; cp[5] = bp[2]; cp[6] = bp[1]; cp[7] = bp[0];
+
+#endif
+
 //**********************************************************************
 //MUST be in order like the values in system/standard/bincode object bellow!!!
 enum BincodeContextValues {
@@ -225,7 +248,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 	REBVAL *val_read  = D_ARG(7);
 	REBOOL  ref_into  = D_REF(8);
 	REBVAL *val_into  = D_ARG(9);
-	REBOOL  ref_with  = D_REF(10);
+//	REBOOL  ref_with  = D_REF(10);
 	REBVAL *val_num   = D_ARG(11);
 
     REBVAL *ret = D_RET;
@@ -247,6 +270,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 	u16 ushort;
 	float16_s f16;
 	float32_s f32;
+	REBYTE buf[8];
 
 
 	ms_datetime* msdt = NULL;
@@ -482,6 +506,13 @@ static REBCNT EncodedU32_Size(u32 value) {
 							continue;
 						}
 						goto error;
+					case SYM_PAD:
+						if (IS_INTEGER(next)) {
+							i = count % VAL_INT32(next);
+							count += (i > 0) ? VAL_INT32(next) - i : 0;
+							continue;
+						}
+						goto error;
 					case SYM_BYTES:
 						if (IS_BINARY(next)) {
 							count += VAL_LEN(next);
@@ -525,24 +556,33 @@ static REBCNT EncodedU32_Size(u32 value) {
 
 					case SYM_ENCODEDU32:
 						if (IS_INTEGER(next)) {
-							count += EncodedU32_Size(VAL_INT64(next));
+							count += EncodedU32_Size(VAL_UNT32(next));
 							continue;
 						}
 						goto error;
 
 					case SYM_FLOAT:
+					case SYM_F32:
+					case SYM_F32LE:
+					case SYM_F32BE:
 						if (IS_INTEGER(next) || IS_DECIMAL(next)) {
 							count += 4;
 							continue;
 						}
 						goto error;
 					case SYM_DOUBLE:
+					case SYM_F64:
+					case SYM_F64LE:
+					case SYM_F64BE:
 						if (IS_INTEGER(next) || IS_DECIMAL(next)) {
 							count += 8;
 							continue;
 						}
 						goto error;
 					case SYM_FLOAT16:
+					case SYM_F16:
+					case SYM_F16LE:
+					case SYM_F16BE:
 						if (IS_INTEGER(next) || IS_DECIMAL(next)) {
 							count += 2;
 							continue;
@@ -674,11 +714,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 						n = 2;
 						i = VAL_INT32(next);
 						bp = (REBYTE*)&i;
-#ifdef ENDIAN_LITTLE
-						cp[0] = bp[1]; cp[1] = bp[0];
-#else
-						memcpy(cp, bp, 2);
-#endif
+						WRITE_BE_2(cp, bp);
 						break;
 					case SYM_UI24:
 					case SYM_UI24BE:
@@ -687,11 +723,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 						n = 3;
 						i = VAL_INT32(next);
 						bp = (REBYTE*)&i;
-#ifdef ENDIAN_LITTLE
-						cp[0] = bp[2]; cp[1] = bp[1]; cp[2] = bp[0];
-#else
-						memcpy(cp, bp, 3);
-#endif
+						WRITE_BE_3(cp, bp);
 						break;
 					case SYM_UI32:
 					case SYM_UI32BE:
@@ -699,63 +731,37 @@ static REBCNT EncodedU32_Size(u32 value) {
 					write_ui32:
 						n = 4;
 						bp = (REBYTE*)&VAL_INT64(next);
-#ifdef ENDIAN_LITTLE
-						cp[0] = bp[3]; cp[1] = bp[2]; cp[2] = bp[1]; cp[3] = bp[0];
-#else
-						memcpy(cp, bp, 4);
-#endif
+						WRITE_BE_4(cp, bp);
 						break;
 					case SYM_UI64:
 					case SYM_UI64BE:
 					write_ui64:
 						n = 8;
 						bp = (REBYTE*)&VAL_INT64(next);
-#ifdef ENDIAN_LITTLE
-						cp[0] = bp[7]; cp[1] = bp[6]; cp[2] = bp[5]; cp[3] = bp[4];
-						cp[4] = bp[3]; cp[5] = bp[2]; cp[6] = bp[1]; cp[7] = bp[0];
-#else
-						memcpy(cp, bp, 8);
-#endif
+						WRITE_BE_8(cp, bp);
 						break;
 					case SYM_UI16LE:
 						ASSERT_UI_RANGE(next, 0xFFFF);
 						n = 2;
 						bp = (REBYTE*)&VAL_INT64(next);
-#ifdef ENDIAN_BIG
-						cp[0] = bp[1]; cp[1] = bp[0];
-#else
-						memcpy(cp, bp, 2);
-#endif
+						WRITE_LE_2(cp, bp);
 						break;
 					case SYM_UI24LE:
 						ASSERT_UI_RANGE(next, 0xFFFFFF);
 						n = 3;
 						bp = (REBYTE*)&VAL_INT64(next);
-#ifdef ENDIAN_BIG
-						cp[0] = bp[2]; cp[1] = bp[1]; cp[2] = bp[0];
-#else
-						memcpy(cp, bp, 3);
-#endif
+						WRITE_LE_3(cp, bp);
 						break;
 					case SYM_UI32LE:
 						ASSERT_U32_RANGE(next);
 						n = 4;
 						bp = (REBYTE*)&VAL_INT64(next);
-#ifdef ENDIAN_BIG
-						cp[0] = bp[3]; cp[1] = bp[2]; cp[2] = bp[1]; cp[3] = bp[0];
-#else
-						memcpy(cp, bp, 4);
-#endif
+						WRITE_LE_4(cp, bp);
 						break;
 					case SYM_UI64LE:
 						n = 8;
 						bp = (REBYTE*)&VAL_INT64(next);
-#ifdef ENDIAN_LITTLE
-						memcpy(cp, bp, 8);
-#else
-						cp[0] = bp[7]; cp[1] = bp[6]; cp[2] = bp[5]; cp[3] = bp[4];
-						cp[4] = bp[3]; cp[5] = bp[2]; cp[6] = bp[1]; cp[7] = bp[0];
-#endif
+						WRITE_LE_8(cp, bp);
 						break;
 
 					case SYM_SI8:
@@ -786,11 +792,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 					case SYM_UI16BEBYTES:
 						n = VAL_LEN(next);
 						bp = (REBYTE*)&n;
-#ifdef ENDIAN_LITTLE
-						cp[0] = bp[1]; cp[1] = bp[0];
-#else
-						memcpy(cp, bp, 2);
-#endif
+						WRITE_BE_2(cp, bp);
 						cp+=2;
 						memcpy(cp, VAL_BIN_AT(next), n);
 						VAL_INDEX(buffer_write)+=2; //for the length byte;
@@ -798,11 +800,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 					case SYM_UI16LEBYTES:
 						n = VAL_LEN(next);
 						bp = (REBYTE*)&n;
-#ifdef ENDIAN_LITTLE
-						memcpy(cp, bp, 2);
-#else
-						cp[0] = bp[1]; cp[1] = bp[0];
-#endif
+						WRITE_LE_2(cp, bp);
 						cp+=2;
 						memcpy(cp, VAL_BIN_AT(next), n);
 						VAL_INDEX(buffer_write)+=2; //for the length byte;
@@ -812,11 +810,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 					case SYM_UI24BEBYTES:
 						n = VAL_LEN(next);
 						bp = (REBYTE*)&n;
-#ifdef ENDIAN_LITTLE
-						cp[0] = bp[2]; cp[1] = bp[1]; cp[2] = bp[0];
-#else
-						memcpy(cp, bp, 3);
-#endif
+						WRITE_BE_3(cp, bp);
 						cp += 3;
 						memcpy(cp, VAL_BIN_AT(next), n);
 						VAL_INDEX(buffer_write) += 3; //for the length byte;
@@ -824,11 +818,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 					case SYM_UI24LEBYTES:
 						n = VAL_LEN(next);
 						bp = (REBYTE*)&n;
-#ifdef ENDIAN_LITTLE
-						memcpy(cp, bp, 3);
-#else
-						cp[0] = bp[2]; cp[1] = bp[1]; cp[2] = bp[0];
-#endif
+						WRITE_LE_3(cp, bp);
 						cp += 3;
 						memcpy(cp, VAL_BIN_AT(next), n);
 						VAL_INDEX(buffer_write) += 3; //for the length byte;
@@ -837,11 +827,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 					case SYM_UI32BEBYTES:
 						n = VAL_LEN(next);
 						bp = (REBYTE*)&n;
-#ifdef ENDIAN_LITTLE
-						cp[0] = bp[3]; cp[1] = bp[2]; cp[2] = bp[1]; cp[3] = bp[0];
-#else
-						memcpy(cp, bp, 4);
-#endif
+						WRITE_BE_4(cp, bp);
 						cp += 4;
 						memcpy(cp, VAL_BIN_AT(next), n);
 						VAL_INDEX(buffer_write) += 4; //for the length byte;
@@ -849,27 +835,44 @@ static REBCNT EncodedU32_Size(u32 value) {
 					case SYM_UI32LEBYTES:
 						n = VAL_LEN(next);
 						bp = (REBYTE*)&n;
-#ifdef ENDIAN_LITTLE
-						memcpy(cp, bp, 4);
-#else
-						cp[0] = bp[3]; cp[1] = bp[2]; cp[2] = bp[1]; cp[3] = bp[0];
-#endif
+						WRITE_LE_4(cp, bp);
 						cp += 4;
 						memcpy(cp, VAL_BIN_AT(next), n);
 						VAL_INDEX(buffer_write) += 4; //for the length byte;
 						break;
 
 					case SYM_FLOAT:
+					case SYM_F32:
+					case SYM_F32LE:
 						f32.v = (float)(IS_INTEGER(next) ? VAL_INT64(next) : VAL_DECIMAL(next));
-						memcpy(cp, (REBYTE*)&f32, 4);
+						bp = (REBYTE *)&f32;
+						WRITE_LE_4(cp, bp);
+						n = 4;
+						break;
+					case SYM_F32BE:
+						f32.v = (float)(IS_INTEGER(next) ? VAL_INT64(next) : VAL_DECIMAL(next));
+						bp = (REBYTE *)&f32;
+						WRITE_BE_4(cp, bp);
 						n = 4;
 						break;
 					case SYM_DOUBLE:
+					case SYM_F64:
+					case SYM_F64LE:
 						dbl = (REBDEC)(IS_INTEGER(next) ? VAL_INT64(next) : VAL_DECIMAL(next));
-						memcpy(cp, (REBYTE*)&dbl, 8);
 						n = 8;
+						bp = (REBYTE *)&dbl;
+						WRITE_LE_8(cp, bp);
+						break;
+					case SYM_F64BE:
+						dbl = (REBDEC)(IS_INTEGER(next) ? VAL_INT64(next) : VAL_DECIMAL(next));
+						n = 8;
+						bp = (REBYTE *)&dbl;
+						WRITE_BE_8(cp, bp);
 						break;
 					case SYM_FLOAT16:
+					case SYM_F16:
+					case SYM_F16BE:
+					case SYM_F16LE:
 						d32 = (REBDEC)(IS_INTEGER(next) ? VAL_INT64(next) : VAL_DECIMAL(next));
 						if (isnan(d32)) { // 1.#NaN
 							ushort = 0x7e00;
@@ -889,7 +892,13 @@ static REBCNT EncodedU32_Size(u32 value) {
 
 							ushort = (u16)t1;
 						}
-						memcpy(cp, (REBYTE*)&ushort, 2);
+						bp = (REBYTE *)&ushort;
+						if (cmd == SYM_F16BE) {
+							WRITE_BE_2(cp, bp);
+						}
+						else {
+							WRITE_LE_2(cp, bp);
+						}
 						n = 2;
 						break;
 
@@ -900,14 +909,22 @@ static REBCNT EncodedU32_Size(u32 value) {
 						n = 0;
 						break;
 
+					case SYM_PAD:
+						n = VAL_INDEX(buffer_write) % VAL_INT32(next);
+						if (n > 0) {
+							n = VAL_INT32(next) - n;
+							memset(cp, 0, n);
+						}
+						break;
+
 					case SYM_ENCODEDU32:
 						ASSERT_U32_RANGE(next);
-						ulong = (u32)VAL_INT64(next);
+						ulong = VAL_UNT32(next);
 						if (ulong == 0) {
 							n = 1;
 							cp[0] = 0;
 						} else {
-							n = EncodedU32_Size(VAL_INT64(next));
+							n = EncodedU32_Size(VAL_UNT32(next));
 							for (u = 0; u < n-1; u++) {
 								cp[u] = (char)(128 + ((ulong >> (u * 7)) & 127));
 							}
@@ -920,22 +937,14 @@ static REBCNT EncodedU32_Size(u32 value) {
 						n = 4;
 						i = (i32)time(NULL);
 						bp = (REBYTE*)&i;
-#ifdef ENDIAN_LITTLE
-						cp[0] = bp[3]; cp[1] = bp[2]; cp[2] = bp[1]; cp[3] = bp[0];
-#else
-						memcpy(cp, bp, 4);
-#endif
+						WRITE_BE_4(cp, bp);
 						break;
 					case SYM_UNIXTIME_NOW_LE:
 						value--; // no args
 						n = 4;
 						i = (i32)time(NULL);
 						bp = (REBYTE*)&i;
-#ifdef ENDIAN_LITTLE
-						memcpy(cp, bp, 4);
-#else
-						cp[0] = bp[3]; cp[1] = bp[2]; cp[2] = bp[1]; cp[3] = bp[0];
-#endif
+						WRITE_LE_4(cp, bp);
 						break;
 
 					case SYM_MSDOS_DATE:
@@ -1019,7 +1028,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 		inBit = IS_OBJECT(val_ctx) ? VAL_INT32(VAL_OBJ_VALUE(val_ctx, BINCODE_READ_BITMASK)): 0;
 
 		if (IS_INTEGER(val_read)) {
-			n = VAL_INT64(val_read);
+			n = (REBCNT)VAL_INT64(val_read);
 			ASSERT_READ_SIZE(val_read, cp, ep, n);
 			if(ref_into) {
 				Trap0(RE_FEATURE_NA);
@@ -1376,7 +1385,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 								VAL_SERIES(temp) = bin_new;
 								VAL_INDEX(temp) = 0;
 								if (cmd == SYM_STRING_BYTES) {
-									VAL_TAIL(temp) = strnlen(cs_cast(VAL_BIN(temp)), n);
+									VAL_TAIL(temp) = (REBCNT)strnlen(cs_cast(VAL_BIN(temp)), n);
 								}
 							}
 							break;
@@ -1387,7 +1396,7 @@ static REBCNT EncodedU32_Size(u32 value) {
 								if(bp == ep) Trap1(RE_OUT_OF_RANGE, value);
 								bp++;
 							}
-							n = bp - cp;
+							n = (REBCNT)(bp - cp);
 							VAL_SET(temp, REB_STRING);
 							bin_new = Copy_Series_Part(bin, VAL_INDEX(buffer_read), n);
 							SET_STR_END(bin_new, n);
@@ -1436,20 +1445,22 @@ static REBCNT EncodedU32_Size(u32 value) {
 							goto readNBytes;
 						case SYM_UI32BYTES:
 							ASSERT_READ_SIZE(value, cp, ep, 4);
-							n = ((u64)cp[3]      ) |
+							n = (REBCNT)(
+                                ((u64)cp[3]      ) |
 							    ((u64)cp[2] << 8 ) |
 							    ((u64)cp[1] << 16) |
-							    ((u64)cp[0] << 24) ;
+							    ((u64)cp[0] << 24));
 							ASSERT_READ_SIZE(value, cp, ep, n);
 							cp += 4;
 							VAL_INDEX(buffer_read) += 4;
 							goto readNBytes;
 						case SYM_UI32LEBYTES:
 							ASSERT_READ_SIZE(value, cp, ep, 4);
-							n = ((u64)cp[0]      ) |
+                            n = (REBCNT)(
+                                ((u64)cp[0]      ) |
 							    ((u64)cp[1] << 8 ) |
 							    ((u64)cp[2] << 16) |
-							    ((u64)cp[3] << 24) ;
+							    ((u64)cp[3] << 24));
 							ASSERT_READ_SIZE(value, cp, ep, n);
 							cp += 4;
 							VAL_INDEX(buffer_read) += 4;
@@ -1479,6 +1490,18 @@ static REBCNT EncodedU32_Size(u32 value) {
 							ASSERT_INDEX_RANGE(buffer_read, i, value);
 							VAL_INDEX(buffer_read) = i; //TODO: range test
 							cp = BIN_DATA(bin) + VAL_INDEX(buffer_read);
+							continue;
+						case SYM_PAD:
+							next = ++value;
+							if (IS_GET_WORD(next)) next = Get_Var(next);
+							if (!IS_INTEGER(next)) Trap1(RE_INVALID_SPEC, value);
+							i = VAL_INDEX(buffer_read) % VAL_INT32(next);
+							if (i > 0) {
+								i = VAL_INT32(next) - i;
+								ASSERT_INDEX_RANGE(buffer_read, i, value);
+								VAL_INDEX(buffer_read) += i;
+								cp = BIN_DATA(bin) + VAL_INDEX(buffer_read);
+							}
 							continue;
 						case SYM_SKIPBITS:
 							next = ++value;
@@ -1514,21 +1537,56 @@ static REBCNT EncodedU32_Size(u32 value) {
 							Set_Tuple(temp, BIN_DATA(bin) + VAL_INDEX(buffer_read), n);
 							break;
 						case SYM_FLOAT16:
+						case SYM_F16:
+						case SYM_F16LE:
 							n = 2;
 							ASSERT_READ_SIZE(value, cp, ep, n);
 							f16.bytes.low  = cp[0];
 							f16.bytes.high = cp[1];
 							SET_DECIMAL(temp, float16to32(f16) );
 							break;
+						case SYM_F16BE:
+							n = 2;
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							f16.bytes.low = cp[1];
+							f16.bytes.high = cp[0];
+							SET_DECIMAL(temp, float16to32(f16));
+							break;
 						case SYM_FLOAT:
+						case SYM_F32:
+						case SYM_F32LE:
 							n = 4;
 							ASSERT_READ_SIZE(value, cp, ep, n);
 							SET_DECIMAL(temp, ((float*)cp)[0]);
 							break;
+						case SYM_F32BE:
+							n = 4;
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							buf[0] = cp[3];
+							buf[1] = cp[2];
+							buf[2] = cp[1];
+							buf[3] = cp[0];
+							SET_DECIMAL(temp, ((float*)buf)[0]);
+							break;
 						case SYM_DOUBLE:
+						case SYM_F64:
+						case SYM_F64LE:
 							n = 8;
 							ASSERT_READ_SIZE(value, cp, ep, n);
 							SET_DECIMAL(temp, ((double*)cp)[0]);
+							break;
+						case SYM_F64BE:
+							n = 8;
+							ASSERT_READ_SIZE(value, cp, ep, n);
+							buf[0] = cp[7];
+							buf[1] = cp[6];
+							buf[2] = cp[5];
+							buf[3] = cp[4];
+							buf[4] = cp[3];
+							buf[5] = cp[2];
+							buf[6] = cp[1];
+							buf[7] = cp[0];
+							SET_DECIMAL(temp, ((double *)buf)[0]);
 							break;
 						case SYM_FIXED8:
 							n = 2;

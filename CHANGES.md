@@ -2,10 +2,416 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+## 2021 December
+
+### Features:
+
+* [`3d83ca`](https://github.com/Oldes/Rebol3/commit/3d83cac73affe6c07ae2fc08665a527ebf257d0c) Errors and debug messages printed to stderr
+* [`95d535`](https://github.com/Oldes/Rebol3/commit/95d5354c071290dcf8398d63c51d696cf8c1f4ce) Added possibility to change console output from `stdout` to `stderr` (windows)
+* [`9c4036`](https://github.com/Oldes/Rebol3/commit/9c40364ab6c5442ff0361456d6ed89ae60b651cd) Added possibility to change console output from `stdout` to `stderr` (posix)
+* [`53b04b`](https://github.com/Oldes/Rebol3/commit/53b04bd93c7d64f7d5f4e8f25308d51081055b96) New `lcm` native for resolving the least common multiple of two integers
+* [`12794b`](https://github.com/Oldes/Rebol3/commit/12794b36ca2758599e2f8647b6f68b796de0c5a6) New `gcd` native for resolving the greatest common divisor of two integers
+* [`f64cd3`](https://github.com/Oldes/Rebol3/commit/f64cd37ac70d36932215d226a5c85f110e8c973b) Partial `crush` decompression
+* [`b7fb49`](https://github.com/Oldes/Rebol3/commit/b7fb49bab839182c73aeacccf366ef4708b7b050) Optional custom LZ77-based compression algorithm (`crush`)
+* [`3a3076`](https://github.com/Oldes/Rebol3/commit/3a30769c1f03da4d78bcaace948b266c962b36cc) Bincode - added padding command `PAD`
+* [`fa46cb`](https://github.com/Oldes/Rebol3/commit/fa46cb46b1580f322b2007d16c3336defd074faa) BinCode - added commands: `F16LE`, `F16BE`, `F32LE`, `F32BE`, `F64LE` and `F64BE`
+* [`15de62`](https://github.com/Oldes/Rebol3/commit/15de62ce49cb6ead3478aa3062cc34e2eb1893df) QOI codec (The "Quite OK Image" format for fast, lossless image compression)
+* [`cc1025`](https://github.com/Oldes/Rebol3/commit/cc1025de878aebf9d39f0f8d783de9a99320754b) Added example how to prevent hacking attempts to the http test server
+* [`b4789f`](https://github.com/Oldes/Rebol3/commit/b4789fb597f0f14e9c17bd858395360b0875e116) Added example how to server `humans.txt` data from the test server
+
+### Changes:
+
+* [`3139f4`](https://github.com/Oldes/Rebol3/commit/3139f40e72fd34a626674b6d0aad949b7db1f648) Keep `/` at the head of the HTTP request target (`httpd` module)
+
+### Fixes:
+
+* [`50caf1`](https://github.com/Oldes/Rebol3/commit/50caf12ba82301211bf4db3413f9891b4f849463) Returning same status code across all systems
+* [`993380`](https://github.com/Oldes/Rebol3/commit/9933803576873d1b38eeb2c148f97550f3de16a5) Command line consumes first argument when --script is used
+* [`84090f`](https://github.com/Oldes/Rebol3/commit/84090f9651be3d5d58b1fb2539257aea15b1d039) Resolved possible buffer overrun warning
+* [`738476`](https://github.com/Oldes/Rebol3/commit/738476556fe9202915859e738ed02cf4135d7772) Using system output to print version info
+* [`03a4b6`](https://github.com/Oldes/Rebol3/commit/03a4b6b64171a45eac4606c48e2ffb9979e5249f) Make project compile able with Xcode v13.2
+* [`d0aa12`](https://github.com/Oldes/Rebol3/commit/d0aa122b63c36d7a580b84cb62c33bed02dd24cc) Accidentally removed `--do` option storage done in https://github.com/Oldes/Rebol3/commit/ca7c0256d23f159dcebfa25146b4288efbe00cba
+* [`ca7c02`](https://github.com/Oldes/Rebol3/commit/ca7c0256d23f159dcebfa25146b4288efbe00cba) Interpreter too eagerly consuming command-line arguments & arguments containing whitespace
+* [`7f1343`](https://github.com/Oldes/Rebol3/commit/7f13439bd3f758b053bc5241db23b3bd4e5c7e17) Evaluate `--do` boot argument
+* [`6588c3`](https://github.com/Oldes/Rebol3/commit/6588c30fec0c92842f82fd35cb05c04426e0a1d3) `switch` with `ref!` value type
+* [`d744ce`](https://github.com/Oldes/Rebol3/commit/d744cee9ad83b76b61566b5de27b7a6e5c80afa6) Memory corruption when used `crush` compression
+* [`c33ff2`](https://github.com/Oldes/Rebol3/commit/c33ff26cbc272a863ab8f6de425af67622f50f46) Force garbage collection before measuring `delta-profile` stats
+* [`34e0e2`](https://github.com/Oldes/Rebol3/commit/34e0e2c29657dfaa8ebfc01342a4ff9339d23e0e) Missing change for: https://github.com/Oldes/Rebol3/commit/15de62ce49cb6ead3478aa3062cc34e2eb1893df
+* [`a09ee2`](https://github.com/Oldes/Rebol3/commit/a09ee2fc455af004f0a7d0f439615f9011ecd32d) `httpd` module: don't keep opened connection if client (like Rebol2) don't want it
+
+## 2021 November
+
+### Features:
+
+* [`5fa5b8`](https://github.com/Oldes/Rebol3/commit/5fa5b83a0ef64a68f0513112f6dc7171b5b2cc3f) Updated ZIP codec
+  * Access to comment and extra field of uncompressed data
+  * Added support to include file comments, extras or insternal and external attributes
+  * Added support to include uncompressed data (useful when making APK targeting version 30 and above)
+* [`b49781`](https://github.com/Oldes/Rebol3/commit/b4978111333a9af2228339ed3924bc6cc85c2d5b) Possibility to resolve context handle's type
+* [`27ab5a`](https://github.com/Oldes/Rebol3/commit/27ab5a4cbb934459ef2a04e4e06f93bccc137d1c) Make context type handles comparable
+* [`e837a8`](https://github.com/Oldes/Rebol3/commit/e837a88efb750bcee354a2306bdec19271782bf0) Allow `insert` on `object!`
+* [`cfe7e2`](https://github.com/Oldes/Rebol3/commit/cfe7e2a25534196a39f69866bb12a04829a44fb8) Allow `select` on `module`
+* [`5ae487`](https://github.com/Oldes/Rebol3/commit/5ae4871c87b839b8c1392fb3812f5d76c89ca06c) Register `.deb` file extension fith `AR` codec
+* [`3a5f9e`](https://github.com/Oldes/Rebol3/commit/3a5f9e50fa084954f76c8adf7bcb2e995d898a47) Including last git commit version in the `system/build/git` and full version info when used `-v` boot argument
+* [`4b321e`](https://github.com/Oldes/Rebol3/commit/4b321e3f0178056d1830e2f02b08ad557bdbc5d6) Extended maximum number of tuple values to 12
+* [`6f451f`](https://github.com/Oldes/Rebol3/commit/6f451f0c58a802ff598329320b29e8406e6be595) Tweaked doc-string of `clear` action
+* [`ab5ae7`](https://github.com/Oldes/Rebol3/commit/ab5ae7dd5573be0a2ef3d3c53e646e7721e10427) Improved doc-string for `at` and `atz` actions
+
+### Changes:
+
+* [`f9fe06`](https://github.com/Oldes/Rebol3/commit/f9fe06397609a60cfe32f66fb15d35ff402f5761) Including some of modules as a delayed (required to `import` them before use)
+* [`9458d4`](https://github.com/Oldes/Rebol3/commit/9458d4d6e34b9b263481ba4bf363aeb9ed56cb15) Modified single-line doc string for modules in the `help` output
+* [`d4e947`](https://github.com/Oldes/Rebol3/commit/d4e947639dff246565768892e623028eebae63ed) Storing `system/modules` as an `object!`; added support to include delayed modules
+* [`04c71d`](https://github.com/Oldes/Rebol3/commit/04c71d11d5f2bba500bd2a658336f33363ac6454) More detailed info about used compilation target; new build output names; rewritten build specification to be better prepared for a future cross-compilation possibility.
+
+### Fixes:
+
+* [`5f9695`](https://github.com/Oldes/Rebol3/commit/5f9695d9defe2bf3bcf6f07e1c0988471028d4c7) Enhanced precision in comparison of time with integer
+* [`b1a65b`](https://github.com/Oldes/Rebol3/commit/b1a65ba77e689905e241ac54c41aeaaa14210ea3) Using `call/shell` in the `launch` function
+* [`a14d3a`](https://github.com/Oldes/Rebol3/commit/a14d3afa777b6b67046b39a8127229da9347ae04) Use user context filtering only for pattern matches and with `strict-equal?`
+* [`74d0c3`](https://github.com/Oldes/Rebol3/commit/74d0c30fa98f5ab84a68748bdaf9641770b27d9d) There must be `get-word!` used in case that value is a function
+* [`e26d3d`](https://github.com/Oldes/Rebol3/commit/e26d3d40b955f71d1df2d598bff7880ce71076bf) Include user context values in the `help` output
+* [`067fee`](https://github.com/Oldes/Rebol3/commit/067fee59362a62858a99e309e4f4a2b4d3dc9c74) Length-specified script embedding
+* [`ef13db`](https://github.com/Oldes/Rebol3/commit/ef13db708605d3c192d2bf6ac9c85340772d8ac1) Improved resolving console width for help output trunctation
+* [`43886c`](https://github.com/Oldes/Rebol3/commit/43886c432448ebf82663e21dbd0cde4a2f2b777d) Improved resolving console width for help output trunctation
+* [`7a4a44`](https://github.com/Oldes/Rebol3/commit/7a4a441133d82c65364cbd8b5b8eadae354b6481) Improved resolving console width for help output trunctation
+* [`a96c89`](https://github.com/Oldes/Rebol3/commit/a96c89285e137795e3b29c86bc751520937aef50) Improved resolving console width for help output trunctation
+* [`cd1afe`](https://github.com/Oldes/Rebol3/commit/cd1afe70fe9d83dd33b19c88580341633bd3c9ba) Improved resolving console width for help output trunctation
+* [`e3520a`](https://github.com/Oldes/Rebol3/commit/e3520a2902f0efd9ef143ad6d5c9825b74e18cd0) Opening a library (extension import) requires absolute path
+* [`2b7b6c`](https://github.com/Oldes/Rebol3/commit/2b7b6cf9588a83351937657c3b473a7171ae3f01) Use default terminal width 80 chars when not resolved from system (CI)
+
+
+## 2021 October
+
+### Features:
+
+* [`60cc1f`](https://github.com/Oldes/Rebol3/commit/60cc1f98e494239d6c119c24e5a8cf84dc4fd286) Simplified resolving of the path to the executable (as it is now resolved in C using `OS_Get_Boot_Path`)
+* [`180dc3`](https://github.com/Oldes/Rebol3/commit/180dc3500f5631a7309adf55073b80b05d9c6bce) Linux version of `OS_Get_Boot_Path` function
+* [`39693b`](https://github.com/Oldes/Rebol3/commit/39693bf5302268e0d0af0d7a8a6aa770ff66e2e8) MacOS version of `OS_Get_Boot_Path` function
+* [`11b46d`](https://github.com/Oldes/Rebol3/commit/11b46de53915ecb76bb18404f1500021118503fe) Windows version of `OS_Get_Boot_Path` function
+* [`d99656`](https://github.com/Oldes/Rebol3/commit/d9965674030d1faf622a19645299d163eb4aeb05) Win32 variant of `to-real-file` native
+* [`31e7c2`](https://github.com/Oldes/Rebol3/commit/31e7c24befef74034ec41f3723f0bb9504808ccc) New `to-real-file` native (posix version) for resolving canonicalized filenames (removing `..` and `.` path components, simplification of sequences of multiple slashes, removal of trailing slashes, and the resolution of symbolic links).
+* [`e108cf`](https://github.com/Oldes/Rebol3/commit/e108cfc88b98a76cbbb63b957f87d8df31d781ad) Optionally truncate output of `probe` function
+* [`2ee6c0`](https://github.com/Oldes/Rebol3/commit/2ee6c0ab964158554a6e44143fb32f14a0ab0b55) Improved `ar` codec to be able decode also System V (or GNU) variant files
+* [`aaa70e`](https://github.com/Oldes/Rebol3/commit/aaa70ecb2d2c1688d681893290d7d6086645e303) Minimalistic Unix Archive File (AR) decoder
+* [`fb0daa`](https://github.com/Oldes/Rebol3/commit/fb0daad20211a8f5acc9f870c70cf130e011ec19) New `ATz` action returning the seriest at 0-based position (index)
+* [`101284`](https://github.com/Oldes/Rebol3/commit/101284b78663859639c4f56a1596d5581dea4af5) New `indexz?` action returning 0-based position (index) of the series
+* [`7d3a04`](https://github.com/Oldes/Rebol3/commit/7d3a040091167ae11364d1ea21e938d3cc925f68) PICKZ and POKEZ functions for 0-based indexing
+* [`877514`](https://github.com/Oldes/Rebol3/commit/8775144375e930c6c1981d7153367823b0607455) Don't allow `clear` on not opened port, allow `size?` on port
+
+### Changes:
+
+* [`5d1a4c`](https://github.com/Oldes/Rebol3/commit/5d1a4ca4809682cca267db5bfc01ba1a6426bd62) New wording for `repend/only` function doc string
+* [`2cd3c8`](https://github.com/Oldes/Rebol3/commit/2cd3c8f19b3c9096e442b7d16f16435b7fd755bd) Rewritten `compress` and `decompress` so it's now compatible with the recent Red language. Now it also correctly handles output buffer expansion. It does not store the uncompress length at the tail of compressed data anymore!
+* [`fb0daa`](https://github.com/Oldes/Rebol3/commit/fb0daad20211a8f5acc9f870c70cf130e011ec19) `at` action on image with pair position was 0-based, now is 1-based
+* [`c8a593`](https://github.com/Oldes/Rebol3/commit/c8a59362bc977556ed1876b6cb5c78f915cf29dd) Replaced internal `boot-print` and `loud-print` functions with system log calls
+* [`117e16`](https://github.com/Oldes/Rebol3/commit/117e1607d7adaa826a55c6f2855fd3393d2a9a8b) Limit output of `help` to single line if used with some value types
+* [`c5c3b4`](https://github.com/Oldes/Rebol3/commit/c5c3b45c31465971057edc051d76c7d76a0b8b62) Made colors in console's prompt and result optional
+* [`e4b1a8`](https://github.com/Oldes/Rebol3/commit/e4b1a8c33f62c54d05e743be9f064ac3312b6e29) Fine-tune decimal non-strict comparison (to cover also percent datatype)
+
+### Fixes:
+
+* [`502382`](https://github.com/Oldes/Rebol3/commit/50238280dd96bf386f3f4013026bb67bd4237d28) Generated RL defines were not counting with possibility of variadic arguments (like in RL_PRINT)
+* [`cd463f`](https://github.com/Oldes/Rebol3/commit/cd463feb183af76795f040108bbf43c773dd07fd) Make sure that TO_OSX define is used even for 64bit builds
+* [`5fcb00`](https://github.com/Oldes/Rebol3/commit/5fcb006327687a208bcc982bd2330d94e12bc89f) Using the new `compress` in build scripts
+* [`720514`](https://github.com/Oldes/Rebol3/commit/72051415e4a944b7d5042d93aa7db66cf62d655d) Wrong member name when `RAW_MAIN_ARGS` define is used
+* [`180264`](https://github.com/Oldes/Rebol3/commit/1802649a37489e208f70b0af4e1528a6b96b700c) Don't treat zero value in `mold/part` as unlimited output
+* [`aaed74`](https://github.com/Oldes/Rebol3/commit/aaed7495afe4cb6e9cd65748aca982d48ed28349) Removed debug trace
+* [`811bb3`](https://github.com/Oldes/Rebol3/commit/811bb35576964ea98b9df42a9968f4faa81c586f) Missing log traces in boot sequence
+* [`14a003`](https://github.com/Oldes/Rebol3/commit/14a003d29f9a102465043b798be92e5360276ebc) Resolve correct canonized absolute path to main process executable
+* [`4c6e88`](https://github.com/Oldes/Rebol3/commit/4c6e884252f3299ce2fb523c5e49653d487fdcd2) Non-void function does not return a value
+* [`226461`](https://github.com/Oldes/Rebol3/commit/226461eda95012bc60965bb844ba190ea636ed8e) Convert TAB in the terminal input to 4 spaces (posix)
+* [`2ac8c1`](https://github.com/Oldes/Rebol3/commit/2ac8c158cf701aaf5509f31ae3833dccf2d8e56e) Update file info after clearing file-port (posix)
+* [`f1395c`](https://github.com/Oldes/Rebol3/commit/f1395c880bea0b8b941c90c0705fc4fd551f656b) Update index after `write` into a file-port
+* [`c6276d`](https://github.com/Oldes/Rebol3/commit/c6276dd94671523aea55c87b57fc51f4f49ba683) Making sure that image codecs extensions are included after image codecs
+* [`22de60`](https://github.com/Oldes/Rebol3/commit/22de60c667f007baaf84faec6c7f462313550689) WRITE on file-port does not update file size (posix fix)
+* [`4127a7`](https://github.com/Oldes/Rebol3/commit/4127a7c2256da494326002994853d277ac82f96d) Non-void function does not return a value
+
+## 2021 September
+
+### Features:
+
+* [`dedf26`](https://github.com/Oldes/Rebol3/commit/dedf268038beea1c45fcd4b18211e4d7bbc1dc4a) Allow making op! from action!
+* [`d797a9`](https://github.com/Oldes/Rebol3/commit/d797a9324bc3b952781837beee58176e4c34e468) Support `to date! integer!` and `to integer! date!` using unixtime as an integer value
+* [`10a5b4`](https://github.com/Oldes/Rebol3/commit/10a5b4d563cee137cc0af82e458cd46225889941) Implemented copy of nested maps
+* [`14bc42`](https://github.com/Oldes/Rebol3/commit/14bc42f747104a0e1e9212e55f2a2fa4599b016e) PDF encoder input validation
+* [`cb0521`](https://github.com/Oldes/Rebol3/commit/cb0521a502b20f7681a48f90bcc7705de3a1075f) Initial implementation of the PDF codec
+* [`770a06`](https://github.com/Oldes/Rebol3/commit/770a06db2285ea173c0c4410bbbf78dfaf1af904) Make PNG filter's native functions optional
+* [`e0d567`](https://github.com/Oldes/Rebol3/commit/e0d5675cb0054dec3edc15290771df3884f0e812) PNG's pre-compression filter algorithms exposed as `filter` and `unfilter` natives
+* [`2947e8`](https://github.com/Oldes/Rebol3/commit/2947e8b4f8692ed2c6e90f78890df9a795fc943e) Print a human friendly list of available codecs on `help codecs`
+* [`f27939`](https://github.com/Oldes/Rebol3/commit/f27939c1e572028601cfe02ed25ecf3be45d0eeb) Define codec's types
+* [`53167c`](https://github.com/Oldes/Rebol3/commit/53167c325b1b2d264c1fff6b4862f4f085e6f417) Optimize powerof2 memory allocation
+* [`e5868f`](https://github.com/Oldes/Rebol3/commit/e5868f4316882c20075fdd42e5084b6e96b34486) Made parse's `ahead` being a synonym for `and` for better compatibility with Red
+* [`19974e`](https://github.com/Oldes/Rebol3/commit/19974e2d6b57b3c035046084c14aa3996451dec2) MacOS support for DirectDraw Surface `dds` encoding/decoding
+* [`5bf90d`](https://github.com/Oldes/Rebol3/commit/5bf90d8141beddc414b18e6fbdefe92a77ac2cd9) `codecs/dds/size?` function for resolving dds image size without need of decoding
+* [`64734d`](https://github.com/Oldes/Rebol3/commit/64734d53f1e33c1c6a6588f9fe42854f303654e7) `codecs/bmp/size?` function for resolving bmp image size without need of decoding
+* [`1d3e2c`](https://github.com/Oldes/Rebol3/commit/1d3e2ce9adc27395754f1c102a971415dcbe6182) `codecs/gif/size?` function for resolving gif image size without need of decoding
+
+### Changes:
+
+* [`093728`](https://github.com/Oldes/Rebol3/commit/093728a7262a9b3ebda7a2d7e18b55bf9ded58db) Appending a `word` into an `object` sets its value to `unset` instead of `none`
+* [`8bf1f2`](https://github.com/Oldes/Rebol3/commit/8bf1f2c5a202936d932460f9241d8ac88cc6be22) Allow `copy error!`
+* [`9ce9d9`](https://github.com/Oldes/Rebol3/commit/9ce9d9a7321574c365234e7de8a4df4e5f47c8d8) Use plain `text` codec for `.cgi` files
+* [`131090`](https://github.com/Oldes/Rebol3/commit/13109036d01bb43243d52aacf977876b1b7e50fe) Merged macOS and Windows OS codecs registrations
+* [`62d8db`](https://github.com/Oldes/Rebol3/commit/62d8db79eb72c336e85c6e61356c5aa11c8f94ad) Using Gregg Irwin's `split` updates
+
+### Fixes:
+
+* [`c8198a`](https://github.com/Oldes/Rebol3/commit/c8198a87262ca9e95ad9f31c3f3b2a4f81aab958) Invalid byte-size of protected vector! data
+* [`d40897`](https://github.com/Oldes/Rebol3/commit/d408975f13acd2906bae2b01784d5960a3cb6602) Handle loading 24bit WAV files + minor wav codec fixes
+* [`b6c9a3`](https://github.com/Oldes/Rebol3/commit/b6c9a389fb0b063d2487926bcc5b01de641a1ab8) Unexpected slowdown when processing deep recursive loops
+* [`ad2819`](https://github.com/Oldes/Rebol3/commit/ad281973854eb4012526b01c8a5628229a82aa8a) `resolve/all` bypassing `protect/hide`
+* [`552ec9`](https://github.com/Oldes/Rebol3/commit/552ec9bda87a953115cadc2a741c11ed0a43b12b) Failed `decompress` when input data was not at head
+* [`85de1d`](https://github.com/Oldes/Rebol3/commit/85de1db567ab46e3cd90e23500e342d36ec5d674) Corrected code for `copy map!`
+* [`9d225e`](https://github.com/Oldes/Rebol3/commit/9d225e5b73976db2f82cb566a2697e2bf1b8b144) Resolved signed/unsigned mismatch warning
+* [`ab3288`](https://github.com/Oldes/Rebol3/commit/ab32889365e99cffc9ff70d85cf44139e9bebaa6) Handle text encoded stream data
+* [`5c7f72`](https://github.com/Oldes/Rebol3/commit/5c7f724c98be7e7994be2f3560d2fa9a5fdc2e59) Regression in `alter` function
+* [`7d936d`](https://github.com/Oldes/Rebol3/commit/7d936dfabf8ea1fa3ff286c97b919ea38243623e) Silenced non-prototype definition warnings
+* [`c52c47`](https://github.com/Oldes/Rebol3/commit/c52c47df8ee85258a9b3c7c25b76575b25d42449) Silenced possibly uninitialized variables warnings
+* [`244c5b`](https://github.com/Oldes/Rebol3/commit/244c5b87d2330894d57481614465eb58285fcb14) Silenced non-prototype definition warnings
+* [`de3d53`](https://github.com/Oldes/Rebol3/commit/de3d53caab842062ee4a7177ff4d38623d426cb9) Silenced possibly uninitialized variables warnings
+* [`515149`](https://github.com/Oldes/Rebol3/commit/515149ccac5cb4ae0e0cbbbea9cec73ca8f24b86) Removed unused variables
+* [`8857d4`](https://github.com/Oldes/Rebol3/commit/8857d44b9b9ca1802a4f0ed569d796c962ee2aeb) Silenced lower precedence warning
+* [`f10ea4`](https://github.com/Oldes/Rebol3/commit/f10ea4a392bacef2d76adb06a5846743a0ff265c) Silenced discarding qualifiers warning
+* [`431bb3`](https://github.com/Oldes/Rebol3/commit/431bb3daaedaa60e6ced257329cc9a7ca7cc4304) Silenced type specifier missing warning
+* [`b83216`](https://github.com/Oldes/Rebol3/commit/b83216937f3b799643c6f1004dbaef0a2333dd3f) Silenced macro redefined warnings
+* [`cfb060`](https://github.com/Oldes/Rebol3/commit/cfb060f366648c25508737e987224383caf0fe3c) Silenced incompatible pointer types passing warning
+* [`218e5c`](https://github.com/Oldes/Rebol3/commit/218e5c70452a098ce36cacd6b1b5d7570c949510) Silenced discarding qualifiers warning
+* [`e97679`](https://github.com/Oldes/Rebol3/commit/e97679fd7b9840db4afb3ad989e49c981fc2d3da) Silenced incompatible function pointer warning
+* [`f46546`](https://github.com/Oldes/Rebol3/commit/f465469f1c563357a6d477cf908308c3217dfed2) Silenced incompatible pointer warnings
+* [`cf86e5`](https://github.com/Oldes/Rebol3/commit/cf86e55d5f39ff52e7f1f391933cd33a7528105a) Recognize also older GIF87a version
+
+## 2021 August
+
+### Features:
+
+* [`7591f4`](https://github.com/Oldes/Rebol3/commit/7591f49fe3f6326c321633d036ce5f5e46e5e126) Allow FIND binary! char!
+* [`547f35`](https://github.com/Oldes/Rebol3/commit/547f357ad356cfb96a3e9228cda4f5af62b5c139) Optimized `parse` when checking `ref!` and `tag!` datatypes
+* [`384602`](https://github.com/Oldes/Rebol3/commit/3846021ea486701b528b8636a84415cf4254cc7d) `codecs/jpeg/size?` function for resolving jpeg image size without need of decoding
+* [`b35117`](https://github.com/Oldes/Rebol3/commit/b35117a9cca11260874456f89bbacd994b2bdcce) MacOS basic clipboard port implementation
+* [`dbe8aa`](https://github.com/Oldes/Rebol3/commit/dbe8aa5737ffde22f199c78adb38b626b15576a2) MacOS image codecs cleanup and added support for `haif` encoding/decoding
+* [`894708`](https://github.com/Oldes/Rebol3/commit/894708f6965353a2c95ac507e4d6ba259dda05c6) Using native system image codecs on macOS
+
+### Changes:
+
+* [`db5ebf`](https://github.com/Oldes/Rebol3/commit/db5ebf22fd3bbfa5297e18cc610438cfd03aff89) `FIND bitset! block!` is looking for ALL of the values in the block by default
+* [`807740`](https://github.com/Oldes/Rebol3/commit/80774077958b63fda663f558d4dc6c9dcaa00bdd) Make `find/match` not imply `/tail`
+
+### Fixes:
+
+* [`458f59`](https://github.com/Oldes/Rebol3/commit/458f5991f967a75d8541056f4eeb7b3f8ec4ee66) Making `find` case-insensitive by default on BITSET when used with a CHAR
+* [`9817d0`](https://github.com/Oldes/Rebol3/commit/9817d01adfb48f710433b1f7f5563c07d907ceb6) FIND string! tag! misses < and >
+* [`9e0f24`](https://github.com/Oldes/Rebol3/commit/9e0f2429e23b7a37cbd36547b1a4bf28c69a5ef4) Make `struct!` result visible in console
+* [`6f9f15`](https://github.com/Oldes/Rebol3/commit/6f9f15ef6d560c2a3dc46e22a4e710fecd8af7ca) Resolved some of the unused variable warnings
+* [`1a3606`](https://github.com/Oldes/Rebol3/commit/1a3606054982f92887146d130ed4f92c1e8229a5) Some of xcode warnings
+* [`9f0b07`](https://github.com/Oldes/Rebol3/commit/9f0b072b4793626efa139673dc53c0edfb9b31f7) Resolved some of possibly uninitialized variables warnings
+* [`95016d`](https://github.com/Oldes/Rebol3/commit/95016d9db16879dad8290560887eaa193f13d505) Missing native jpeg codec on posix platforms
+
+## 2021 July
+
+### Features:
+
+* [`515c16`](https://github.com/Oldes/Rebol3/commit/515c163df1b2803e20c0f2685be22d3e1f89a348) Conversion of `struct!` to `binary!`
+* [`319531`](https://github.com/Oldes/Rebol3/commit/319531e6149cab65dd3066d2c24c414acc34e7c4) Add support for `word!` struct fields
+* [`476327`](https://github.com/Oldes/Rebol3/commit/4763277d8d27fe98b92d91da83fa930f2b9a3314) Including Atronix's source of `struct!` datatype implementation
+* [`af7772`](https://github.com/Oldes/Rebol3/commit/af77722d5d8f827afd286724147fdf7f2942c92a) Better deal with stack size definition while compilation
+* [`f1b74c`](https://github.com/Oldes/Rebol3/commit/f1b74c7ed3741b6c65107954cc2850a0a3b125ae) Store last console result in `system/state/last-result`
+* [`4fab4c`](https://github.com/Oldes/Rebol3/commit/4fab4ce4b8ff41475e71b47649f22c85e554d48a) `REFLECT module! 'title` could return the module header title
+
+### Changes:
+
+* [`e564c5`](https://github.com/Oldes/Rebol3/commit/e564c594037aaffe913882999b7a94d3b45eb2e4) Using `!` at the end of struct value type specification
+* [`0248e8`](https://github.com/Oldes/Rebol3/commit/0248e8599611ac4ef94136a70887e37023e6276b) Revisited vector construction syntax types
+  Now accepting for example `i16!` and `uint16!` instead of previous `si16!` and `ui16!`.
+* [`2cc8c7`](https://github.com/Oldes/Rebol3/commit/2cc8c7351c2ead999b73e47cad57d5890050265f) Disable support for Rebol values in struct
+
+### Fixes:
+
+* [`72d0d2`](https://github.com/Oldes/Rebol3/commit/72d0d2fafbd202531aeba81c15c472fec7516b9e) Don't allow code evaluation inside struct construction specification
+* [`d135f0`](https://github.com/Oldes/Rebol3/commit/d135f0b34787e7f1e87ee9f443ad7c319e8fb00b) Removed debug traces
+* [`49481f`](https://github.com/Oldes/Rebol3/commit/49481f3727dd804e9cd5352f2f1cab4f96e3c841) Allow pool size to be larger than series total length in `evoke` memory check
+* [`6901c1`](https://github.com/Oldes/Rebol3/commit/6901c173cb09e08d1462093f488d36ac9a8d5e2a) Validate missing struct initialization field value
+* [`1fb779`](https://github.com/Oldes/Rebol3/commit/1fb779f5f0793f08d1c1c76cf56dfc6f915d4166) Possible use of uninitialized variable
+* [`fb6624`](https://github.com/Oldes/Rebol3/commit/fb662464fc2915fbde9a63eb9b266603d48185d5) Crash when using `do` on a function which returns itself
+* [`d1ff72`](https://github.com/Oldes/Rebol3/commit/d1ff72d809b930b489a2a98302fa70d3cf755c7a) Crash when using `context?` on function's local word outside of its function
+
+## 2021 June
+
+### Features:
+
+* [`c75649`](https://github.com/Oldes/Rebol3/commit/c756498cfe767872be880162305e53dc37080754) New `blur` native function for fast Gaussian blur of images
+  Based on Ivan Kuckir's Fastest Gaussian blur implementation algorithm from article: http://blog.ivank.net/fastest-gaussian-blur.html
+  
+  Usage example:
+  ```
+  image: load %some-image.jpg
+  blur image 15                 ;@@ image is modified!
+  save %blured-image.png image
+  
+  ```
+* [`77426b`](https://github.com/Oldes/Rebol3/commit/77426bf11820e4730e7ce8020128a2075ec11b4e) Munge code updated using the new built-in ZIP encoder
+* [`52b269`](https://github.com/Oldes/Rebol3/commit/52b269660e5f027b3641bba0acd2815414c6110e) Added `ZIP` encoder
+* [`13d7c9`](https://github.com/Oldes/Rebol3/commit/13d7c9ec53ed3424746eff95986b2c725a7475da) Munge (quickly modified to be runnable from Oldes' R3 derivative)
+
+### Changes:
+
+* [`9c5892`](https://github.com/Oldes/Rebol3/commit/9c58928aaabf1309880744eb1ded6f08bc084f1d) `RL_Register_Handle` from extension returns word's symbol id
+* [`99a5c2`](https://github.com/Oldes/Rebol3/commit/99a5c287b3d5579f59850fb0396f4128233f0ce7) Swapped `crc` and `data` values in ZIP decoder's result
+
+### Fixes:
+
+* [`99b5db`](https://github.com/Oldes/Rebol3/commit/99b5db8243bd4bce2c0fedcc18d6b024a33d0ee1) Pass handle flags from external (extension) argument to the internal (host) value
+* [`cf1a20`](https://github.com/Oldes/Rebol3/commit/cf1a205a29bf1b7b69f7b14b3b3fe043881804cc) Crash when using special handle's object (HOB)
+* [`a03a3b`](https://github.com/Oldes/Rebol3/commit/a03a3b5c207939bc204cb826166409b04b1342b6) Munge - a little bit more optimizations
+* [`7d8c10`](https://github.com/Oldes/Rebol3/commit/7d8c1084e59220db159bfc673955b76bd52b097d) Munge - make working loading excel sheet even in case when there is no info about number of columns
+* [`da902d`](https://github.com/Oldes/Rebol3/commit/da902de1c79d0afa789a1c155f7c503318913179) Munge - `sheets?` function was not working
+* [`73b7f3`](https://github.com/Oldes/Rebol3/commit/73b7f38ec2a2a386793747229937630a005f8bea) Munge - replaced ZIP unarchive code with R3's ZIP codec
+
+## 2021 May
+
+### Features:
+
+* [`a2bcfe`](https://github.com/Oldes/Rebol3/commit/a2bcfed99cb42e3b0e2c245172752e584496aaa5) Allow conversion from `object!` to `map!`
+* [`933514`](https://github.com/Oldes/Rebol3/commit/933514dafc74c307ceeca636e6b14b0bcdc5eabf) Reimplemented `mod` and `modulo` in C, `//` is now `op!` for `modulo` and `%` is now `op!` for `remainder`
+* [`72a7b9`](https://github.com/Oldes/Rebol3/commit/72a7b98779256d74766af0436bdb27657f9a7e48) Allow making `op!` from `function!`
+* [`c9aa62`](https://github.com/Oldes/Rebol3/commit/c9aa62861ca8e617b1b2ab0a3fb3785c52576231) Allow _slash_ words
+* [`30b179`](https://github.com/Oldes/Rebol3/commit/30b179f667c4c255fe78f806a96b02870d6f92b4) Added simple test extension + handling `RXR_BAD_ARGS` value from extension command call
+
+### Changes:
+
+* [`6dad57`](https://github.com/Oldes/Rebol3/commit/6dad57f8d44bb19cf2426bdc4bf2948a5102122f) Don't protect `system/dialects` as it's not used anyway
+* [`bc48fe`](https://github.com/Oldes/Rebol3/commit/bc48fe8db759d29620f08a2bfc12dd8dcaf2b4fc) Allow direct comparison of `time!` with `number!` types
+* [`c31151`](https://github.com/Oldes/Rebol3/commit/c311519a84bca3999a24a79fa4ac0788899ed3f8) Rename MAXIMUM-OF and MINIMUM-OF to FIND-MAX and FIND-MIN
+* [`c72b15`](https://github.com/Oldes/Rebol3/commit/c72b158a41acff007267e707fcfdfedd370b9489) Better sorting of specific runtime extension module values
+
+### Fixes:
+
+* [`e868db`](https://github.com/Oldes/Rebol3/commit/e868dba356b15915cfe0d09451f686fee40f9dab) Not truncating random time to seconds only
+* [`512505`](https://github.com/Oldes/Rebol3/commit/512505109fdf0849569d6e9a12f36554ead1768f) Import of native extension (library) on Windows
+
+## 2021 April
+
+### Fixes:
+
+* [`69cd34`](https://github.com/Oldes/Rebol3/commit/69cd3437c6a0c2b59f0d7d9c0e6e18bc470da132) In cloud builds it's not possible to resolve console width
+* [`1075e8`](https://github.com/Oldes/Rebol3/commit/1075e8a26c168c7e1da8ddc3fb47cb52ae127376) Not changing default definition of `binary-base` from `prebol` module
+* [`6384bc`](https://github.com/Oldes/Rebol3/commit/6384bc1e445d040b9864456de55017fd14f163da) Typo in ico's identify function
+* [`a7adc4`](https://github.com/Oldes/Rebol3/commit/a7adc4e3740d2397c691053fb87865bf6ea65382) `%` is not an empty path anymore
+* [`4167ab`](https://github.com/Oldes/Rebol3/commit/4167abe3ba151c8eda9103dcc96c630af976fcc7) Allow various variants of arrow-like words (fixed CC warning)
+* [`19f86b`](https://github.com/Oldes/Rebol3/commit/19f86be34a5dc6c521e8d14ac3587fbb0c192533) Make sure that console's input buffer is not growing over 2GB
+* [`cefbc9`](https://github.com/Oldes/Rebol3/commit/cefbc96afb175fcb9d3ee611c70398aa7a01b73f) Allow various variants of arrow-like words
+* [`4b2eda`](https://github.com/Oldes/Rebol3/commit/4b2edac158097af5011b41d382aacc44e1bd2cfa) Allow comparison of `char!` with `integer!`
+
+## 2021 March
+
+### Features:
+
+* [`e9b0bb`](https://github.com/Oldes/Rebol3/commit/e9b0bb1cae9ca725fc1c8028726444b6cfee9bf7) `debase` accepting `any-string!` for it's value
+* [`5ed41d`](https://github.com/Oldes/Rebol3/commit/5ed41d3843d4ad38f8a57990e6651b455c37cd06) Allow creation of `path!` from any value
+* [`46e3a2`](https://github.com/Oldes/Rebol3/commit/46e3a2ce33a4b175ac7a54d77aa6db89a93d12e3) Extended PNG codec with `chunks` function
+* [`a5ba0f`](https://github.com/Oldes/Rebol3/commit/a5ba0fdb5e87802b933db7b32ffa503782636597) Added a simple codec for decoding/encoding ICO files
+* [`fd67a5`](https://github.com/Oldes/Rebol3/commit/fd67a59b3bdb410145f9dd2e2d1b95960e73b8ba) Added a simple codec for decoding/encoding ICO files
+* [`3f45b9`](https://github.com/Oldes/Rebol3/commit/3f45b9f832db74826182e2373b0736468c298fa3) Updated `prebol` (Rebol Preprocessor) to be a real module working with current Rebol
+* [`22a6d0`](https://github.com/Oldes/Rebol3/commit/22a6d0b531a8d2620067eac1b9d45128c4062df2) Added possibility not to process default application arguments on boot
+
+### Changes:
+
+* [`aece05`](https://github.com/Oldes/Rebol3/commit/aece05f17345994ff4c5154a64b327f714667631) Have `%` to be a valid word and not an empty file
+* [`1e71aa`](https://github.com/Oldes/Rebol3/commit/1e71aa39754d7acd5114450166b997e77cd9edd1) Removed ANSI related functions from colors mezzanine file
+
+### Fixes:
+
+* [`277ab5`](https://github.com/Oldes/Rebol3/commit/277ab51cf479bfb97833d45905f0ba50f96ef749) Parse rule fails when input is modified and so does not advance
+* [`ea3aab`](https://github.com/Oldes/Rebol3/commit/ea3aab8bf1bad4da84bf82fa501e2b91f79e7484) Crash on boot on Windows7 (regression since 3.4.0)
+* [`452893`](https://github.com/Oldes/Rebol3/commit/452893f22abeca6b3fc8b8973b28f035ca982ed1) Crash on boot on Windows7 (regression since 3.4.0)
+* [`d83cf1`](https://github.com/Oldes/Rebol3/commit/d83cf1c0b2cb39a2ad0d0587d873ee3b54ed9da2) HTTP redirection does not handle correctly locations with url-encoded content
+
+## 2021 February
+
+### Features:
+
+* [`552e2c`](https://github.com/Oldes/Rebol3/commit/552e2c0d0ff8943d665dc040886efc4dfe700af9) Parse string! using any-string!
+* [`9249a3`](https://github.com/Oldes/Rebol3/commit/9249a364380352f498a7b91abfbc5b66d1d7b463) Exporting new library functions for registering, creation and releasing handles (so these may be also used from external native modules.
+* [`c990e8`](https://github.com/Oldes/Rebol3/commit/c990e82e678d578db2429173caf989c2dead302f) Simple TCP port scanner (module)
+* [`b6cbac`](https://github.com/Oldes/Rebol3/commit/b6cbac24a999355934784a604bc2c4146f0e5df5) Do some minimal extension's module protection
+* [`4d44e9`](https://github.com/Oldes/Rebol3/commit/4d44e997c68951a5dc651023610ced7355ed5398) When $SHELL is not set on POSIX OS, `/bin/sh` is used as a default
+
+### Changes:
+
+* [`bbf89c`](https://github.com/Oldes/Rebol3/commit/bbf89ca6e7c9b810080c462a68cf3f678a502839) `DELETE` returning `false` if called on not existing file or directory
+* [`6809c8`](https://github.com/Oldes/Rebol3/commit/6809c89dc01ed720401a8ce0a65f15f57c41a5df) Registered new system ID 0.4.46 as a 64bit Linux using `musl` compiler (musl.libc.org)
+* [`d352af`](https://github.com/Oldes/Rebol3/commit/d352af0674aa647e942aeee82618821ff5fae7c3) Renamed module's local context from `local-lib` to `lib-local`
+* [`500d3d`](https://github.com/Oldes/Rebol3/commit/500d3da6542db487cd190a48e8bb83000707b3e1) Force UTF-8 console output code page on Windows
+* [`f09840`](https://github.com/Oldes/Rebol3/commit/f09840e2b6fcafc72ae27f5409181d1da2ddba4f) Using NOT_FOUND instead of 0 in handle's registration
+
+### Fixes:
+
+* [`a2b1a4`](https://github.com/Oldes/Rebol3/commit/a2b1a408a804cf865cf0078b8723782b27977763) Updating `PWD` system environment variable after each directory change
+* [`9b5723`](https://github.com/Oldes/Rebol3/commit/9b5723a2c36d5ce1bdd97a8f707e798d51e510f4) Resolved crash in lower level (debugging) value formatter
+* [`1864b6`](https://github.com/Oldes/Rebol3/commit/1864b67c28d90f06bbc3089184f7167a1c2564f8) Better results from `change-dir` function (on error and also on success).
+* [`a90ee0`](https://github.com/Oldes/Rebol3/commit/a90ee0798a06a831b41d2bf42f2de0f542866794) Crash when re-opening listening port multiple times
+* [`98d66e`](https://github.com/Oldes/Rebol3/commit/98d66e5f7ba5c5a44c605d49aae2651275c994ed) Using at least one image in the ICO file as a PNG encoded in RGBA32 format
+* [`82f0ae`](https://github.com/Oldes/Rebol3/commit/82f0ae3f15e3133edc3e805e89adf986b61bff4a) Updated banners look
+* [`be2463`](https://github.com/Oldes/Rebol3/commit/be2463a4bd0ca9837cf1b7ce6adc7015e8350af7) Memory leak in `list-env` function
+* [`d1e316`](https://github.com/Oldes/Rebol3/commit/d1e31695b1f4e70465f9ff5c03d4825c43df6c18) `to word!` accepting delimiters in the input string
+* [`a81b86`](https://github.com/Oldes/Rebol3/commit/a81b862ad71b5dc095c51a57a0cd1c97b7259a0d) `to word!` accepting delimiters in the input string
+
+## 2021 January
+
+### Features:
+
+* [`102488`](https://github.com/Oldes/Rebol3/commit/102488d30c3a4be94ea9ada3ccb613154c38d7ca) POSIX wildcard support in `read`'s `file` argument
+* [`b83660`](https://github.com/Oldes/Rebol3/commit/b836603cb640e36d5cd1f551b981965f2d721959) Replaced `dir?` mezzanine as a `native!` with optional `/check` refinement
+* [`0f71dd`](https://github.com/Oldes/Rebol3/commit/0f71dd64598a3d0e2502480a5ca5e9988f7ce20b) Macro for getting c-string from a symbol
+* [`65ac08`](https://github.com/Oldes/Rebol3/commit/65ac088a875ab365f196f47e0dd5288e971ad72b) Register `*.key` suffix for SSH keys
+* [`15eaec`](https://github.com/Oldes/Rebol3/commit/15eaec4cf2a9741584b9e93672e4bebe8d080694) Allow to decode `*.crt` files stored in `PKIX` format
+* [`88086a`](https://github.com/Oldes/Rebol3/commit/88086a5dabbd86c8249f6f7ced5dfcb645f0e5ec) Preliminary support for system managed handles
+* [`2cd73c`](https://github.com/Oldes/Rebol3/commit/2cd73c6e3a637cd6c9c99afc3f911df069fc9143) `break/return` now has priority over regular return value from `remove-each`
+* [`355df8`](https://github.com/Oldes/Rebol3/commit/355df845dbb1bdd2062e8609455f312618bdc6c0) Support `map!` in `remove-each`
+* [`1ab00e`](https://github.com/Oldes/Rebol3/commit/1ab00e66004196b8f83deef20b356b1e780e5b64) Improved dealing with automatically collected natives from C sources
+* [`775155`](https://github.com/Oldes/Rebol3/commit/77515519655a579fbef99f7e185a27a4451718d7) Replacing old checksum code with implementations from the Mbed TLS library (including optionally also SHA224, MD4 and RIPE-MD-160 checksums)
+* [`40ddbf`](https://github.com/Oldes/Rebol3/commit/40ddbf368175351817f476bc906ab365bbbd8888) Introducing user defined config file for compile options
+
+  Using INCLUDE_* instead of USE_* definition names for optional parts
+
+### Changes:
+
+* [`0f4d26`](https://github.com/Oldes/Rebol3/commit/0f4d26ce68a891b5ea4045f8a7a64d04d6c5ced8) `REMOVE-EACH` returns the modified series at the argument position as in Rebol2
+
+  Added a `REMOVE-EACH/count` refinement, which toggles `REMOVE-EACH` to returning the removal count.
+
+* [`8f30a4`](https://github.com/Oldes/Rebol3/commit/8f30a41303cd87dd5d250a642089ab55750be7ef) Making `CHECKSUM` more compatible with Red language
+
+  * removed `/method`; now method is always used as second argument
+  * removed `/tcp`; now accessible as: `checksum data 'tcp`
+  * removed `/secure`; now accessible as: `checksum data 'sha1` (`sha1` is not considered as too secure anyway these days)
+  * removed `/hash`; now accessible as: `checksum/with value 'hash 256`
+  * renamed `/key` to `/with`; given `spec` is used as a key for HMAC and or size of hash table
+  
+  Available checksum methods are now listed in: `system/catalog/checksums`
+  
+  Note: checksum port does not support these methods: adler32, crc24, crc32 and tcp
+
+### Fixes:
+
+* [`5060ce`](https://github.com/Oldes/Rebol3/commit/5060cea88b8bbfa67192308dc0c600ea4c780cc6) HTTPD: allow target to be a none in decode-target
+* [`040c9c`](https://github.com/Oldes/Rebol3/commit/040c9c689376dd7b898ea22e944646df7bd18377) POSIX: `query` not handling correctly file names with non ASCII chars
+* [`2d5a75`](https://github.com/Oldes/Rebol3/commit/2d5a759b0b09e7a8b850c62dea25afe77cd79c53) Not possible to read url after failed lookup on posix
+* [`676405`](https://github.com/Oldes/Rebol3/commit/6764052442e161abcb09437d11a846498c72f580) Disposing all handles on exit (so Valgrind doesn't report errors)
+* [`e29986`](https://github.com/Oldes/Rebol3/commit/e299860a2281db57c870aaddcfc2afa7433d3412) Invalid handle's spec offset
+* [`681851`](https://github.com/Oldes/Rebol3/commit/68185158ec4a1bf0c5a9033fa83c8e13deafb7bf) Updated build scripts to be compatible with the recent `CHECKSUM` change
+* [`516dfe`](https://github.com/Oldes/Rebol3/commit/516dfee630e95f458bb51016a8616050635d5b5c) `reword` expecting that maps cannot accept `none` values
+* [`b7118b`](https://github.com/Oldes/Rebol3/commit/b7118b71860c0ede346abe116bfad6707071f936) `foreach` not seeing `none` values in `map!`
+* [`98b806`](https://github.com/Oldes/Rebol3/commit/98b806dcbf864051727b0bb5fde7330f68f6cc9b) Update MIDI device code to use the new option's configuration
+* [`9723d4`](https://github.com/Oldes/Rebol3/commit/9723d43c52caf3fd70d961f6752954ce525d386e) Add missing library dependency for `request-dir` function on Windows
+* [`61ab30`](https://github.com/Oldes/Rebol3/commit/61ab3023ac7bcefa6bbb42d488b70d3a71ca0e32) Avoiding compiler warnings
+* [`a96958`](https://github.com/Oldes/Rebol3/commit/a969582ac6b20daee6699bd7901b0203e91ac8fa) Resolved redefinition warning
+
 ## 2020 December
 
 ### Features:
 
+* [`379072`](https://github.com/Oldes/Rebol3/commit/3790723fb92eab6f0792f7b5b8e55269098a0354) Unified line breaks when converting map to block
 * [`33e013`](https://github.com/Oldes/Rebol3/commit/33e01309018001ac22c992b4c718f3f49accbfb6) Implemented `request-dir` on Windows
 * [`d5efc5`](https://github.com/Oldes/Rebol3/commit/d5efc5ee048f6593d9f23b18acd16f2bb4862c7e) Revisited `delete-dir` function
 * [`6fc873`](https://github.com/Oldes/Rebol3/commit/6fc8732e5309aba4a88b00bdea1381ec49d6db0f) `wildcard` function - returns block of absolute path files filtered using * and ? wildcards.
@@ -54,8 +460,6 @@ This is just generated output from commits in [this repository](https://github.c
 ### Features:
 
 * [`030915`](https://github.com/Oldes/Rebol3/commit/0309156ad657f95e8ce674b74266cfed3e6f9338) Add possibility to set date's `/utc` and `/yearday`
-
-  resolves: https://github.com/Oldes/Rebol-wishes/issues/18
 * [`c49f86`](https://github.com/Oldes/Rebol3/commit/c49f86aabdfdae13a793c41555c82075f7599293) Set `local-lib` to refer to the local import library
 * [`52ee40`](https://github.com/Oldes/Rebol3/commit/52ee407276ddb6e34f1592a21ea00704fcafae4d) Added `supplement` mezzanine function which appends a value into a block if not yet present
 * [`2aa6c6`](https://github.com/Oldes/Rebol3/commit/2aa6c68300ffc50c163af5c608a14bca8ff8b18b) Allow direct conversion from tag! to word! (if it has valid chars)
@@ -68,8 +472,6 @@ This is just generated output from commits in [this repository](https://github.c
 
 * [`6ba777`](https://github.com/Oldes/Rebol3/commit/6ba777e64bbc5a193a103e4288dc0c2cca7b20cf) Removed mention of boot in `boot-print` and `loud-print` doc-strings (these can be use also after boot)
 * [`a253f5`](https://github.com/Oldes/Rebol3/commit/a253f5e8ab4b33bb2318a534d5f5c53f73d08309) A plain, explicit QUIT from nested scripts returning UNSET! instead of 0
-
-  resolves: https://github.com/Oldes/Rebol-issues/issues/2250
 * [`a6a07f`](https://github.com/Oldes/Rebol3/commit/a6a07f8bea642c20652dca1b446c90e9103f6eab) Updated Windows' icon file
 * [`42ef0d`](https://github.com/Oldes/Rebol3/commit/42ef0d5c8720f9ab9678b3556933a94ff3e7d8f0) Updated banner and `license` output
 
@@ -156,8 +558,6 @@ This is just generated output from commits in [this repository](https://github.c
 ### Features:
 
 * [`260f59`](https://github.com/Oldes/Rebol3/commit/260f595f1c4b27c7ba714f34e8c6d378f8eaa5ec) Implement `SORT/COMPARE` on `any-string!` values
-
-  fixes: https://github.com/Oldes/Rebol-issues/issues/1100
 * [`aedd6b`](https://github.com/Oldes/Rebol3/commit/aedd6bbc3850e112a26c9122a988a81aa305b79e) Implemented _shutdown sequence_ to release allocated memory on exit
 
   That is useful with tools like Valgrind to find possible memory leaks)
@@ -215,10 +615,7 @@ This is just generated output from commits in [this repository](https://github.c
 ### Features:
 
 * [`a7d02d`](https://github.com/Oldes/Rebol3/commit/a7d02dae51242b39af025c75d3d3c677d19ce6eb) Loading .txt files with unicode encodings
-
   Text files (.txt) are now loaded just as a string and not as a Rebol code. Unicode decoding is handled correctly if specified in BOM. Files (.txt) are always saved as UTF-8.
-  
-  fixes: https://github.com/Oldes/Rebol-issues/issues/2424
 * [`afebd2`](https://github.com/Oldes/Rebol3/commit/afebd212f3d81e28a6b756b4e329ee9ddd814fb2) Added a new `ref!` datatype like: `@username`
 * [`36fee1`](https://github.com/Oldes/Rebol3/commit/36fee1d2ac96c2cfaca833903118760f60ca5440) Added support for missing UTF-32 encoded binary to string conversion
 * [`499a93`](https://github.com/Oldes/Rebol3/commit/499a93e4aadfa6e5df9a72c7532198e2d976ae8d) Added support for decimap pick on `pair!` and `any-string!`

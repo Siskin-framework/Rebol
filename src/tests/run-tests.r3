@@ -5,6 +5,10 @@ Rebol [
 	Needs:   [%quick-test-module.r3]
 ]
 
+;- check speed of available checksum methods
+;do %test-checksums.r3
+
+;- run unit tests..
 dt [ ;- delta time
 	***start-run*** "All tests"
 	;recycle/torture
@@ -13,9 +17,13 @@ dt [ ;- delta time
 		%units/bbcode-test.r3
 		%units/bincode-test.r3
 		%units/bitset-test.r3
+		%units/call-test.r3
 		%units/codecs-test.r3
+		%units/codecs-test-pdf.r3
+		%units/compare-test.r3
 		%units/compress-test.r3
 		%units/conditional-test.r3
+		%units/copy-test.r3
 		%units/crash-test.r3
 		%units/datatype-test.r3
 		%units/date-test.r3
@@ -27,7 +35,9 @@ dt [ ;- delta time
 		%units/evaluation-test.r3
 		%units/event-test.r3
 		%units/gob-test.r3
+		%units/handle-test.r3
 		%units/file-test.r3
+		%units/format-test.r3
 		%units/func-test.r3
 		%units/image-test.r3
 		%units/integer-test.r3
@@ -48,6 +58,7 @@ dt [ ;- delta time
 		%units/power-test.r3
 		%units/protect-test.r3
 		%units/series-test.r3
+		%units/struct-test.r3
 		%units/task-test.r3
 		%units/time-test.r3
 		%units/tuple-test.r3
@@ -66,6 +77,7 @@ dt [ ;- delta time
 		;- known issues - waiting for fix
 		;%units/_known-issues_.r3
 		;%units/xx-test.r3
+		;%units/_test.r3
 	][
 		try/except [wrap load file] func[error][
 			repend failed-units [file error]

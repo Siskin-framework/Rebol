@@ -30,6 +30,11 @@ Rebol [
 	--assert date?  apply :f [now]
 	--assert 'now = apply/only :f [now]
 
+--test-- "apply op!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/618
+	--assert 3 = apply :add [1 2]
+	--assert 3 = apply :+ [1 2]
+
 ===end-group===
 
 
@@ -46,6 +51,13 @@ Rebol [
 --test-- "body-of FUNCTION"
 	fce: func[a [integer!]][probe a]
 	--assert [probe a] = body-of :fce
+	;@@ https://github.com/Oldes/Rebol-issues/issues/166
+	fce: func[a][append "xx" s]
+	clear second body-of :fce
+	--assert [append "xx" s] = body-of :fce
+	clear body-of :fce
+	--assert [append "xx" s] = body-of :fce
+
 
 --test-- "invalid MAKE"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1052
@@ -78,6 +90,15 @@ Rebol [
 		f2 arg1
 	]
 	--assert [a] = f 1 2
+	
+	;@@ https://github.com/Oldes/Rebol-issues/issues/886
+	f: func[arg][p: 'arg]
+	f 1 2
+	; --assert none? context? p ; and no crash!
+	; not using above, because tests are run from `do`, so the context is not none like in console!
+	--assert same? :do context? p ; and no crash!
+	c: closure[a][context? 'a]
+	--assert all [object? o: c 1  o/a = 1]
 ===end-group===
 
 
@@ -114,9 +135,84 @@ Rebol [
 	--assert [a b]         = spec-of :+*
 	--assert (spec-of :. ) = [a "val1" b "val2" /local c]
 
+--test-- "make op! from action!"
+	--assert all [
+		op? op1: try [make op! :remainder]
+		0 = (6 op1 3)
+	]
+--test-- "make op! from function!"
+	fce: func[a b][a * b]
+	--assert op? op2: make op! :fce
+	--assert 6 = (2 op2 3)
+	--assert 2 op2 3 = 6
+	fce: func[a b c][a + b + c]
+	--assert all [error? e: try [make op! :fce] e/id = 'bad-make-arg]
+	fce: func[a][a]
+	--assert all [error? e: try [make op! :fce] e/id = 'bad-make-arg]
 	
 ===end-group===
 
+
+===start-group=== "ZERO?"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/772
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1102
+	--test-- "zero?"
+	--assert all [
+		zero? 0
+		zero? 0.0
+		zero? $0
+		zero? 0%
+		zero? #"^@"
+		zero? 0:0:0
+		zero? 0x0
+	]
+	--assert all [
+		not zero? 10
+		not zero? 10.0
+		not zero? $10
+		not zero? 10%
+		not zero? 1:0:0
+		not zero? 0x1
+		not zero? 1x0
+	]
+	--assert all [
+		not zero? "0"
+		not zero? #"0"
+		not zero? @0
+		not zero? #0
+		not zero? 1-1-2000
+		not zero? ""
+		not zero? []
+		not zero? none
+		not zero? false
+	]
+
+===end-group===
+
+
+===start-group=== "COLLECT-WORDS"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/544
+	blk: [a "b" c: 2 [:d e:]]
+	--test-- "collect-words"
+		--assert [a c] = collect-words blk
+	--test-- "collect-words/deep"
+		--assert [a c d e] = collect-words/deep blk
+	--test-- "collect-words/set"
+		--assert [c] = collect-words/set blk
+		--assert [c e] = collect-words/set/deep blk
+	--test-- "collect-words/ignore"
+		--assert [a c] = collect-words/ignore blk none
+		--assert [a] = collect-words/ignore blk [c]
+		--assert [c] = collect-words/ignore blk object [a: 1]
+	--test-- "collect-words/as"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/724
+		--assert [:a :c] = collect-words/as blk get-word!
+		--assert [a: c:] = collect-words/as blk set-word!
+		--assert ['a 'c] = collect-words/as blk lit-word!
+		--assert [/a /c] = collect-words/as blk refinement!
+		--assert [#a #c] = collect-words/as blk issue!
+		--assert all [error? e: try [collect-words/as blk string!] e/id = 'bad-func-arg]
+===end-group===
 
 
 ===start-group=== "Other issues"
@@ -203,9 +299,11 @@ Rebol [
 
 --test-- "issue-196"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/196
-	; with change related to https://github.com/Oldes/Rebol-issues/issues/2440
-	; bellow test is now throwing error instead of `true`
-	--assert error? try [do func [a] [context? 'a] 1] ;-no crash
+;@@ https://github.com/Oldes/Rebol-issues/issues/886
+;@@ https://github.com/Oldes/Rebol-issues/issues/2440
+	--assert function? do func [/local a] [context? 'a] ;-no crash
+	--assert 1 = do has [arg] [1]
+	--assert function? do has [arg] [context? 'arg] ;-no crash and recursion
 
 --test-- "issue-216"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/216

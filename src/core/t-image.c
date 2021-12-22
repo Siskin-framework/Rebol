@@ -659,9 +659,9 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	REBVAL	*len   = D_ARG(4);
 	REBVAL	*count = D_ARG(7);
 	REBINT  part = 1; // /part len
-	REBINT	partx, party;
+	REBINT	partx = 0, party = 0;
 	REBINT	dup = 1;  // /dup count
-	REBINT  dupx, dupy;
+	REBINT  dupx = 0, dupy = 0;
 	REBOOL  only = 0; // /only
 	REBCNT  index = VAL_INDEX(value);
 	REBCNT  tail = VAL_TAIL(value);
@@ -861,8 +861,8 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 		n = (REBCNT)(p - (REBCNT *)VAL_IMAGE_HEAD(value));
 		if (refs & AM_FIND_MATCH) { // match
 			if (n != (REBINT)index) goto find_none;
-			n++;
-		} else if (refs & AM_FIND_TAIL) n++; // /tail
+		}
+		if (refs & AM_FIND_TAIL) n++; // /tail
 		index = n;
 		VAL_INDEX(value) = index;
 		return value;
@@ -996,8 +996,8 @@ find_none:
 	REBVAL	*arg = D_ARG(2);
 	REBSER	*series = VAL_SERIES(value);
 	REBINT	index = (REBINT)VAL_INDEX(value);
-	REBINT	tail;
-	REBINT	diff, len, w, h;
+	REBINT	tail = 0;
+	REBINT	diff, len = 0, w, h;
 	REBVAL	*val;
 
 	// Clip index if past tail:
@@ -1047,6 +1047,17 @@ find_none:
 			DS_RET_INT(index + 1);
 			return R_RET;
 		}
+	case A_INDEXZQ:
+		if (D_REF(2)) {
+			VAL_SET(D_RET, REB_PAIR);
+			VAL_PAIR_X(D_RET) = (REBD32)(index % VAL_IMAGE_WIDE(value));
+			VAL_PAIR_Y(D_RET) = (REBD32)(index / VAL_IMAGE_WIDE(value));
+			return R_RET;
+		}
+		else {
+			DS_RET_INT(index);
+			return R_RET;
+		}
 	case A_LENGTHQ:
 		DS_RET_INT(tail > index ? tail - index : 0);
 		return R_RET;
@@ -1059,21 +1070,18 @@ find_none:
 		Pick_Path(value, arg, D_ARG(3));
 		return R_ARG3;
 
-	case A_SKIP:
-	case A_AT:
-		// This logic is somewhat complicated by the fact that INTEGER args use
-		// base-1 indexing, but PAIR args use base-0.
+	case A_AT:   // base-1
+	case A_ATZ:  // base-0
+	case A_SKIP: // base-0
 		if (IS_PAIR(arg)) {
-			if (action == A_AT) action = A_SKIP;
-			diff = (VAL_PAIR_Y_INT(arg) * VAL_IMAGE_WIDE(value) + VAL_PAIR_X_INT(arg)) +
-				((action == A_SKIP) ? 0 : 1);
+			diff = ((VAL_PAIR_Y_INT(arg) - ((action == A_AT) ? 1 : 0)) * VAL_IMAGE_WIDE(value) + VAL_PAIR_X_INT(arg));
 		} else
 			diff = Get_Num_Arg(arg);
 
 		index += diff;
 		if (action == A_SKIP) {
 			if (IS_LOGIC(arg)) index--;
-		} else {
+		} else if (action == A_AT) {
 			if (diff > 0) index--; // For at, pick, poke.
 		}
 

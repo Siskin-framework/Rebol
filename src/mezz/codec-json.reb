@@ -1,9 +1,12 @@
 Rebol [
+	Name:    json
+	Type:    module
+	Options: [delay]
+	Exports: [to-json load-json]
+	Version: 0.1.1
 	Title:   "JSON codec"
-	Name:    'JSON
 	Purpose: "Convert Rebol value into JSON format and back."
-	File:    %codec-json.r
-	Version: 0.1.0
+	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-json.reb
 	Author: [
 		"Gregg Irwin" {
 			Ported from %json.r by Romano Paolo Tenca, Douglas Crockford, 
@@ -24,6 +27,7 @@ Rebol [
 		0.0.3 31-Aug-2018 "Gabriele" "Converted to non-recursive version"
 		0.0.4  9-Oct-2018 "Gabriele" "Back to an easier to read recursive version"
 		0.1.0 13-Feb-2020 "Oldes"    "Ported Red's version back to Rebol"
+		0.1.1 22-Dec-2021 "Oldes"    "Handle '+1' and/or '-1' JSON keys"
 	]
 
 	Rights:  "Copyright (C) 2019 Red Foundation. All rights reserved."
@@ -44,9 +48,6 @@ Rebol [
 		https://github.com/rebolek/red-tools/blob/master/json.red
 		https://github.com/rgchris/Scripts/blob/master/red/altjson.red
 	]
-
-	Type: 'module
-	Exports: [to-json load-json]
 ]
 
 ;----------------------------------------------------------------
@@ -65,11 +66,11 @@ BOM: [
 ]
 
 BOM-UTF-16?: func [data [string! binary!]][
-	any [find/match data BOM/UTF-16-BE  find/match data BOM/UTF-16-LE]
+	any [find/match/tail data BOM/UTF-16-BE  find/match/tail data BOM/UTF-16-LE]
 ]
 
 BOM-UTF-32?: func [data [string! binary!]][
-	any [find/match data BOM/UTF-32-BE  find/match data BOM/UTF-32-LE]
+	any [find/match/tail data BOM/UTF-32-BE  find/match/tail data BOM/UTF-32-LE]
 ]
 
 
@@ -233,7 +234,15 @@ json-object: [
 ]
 
 property-list: [property any [sep property]]
-property: [json-name (emit either parse _str [word-1st any word-char] [to word! _str] [_str]) json-value]
+property: [
+	json-name (
+		emit either parse _str [
+			and [word-1st any word-char]
+			not [#"+" | #"-"] some digit end ; do not try to convert +1 or -1 to words
+		] [to word! _str] [_str]
+	)
+	json-value
+]
 json-name: [ws* string-literal ws* #":"]
 
 ;-----------------------------------------------------------
@@ -451,6 +460,7 @@ to-json: function [
 
 register-codec [
 	name:  'json
+	type:  'text
 	title: "JavaScript Object Notation"
 	suffixes: [%.json]
 

@@ -78,10 +78,11 @@ do*: func [
 		]
 
 		; Print out the script info
-		boot-print [
-			pick ["Module:" "Script:"] mod?  mold select hdr 'title
-			"Version:" select hdr 'version
-			"Date:" select hdr 'date
+		log/info 'REBOL [
+			pick ["Module:" "Script:"] mod?
+			mold select hdr 'title
+			"Version:" any [select hdr 'version '_]
+			"Date:"    any [select hdr 'date    '_]
 		]
 
 		set/any 'value try [
@@ -129,10 +130,16 @@ make-module*: func [
 	; Module is an object during its initialization:
 	obj: make object! 7 ; arbitrary starting size
 
-	if find spec/options 'extension [
-		append obj 'lib-base ; specific runtime values MUST BE FIRST
+	either find spec/options 'extension [
+		bind/new [
+			lib-base ; specific runtime values MUST BE FIRST
+			lib-file
+			lib-local
+			words
+		] obj
+	][
+		append obj 'lib-local ; local import library for the module
 	]
-	append obj 'local-lib ; local import library for the module
 
 	unless spec/type [spec/type: 'module] ; in case not set earlier
 
@@ -184,7 +191,7 @@ make-module*: func [
 	]
 
 	bind body obj
-	obj/local-lib: any [mixins make object! 0] ; always set, always overrides
+	obj/lib-local: any [mixins make object! 0] ; always set, always overrides
 	if block? hidden [protect/hide/words hidden]
 	obj: to module! reduce [spec obj]
 	do body
@@ -194,14 +201,7 @@ make-module*: func [
 ]
 
 ; MOVE some of these to SYSTEM?
-boot-banner: ajoin [
-	"REBOL 3." system/version/2 #"." system/version/3
-	" for "    system/platform " (" system/build/os #")"
-	" built "  system/build/date
-]
-if all [system/build/git system/build/git/commit] [
-	append append boot-banner " commit #" copy/part system/build/git/commit 8
-]
+boot-banner: none
 boot-help: "Boot-sys level - no extra features."
 boot-host: none ; any host add-ons to the lib (binary)
 boot-mezz: none ; built-in mezz code (put here on boot)
@@ -248,8 +248,8 @@ log: func [
 		exit
 	]
 	if system/options/quiet [exit]
-	level: select system/options/log id
-	if any [none? level level <= 0] [exit]
+	level: any [select system/options/log id 3]
+	if level <= 0 [exit]
 	if block? msg [msg: form reduce :msg]
 	case [
 		info  [ if level > 0 [print ajoin [" ^[[1;33m[" id "] ^[[36m" msg "^[[0m"]]]

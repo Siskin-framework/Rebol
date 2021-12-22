@@ -43,6 +43,31 @@
 	return (VAL_INT64(a) > VAL_INT64(b));
 }
 
+/***********************************************************************
+**
+*/	REBINT Gcd(REBINT a, REBINT b)
+/*
+**	Greatest common divisor (Euclid's algorithm)
+**
+***********************************************************************/
+{
+	if (a < 0) a = -a;
+	if (b < 0) b = -b;
+	if (b) while ((a %= b) && (b %= a));
+	return a + b;
+}
+
+/***********************************************************************
+**
+*/	REBINT Lcm(REBINT a, REBINT b)
+/*
+**	Least common multiple
+***********************************************************************/
+{
+	if (a == 0 && b == 0) return 0;
+	return a / Gcd(a, b) * b;
+}
+
 
 /***********************************************************************
 **
@@ -53,7 +78,7 @@
 	REBVAL *val = D_ARG(1);
 	REBVAL *val2 = D_ARG(2);
 	REBI64 num;
-	REBI64 arg;
+	REBI64 arg = 0;
 	REBINT n;
 
 	REBU64 p; // for overflow detection
@@ -245,6 +270,7 @@
 		else if (IS_CHAR(val))
 			num = VAL_CHAR(val);
 		// else if (IS_NONE(val)) num = 0;
+		else if (IS_DATE(val)) num = Date_To_Timestamp(val);
 		else if (IS_TIME (val)) num = SECS_IN(VAL_TIME(val));
 		else goto is_bad;
 		break;

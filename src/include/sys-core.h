@@ -39,6 +39,9 @@
 //#define MUNGWALL				// memory allocation bounds checking
 #define STACK_MIN   4000		// data stack increment size
 #define STACK_LIMIT 400000		// data stack max (6.4MB)
+#ifndef STACK_SIZE
+#define STACK_SIZE (1 * 1024 * 1024) // Default MSVS stack size is 1MiB
+#endif
 #define MIN_COMMON 10000		// min size of common buffer
 #define MAX_COMMON 100000		// max size of common buffer (shrink trigger)
 #define	MAX_NUM_LEN 64			// As many numeric digits we will accept on input
@@ -73,7 +76,7 @@
 #include "reb-c.h"
 #include "reb-defs.h"
 #include "reb-args.h"
-#include "tmp-bootdefs.h"
+#include "gen-bootdefs.h"
 #define PORT_ACTIONS A_CREATE  // port actions begin here
 
 #include "reb-device.h"
@@ -81,8 +84,10 @@
 #include "reb-event.h"
 
 #include "sys-value.h"
-#include "tmp-strings.h"
-#include "tmp-funcargs.h"
+#include "gen-strings.h"
+#include "gen-funcargs.h"
+
+#include "reb-struct.h"
 
 //-- Port actions (for native port schemes):
 typedef struct rebol_port_action_map {
@@ -106,18 +111,18 @@ typedef struct rebol_mold {
 #include "reb-math.h"
 #include "reb-codec.h"
 
-#include "tmp-sysobj.h"
-#include "tmp-sysctx.h"
+#include "gen-sysobj.h"
+#include "gen-sysctx.h"
 
 //#include "reb-net.h"
 #include "sys-panics.h"
-#include "tmp-boot.h"
+#include "gen-boot.h"
 #include "sys-mem.h"
-#include "tmp-errnums.h"
+#include "gen-errnums.h"
 #include "host-lib.h"
 #include "sys-stack.h"
 #include "sys-state.h"
-#include "tmp-portmodes.h"
+#include "gen-portmodes.h"
 
 /***********************************************************************
 **
@@ -158,6 +163,7 @@ enum {
 #define TS_STD_SERIES (TS_SERIES & ~TS_NOT_COPIED)
 #define TS_SERIES_OBJ ((TS_SERIES | TS_OBJECT) & ~TS_NOT_COPIED)
 #define TS_BLOCKS_OBJ ((TS_BLOCK | TS_OBJECT) & ~TS_NOT_COPIED)
+#define TS_DEEP_COPIED ((TS_SERIES | TYPESET(REB_MAP)) & ~TS_NOT_COPIED)
 
 #define TS_CODE ((CP_DEEP | TS_SERIES) & ~TS_NOT_COPIED)
 
@@ -354,8 +360,9 @@ enum {
 #else
 #define CHECK_STACK(v) if ((REBUPT)(v) <= Stack_Limit) Trap_Stack();
 #endif
-#define STACK_BOUNDS (4*1024*1000) // note: need a better way to set it !!
-// Also: made somewhat smaller than linker setting to allow trapping it
+#define STACK_BOUNDS (STACK_SIZE - (24 * 1024)) // made somewhat smaller than linker setting to allow trapping it
+//NOTE: in VS Debug build the stack overflow is detected before trying to expand the data stack!
+//      So use Relase build to test the stack expansion.
 
 
 /***********************************************************************
@@ -417,7 +424,7 @@ extern const REBACT Value_Dispatch[];
 //extern const REBYTE Lower_Case[];
 
 
-#include "tmp-funcs.h"
+#include "gen-funcs.h"
 
 
 /***********************************************************************

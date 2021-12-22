@@ -22,7 +22,7 @@ repend: func [
 	value {The value to insert}
 	/part {Limits to a given length or position}
 	length [number! series! pair!]
-	/only {Inserts a series as a series}
+	/only {Appends a block value as a block}
 	/dup {Duplicates the insert a specified number of times}
 	count [number! pair!]
 ][
@@ -43,4 +43,28 @@ reform: func [
 	;/with "separator"
 ][
 	form reduce :value
+]
+
+ellipsize: func [
+	"Truncate and add ellipsis if str is longer than len"
+	str [string!] "(modified)"
+	len [integer!] "Max length"
+	/one-line "Escape line breaks"
+	/local chars
+][
+	if one-line [
+		chars: #[bitset! [not bits #{0024}]]
+		parse str [
+			any [
+				some chars
+				| change #"^/" "^^/"
+				| change #"^M" "^^M"
+			]
+		]
+	]
+	if len < length? str [
+		append clear skip str (len - 3) "..."
+	]
+
+	str
 ]

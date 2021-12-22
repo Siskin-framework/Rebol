@@ -56,7 +56,7 @@
 
 	vp = VAL_TUPLE(out);
 	for (; NOT_END(data); data++, vp++, len++) {
-		if (len >= 10) return FALSE;
+		if (len >= MAX_TUPLE) return FALSE;
 		if (IS_INTEGER(data)) {
 			n = Int32(data);
 		}
@@ -68,11 +68,10 @@
 		*vp = n;
 	}
 
+	VAL_SET(out, type); // clears all flags so the length must be set after it
 	VAL_TUPLE_LEN(out) = len;
-
 	for (; len < 10; len++) *vp++ = 0;
 
-	VAL_SET(out, type);
 	return TRUE;
 }
 
@@ -191,8 +190,8 @@
 	REBCNT	len = 0;
 	REBCNT	alen;
 	REBI64	v;
-	REBI64	a;
-	REBDEC	dec;
+	REBI64	a = 0;
+	REBDEC	dec = 0.0;
 
 	value = D_ARG(1);
 	if (IS_TUPLE(value)) {

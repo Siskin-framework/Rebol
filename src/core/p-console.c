@@ -64,7 +64,6 @@
 	switch (action) {
 
 	case A_READ:
-
 		// If not open, open it:
 		if (!IS_OPEN(req)) {
 			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
@@ -92,7 +91,15 @@
 		if (req->actual > 0) req->actual -= 1; // remove LF from tail
 #endif
 
-		Set_Binary(ds, Copy_Bytes(req->data, req->actual));
+		// Convert to string or block of strings.
+		args = Find_Refines(ds, ALL_READ_REFS);
+		if (args & (AM_READ_STRING | AM_READ_LINES)) {
+			ser = Decode_UTF_String(req->data, req->actual, -1, TRUE, FALSE);
+			Set_String(ds, ser);
+			if (args & AM_READ_LINES) Set_Block(ds, Split_Lines(ds));
+		} else {
+			Set_Binary(ds, Copy_Bytes(req->data, req->actual));
+		}
 		break;
 
 	case A_UPDATE:
@@ -116,12 +123,15 @@
 		return R_FALSE;
 
 	case A_MODIFY:
-		if (IS_WORD(arg)
-			&& (VAL_WORD_CANON(arg) == SYM_ECHO || VAL_WORD_CANON(arg) == SYM_LINE)
-		) {
+		if (IS_WORD(arg)) {
+			switch (VAL_WORD_CANON(arg)) {
+				case SYM_ECHO:  req->modify.mode = MODE_CONSOLE_ECHO; break;
+				case SYM_LINE:  req->modify.mode = MODE_CONSOLE_LINE; break;
+				case SYM_ERROR: req->modify.mode = MODE_CONSOLE_ERROR; break;
+				default: Trap1(RE_BAD_FILE_MODE, arg);
+			}
 			spec = D_ARG(3);
 			if (!IS_LOGIC(spec)) Trap2(RE_INVALID_VALUE_FOR, spec, arg);
-			req->modify.mode = (VAL_WORD_CANON(arg) == SYM_ECHO) ? MODE_CONSOLE_ECHO : MODE_CONSOLE_LINE;
 			req->modify.value = VAL_LOGIC(spec);
 			OS_DO_DEVICE(req, RDC_MODIFY);
 		} else Trap1(RE_BAD_FILE_MODE, arg);

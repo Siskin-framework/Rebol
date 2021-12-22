@@ -343,6 +343,23 @@
 
 /***********************************************************************
 **
+*/	REBSER *Copy_Map(REBVAL *val, REBU64 types)
+/*
+**		Copy given map.
+**
+***********************************************************************/
+{
+	REBSER *series;
+	series = Make_Map(VAL_BLK_LEN(val) / 2);
+	//COPY_BLK_PART(series, VAL_BLK_DATA(data), n);
+	Append_Map(series, val, UNKNOWN);
+	if (types != 0) Copy_Deep_Values(series, 0, SERIES_TAIL(series), types);
+	Rehash_Hash(series);
+	return series;
+}
+
+/***********************************************************************
+**
 */	REBFLG MT_Map(REBVAL *out, REBVAL *data, REBCNT type)
 /*
 ***********************************************************************/
@@ -355,16 +372,7 @@
 	n = VAL_BLK_LEN(data);
 	if (n & 1) return FALSE;
 
-	series = Make_Map(n/2);
-
-	//COPY_BLK_PART(series, VAL_BLK_DATA(data), n);
-	Append_Map(series, data, UNKNOWN);
-
-	if (type != 0) Copy_Deep_Values(series, 0, SERIES_TAIL(series), type);
-
-	Rehash_Hash(series);
-
-	Set_Series(REB_MAP, out, series);
+	Set_Series(REB_MAP, out, Copy_Map(data, type));
 
 	return TRUE;
 }
@@ -484,7 +492,7 @@
 {
 	REBVAL *val = D_ARG(1);
 	REBVAL *arg = D_ARG(2);
-	REBINT n;
+	REBINT n = 0;
 	REBSER *series = VAL_SERIES(val);
 
 	// Check must be in this order (to avoid checking a non-series value);
@@ -540,6 +548,7 @@
 	case A_TO:
 		// make map! [word val word val]
 		if (IS_BLOCK(arg) || IS_PAREN(arg) || IS_MAP(arg)) {
+		map_from_block:
 			if (MT_Map(D_RET, arg, 0)) return R_RET;
 			Trap_Arg(arg);
 //		} else if (IS_NONE(arg)) {
@@ -548,6 +557,9 @@
 		} else if (IS_NUMBER(arg)) {
 			if (action == A_TO) Trap_Arg(arg);
 			n = Int32s(arg, 0);
+		} else if (IS_OBJECT(arg)) {
+			Set_Block(arg, Make_Object_Block(VAL_OBJ_FRAME(arg), 3));
+			goto map_from_block;
 		} else
 			Trap_Make(REB_MAP, Of_Type(arg));
 		// positive only
@@ -557,17 +569,16 @@
 
 	case A_COPY: {
 		REBU64 types = 0;
-		if (D_REF(ARG_COPY_DEEP)) {
-			//puts("deep copy wanted");
-			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? 0 : TS_STD_SERIES);
-		}
 		if D_REF(ARG_COPY_TYPES) {
 			arg = D_ARG(ARG_COPY_KINDS);
 			if (IS_DATATYPE(arg)) types |= TYPESET(VAL_DATATYPE(arg));
 			else types |= VAL_TYPESET(arg);
 		}
-		if (MT_Map(D_RET, val, types)) return R_RET;
-		Trap_Arg(val);
+		if (D_REF(ARG_COPY_DEEP)) {
+			types |= CP_DEEP | (D_REF(ARG_COPY_TYPES) ? types : TS_DEEP_COPIED);
+		}
+		Set_Series(REB_MAP, D_RET, Copy_Map(val, types));
+		break;
 	}
 	case A_CLEAR:
 		Clear_Series(series);

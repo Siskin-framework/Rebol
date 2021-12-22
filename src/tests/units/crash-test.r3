@@ -30,6 +30,7 @@ Rebol [
 
 --test-- "issue-2190"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2190
+	unset 'x ; make sure that `print x` has reason to throw an error!
 	catch/quit [ attempt [ quit ] ]
 	--assert error? try [print x] ;- no crash, just error!
 
@@ -170,6 +171,61 @@ Rebol [
 --test-- "issue-441"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/441
 	--assert unset? repeat n 1000000 [foreach a [1 2 3] []] ;- no crash
+
+--test-- "issue-2445"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2445
+	--assert not error? try [p: open tcp://localhost:10000]
+	loop 10 [--assert not error? try [close p open p]] ;- no crash
+	--assert not error? try [close p]
+
+--test-- "issue-589"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/589
+	--assert all [
+		error? e: try [system/schemes/tcp/actor] ;- no crash
+		e/id = 'invalid-port
+	]
+
+--test-- "issue-1295"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1295
+	--assert error? try [to-object now] ;-no crash
+
+--test-- "issue-802"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/802
+	--assert object? a: make object [b: self] []  ;-no crash
+--test-- "issue-1058"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1058
+	--assert not error? try [
+		o: make object! [w: self]
+		make o []
+	]
+--test--  "make of huge block"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1172
+	--assert all [
+		error? e: try [make block! (shift 1 26)]
+		e/id = 'no-memory
+	]
+	--assert all [
+		error? e: try [make block! (shift 1 28)]
+		e/id = 'no-memory
+	]
+	--assert all [
+		error? e: try [append make block! -1 + (shift 1 28) 1] ;-no crash
+		e/id = 'no-memory
+	]
+--test-- "cyclic block comparison"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1049
+	a: copy []
+	insert/only a a
+	b: copy []
+	insert/only b b
+	--assert all [error? e: try [equal? a b] e/id = 'stack-overflow]
+	--assert all [error? e: try [equiv? a b] e/id = 'stack-overflow] 
+	--assert all [error? e: try [strict-equal? a b] e/id = 'stack-overflow] 
+
+--test-- "copy action!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/767
+	--assert same? :greater? copy :greater? ;-no crash
+
 ===end-group===
 
 ~~~end-file~~~

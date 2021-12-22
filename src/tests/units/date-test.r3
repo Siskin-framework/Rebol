@@ -166,6 +166,37 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/276
 		--assert error? try [0 - 1-jan-0000] ;- no crash!
 
+	--test-- "negative year"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/548
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1250
+		--assert all [error? e: try [load {1/11/-0}]  e/id = 'invalid]
+		--assert all [error? e: try [load {1/11/-1}]  e/id = 'invalid]
+		--assert all [error? e: try [load {1/11/-00}] e/id = 'invalid]
+		--assert 1-Nov-2000 = try [load {1/11/0}] ; this is error in Red!
+
+	--test-- "invalid time in date"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1413
+		--assert error? try [load "3-Jan-2010/30:00"]
+		--assert error? try [load "3-Jan-2010/-30:00"]
+		--assert error? try [load "3-Jan-2010/-10:00"]
+		--assert error? try [load "3-Jan-2010/-30:00+1:0"]
+
+	--test-- "timezones"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1608
+		--assert all [date?  d: try [load {27-Jan-2009/13:50+5}] d/zone = 0:0]
+		--assert all [date?  d: try [load {27-Jan-2009/13:50+20}] d/zone = 0:15]
+		--assert all [date?  d: try [load {27-Jan-2009/13:50+29}] d/zone = 0:15]
+		--assert all [date?  d: try [load {27-Jan-2009/13:50+30}] d/zone = 0:30]
+		--assert all [date?  d: try [load {27-Jan-2009/13:50+200}] d/zone = 2:0]
+		--assert all [date?  d: try [load {27-Jan-2009/13:50+220}] d/zone = 2:15]
+		--assert all [date?  d: try [load {27-Jan-2009/13:50+1000}] d/zone = 10:0]
+		--assert all [date?  d: try [load {27-Jan-2009/13:50+1500}] d/zone = 15:0]
+		--assert all [error? e: try [load {27-Jan-2009/15:05+1501}] e/id = 'invalid]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/570
+		--assert all [date?  d: try [load {27-Jan-2009/13:50+5:45}] d/zone = 5:45]
+		--assert all [error? e: try [load {27-Jan-2009/15:05+24:00}]  e/id = 'invalid]
+		--assert all [error? e: try [load {27-Jan-2009/15:05-+26:00}] e/id = 'invalid]
+
 	--test-- "poke on date not supported"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1074
 		d: 2009-jul-09

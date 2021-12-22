@@ -380,7 +380,7 @@ static void *Task_Ready;
 	//OS_Call_Device(RDI_STDIO, RDC_CLOSE); // close echo
 	
 	OS_Quit_Devices(0);
-#ifdef USE_NATIVE_IMAGE_CODECS
+#ifdef INCLUDE_IMAGE_OS_CODEC
 	OS_Release_Codecs();
 #endif
 #ifdef REB_VIEW
@@ -464,7 +464,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	REBOOL OS_Get_Boot_Path(REBCHR *name)
+*/	REBOOL OS_Get_Boot_Path(REBCHR **name)
 /*
 **		Used to determine the program file path for REBOL.
 **		This is the path stored in system->options->boot and
@@ -472,7 +472,8 @@ static void *Task_Ready;
 **
 ***********************************************************************/
 {
-	return (GetModuleFileName(0, name, MAX_FILE_NAME) > 0);
+	*name = MAKE_STR(MAX_FILE_NAME);
+	return (GetModuleFileName(0, *name, MAX_FILE_NAME) > 0);
 }
 
 
@@ -546,6 +547,8 @@ static void *Task_Ready;
 **
 */	REBCHR *OS_List_Env(void)
 /*
+**		Returns NULL on error.
+**
 ***********************************************************************/
 {
 	REBCHR *env = GetEnvironmentStrings();
@@ -559,7 +562,9 @@ static void *Task_Ready;
 	}
 	len++;
 
-	str = OS_Make(len * sizeof(REBCHR));
+	str = OS_Make(len * sizeof(REBCHR)); // Must be released by caller!
+	if(!str) return NULL;
+
 	MOVE_MEM(str, env, len * sizeof(REBCHR));
 
 	FreeEnvironmentStrings(env);
@@ -638,16 +643,37 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	REBOOL OS_Set_Current_Dir(REBCHR *path)
+*/	int OS_Set_Current_Dir(REBCHR *path)
 /*
-**		Set the current directory to local path. Return FALSE
-**		on failure.
+**		Set the current directory to local path.
+**		Return 0 on success else error number.
 **
 ***********************************************************************/
 {
-	return SetCurrentDirectory( path[0]==0 ? L"\\" : path );
+	if (SetCurrentDirectory(path[0] == 0 ? L"\\" : path)) {
+		// directory changed... update PWD
+		// https://github.com/Oldes/Rebol-issues/issues/2448
+		SetEnvironmentVariable(L"PWD", path);
+		return 0;
+	} else
+		return GetLastError();
 }
 
+/***********************************************************************
+**
+*/	REBCHR* OS_Real_Path(const REBCHR *path)
+/*
+**		Returns a null-terminated string containing the canonicalized
+**		absolute pathname corresponding to path. In the returned string,
+**		symbolic links are resolved, as are . and .. pathname components.
+**		Consecutive slash (/) characters are replaced by a single slash.
+**
+**		The result should be freed after copy/conversion.
+**
+***********************************************************************/
+{
+	return _wfullpath(NULL, path, MAX_PATH);
+}
 
 /***********************************************************************
 **
@@ -1226,7 +1252,7 @@ error_error:
 	}
 
 output_error:
-	if (input_type == FILE_TYPE) {
+	if (input_type == FILE_TYPE && si.hStdInput != NULL) {
 		CloseHandle(si.hStdInput);
 	}
 

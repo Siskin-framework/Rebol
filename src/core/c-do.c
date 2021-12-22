@@ -62,7 +62,7 @@ void T_List(REBCNT n) {;}		// list
 
 void Do_Rebcode(REBVAL *v) {;}
 
-#include "tmp-evaltypes.h"
+#include "gen-evaltypes.h"
 
 #define EVAL_TYPE(val) (Eval_Type_Map[VAL_TYPE(val)])
 
@@ -105,7 +105,9 @@ static REBVAL *Func_Word(REBINT dsf)
 	}
 	Extend_Series(DS_Series, amount);
 	DS_Base = BLK_HEAD(DS_Series);
+#ifdef SHOW_EXPAND_STACK
 	Debug_Fmt(BOOT_STR(RS_STACK, 0), DSP, SERIES_REST(DS_Series));
+#endif
 }
 
 
@@ -861,7 +863,7 @@ more_path:
 
 	//CHECK_MEMORY(1);
 	CHECK_STACK(&value);
-	if ((DSP + 20) > (REBINT)SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN); //Trap0(RE_STACK_OVERFLOW);
+	if ((DSP + 200) > (REBINT)SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN); //Trap0(RE_STACK_OVERFLOW); 
 	if (--Eval_Count <= 0 || Eval_Signals) Do_Signals();
 
 	value = BLK_SKIP(block, index);
@@ -916,7 +918,7 @@ eval_func2:
 		// Evaluate the function:
 		DSF = dsf;	// Set new DSF
 		if (!THROWN(DS_TOP)) {
-			//if (Trace_Flags) 
+			if (Trace_Flags) 
 				Trace_Func(word, value);
 			Func_Dispatch[ftype](value);
 		}
@@ -932,6 +934,7 @@ eval_func2:
 
 		// The return value is a FUNC that needs to be re-evaluated.
 		if (VAL_GET_OPT(DS_TOP, OPTS_REVAL) && ANY_FUNC(DS_TOP)) {
+			VAL_CLR_OPT(DS_TOP, OPTS_REVAL); // avoid recursion https://github.com/Oldes/Rebol-issues/issues/196
 			value = DS_POP; // WARNING: value is volatile on TOS1 !
 			word = Get_Type_Word(VAL_TYPE(value));
 			index--;		// Backup block index to re-evaluate.
@@ -2301,7 +2304,7 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 					OS_EXIT(VAL_INT32(VAL_ERR_VALUE(val))); // console quit
 				}
 				if (VAL_ERR_NUM(val) >= RE_THROW_MAX)
-					Print_Value(val, 1000, FALSE);
+					Print_Value(val, 1000, FALSE, TRUE);
 			}
 			return -1;
 		}

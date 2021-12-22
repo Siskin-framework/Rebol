@@ -56,6 +56,7 @@ enum parse_flags {
 	PF_CHANGE,
 	PF_RETURN,
 	PF_WHILE,
+	PF_ADVANCE, // used to report that although index was not changed, rule is suppose to advance
 };
 
 #define MAX_PARSE_DEPTH 512
@@ -181,7 +182,6 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 {
 	// !!! THIS CODE NEEDS CLEANUP AND REWRITE BASED ON OTHER CHANGES
 	REBSER *series = parse->series;
-	REBSER *ser;
 	REBCNT flags = parse->flags | AM_FIND_MATCH | AM_FIND_TAIL;
 //	int rewrite_needed;
 
@@ -204,9 +204,12 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 			index = (UP_CASE(VAL_CHAR(item)) == UP_CASE(GET_ANY_CHAR(series, index))) ? index+1 : NOT_FOUND;
 		break;
 
-	case REB_EMAIL:
 	case REB_STRING:
 	case REB_BINARY: 
+	case REB_FILE:
+	case REB_URL:
+	case REB_EMAIL:
+	case REB_REF:
 		index = Find_Str_Str(series, 0, index, SERIES_TAIL(series), 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), flags);
 		break;
 
@@ -225,11 +228,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 		break;
 */
 	case REB_TAG:
-	case REB_FILE:
-//	case REB_ISSUE:
-		// !! Can be optimized (w/o COPY)
-		ser = Copy_Form_Value(item, 0);
-		index = Find_Str_Str(series, 0, index, SERIES_TAIL(series), 1, ser, 0, ser->tail, flags);
+		index = Find_Str_Tag(series, 0, index, SERIES_TAIL(series), 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), flags);
 		break;
 
 	case REB_NONE:
@@ -423,14 +422,10 @@ no_result:
 					if (ch1 == ch2) goto found1;
 				}
 				else if (IS_TAG(item)) {
-					ch2 = '<';
-					if (ch1 == ch2) {
-						// adapted from function Parse_To :-)
-						REBSER *ser;
-						ser = Copy_Form_Value(item, 0);
-						i = Find_Str_Str(series, 0, index, series->tail, 1, ser, 0, ser->tail,  AM_FIND_MATCH | parse->flags);
+					if (ch1 == '<') {
+						i = Find_Str_Tag(series, 0, index, series->tail, 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item),  AM_FIND_MATCH | parse->flags);
 						if (i != NOT_FOUND) {
-							if (is_thru) i += ser->tail;
+							if (is_thru) i += VAL_LEN(item) + 2;
 							index = i;
 							goto found;
 						}
@@ -501,8 +496,7 @@ bad_target:
 ***********************************************************************/
 {
 	REBSER *series = parse->series;
-	REBCNT i;
-	REBSER *ser;
+	REBCNT i = 0;
 
 	// TO a specific index position.
 	if (IS_INTEGER(item)) {
@@ -530,17 +524,10 @@ bad_target:
 		}
 		else {
 			// "str"
-			if (ANY_BINSTR(item)) {
-				if (!IS_STRING(item) && !IS_BINARY(item)) {
-					// !!! Can this be optimized not to use COPY?
-					ser = Copy_Form_Value(item, 0);
-					i = Find_Str_Str(series, 0, index, series->tail, 1, ser, 0, ser->tail, HAS_CASE(parse));
-					if (i != NOT_FOUND && is_thru) i += ser->tail;
-				}
-				else {
-					i = Find_Str_Str(series, 0, index, series->tail, 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), HAS_CASE(parse));
-					if (i != NOT_FOUND && is_thru) i += VAL_LEN(item);
-				}
+			//O: not using ANY_BINSTR as TAG is now handled separately
+			if (VAL_TYPE(item) >= REB_BINARY && VAL_TYPE(item) < REB_TAG) {
+				i = Find_Str_Str(series, 0, index, series->tail, 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), HAS_CASE(parse));
+				if (i != NOT_FOUND && is_thru) i += VAL_LEN(item);
 			}
 			// #"A"
 			else if (IS_CHAR(item)) {
@@ -551,6 +538,10 @@ bad_target:
 			else if (IS_BITSET(item)) {
 				i = Find_Str_Bitset(series, 0, index, series->tail, 1, VAL_BITSET(item), HAS_CASE(parse));
 				if (i != NOT_FOUND && is_thru) i++;
+			}
+			else if (IS_TAG(item)) {
+				i = Find_Str_Tag(series, 0, index, series->tail, 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), HAS_CASE(parse));
+				if (i != NOT_FOUND && is_thru) i += VAL_LEN(item) + 2;
 			}
 			else
 				Trap1(RE_PARSE_RULE, item - 1);
@@ -748,6 +739,7 @@ bad_target:
 						continue;
 	
 					case SYM_AND:
+					case SYM_AHEAD:
 						SET_FLAG(flags, PF_AND);
 						continue;
 
@@ -836,8 +828,8 @@ bad_target:
 					// #2269 - reset the position if we are not in the middle of any rule
 					// don't allow code like: [copy x :pos integer!]
 					if (flags != 0) Trap1(RE_PARSE_RULE, rules-1); 
-                    begin = index;
-
+					begin = index;
+					SET_FLAG(parse->flags, PF_ADVANCE);
 					continue;
 				}
 
@@ -975,10 +967,20 @@ bad_target:
 			if (i != NOT_FOUND) {
 				count++; // may overflow to negative
 				if (count < 0) count = MAX_I32; // the forever case
+
 				// If input did not advance:
-				if (i == index && !GET_FLAG(flags, PF_WHILE)) {
-					if (count < mincount) index = NOT_FOUND; // was not enough
-					break;
+				if (i == index) {
+					// check if there was processed some _modifying_ rule, which should advance
+					// even if index was not changed (https://github.com/Oldes/Rebol-issues/issues/2452)
+					if (GET_FLAG(parse->flags, PF_ADVANCE)) {
+						// clear the state in case, that there are other rules to be processed
+						// keep it in case that we were at the last one
+						if(count < maxcount) CLR_FLAG(parse->flags, PF_ADVANCE);
+					}
+					else if (!GET_FLAG(flags, PF_WHILE)) {
+						if (count < mincount) index = NOT_FOUND; // was not enough
+						break;
+					}
 				}
 			}
 			//if (i >= series->tail) {     // OLD check: no more input
@@ -1055,6 +1057,7 @@ post:
 						if (IS_PROTECT_SERIES(series)) Trap0(RE_PROTECTED);
 						Remove_Series(series, begin, count);
 					}
+					SET_FLAG(parse->flags, PF_ADVANCE);
 					index = begin;
 				}
 				if (flags & (1<<PF_INSERT | 1<<PF_CHANGE)) {
@@ -1087,6 +1090,7 @@ post:
 						index = Modify_String(GET_FLAG(flags, PF_CHANGE) ? A_CHANGE : A_INSERT,
 								series, begin, item, cmd, count, 1);
 					}
+					SET_FLAG(parse->flags, PF_ADVANCE);
 				}
 				if (GET_FLAG(flags, PF_AND)) index = begin;
 			}

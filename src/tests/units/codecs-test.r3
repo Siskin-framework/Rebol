@@ -37,6 +37,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "TEXT codec"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2028
 	--test-- "ENCODE text"
 		--assert "1 2" = encode 'text [1 2]
 		--assert "1 2" = encode 'text #{312032}
@@ -61,16 +62,47 @@ Rebol [
 		--assert #{CAFE} = load save #{} #{CAFE}
 		--assert [1 2]   = load save #{} [1 2]
 
-	--test-- "invalid image SAVE"
-		--assert error? try [save %temp.bmp [1 2]]
-		--assert error? try [save %temp.png [1 2]]
-		--assert error? try [save %temp.jpg [1 2]]
-		--assert error? try [save %temp.bmp "foo"]
-		--assert error? try [save %temp.png "foo"]
-		--assert error? try [save %temp.jpg "foo"]
-		--assert error? try [save %temp.bmp #{00}]
-		--assert error? try [save %temp.png #{00}]
-		--assert error? try [save %temp.jpg #{00}]
+	--test-- "invalid image SAVE"	
+		if in codecs 'png [
+			--assert error? try [save %temp.png [1 2]]
+			--assert error? try [save %temp.png "foo"]
+			--assert error? try [save %temp.png #{00}]
+		]
+		if in codecs 'bmp [
+			--assert error? try [save %temp.bmp [1 2]]
+			--assert error? try [save %temp.bmp "foo"]
+			--assert error? try [save %temp.bmp #{00}]
+		]
+		if in codecs 'jpg [
+			--assert error? try [save %temp.jpg [1 2]]
+			--assert error? try [save %temp.jpg "foo"]
+			--assert error? try [save %temp.jpg #{00}]
+		]
+	--test-- "SAVE/compress"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1466
+		--assert all [
+			binary? b: try [save/compress none [print "Hello World!"] true]
+			b = #{
+5245424F4C205B0A202020206F7074696F6E733A205B636F6D70726573735D0A
+5D0A789C2B28CACC2B5150F248CDC9C95708CF2FCA495154E20200526B06D9}
+			(load b) = [print "Hello World!"]
+			object? first load/header b
+		]
+		--assert all [
+			binary? b: try [save/compress none [print "Hello World!"] 'script]
+			b = #{
+5245424F4C205B0A202020206F7074696F6E733A205B636F6D70726573735D0A
+5D0A3634237B654A77724B4D724D4B314651386B6A4E79636C58434D3876796B
+6C52564F494341464A7242746B3D7D}
+			(load b) = [print "Hello World!"]
+			object? first load/header b
+		]
+		--assert all [
+			binary? b: try [save/compress none [print "Hello World!"] false]
+			b = #{789C2B28CACC2B5150F248CDC9C95708CF2FCA495154E20200526B06D9}
+			(load decompress b 'zlib) = [print "Hello World!"]
+		]
+
 ===end-group===
 
 
@@ -143,7 +175,7 @@ if find codecs 'wav [
 			bin: none
 			
 		--test-- "Encode WAV"
-			samples: #[si16! [0 -1000 -2000 -1000 0 1000 2000 1000 0]]
+			samples: #[i16! [0 -1000 -2000 -1000 0 1000 2000 1000 0]]
 			--assert binary? bin: encode 'wav :samples
 			--assert object? snd: decode 'wav :bin
 			--assert   'wave = snd/type
@@ -190,6 +222,7 @@ if find codecs 'crt [
 	codecs/crt/verbose: 0
 ]
 
+import 'swf
 if find codecs 'swf [
 	codecs/swf/verbose: 1
 	===start-group=== "SWF codec"
@@ -221,8 +254,8 @@ if find codecs 'zip [
 
 		--test-- "Decode ZIP using the codec directly"
 			--assert block? data: codecs/zip/decode/only %units/files/test.aar [%classes.jar]
-			--assert data/2/2 = 646121705
-			--assert block? codecs/zip/decode data/2/3
+			--assert data/2/3 = 646121705
+			--assert block? codecs/zip/decode data/2/2
 
 		--test-- "Decode ZIP using info"
 			bin: read %units/files/test-lzma.zip
@@ -231,6 +264,50 @@ if find codecs 'zip [
 			--assert info/2/1 = 18-Aug-2012/5:20:28
 			data: codecs/zip/decompress-file at bin info/2/2 reduce [info/2/5 info/2/3 info/2/4]
 			--assert info/2/6 = checksum data 'crc32
+
+		--test-- "Encode ZIP using encode"
+			--assert binary? try [bin: encode 'ZIP [
+				%empty-folder/ none
+				%file-1 "Hello!"
+				%file-2 "Hello, Hello, Hello, Hello, Hello!"
+				%file-3 #{000102030400010203040001020304}
+				%folder/file-4 [1-Jan-2021 "This file is with date!"]
+				%file-5 ["Uncompressed" store] ; this file will be included uncompressed
+				%file-6 ["This file have a comment" comment: "This file is not important."]
+				%file-7 ["File with attributes" att-int: 1 att-ext: 2175008768]
+			]]
+			data: decode 'ZIP bin
+			--assert all [
+				data/1 = %empty-folder/
+				data/3 = %file-1
+				data/4/2 = #{48656C6C6F21}
+				data/5 = %file-2
+				data/9 = %folder/file-4
+				data/10/1 = 1-Jan-2021/0:00
+				"Uncompressed" = to string! second select data %file-5
+				"This file is not important." = to string! select select data %file-6 'comment
+				         1 = select select data %file-7 'att-int
+				2175008768 = select select data %file-7 'att-ext
+			]
+
+		--test-- "Encode ZIP using directory"
+			--assert not error? try [save %ico.zip %units/files/ico/]
+			data: load %ico.zip
+			--assert 30 = length? data ; 14 files and 1 directory
+			--assert %ico/ = data/1
+			; the order of files is not same across all systems, so next assert is not used
+			; --assert %ico/icon_128.png = data/3
+			--assert block? select data %ico/icon_128.png
+			delete %ico.zip
+
+		--test-- "Encode ZIP using wildcard"
+			--assert not error? try [save %temp.zip %units/files/issue-2186*.txt]
+			data: load %temp.zip
+			--assert 8 = length? data ; 4 files
+			--assert %issue-2186-UTF16-BE.txt = data/1
+			--assert %issue-2186-UTF16-LE.txt = data/3
+			delete %temp.zip
+
 
 	===end-group===
 	system/options/log/zip: v
@@ -280,23 +357,145 @@ if find codecs 'unixtime [
 	===end-group===
 ]
 
+if all [
+	find codecs 'ICO
+	find codecs 'PNG
+][
+	===start-group=== "ICO codec"
+	--test-- "ICO encode"
+		--assert all [
+			binary? bin: try [codecs/ico/encode sort wildcard %units/files/ico/ %*.png]
+			#{0E7368623AD1DBD1BD94FC55B174778C} = checksum bin 'md5
+		]
+	--test-- "ICO decode"
+		--assert all [
+			block? ico: try [codecs/ico/decode %units/files/test.ico]
+			ico/1/1  = 128 ico/1/2  = 32  binary? ico/1/3
+			ico/2/1  = 16  ico/2/2  = 32  binary? ico/2/3
+			ico/3/1  = 20  ico/3/2  = 32  binary? ico/3/3
+			ico/4/1  = 24  ico/4/2  = 32  binary? ico/4/3
+			ico/5/1  = 30  ico/5/2  = 32  binary? ico/5/3
+			ico/6/1  = 32  ico/6/2  = 32  binary? ico/6/3
+			ico/7/1  = 36  ico/7/2  = 32  binary? ico/7/3
+			ico/8/1  = 40  ico/8/2  = 32  binary? ico/8/3
+			ico/9/1  = 48  ico/9/2  = 32  binary? ico/9/3
+			ico/10/1 = 60  ico/10/2 = 32  binary? ico/10/3
+			ico/11/1 = 64  ico/11/2 = 32  binary? ico/11/3
+			ico/12/1 = 72  ico/12/2 = 32  binary? ico/12/3
+			ico/13/1 = 80  ico/13/2 = 32  binary? ico/13/3
+			ico/14/1 = 96  ico/14/2 = 32  binary? ico/14/3
+		]
+		--assert all [
+			image? img: try [decode 'png ico/2/3]
+			16x16 = img/size
+		]
+	===end-group===
+]
+
+try [import 'json]
 if find codecs 'JSON [
 	===start-group=== "JSON codec"
 	--test-- "JSON encode/decode"
 		data: #(a: 1 b: #(c: 2.0) d: "^/^-")
 		str: encode 'JSON data
 		--assert data = decode 'JSON str
+		; Github is using "+1" and "-1" keys in the `reactions` data now
+		--assert ["+1" 1] = to block! decode 'JSON {{"+1": 1}}
 	===end-group===
 ]
 
 if find codecs 'PNG [
+	system/options/log/png: 3
 	===start-group=== "PNG codec"
 	--test-- "png/size?"
 		--assert 24x24 = codecs/png/size? read %units/files/r3.png
 		--assert none?   codecs/png/size? read %units/files/test.aar
+
+	--test-- "png/chunks"
+		--assert all [
+			; read PNG file as a block of chunks...
+			block? blk: try [codecs/png/chunks %units/files/png-from-photoshop.png]
+			10 = length? blk
+			"IHDR" = to string! blk/1    13 = length? blk/2
+			"pHYs" = to string! blk/3     9 = length? blk/4
+			"iTXt" = to string! blk/5  2661 = length? blk/6
+			"IDAT" = to string! blk/7   264 = length? blk/8
+			"IEND" = to string! blk/9     0 = length? blk/10
+		]
+		--assert all [
+			; read PNG with only specified set of chunks...
+			block? blk: try [codecs/png/chunks/only %units/files/png-from-photoshop.png ["IHDR" "IDAT" "PLTE"]]
+			4 = length? blk
+			"IHDR" = to string! blk/1
+			"IDAT" = to string! blk/3
+			; the source image does not use palette, so there is no PLTE chunk
+			; write filtered set of chunks back as a PNG file...
+			file? try [write %new.png codecs/png/chunks blk]
+			; validate, if the new PNG is loadeable
+			image? img: try [load %new.png]
+			img/size = 72x72
+			; compare sizes of the original and the reduced version
+			321  = size? %new.png
+			3015 = size? %units/files/png-from-photoshop.png
+		]
+		try [delete %new.png]
 	===end-group===
 ]
 
+if find codecs 'QOI [
+	===start-group=== "QOI codec"
+	;@@ https://github.com/Oldes/Rebol3/issues/39
+	--test-- "save qoi"
+		img: make image! 256x256
+		--assert file? try [save %test.qoi img]
+	--test-- "load qoi"
+		--assert equal? img try [load %test.qoi]
+	--test-- "qoi/size?"
+		--assert 256x256 = codecs/qoi/size? %test.qoi
+		try [delete %test.qoi]
+	===end-group===
+]
+
+if find codecs 'JPEG [
+	===start-group=== "JPEG codec"
+	--test-- "load jpeg"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/678
+		--assert image? load %units/files/flower.jpg
+		--assert image? load %units/files/flower-from-photoshop.jpg
+		--assert image? load %units/files/flower-tiny.jpg
+	--test-- "jpeg/size?"
+		--assert 256x256 = codecs/jpeg/size? %units/files/flower.jpg
+		--assert 256x256 = codecs/jpeg/size? %units/files/flower-from-photoshop.jpg
+		--assert 256x256 = codecs/jpeg/size? %units/files/flower-tiny.jpg
+		--assert none?     codecs/jpeg/size? %units/files/test.aar
+	===end-group===
+]
+
+if find codecs 'GIF [
+	===start-group=== "GIF codec"
+	--test-- "gif/size?"
+		--assert 256x256 = codecs/gif/size? %units/files/flower.gif
+		--assert none?     codecs/gif/size? %units/files/test.aar
+	===end-group===
+]
+
+if find codecs 'BMP [
+	===start-group=== "BMP codec"
+	--test-- "bmp/size?"
+		--assert 256x256 = codecs/bmp/size? %units/files/flower.bmp
+		--assert none?     codecs/bmp/size? %units/files/test.aar
+	===end-group===
+]
+
+if find codecs 'DDS [
+	===start-group=== "DDS codec"
+	--test-- "dds/size?"
+		--assert 256x256 = codecs/dds/size? %units/files/flower.dds
+		--assert none?     codecs/dds/size? %units/files/test.aar
+	===end-group===
+]
+
+try [import 'xml]
 if find codecs 'XML [
 	===start-group=== "XML codec"
 	--test-- "XML decode test1"
@@ -329,6 +528,7 @@ if find codecs 'XML [
 	===end-group===
 ]
 
+try [import 'html-entities]
 if find codecs 'html-entities [
 	===start-group=== "HTML-entities codec"
 	--test-- "decode html-entities"
@@ -338,5 +538,7 @@ if find codecs 'html-entities [
 
 	===end-group===
 ]
+
+;@@ PDF codec test is in: codecs-test-pdf.r3
 
 ~~~end-file~~~

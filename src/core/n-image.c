@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2019 Rebol Open Source Contributors
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,9 +34,15 @@
 
 #include "reb-codec.h"
 #include "sys-magick.h" // used for `resize` native
-#if defined(TO_WINDOWS) && defined(USE_OS_IMAGE_CODECS)
+#include "sys-blur.h" // used for `blur` native
+#if defined(TO_WINDOWS) && defined(INCLUDE_IMAGE_OS_CODEC)
 #include "winerror.h" // used for WINCODEC_ERR_COMPONENTNOTFOUND
 #endif
+
+#ifndef WINCODEC_ERR_COMPONENTNOTFOUND
+#define WINCODEC_ERR_COMPONENTNOTFOUND   0x88982F50L
+#endif
+
 
 typedef struct REBCLR {
 	union {
@@ -260,7 +266,7 @@ typedef struct REBCLR {
 	REBCNT  filter = 0;
 	REBDEC  blur = 1.0;
 	REBOOL  has_alpha = Image_Has_Alpha(val_img, FALSE);
-	REBINT  wide, high;
+	REBINT  wide = 0, high = 0;
 	
 	if (IS_INTEGER(val_filter))
 		filter = VAL_INT32(val_filter);
@@ -336,6 +342,25 @@ typedef struct REBCLR {
 
 /***********************************************************************
 **
+*/	REBNATIVE(blur)
+/*
+//	blur: native [
+//		"Blur (Gaussian) given image"
+//		 image    [image!]  "Image to blur (modified)"
+//		 radius   [number!] "Blur amount"
+//	]
+***********************************************************************/
+{
+	REBVAL* val_img = D_ARG(1);
+	REBVAL* val_rad = D_ARG(2);
+	REBINT radius = IS_INTEGER(val_rad) ? VAL_INT32(val_rad) : (REBINT)round(VAL_DECIMAL(val_rad));
+
+	BlurImage(VAL_SERIES(val_img), radius);
+	return R_ARG1;
+}
+
+/***********************************************************************
+**
 */	REBNATIVE(image)
 /*
 //  image: native [
@@ -349,8 +374,8 @@ typedef struct REBCLR {
 //		 num       [integer!]  "1-based index of the image to receive"
 //		/as        "Used to define which codec should be used"
 //		 type      [word!] "One of: [PNG JPEG JPEGXR BMP DDS GIF TIFF] read only: [DNG ICO HEIF]"
-//		/scale
-//		 sc        [pair! percent!]
+//;		/scale
+//;		 sc        [pair! percent!]
 //  ]
 ***********************************************************************/
 {
@@ -363,17 +388,16 @@ typedef struct REBCLR {
 	REBVAL *val_frame    = D_ARG(7);
 	REBOOL  ref_as       = D_REF(8);
 	REBVAL *val_type     = D_ARG(9);
-	REBOOL  ref_scale    = D_REF(10);
-	REBVAL *val_scale    = D_ARG(11);
+	//REBOOL  ref_scale    = D_REF(10);
+	//REBVAL *val_scale    = D_ARG(11);
 
 	REBCDI codi;
 	REBSER *ser = NULL;
 	REBCNT  frm = ref_frame ? VAL_INT32(val_frame) - 1 : 0;
-	REBVAL *ret = D_RET;
 	REBCNT length;
 
 
-#if defined(TO_WINDOWS) && defined(USE_OS_IMAGE_CODECS)
+#ifdef INCLUDE_IMAGE_OS_CODEC
 	CLEARS(&codi);
 	if (ref_as) {
 		switch (VAL_WORD_CANON(val_type)) {
@@ -383,6 +407,7 @@ typedef struct REBCLR {
 			case SYM_JPEGXR:
 			case SYM_HDP:
 			case SYM_JXR:   codi.type = CODI_IMG_JXR;  break;
+			case SYM_JP2:   codi.type = CODI_IMG_JP2;  break;
 			case SYM_BMP:   codi.type = CODI_IMG_BMP;  break;
 			case SYM_GIF:   codi.type = CODI_IMG_GIF;  break;
 			case SYM_DDS:   codi.type = CODI_IMG_DDS;  break;
@@ -398,7 +423,11 @@ typedef struct REBCLR {
 	if (ref_load) {
 		
 		if (IS_FILE(val_src_file)) {
+#ifdef TO_WINDOWS
 			ser = Value_To_Local_Path(val_src_file, TRUE);
+#else
+			ser = Value_To_OS_Path(val_src_file, TRUE);
+#endif
 		} else {
 			// raw binary data
 			codi.data = VAL_BIN(val_src_file);
@@ -409,9 +438,11 @@ typedef struct REBCLR {
 
 		if(codi.error) {
 			switch (codi.error) {
+#ifdef TO_WINDOWS
 			case WINCODEC_ERR_COMPONENTNOTFOUND:
 				Trap1(RE_NO_CODEC, val_type);
 				break;
+#endif
 			default:
 				SET_INTEGER(D_RET, codi.error);
 				if (IS_BINARY(val_src_file)) {
@@ -434,7 +465,11 @@ typedef struct REBCLR {
 		codi.h    = VAL_IMAGE_HIGH(val_dst_img);
 
 		if (IS_FILE(val_dest)) {
+#ifdef TO_WINDOWS
 			ser = Value_To_Local_Path(val_dest, TRUE);
+#else
+			ser = Value_To_OS_Path(val_dest, TRUE);
+#endif
 		} else {
 			// raw binary data...
 			// ... predict number of bytes large enough to hold the result
@@ -469,9 +504,11 @@ typedef struct REBCLR {
 
 		if(codi.error) {
 			switch (codi.error) {
+#ifdef TO_WINDOWS
 			case WINCODEC_ERR_COMPONENTNOTFOUND:
 				Trap1(RE_NO_CODEC, val_type);
 				break;
+#endif
 			default:
 				SET_INTEGER(D_RET, codi.error);
 				if (IS_BINARY(val_dest)) {

@@ -13,11 +13,12 @@ REBOL [
 
 import module [
 	Title:  "Help related functions"
-	Name:    Help
+	Name:    help
 	Version: 3.0.0
 	Exports: [? help about usage what license source dump-obj]
 ][
 	buffer: none
+	cols:   80 ; default terminal width
 	max-desc-width: 45
 
 	help-text: {
@@ -47,6 +48,10 @@ import module [
       ? function!
       ? datatype!
   ^[[m
+  ^[[4;1;36mTo see all available codecs^[[m:
+  ^[[1;32m
+      ? codecs
+  ^[[m
   ^[[4;1;36mOther debug functions^[[m:
   
       ^[[1;32m??^[[m      - display a variable and its value
@@ -64,15 +69,6 @@ import module [
 
 	output: func[value][
 		buffer: insert buffer form reduce value
-	]
-
-	clip-str: func [str] [
-		; Keep string to one line.
-		unless string? str [str: mold/part/flat str max-desc-width]
-		replace/all str LF "^^/"
-		replace/all str CR "^^M"
-		if (length? str) > (max-desc-width - 1) [str: append copy/part str max-desc-width "..."]
-		str
 	]
 
 	interpunction: charset ";.?!"
@@ -94,13 +90,18 @@ import module [
 		a-an head clear back tail mold type? :value
 	]
 
-	form-val: func [val /local limit] [
+	form-val: func [val /local limit hdr tmp] [
 		; Form a limited string from the value provided.
 		val: case [
 			string?       :val [ mold/part/flat val max-desc-width]
 			any-block?    :val [ reform ["length:" length? val mold/part/flat val max-desc-width] ]
 			object?       :val [ words-of val ]
-			module?       :val [ words-of val ]
+			module?       :val [
+				hdr: spec-of :val
+				either val: select hdr 'title [ if #"." <> last val [append val #"."] ][ val: copy "" ]
+				if tmp: select hdr 'exports [	append append val #" " mold/flat tmp ]
+				val
+			]
 			any-function? :val [ any [title-of :val spec-of :val] ]
 			datatype?     :val [ get in spec-of val 'title ]
 			typeset?      :val [ to block! val]
@@ -111,7 +112,8 @@ import module [
 			;none?         :val [ mold/all val]
 			true [:val]
 		]
-		clip-str val
+		unless string? val [val: mold/part/flat val max-desc-width]
+		ellipsize/one-line val max-desc-width - 1
 	]
 
 	form-pad: func [val size] [
@@ -127,10 +129,10 @@ import module [
 		/weak "Provides sorting and does not displays unset values"
 		/match "Include only those that match a string or datatype"
 			pattern
-		/only {Do not display "no info" message}
-		/local start wild type str result
+		/local start wild type str result user?
 	][
 		result: clear ""
+		user?: same? obj system/contexts/user
 		; Search for matching strings:
 		wild: all [string? pattern  find pattern "*"]
 		foreach [word val] obj [
@@ -145,7 +147,7 @@ import module [
 				not match
 				either string? :pattern [
 					either wild [
-						tail? any [find/any/match str pattern pattern]
+						tail? any [find/any/match/tail str pattern pattern]
 					][
 						find str pattern
 					]
@@ -153,6 +155,15 @@ import module [
 					type = :pattern
 				]
 			][
+				if all [
+					user?   ; if we are using user's context (system/contexts/user)
+					match   ; with a pattern or a datatype
+					any [   ; don't show results
+						word = 'lib-local ; for internal `lib-local` value (as it would always match)
+						strict-equal? :val select system/contexts/lib word ; or if the same value is in the library context (already reported)
+					]
+				][ continue ]
+
 				str: join "^[[1;32m" form-pad word 15
 				append str "^[[m "
 				append str form-pad type 11 - min 0 ((length? str) - 15)
@@ -164,9 +175,7 @@ import module [
 				]
 			]
 		]
-		either all [pattern empty? result not only] [
-			ajoin ["No information on: ^[[32m" pattern "^[[m^/"]
-		][	copy result ]
+		copy result
 	]
 
 	out-description: func [des [block!]][
@@ -182,11 +191,12 @@ import module [
 		'word [any-type!]
 		/into "Help text will be inserted into provided string instead of printed"
 			string [string!] "Returned series will be past the insertion"
-		/local value spec args refs rets type ret desc arg def des ref str
+		/local value spec args refs rets type ret desc arg def des ref str cols tmp
 	][
-		try [
-			max-desc-width: (query/mode system/ports/input 'buffer-cols) - 35
-		]
+		;@@ quering buffer width in CI under Windows now throws error: `Access error: protocol error: 6`
+		;@@ it should return `none` like under Posix systems!
+		cols: any [ attempt [ query/mode system/ports/input 'buffer-cols ] 120]
+		max-desc-width: cols - 35
 		buffer: any [string  clear ""]
 		catch [
 			case/all [
@@ -197,10 +207,33 @@ import module [
 				word? :word [
 					either value? :word [
 						value: get :word    ;lookup for word's value if any
+						if :word = 'codecs [
+							list-codecs :word
+							if same? :value system/codecs [throw true]
+							output lf
+							if any-function? :value [
+								; don't display help in case that user redefined `codecs` with a function
+								output ajoin ["^[[1;32m" uppercase mold word "^[[m is " form-type :value ".^[[m"]
+								throw true
+							]
+						]
 					][	word: mold :word ]  ;or use it as a string input
 				]
 				string? :word  [
-					output dump-obj/weak/match system/contexts/lib :word
+					tmp: false
+					case/all [
+						not empty? value: dump-obj/weak/match system/contexts/lib :word [
+							output ajoin ["Found these related matches:^/" value]
+							tmp: true
+						]
+						not empty? value: dump-obj/weak/match system/contexts/user :word [
+							output ajoin ["Found these related matches in the user context:^/" value]
+							tmp: true
+						]
+						not tmp [
+							output ajoin ["No information on: ^[[32m" :word "^[[m^/"]
+						]
+					]
 					throw true
 				]
 				datatype? :value [
@@ -217,8 +250,11 @@ import module [
 						 "It is defined as" either find "aeiou" first spec/title [" an "] [" a "] spec/title ".^/"
 						 "It is of the general type ^[[1;32m" spec/type "^[[m.^/^/"
 						]
-						unless empty? value: dump-obj/match/only system/contexts/lib :word [
+						unless empty? value: dump-obj/match system/contexts/lib :word [
 							output ajoin ["Found these related words:^/" value]
+						]
+						unless empty? value: dump-obj/match system/contexts/user :word [
+							output ajoin ["Found these related words in the user context:^/" value]
 						]
 					]
 					throw true
@@ -246,7 +282,7 @@ import module [
 					throw true
 				]
 				not any [word? :word path? :word] [
-					output [mold :word "is" form-type :word]
+					output ajoin ["^[[1;32m" uppercase mold :word "^[[m is " form-type :word]
 					throw true
 				]
 				path? :word [
@@ -355,13 +391,62 @@ import module [
 					throw true
 				]
 				'else [
-					output ajoin ["^[[1;32m" uppercase mold word "^[[m is " form-type :value " of value: ^[[32m"]
-					output either any [any-object? value] [output lf dump-obj :value][mold :value]
+					word: uppercase mold word
+					type: form-type :value
+					output ajoin ["^[[1;32m" word "^[[m is " type " of value: ^[[32m"]
+					output either any [any-object? value] [
+						output lf dump-obj :value
+					][
+						max-desc-width: cols - (length? word) - (length? type) - 21
+						form-val :value
+					]
 					output "^[[m"
 				]
 			]
 		]
 		either into [buffer][print head buffer]
+	]
+
+	list-codecs: function [][
+		names: sort keys-of codecs: system/codecs
+		foreach type common-types: [
+			time
+			text			
+			cryptography
+			compression
+			sound
+			image
+			other
+		][
+			tmp: clear []
+			foreach name names [
+				codec: codecs/:name
+				if any [
+					type = codec/type
+					all [type = 'other not find common-types codec/type]
+				][
+					append tmp codec
+				]
+			]
+			if empty? tmp [continue]
+
+			output ajoin [{^[[4;1;36m} uppercase form type { CODECS^[[m:}]
+			foreach codec tmp [
+				output ajoin ["^/    ^[[4;1;33m" uppercase form codec/name "^[[m^/    ^[[1;32m" codec/title]
+				if all [tmp: select codec 'suffixes not empty? tmp] [
+					output ajoin ["^[[m^/    Suffixes: ^[[31m" codec/suffixes]
+				]
+				tmp: exclude keys-of codec [name type title entry suffixes]
+				unless empty? tmp [
+					output ajoin ["^[[m^/    Includes: ^[[35m" tmp]
+				]
+				output lf
+			]
+			output "^[[m^/^/"
+		]
+		output ajoin [
+			"^[[1mTIP:^[[m use for example ^[[1;32mhelp system/codecs/" codec/name "^[[m to see more info.^/"
+		]
 	]
 
 	about: func [

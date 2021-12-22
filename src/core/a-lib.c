@@ -340,7 +340,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	val = Do_String(text->data, flags);
 	UNSAVE_SERIES(text);
 	if (IS_ERROR(val)) // && (VAL_ERR_NUM(val) != RE_QUIT)) {
-		Print_Value(val, 1000, FALSE);
+		Print_Value(val, 1000, FALSE, TRUE);
 
 	if (result) {
 		*result = Value_To_RXI(val);
@@ -449,6 +449,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	REBVAL *top = DS_VALUE(dsp+1);
 	REBOL_STATE state;
 	REBVAL *types;
+	REBVAL *last;
 
 	if (dsp != 0) Debug_Fmt(Str_Stack_Misaligned, dsp);
 
@@ -456,7 +457,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	if (SET_JUMP(state)) {
 		POP_STATE(state, Saved_State);
 		Catch_Error(DS_NEXT); // Stores error value here
-		Out_Value(DS_NEXT, 0, FALSE, 0); // error
+		Out_Value(DS_NEXT, 0, FALSE, 0, TRUE); // error
 		DSP = 0;
 		return;
 	}
@@ -468,26 +469,32 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 			if (IS_TYPESET(types) && TYPE_CHECK(types, VAL_TYPE(top))) {
 				if (marker) {
 					DS_SKIP; // protect `top` from modification
-					Out_Str(marker, 0);
+					Out_Str(marker, 0, FALSE);
 					DS_DROP; 
 				}
-				Out_Value(top, 500, TRUE, 1); // limit, molded
+				Out_Value(top, 500, TRUE, 1, FALSE); // limit, molded
 			}
 //			else {
 //				Out_Str(Get_Type_Name(top), 1);
 //			}
 		} else {
 			if (VAL_ERR_NUM(top) != RE_HALT) {
-				Out_Str(cb_cast("\x1B[1;35m"), 0);
+#ifdef COLOR_CONSOLE 
+				Out_Str(cb_cast("\x1B[1;35m"), 0, TRUE);
+				Out_Value(top, 640, FALSE, 0, TRUE); // error FORMed
+				Out_Str(cb_cast("\x1B[0m"), 0, TRUE);
+#else
 				Out_Value(top, 640, FALSE, 0); // error FORMed
-				Out_Str(cb_cast("\x1B[0m"), 0);
+#endif
 //				if (VAL_ERR_NUM(top) > RE_THROW_MAX) {
-//					Out_Str("** Note: use WHY? for more about this error", 1);
+//					Out_Str("** Note: use WHY? for more about this error", 1, TRUE);
 //				}
 			}
 		}
 	}
-
+	// store last result in system/state/last-result
+	last = Get_System(SYS_STATE, STATE_LAST_RESULT);
+	*last = *top;
 	POP_STATE(state, Saved_State);
 	DSP = 0;
 }
@@ -1120,6 +1127,63 @@ RL_API REBSER* RL_Decode_UTF_String(REBYTE *src, REBCNT len, REBINT utf, REBFLG 
 {
 	return Decode_UTF_String(src, len, utf, ccr, uni);
 }
+
+/***********************************************************************
+**
+*/	RL_API REBCNT RL_Register_Handle(REBYTE *name, REBCNT size, void* free_func)
+/*
+**	Stores handle's specification (required data size and optional free callback.
+**
+**	Returns:
+**		symbol id of the word (whether found or new)
+**		or NOT_FOUND if handle with give ID is already registered.
+**	Arguments:
+**		name      - handle's name as a c-string (length is being detected)
+**		size      - size of needed memory to handle
+**		free_func - custom function to be called when handle is released
+**
+***********************************************************************/
+{
+	REBCNT sym;
+	REBCNT len;
+	REBCNT idx;
+
+	// Convert C-string to Rebol word
+	len = strlen(cs_cast(name));
+	sym = Scan_Word(name, len);
+	if (!sym) return NOT_FOUND; //TODO: use different value if word is invalid?
+	idx = Register_Handle(sym, size, (REB_HANDLE_FREE_FUNC)free_func);
+	return (idx == NOT_FOUND) ? NOT_FOUND : sym;
+}
+
+RL_API REBHOB* RL_Make_Handle_Context(REBCNT sym)
+/*
+**	Allocates memory large enough to hold given handle's id
+**
+**	Returns:
+**		A pointer to a Rebol's handle value.
+**	Arguments:
+**		sym - handle's word id
+**
+***********************************************************************/
+{
+	return Make_Handle_Context(sym);
+}
+
+RL_API void RL_Free_Handle_Context(REBHOB *hob)
+/*
+**	Frees memory of given handle's context
+**
+**	Returns:
+**		nothing
+**	Arguments:
+**		hob - handle's context
+**
+***********************************************************************/
+{
+	Free_Hob(hob);
+}
+
 
 
 

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -212,7 +213,7 @@
 	while (wt) {
 		if (GET_SIGNAL(SIG_ESCAPE)) {
 			CLR_SIGNAL(SIG_ESCAPE);
-			Out_Str(cb_cast("[ESC]"), 1);
+			Out_Str(cb_cast("[ESC]"), 1, TRUE);
 			Halt_Code(RE_HALT, 0); // Throws!
 		}
 
@@ -632,10 +633,10 @@ SCHEME_ACTIONS *Scheme_Actions;	// Initial Global (not threaded)
 	Init_UDP_Scheme();
 	Init_DNS_Scheme();
 	Init_Checksum_Scheme();
-#ifndef MIN_OS
+#ifdef INCLUDE_CLIPBOARD
 	Init_Clipboard_Scheme();
 #endif
-#ifdef USE_MIDI_DEVICE
+#ifdef INCLUDE_MIDI_DEVICE
 	Init_MIDI_Scheme();
 #endif
 }

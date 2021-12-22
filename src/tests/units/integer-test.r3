@@ -19,7 +19,25 @@ Rebol [
 		--assert -3 == min -3 $1
 ===end-group===
 
-===start-group=== "shift op!"
+===start-group=== "shift"
+	--test-- "shift native"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1310
+		m: to-integer #{8000 0000 0000 0000}
+		--assert  0 = shift 0 0
+		--assert  0 = shift 0 1
+		--assert  0 = shift 0 63
+		--assert  0 = shift 0 -1
+		--assert  1 = shift 1 0
+		--assert  2 = shift 1 1
+		--assert  error? try [shift 1 63]
+		--assert  error? try [shift 1 64]
+		--assert  0 = shift 1 -1
+		--assert -1 = shift m -63
+		--assert -1 = shift m -64
+		--assert  m = shift/logical 1 63 ; same as above
+		--assert  1 = shift/logical m -63
+		--assert  0 = shift/logical m -64
+
 	--test-- "shift-op-left"
 		--assert 2 << 3 = 16
 		--assert 1 <<  0 = 1
@@ -41,6 +59,24 @@ Rebol [
 		--assert 0 = shift 1 -100
 
 ===end-group===
+
+
+===start-group=== "gcd/lcm"
+	--test-- "gcd"
+		--assert  6 = gcd 54 24
+		--assert  6 = gcd 24 54
+		--assert  3 = gcd 0 3
+		--assert  3 = gcd 3 0
+		--assert  3 = gcd 21 -48
+	--test-- "lcm"
+		--assert 36 = lcm 12 18
+		--assert 36 = lcm 18 12
+		--assert  0 = lcm 0 1
+		--assert  0 = lcm 1 0
+		--assert  0 = lcm 0 0
+
+===end-group===
+
 
 ===start-group=== "multiply"
 	--test-- "0 * 1"
@@ -281,6 +317,17 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "++ & --"
+	--test-- "++ and -- integer!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/554
+		a: 1
+		--assert 1 = ++ a
+		--assert 2 = -- a
+		--assert 1 = a
+
+===end-group===
+
+
 ===start-group=== "integer issues"
 	--test-- "issue-502"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/502
@@ -302,6 +349,10 @@ Rebol [
 			error? e: try [1 + "2"]
 			e/id = 'expect-arg
 		]
+
+	--test-- "issue-569"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/569
+		--assert not strict-equal? 1 $1
 		
 ===end-group===
 

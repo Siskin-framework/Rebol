@@ -3,6 +3,7 @@ REBOL [
 	Title: "Native function specs"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2021 Rebol Open Source Developers
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -371,14 +372,7 @@ context?: native [ ; was originally named `bound?`
 	;return: [object! function! none!]
 ]
 
-collect-words: native [
-	"Collect unique words used in a block (used for context construction)."
-	block [block!]
-	/deep "Include nested blocks"
-	/set "Only include set-words"
-	/ignore "Ignore prior words"
-	words [any-object! block! none!] "Words to ignore"
-]
+;collect-words: native [] ;defined in %n-data.c
 
 ;checksum:   native [] ; defined in %n-string.c
 ;compress:   native [] ; defined in %n-string.c
@@ -393,7 +387,7 @@ construct: native [
 
 debase: native [
 	{Decodes binary-coded string to binary value.}
-	value [binary! string!] {The string to decode}
+	value [binary! any-string!] {The string to decode}
 	base  [integer!] {Binary base to use: 85, 64, 16, or 2}
 	/url  {Base 64 Decoding with URL and Filename Safe Alphabet}
 	/part {Limit the length of the input}
@@ -448,15 +442,7 @@ entab: native [
 	number [integer!]
 ]
 
-delect: native [
-	"Parses a common form of dialects. Returns updated input block."
-	 dialect [object!] "Describes the words and datatypes of the dialect"
-	 input [block!] "Input stream to parse"
-	 output [block!] "Resulting values, ordered as defined (modified)"
-	 /in "Search for var words in specific objects (contexts)"
-	 where [block!] "Block of objects to search (non objects ignored)"
-	 /all "Parse entire block, not just one command at a time"
-]
+;delect: ;@@ defined in u-dialec.c
 
 difference: native [
 	{Returns the special difference of two values.}
@@ -887,7 +873,7 @@ get-env: native [
 ]
 
 set-env: native [
-	{Sets the value of an operating system environment variable (for current process).} 
+	{Sets the value of an OS environment variable (for current process).} 
 	var [any-string! any-word!] "Variable to set" 
 	value [string!  none!] "Value to set, or NONE to unset it"
 ]

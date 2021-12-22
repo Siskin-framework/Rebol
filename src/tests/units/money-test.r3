@@ -52,6 +52,7 @@ Rebol [
 	--assert -$2 = round -$1.5
 
 	--test-- "round/to"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/765
 	--assert $1.375 = round/to $1.333 $.125
 	--assert $1.33  = round/to $1.333 $.01
 	--assert     $1 = round/to $0.5   $1
@@ -94,10 +95,10 @@ Rebol [
 ===start-group=== "reminder on money"
 	--test-- "issue-401"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/401
-	--assert $0.100000000 = ($.100000000 // $1)
-	--assert $0.1000000000 = ($.1000000000 // $1)
-	--assert $0.10000000000 = ($.10000000000 // $1)
-	--assert $0.100000000000 = ($.100000000000 // $1)
+	--assert $0.100000000 = ($.100000000 % $1)
+	--assert $0.1000000000 = ($.1000000000 % $1)
+	--assert $0.10000000000 = ($.10000000000 % $1)
+	--assert $0.100000000000 = ($.100000000000 % $1)
 	
 ===end-group===
 
@@ -154,6 +155,10 @@ Rebol [
 		--assert error? try [$1 / #"a"]
 		--assert error? try [$1 * 1.2.3.4]
 		--assert error? try [$1 - 10:30]
+
+	--test-- "issue-569"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/569
+		--assert not strict-equal? $1 1
 
 ===end-group===
 	

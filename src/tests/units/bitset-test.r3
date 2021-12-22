@@ -142,6 +142,11 @@
 		--assert bs/8 = true
 		--assert bs/9 = false
 
+	--test-- "pick-9"
+		ABC: charset [#"A" #"B" #"C"]
+		--assert pick ABC "BCB"
+		--assert not pick ABC "BCBX"
+
 ===end-group===
 
 ===start-group=== "modify"
@@ -180,6 +185,13 @@
 		append bs ["hello" #"x" - #"z"]
 		--assert "make bitset! #{000000000000000000000000048900E0}" = mold bs
 
+	--test-- "insert-1"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/789
+		bs: make bitset! 8
+		--assert 8 = length? bs
+		insert bs ["hello" #"x" - #"z"]
+		--assert "make bitset! #{000000000000000000000000048900E0}" = mold bs
+
 	--test-- "clear-1"
 		clear bs
 		--assert "make bitset! #{}" = mold bs
@@ -204,6 +216,51 @@
 			error? e: try [remove/part bs "01"]
 			e/id = 'bad-refines
 		]
+
+===end-group===
+
+
+===start-group=== "find"
+	--test-- "find bitset! char!"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2166
+		ABC: charset [#"A" #"B" #"C"]
+		--assert find ABC #"a"
+		--assert find ABC #"A"
+		--assert find/case ABC #"A"
+		--assert not find/case ABC #"a"
+		; finding integer value is always case-sensitive
+		--assert find ABC to-integer #"A"
+		--assert not find ABC to-integer #"a"
+		; pick is always case-sensitive
+		--assert pick ABC #"A"
+		--assert not pick ABC #"a"
+
+	--test-- "find bitset! string!"
+		--assert find ABC "ABC"
+		--assert find ABC "BAC"
+		--assert find ABC "CA"
+		--assert find/any ABC "XCA"
+		--assert not find ABC "XCA"
+		--assert not find ABC "abc" ;@@ should be searching of a string case-insensitive?
+
+	--test-- "find bitset! block-of-integers"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1512
+		bits1-3: make bitset! [1 - 3]
+		--assert find bits1-3 [1]
+		--assert find bits1-3 [1 2]
+		--assert find bits1-3 [1 - 3]
+		--assert find bits1-3 as paren! [1 - 3]
+		--assert not find bits1-3 [4]
+		--assert not find bits1-3 [1 2 4]
+		--assert not find bits1-3 [1 - 4]
+		--assert find/any bits1-3 [4 1]
+		--assert find/any bits1-3 [1 2 4]
+		--assert find/any bits1-3 [1 - 4]
+
+	--test-- "find bitset! block-of-strings!"
+		--assert find ABC ["AB"]
+		--assert find ABC ["AB" "CB"]
+		--assert not find ABC ["AB" "CBX"]
 
 ===end-group===
 
@@ -258,6 +315,17 @@
 		--assert "make bitset! [not bits #{00000000FF80}]" = mold bs
 		poke bs [32 - 40] true
 		--assert "make bitset! [not bits #{000000000000}]" = mold bs
+
+	--test-- "issue-1541"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1541
+		b: charset " "
+		b/48: true
+		--assert b = #[bitset! #{00000000800080}]
+		b: complement charset " "
+		b/48: none
+		--assert b = make bitset! [not bits #{00000000800080}]
+		b/48: true
+		--assert b = make bitset! [not bits #{00000000800000}]
 
 ===end-group===
 
