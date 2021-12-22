@@ -44,7 +44,7 @@ OS_ID?= 0.4.40
 BIN_SUFFIX=
 LIB_SUFFIX= .so
 RES=
-RAPI_FLAGS=  -O2 -fvisibility=hidden -D__LP64__ -fPIC -DENDIAN_LITTLE
+RAPI_FLAGS=  -O2 -fvisibility=hidden -D__LP64__ -fPIC -DENDIAN_LITTLE -DREBOL_OPTIONS_FILE=\"gen-config.h\"
 HOST_FLAGS=	-DREB_EXE  -O2 -fvisibility=hidden -D__LP64__ -DENDIAN_LITTLE -D_FILE_OFFSET_BITS=64
 RLIB_FLAGS=
 USE_FLAGS=
@@ -100,19 +100,19 @@ OBJS =	objs/a-constants.o objs/a-globals.o objs/a-lib.o objs/b-boot.o \
 	objs/n-math.o objs/n-sets.o objs/n-strings.o objs/n-system.o \
 	objs/p-checksum.o objs/p-clipboard.o objs/p-console.o objs/p-dir.o \
 	objs/p-dns.o objs/p-event.o objs/p-file.o objs/p-net.o \
-	objs/p-midi.o objs/s-cases.o objs/s-crc.o objs/s-file.o \
+	objs/s-cases.o objs/s-crc.o objs/s-file.o \
 	objs/s-find.o objs/s-make.o objs/s-mold.o objs/s-ops.o \
 	objs/s-trim.o objs/s-unicode.o objs/t-bitset.o objs/t-block.o \
 	objs/t-char.o objs/t-datatype.o objs/t-date.o objs/t-decimal.o \
-	objs/t-event.o objs/t-function.o objs/t-gob.o objs/t-image.o \
+	objs/t-event.o objs/t-function.o objs/t-gob.o objs/t-image.o objs/t-handle.o \
 	objs/t-integer.o objs/t-logic.o objs/t-map.o objs/t-money.o \
 	objs/t-none.o objs/t-object.o objs/t-pair.o objs/t-port.o \
-	objs/t-string.o objs/t-time.o objs/t-tuple.o objs/t-typeset.o \
+	objs/t-string.o objs/t-struct.o objs/t-time.o objs/t-tuple.o objs/t-typeset.o \
 	objs/t-utype.o objs/t-vector.o objs/t-word.o objs/u-aes.o \
 	objs/u-bigint.o objs/u-bincode.o objs/u-bmp.o objs/u-chacha20.o \
-	objs/u-compress.o objs/u-dh.o objs/u-dialect.o objs/u-gif.o \
-	objs/u-iconv.o objs/u-image-resize.o objs/u-jpg.o objs/u-lzma.o \
-	objs/u-parse.o objs/u-png.o objs/u-poly1305.o objs/u-rc4.o \
+	objs/u-compress.o objs/u-crush.o objs/u-dh.o objs/u-dialect.o objs/u-gif.o \
+	objs/u-iconv.o objs/u-image-resize.o objs/u-image-blur.o objs/u-jpg.o objs/u-qoi.o objs/u-lzma.o \
+	objs/u-parse.o objs/u-png.o objs/u-png-filter.o objs/u-poly1305.o objs/u-rc4.o \
 	objs/u-rsa.o objs/u-uECC.o objs/u-zlib.o objs/u-wav.o \
 	objs/u-mbedtls.o objs/mbedtls/platform.o objs/mbedtls/platform_util.o objs/mbedtls/md4.o \
 	objs/mbedtls/md5.o objs/mbedtls/ripemd160.o objs/mbedtls/sha1.o objs/mbedtls/sha256.o \
@@ -120,8 +120,7 @@ OBJS =	objs/a-constants.o objs/a-globals.o objs/a-lib.o objs/b-boot.o \
 
 HOST =	objs/host-main.o objs/host-args.o objs/host-device.o objs/host-stdio.o \
 	objs/dev-net.o objs/dev-dns.o objs/host-ext-test.o objs/host-lib.o \
-	objs/host-readline.o objs/dev-stdio.o objs/dev-event.o objs/dev-file.o \
-	objs/dev-midi-osx.o 
+	objs/host-readline.o objs/dev-stdio.o objs/dev-event.o objs/dev-file.o 
 
 
 # Directly linked r3 executable:
@@ -353,6 +352,9 @@ objs/t-gob.o:         $R/t-gob.c
 objs/t-image.o:       $R/t-image.c
 	$(CC) $R/t-image.c $(RFLAGS) -o objs/t-image.o
 
+objs/t-handle.o:       $R/t-handle.c
+	$(CC) $R/t-handle.c $(RFLAGS) -o objs/t-handle.o	
+
 objs/t-integer.o:     $R/t-integer.c
 	$(CC) $R/t-integer.c $(RFLAGS) -o objs/t-integer.o
 
@@ -379,6 +381,9 @@ objs/t-port.o:        $R/t-port.c
 
 objs/t-string.o:      $R/t-string.c
 	$(CC) $R/t-string.c $(RFLAGS) -o objs/t-string.o
+
+objs/t-struct.o:      $R/t-struct.c
+	$(CC) $R/t-struct.c $(RFLAGS) -o objs/t-struct.o
 
 objs/t-time.o:        $R/t-time.c
 	$(CC) $R/t-time.c $(RFLAGS) -o objs/t-time.o
@@ -416,6 +421,9 @@ objs/u-chacha20.o:    $R/u-chacha20.c
 objs/u-compress.o:    $R/u-compress.c
 	$(CC) $R/u-compress.c $(RFLAGS) -o objs/u-compress.o
 
+objs/u-crush.o:    $R/u-crush.c
+	$(CC) $R/u-crush.c $(RFLAGS) -o objs/u-crush.o
+
 objs/u-dh.o:          $R/u-dh.c
 	$(CC) $R/u-dh.c $(RFLAGS) -o objs/u-dh.o
 
@@ -431,8 +439,14 @@ objs/u-iconv.o:       $R/u-iconv.c
 objs/u-image-resize.o:$R/u-image-resize.c
 	$(CC) $R/u-image-resize.c $(RFLAGS) -o objs/u-image-resize.o
 
+objs/u-image-blur.o:$R/u-image-blur.c
+	$(CC) $R/u-image-blur.c $(RFLAGS) -o objs/u-image-blur.o
+
 objs/u-jpg.o:         $R/u-jpg.c
 	$(CC) $R/u-jpg.c $(RFLAGS) -o objs/u-jpg.o
+
+objs/u-qoi.o:         $R/u-qoi.c
+	$(CC) $R/u-qoi.c $(RFLAGS) -o objs/u-qoi.o
 
 objs/u-lzma.o:        $R/u-lzma.c
 	$(CC) $R/u-lzma.c $(RFLAGS) -o objs/u-lzma.o
@@ -442,6 +456,9 @@ objs/u-parse.o:       $R/u-parse.c
 
 objs/u-png.o:         $R/u-png.c
 	$(CC) $R/u-png.c $(RFLAGS) -o objs/u-png.o
+
+objs/u-png-filter.o:         $R/u-png-filter.c
+	$(CC) $R/u-png-filter.c $(RFLAGS) -o objs/u-png-filter.o
 
 objs/u-poly1305.o:    $R/u-poly1305.c
 	$(CC) $R/u-poly1305.c $(RFLAGS) -o objs/u-poly1305.o
