@@ -753,5 +753,4 @@ extern REBYTE *SHA256(REBYTE *d, REBCNT n, REBYTE *md); // src/core/u-mbedtls.c
 extern REBYTE *SHA384(REBYTE *d, REBCNT n, REBYTE *md); // src/core/u-mbedtls.c
 extern REBYTE *SHA512(REBYTE *d, REBCNT n, REBYTE *md); // src/core/u-mbedtls.c
 extern REBYTE *RIPEMD160(REBYTE *d, REBCNT n, REBYTE *md); // src/core/u-mbedtls.c
-extern void Init_Clipboard_Scheme(void); // src/core/p-clipboard.c
 extern void Init_Crypt(void); // src/core/n-crypt.c
