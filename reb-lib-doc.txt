@@ -1,0 +1,758 @@
+Host/Extension API
+
+=r3
+
+=*Updated for 3.7.2 on 5-Jan-2022
+
+=*Describes the functions of reb-lib, the REBOL API (both the DLL and extension library.)
+
+=!This document is auto-generated and changes should not be made within this wiki.
+
+=note WARNING: PRELIMINARY Documentation
+
+=*This API is under development and subject to change. Various functions may be moved, removed, renamed, enhanced, etc.
+
+Also note: the formatting of this document will be enhanced in future revisions.
+
+=/note
+
+==Concept
+
+The REBOL API provides common API functions needed by the Host-Kit and also by
+REBOL extension modules. This interface is commonly referred to as "reb-lib".
+
+There are two methods of linking to this code:
+
+*Direct calls as you would use functions within any DLL.
+
+*Indirect calls through a set of macros (that use a structure pointer to the library.)
+
+==Functions
+
+===RL_Version
+
+:Function: - <tt class=word>void RL_Version(REBYTE vers[])</tt>
+
+:Summary: - Obtain current REBOL interpreter version information.
+
+:Returns: - A byte array containing version, revision, update, and more.
+
+:Arguments: - <tt class=word>vers</tt> - a byte array to hold the version info. First byte is length,
+followed by version, revision, update, system, variation.
+
+
+:Notes: - This function can be called before any other initialization
+to determine version compatiblity with the caller.
+
+
+===RL_Init
+
+:Function: - <tt class=word>int RL_Init(REBARGS *rargs, void *lib)</tt>
+
+:Summary: - Initialize the REBOL interpreter.
+
+:Returns: - Zero on success, otherwise an error indicating that the
+host library is not compatible with this release.
+
+:Arguments: - <tt class=word>rargs</tt> - REBOL command line args and options structure.
+See the host-args.c module for details.
+<br><tt class=word>lib</tt> - the host lib (OS_ functions) to be used by REBOL.
+See host-lib.c for details.
+
+
+:Notes: - This function will allocate and initialize all memory
+structures used by the REBOL interpreter. This is an
+extensive process that takes time.
+
+
+===RL_Dispose
+
+:Function: - <tt class=word>void RL_Dispose(void)</tt>
+
+:Summary: - Disposes the REBOL interpreter.
+
+:Returns: - nothing
+
+:Arguments: - none
+
+
+:Notes: - This function will deallocate and release all memory
+structures used by the REBOL interpreter.
+
+
+===RL_Start
+
+:Function: - <tt class=word>int RL_Start(REBYTE *bin, REBINT len, REBCNT flags)</tt>
+
+:Summary: - Evaluate the default boot function.
+
+:Returns: - Zero on success, otherwise indicates an error occurred.
+
+:Arguments: - <tt class=word>bin</tt> - optional startup code (compressed), can be null
+<br><tt class=word>len</tt> - length of above bin
+<br><tt class=word>flags</tt> - special flags
+
+
+:Notes: - This function completes the startup sequence by calling
+the sys/start function.
+
+
+===RL_Reset
+
+:Function: - <tt class=word>void RL_Reset(void)</tt>
+
+:Summary: - Reset REBOL (not implemented)
+
+:Returns: - nothing
+
+:Arguments: - none
+
+
+:Notes: - Intended to reset the REBOL interpreter.
+
+
+===RL_Extend
+
+:Function: - <tt class=word>void *RL_Extend(REBYTE *source, RXICAL call)</tt>
+
+:Summary: - Appends embedded extension to system/catalog/boot-exts.
+
+:Returns: - A pointer to the REBOL library (see reb-lib.h).
+
+:Arguments: - <tt class=word>source</tt> - A pointer to a UTF-8 (or ASCII) string that provides
+extension module header, function definitions, and other
+related functions and data.
+<br><tt class=word>call</tt> - A pointer to the extension's command dispatcher.
+
+
+:Notes: - This function simply adds the embedded extension to the
+boot-exts list. All other processing and initialization
+happens later during startup. Each embedded extension is
+queried and init using LOAD-EXTENSION system native.
+See c:extensions-embedded
+
+
+===RL_Escape
+
+:Function: - <tt class=word>void RL_Escape(REBINT reserved)</tt>
+
+:Summary: - Signal that code evaluation needs to be interrupted.
+
+:Returns: - nothing
+
+:Arguments: - <tt class=word>reserved</tt> - must be set to zero.
+
+
+:Notes: - This function set's a signal that is checked during evaluation
+and will cause the interpreter to begin processing an escape
+trap. Note that control must be passed back to REBOL for the
+signal to be recognized and handled.
+
+
+===RL_Do_String
+
+:Function: - <tt class=word>int RL_Do_String(REBYTE *text, REBCNT flags, RXIARG *result)</tt>
+
+:Summary: - Load a string and evaluate the resulting block.
+
+:Returns: - The datatype of the result.
+
+:Arguments: - <tt class=word>text</tt> - A null terminated UTF-8 (or ASCII) string to transcode
+into a block and evaluate.
+<br><tt class=word>flags</tt> - set to zero for now
+<br><tt class=word>result</tt> - value returned from evaluation.
+
+
+
+===RL_Do_Binary
+
+:Function: - <tt class=word>int RL_Do_Binary(REBYTE *bin, REBINT length, REBCNT flags, REBCNT key, RXIARG *result)</tt>
+
+:Summary: - Evaluate an encoded binary script such as compressed text.
+
+:Returns: - The datatype of the result or zero if error in the encoding.
+
+:Arguments: - <tt class=word>bin</tt> - by default, a REBOL compressed UTF-8 (or ASCII) script.
+<br><tt class=word>length</tt> - the length of the data.
+<br><tt class=word>flags</tt> - special flags (set to zero at this time).
+<br><tt class=word>key</tt> - encoding, encryption, or signature key.
+<br><tt class=word>result</tt> - value returned from evaluation.
+
+
+:Notes: - As of A104, only compressed scripts are supported, however,
+rebin, cloaked, signed, and encrypted formats will be supported.
+
+
+===RL_Do_Block
+
+:Function: - <tt class=word>int RL_Do_Block(REBSER *blk, REBCNT flags, RXIARG *result)</tt>
+
+:Summary: - Evaluate a block. (not implemented)
+
+:Returns: - The datatype of the result or zero if error in the encoding.
+
+:Arguments: - <tt class=word>blk</tt> - A pointer to the block series
+<br><tt class=word>flags</tt> - set to zero for now
+<br><tt class=word>result</tt> - value returned from evaluation
+
+
+:Notes: - Not implemented. Contact Carl on R3 Chat if you think you
+could use it for something.
+
+
+===RL_Do_Commands
+
+:Function: - <tt class=word>void RL_Do_Commands(REBSER *blk, REBCNT flags, REBCEC *context)</tt>
+
+:Summary: - Evaluate a block of extension commands at high speed.
+
+:Returns: - Nothing
+
+:Arguments: - <tt class=word>blk</tt> - a pointer to the block series
+<br><tt class=word>flags</tt> - set to zero for now
+<br><tt class=word>context</tt> - command evaluation context struct or zero if not used.
+
+
+:Notes: - For command blocks only, not for other blocks.
+The context allows passing to each command a struct that is
+used for back-referencing your environment data or for tracking
+the evaluation block and its index.
+
+
+===RL_Print
+
+:Function: - <tt class=word>void RL_Print(REBYTE *fmt, ...)</tt>
+
+:Summary: - Low level print of formatted data to the console.
+
+:Returns: - nothing
+
+:Arguments: - <tt class=word>fmt</tt> - A format string similar but not identical to printf.
+Special options are available.
+<br><tt class=word>...</tt> - Values to be formatted.
+
+
+:Notes: - This function is low level and handles only a few C datatypes
+at this time.
+
+
+===RL_Print_TOS
+
+:Function: - <tt class=word>void RL_Print_TOS(REBCNT flags, REBYTE *marker)</tt>
+
+:Summary: - Print top REBOL stack value to the console. (pending changes)
+
+:Returns: - Nothing
+
+:Arguments: - <tt class=word>flags</tt> - special flags (set to zero at this time).
+<br><tt class=word>marker</tt> - placed at beginning of line to indicate output.
+
+
+:Notes: - This function is used for the main console evaluation
+input loop to print the results of evaluation from stack.
+The REBOL data stack is an abstract structure that can
+change between releases. This function allows the host
+to print the result of processed functions.
+Note that what is printed is actually TOS+1.
+Marker is usually "==" to show output.
+The system/options/result-types determine which values
+are automatically printed.
+
+
+===RL_Event
+
+:Function: - <tt class=word>int RL_Event(REBEVT *evt)</tt>
+
+:Summary: - Appends an application event (e.g. GUI) to the event port.
+
+:Returns: - Returns TRUE if queued, or FALSE if event queue is full.
+
+:Arguments: - <tt class=word>evt</tt> - A properly initialized event structure. The
+contents of this structure are copied as part of
+the function, allowing use of locals.
+
+
+:Notes: - Sets a signal to get REBOL attention for WAIT and awake.
+To avoid environment problems, this function only appends
+to the event queue (no auto-expand). So if the queue is full
+
+
+===RL_Update_Event
+
+:Function: - <tt class=word>int RL_Update_Event(REBEVT *evt)</tt>
+
+:Summary: - Updates an application event (e.g. GUI) to the event port.
+
+:Returns: - Returns 1 if updated, or 0 if event appended, and -1 if full.
+
+:Arguments: - <tt class=word>evt</tt> - A properly initialized event structure. The
+model and type of the event are used to address
+the unhandled event in the queue, when it is found,
+it will be replaced with this one
+
+
+
+===RL_Make_Block
+
+:Function: - <tt class=word>void *RL_Make_Block(u32 size)</tt>
+
+:Summary: - Allocate a new block.
+
+:Returns: - A pointer to a block series.
+
+:Arguments: - <tt class=word>size</tt> - the length of the block. The system will add one extra
+for the end-of-block marker.
+
+
+:Notes: - Blocks are allocated with REBOL's internal memory manager.
+Internal structures may change, so NO assumptions should be made!
+Blocks are automatically garbage collected if there are
+no references to them from REBOL code (C code does nothing.)
+However, you can lock blocks to prevent deallocation. (?? default)
+
+
+===RL_Expand_Series
+
+:Function: - <tt class=word>void RL_Expand_Series(REBSER *series, REBCNT index, REBCNT delta)</tt>
+
+:Summary: - Expand a series at a particular index point by the number
+number of units specified by delta.
+
+:Returns: - 
+
+:Arguments: - <tt class=word>series</tt> - series to expand
+<br><tt class=word>index</tt> - position where to expand
+<br><tt class=word>delta</tt> - number of UNITS to expand from TAIL (keeping terminator)
+
+
+
+===RL_Make_String
+
+:Function: - <tt class=word>void *RL_Make_String(u32 size, int unicode)</tt>
+
+:Summary: - Allocate a new string or binary series.
+
+:Returns: - A pointer to a string or binary series.
+
+:Arguments: - <tt class=word>size</tt> - the length of the string. The system will add one extra
+for a null terminator (not strictly required, but good for C.)
+<br><tt class=word>unicode</tt> - set FALSE for ASCII/Latin1 strings, set TRUE for Unicode.
+
+
+:Notes: - Strings can be REBYTE or REBCHR sized (depends on R3 config.)
+Strings are allocated with REBOL's internal memory manager.
+Internal structures may change, so NO assumptions should be made!
+Strings are automatically garbage collected if there are
+no references to them from REBOL code (C code does nothing.)
+However, you can lock strings to prevent deallocation. (?? default)
+
+
+===RL_Make_Image
+
+:Function: - <tt class=word>void *RL_Make_Image(u32 width, u32 height)</tt>
+
+:Summary: - Allocate a new image of the given size.
+
+:Returns: - A pointer to an image series, or zero if size is too large.
+
+:Arguments: - <tt class=word>width</tt> - the width of the image in pixels
+<br><tt class=word>height</tt> - the height of the image in lines
+
+
+:Notes: - Images are allocated with REBOL's internal memory manager.
+Image are automatically garbage collected if there are
+no references to them from REBOL code (C code does nothing.)
+
+
+===RL_Make_Vector
+
+:Function: - <tt class=word>void *RL_Make_Vector(REBINT type, REBINT sign, REBINT dims, REBINT bits, REBINT size)</tt>
+
+:Summary: - Allocate a new vector of the given attributes.
+
+:Returns: - A pointer to a vector series or zero.
+
+:Arguments: - type: the datatype
+sign: signed or unsigned
+dims: number of dimensions
+bits: number of bits per unit (8, 16, 32, 64)
+size: number of values
+
+
+:Notes: - Allocated with REBOL's internal memory manager.
+Vectors are automatically garbage collected if there are
+no references to them from REBOL code (C code does nothing.)
+
+
+===RL_Protect_GC
+
+:Function: - <tt class=word>void RL_Protect_GC(REBSER *series, u32 flags)</tt>
+
+:Summary: - Protect memory from garbage collection.
+
+:Returns: - nothing
+
+:Arguments: - <tt class=word>series</tt> - a series to protect (block, string, image, ...)
+<br><tt class=word>flags</tt> - set to 1 to protect, 0 to unprotect
+
+
+:Notes: - You should only use this function when absolutely necessary,
+because it bypasses garbage collection for the specified series.
+Meaning: if you protect a series, it will never be freed.
+Also, you only need this function if you allocate several series
+such as strings, blocks, images, etc. within the same command
+and you don't store those references somewhere where the GC can
+find them, such as in an existing block or object (variable).
+
+
+===RL_Get_String
+
+:Function: - <tt class=word>int RL_Get_String(REBSER *series, u32 index, void **str, REBOOL needs_wide)</tt>
+
+:Summary: - Obtain a pointer into a string (bytes or unicode).
+
+:Returns: - The length and type of string. When len > 0, string is unicode.
+When len < 0, string is bytes.
+
+:Arguments: - <tt class=word>series</tt> - string series pointer
+<br><tt class=word>index</tt> - index from beginning (zero-based)
+<br><tt class=word>str  </tt> - pointer to first character
+<br><tt class=word>needs_wide</tt> - unicode string is required, converts if needed
+
+
+:Notes: - If the len is less than zero, then the string is optimized to
+codepoints (chars) 255 or less for ASCII and LATIN-1 charsets.
+Strings are allowed to move in memory. Therefore, you will want
+to make a copy of the string if needed.
+
+
+===RL_Get_UTF8_String
+
+:Function: - <tt class=word>int RL_Get_UTF8_String(REBSER *series, u32 index, void **str)</tt>
+
+:Summary: - Obtain a pointer into an UTF8 encoded string.
+
+:Returns: - The length of string is bytes.
+
+:Arguments: - <tt class=word>series</tt> - string series pointer
+<br><tt class=word>index</tt> - index from beginning (zero-based)
+<br><tt class=word>str  </tt> - pointer to first character
+
+
+:Notes: - Strings are allowed to move in memory. Therefore, you will want
+to make a copy of the string if needed.
+
+
+===RL_Map_Word
+
+:Function: - <tt class=word>u32 RL_Map_Word(REBYTE *string)</tt>
+
+:Summary: - Given a word as a string, return its global word identifier.
+
+:Returns: - The word identifier that matches the string.
+
+:Arguments: - <tt class=word>string</tt> - a valid word as a UTF-8 encoded string.
+
+
+:Notes: - Word identifiers are persistent, and you can use them anytime.
+If the word is new (not found in master symbol table)
+it will be added and the new word identifier is returned.
+
+
+===RL_Map_Words
+
+:Function: - <tt class=word>u32 *RL_Map_Words(REBSER *series)</tt>
+
+:Summary: - Given a block of word values, return an array of word ids.
+
+:Returns: - An array of global word identifiers (integers). The [0] value is the size.
+
+:Arguments: - <tt class=word>series</tt> - block of words as values (from REBOL blocks, not strings.)
+
+
+:Notes: - Word identifiers are persistent, and you can use them anytime.
+The block can include any kind of word, including set-words, lit-words, etc.
+If the input block contains non-words, they will be skipped.
+The array is allocated with OS_MAKE and you can OS_FREE it any time.
+
+
+===RL_Word_String
+
+:Function: - <tt class=word>REBYTE *RL_Word_String(u32 word)</tt>
+
+:Summary: - Return a string related to a given global word identifier.
+
+:Returns: - A copy of the word string, null terminated.
+
+:Arguments: - <tt class=word>word</tt> - a global word identifier
+
+
+:Notes: - The result is a null terminated copy of the name for your own use.
+The string is always UTF-8 encoded (chars > 127 are encoded.)
+In this API, word identifiers are always canonical. Therefore,
+the returned string may have different spelling/casing than expected.
+The string is allocated with OS_MAKE and you can OS_FREE it any time.
+
+
+===RL_Find_Word
+
+:Function: - <tt class=word>u32 RL_Find_Word(u32 *words, u32 word)</tt>
+
+:Summary: - Given an array of word ids, return the index of the given word.
+
+:Returns: - The index of the given word or zero.
+
+:Arguments: - <tt class=word>words</tt> - a word array like that returned from MAP_WORDS (first element is size)
+<br><tt class=word>word</tt> - a word id
+
+
+:Notes: - The first element of the word array is the length of the array.
+
+
+===RL_Series
+
+:Function: - <tt class=word>REBUPT RL_Series(REBSER *series, REBCNT what)</tt>
+
+:Summary: - Get series information.
+
+:Returns: - Returns information related to a series.
+
+:Arguments: - <tt class=word>series</tt> - any series pointer (string or block)
+<br><tt class=word>what</tt> - indicates what information to return (see RXI_SER enum)
+
+
+:Notes: - Invalid what arg nums will return zero.
+
+
+===RL_Get_Char
+
+:Function: - <tt class=word>int RL_Get_Char(REBSER *series, u32 index)</tt>
+
+:Summary: - Get a character from byte or unicode string.
+
+:Returns: - A Unicode character point from string. If index is
+at or past the tail, a -1 is returned.
+
+:Arguments: - <tt class=word>series</tt> - string series pointer
+<br><tt class=word>index</tt> - zero based index of character
+
+
+:Notes: - This function works for byte and unicoded strings.
+The maximum size of a Unicode char is determined by
+R3 build options. The default is 16 bits.
+
+
+===RL_Set_Char
+
+:Function: - <tt class=word>u32 RL_Set_Char(REBSER *series, u32 index, u32 chr)</tt>
+
+:Summary: - Set a character into a byte or unicode string.
+
+:Returns: - The index passed as an argument.
+
+:Arguments: - <tt class=word>series</tt> - string series pointer
+<br><tt class=word>index</tt> - where to store the character. If past the tail,
+the string will be auto-expanded by one and the char
+will be appended.
+
+
+
+===RL_Get_Value_Resolved
+
+:Function: - <tt class=word>int RL_Get_Value_Resolved(REBSER *series, u32 index, RXIARG *result)</tt>
+
+:Summary: - Get a value from a block. If value is WORD or PATH, than its value is resolved.
+
+:Returns: - Datatype of value or zero if index is past tail.
+
+:Arguments: - <tt class=word>series</tt> - block series pointer
+<br><tt class=word>index</tt> - index of the value in the block (zero based)
+<br><tt class=word>result</tt> - set to the value of the field
+
+
+
+===RL_Get_Value
+
+:Function: - <tt class=word>int RL_Get_Value(REBSER *series, u32 index, RXIARG *result)</tt>
+
+:Summary: - Get a value from a block.
+
+:Returns: - Datatype of value or zero if index is past tail.
+
+:Arguments: - <tt class=word>series</tt> - block series pointer
+<br><tt class=word>index</tt> - index of the value in the block (zero based)
+<br><tt class=word>result</tt> - set to the value of the field
+
+
+
+===RL_Set_Value
+
+:Function: - <tt class=word>int RL_Set_Value(REBSER *series, u32 index, RXIARG val, int type)</tt>
+
+:Summary: - Set a value in a block.
+
+:Returns: - TRUE if index past end and value was appended to tail of block.
+
+:Arguments: - <tt class=word>series</tt> - block series pointer
+<br><tt class=word>index</tt> - index of the value in the block (zero based)
+<br><tt class=word>val </tt> - new value for field
+<br><tt class=word>type</tt> - datatype of value
+
+
+
+===RL_Words_Of_Object
+
+:Function: - <tt class=word>u32 *RL_Words_Of_Object(REBSER *obj)</tt>
+
+:Summary: - Returns information about the object.
+
+:Returns: - Returns an array of words used as fields of the object.
+
+:Arguments: - <tt class=word>obj </tt> - object pointer (e.g. from RXA_OBJECT)
+
+
+:Notes: - Returns a word array similar to MAP_WORDS().
+The array is allocated with OS_MAKE. You can OS_FREE it any time.
+
+
+===RL_Get_Field
+
+:Function: - <tt class=word>int RL_Get_Field(REBSER *obj, u32 word, RXIARG *result)</tt>
+
+:Summary: - Get a field value (context variable) of an object.
+
+:Returns: - Datatype of value or zero if word is not found in the object.
+
+:Arguments: - <tt class=word>obj </tt> - object pointer (e.g. from RXA_OBJECT)
+<br><tt class=word>word</tt> - global word identifier (integer)
+<br><tt class=word>result</tt> - gets set to the value of the field
+
+
+
+===RL_Set_Field
+
+:Function: - <tt class=word>int RL_Set_Field(REBSER *obj, u32 word, RXIARG val, int type)</tt>
+
+:Summary: - Set a field (context variable) of an object.
+
+:Returns: - The type arg, or zero if word not found in object or if field is protected.
+
+:Arguments: - <tt class=word>obj </tt> - object pointer (e.g. from RXA_OBJECT)
+<br><tt class=word>word</tt> - global word identifier (integer)
+<br><tt class=word>val </tt> - new value for field
+<br><tt class=word>type</tt> - datatype of value
+
+
+
+===RL_Callback
+
+:Function: - <tt class=word>int RL_Callback(RXICBI *cbi)</tt>
+
+:Summary: - Evaluate a REBOL callback function, either synchronous or asynchronous.
+
+:Returns: - Sync callback: type of the result; async callback: true if queued
+
+:Arguments: - <tt class=word>cbi</tt> - callback information including special option flags,
+object pointer (where function is located), function name
+as global word identifier (within above object), argument list
+passed to callback (see notes below), and result value.
+
+
+:Notes: - The flag value will determine the type of callback. It can be either
+synchronous, where the code will re-enter the interpreter environment
+and call the specified function, or asynchronous where an EVT_CALLBACK
+event is queued, and the callback will be evaluated later when events
+are processed within the interpreter's environment.
+For asynchronous callbacks, the cbi and the args array must be managed
+because the data isn't processed until the callback event is
+handled. Therefore, these cannot be allocated locally on
+the C stack; they should be dynamic (or global if so desired.)
+See c:extensions-callbacks
+
+
+===RL_Encode_UTF8
+
+:Function: - <tt class=word>REBCNT RL_Encode_UTF8(REBYTE *dst, REBINT max, void *src, REBCNT *len, REBFLG uni, REBFLG opts)</tt>
+
+:Summary: - Encode the unicode into UTF8 byte string.
+
+:Returns: - Number of source chars used.
+Updates len for dst bytes used.
+Does not add a terminator.
+
+:Arguments: - <tt class=word>max </tt> - The maximum size of the result (UTF8).
+<br><tt class=word>uni </tt> - Source string can be byte or unichar sized (uni = TRUE);
+<br><tt class=word>opts</tt> - Convert LF/CRLF
+
+
+
+===RL_Encode_UTF8_String
+
+:Function: - <tt class=word>REBSER* RL_Encode_UTF8_String(void *src, REBCNT len, REBFLG uni, REBFLG opts)</tt>
+
+:Summary: - Encode the unicode into UTF8 byte string.
+
+:Returns: - Rebol series value with an UTF8 encoded data.
+
+:Arguments: - <tt class=word>src </tt> - series as a REBYTE or REBUNI.
+<br><tt class=word>len </tt> - number of source bytes to convert.
+<br><tt class=word>uni </tt> - Source string can be byte or unichar sized (uni = TRUE);
+<br><tt class=word>opts</tt> - Convert LF/CRLF
+
+
+
+===RL_Decode_UTF_String
+
+:Function: - <tt class=word>REBSER* RL_Decode_UTF_String(REBYTE *src, REBCNT len, REBINT utf, REBFLG ccr, REBFLG uni)</tt>
+
+:Summary: - Decode the UTF8 encoded data into Rebol series.
+
+:Returns: - Rebol series with char size 1 or 2
+
+:Arguments: - <tt class=word>src </tt> - UTF8 encoded data
+<br><tt class=word>len </tt> - number of source bytes to convert.
+<br><tt class=word>utf </tt> - is 0, 8, +/-16, +/-32.
+<br><tt class=word>ccr </tt> - Convert LF/CRLF
+<br><tt class=word>uni </tt> - keep uni version even for plain ascii
+
+
+
+===RL_Register_Handle
+
+:Function: - <tt class=word>REBCNT RL_Register_Handle(REBYTE *name, REBCNT size, void* free_func)</tt>
+
+:Summary: - Stores handle's specification (required data size and optional free callback.
+
+:Returns: - symbol id of the word (whether found or new)
+or NOT_FOUND if handle with give ID is already registered.
+
+:Arguments: - <tt class=word>name     </tt> - handle's name as a c-string (length is being detected)
+<br><tt class=word>size     </tt> - size of needed memory to handle
+<br><tt class=word>free_func</tt> - custom function to be called when handle is released
+
+
+
+===RL_Make_Handle_Context
+
+:Function: - <tt class=word>REBHOB* RL_Make_Handle_Context(REBCNT sym)</tt>
+
+:Summary: - Allocates memory large enough to hold given handle's id
+
+:Returns: - A pointer to a Rebol's handle value.
+
+:Arguments: - <tt class=word>sym</tt> - handle's word id
+
+
+
+===RL_Free_Handle_Context
+
+:Function: - <tt class=word>void RL_Free_Handle_Context(REBHOB *hob)</tt>
+
+:Summary: - Frees memory of given handle's context
+
+:Returns: - nothing
+
+:Arguments: - <tt class=word>hob</tt> - handle's context
+
+
+

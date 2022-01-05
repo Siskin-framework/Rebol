@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Function Prototypes
-**  Build: 3.7.1
-**  Date:  22-Dec-2021
+**  Build: 3.7.2
+**  Date:  5-Jan-2022
 **  File:  funcs.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: pre-make)
@@ -753,24 +753,5 @@ extern REBYTE *SHA256(REBYTE *d, REBCNT n, REBYTE *md); // src/core/u-mbedtls.c
 extern REBYTE *SHA384(REBYTE *d, REBCNT n, REBYTE *md); // src/core/u-mbedtls.c
 extern REBYTE *SHA512(REBYTE *d, REBCNT n, REBYTE *md); // src/core/u-mbedtls.c
 extern REBYTE *RIPEMD160(REBYTE *d, REBCNT n, REBYTE *md); // src/core/u-mbedtls.c
+extern void Init_Clipboard_Scheme(void); // src/core/p-clipboard.c
 extern void Init_Crypt(void); // src/core/n-crypt.c
-extern REBSER *CompressCrush(REBSER *input, REBINT index, REBCNT size, int level); // src/core/u-crush.c
-extern REBSER *DecompressCrush(REBSER *data, REBINT index, REBCNT length, REBCNT limit); // src/core/u-crush.c
-extern REBINT Codec_BMP_Image(REBCDI *codi); // src/core/u-bmp.c
-extern void Init_BMP_Codec(void); // src/core/u-bmp.c
-extern void Encode_PNG_Image(REBCDI *codi); // src/core/u-png.c
-extern void Decode_PNG_Image(REBCDI *codi); // src/core/u-png.c
-extern REBINT Codec_PNG_Image(REBCDI *codi); // src/core/u-png.c
-extern void Init_PNG_Codec(void); // src/core/u-png.c
-extern REBINT Codec_JPEG_Image(REBCDI *codi); // src/core/u-jpg.c
-extern void Init_JPEG_Codec(void); // src/core/u-jpg.c
-extern void Decode_LZW(REBCNT *data, REBYTE **cpp, REBYTE *colortab, REBINT w, REBINT h, REBOOL interlaced); // src/core/u-gif.c
-extern void Decode_GIF_Image(REBCDI *codi); // src/core/u-gif.c
-extern REBINT Codec_GIF_Image(REBCDI *codi); // src/core/u-gif.c
-extern void Init_GIF_Codec(void); // src/core/u-gif.c
-extern void Decode_QOI_Image(REBCDI *codi); // src/core/u-qoi.c
-extern void Identify_QOI_Image(REBCDI *codi); // src/core/u-qoi.c
-extern REBINT Codec_QOI_Image(REBCDI *codi); // src/core/u-qoi.c
-extern void Init_QOI_Codec(void); // src/core/u-qoi.c
-extern REBINT Do_Dialect(REBSER *dialect, REBSER *block, REBCNT *index, REBSER **out); // src/core/u-dialect.c
-extern void Trace_Delect(REBINT level); // src/core/u-dialect.c

@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Extension Type Equates
-**  Build: 3.7.1
-**  Date:  22-Dec-2021
+**  Build: 3.7.2
+**  Date:  5-Jan-2022
 **  File:  tmp-exttypes.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -160,7 +160,7 @@
 	0,                            // 9
 	RXE_32,                       // char
 	RXE_64,                       // pair
-	RXE_64,                       // tuple
+	RXE_TUPLE,                    // tuple
 	RXE_64,                       // time
 	RXE_DATE,                     // date
 	0,                            // 15

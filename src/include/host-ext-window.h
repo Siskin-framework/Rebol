@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: REBOL Window
-**  Build: 3.7.1
-**  Date:  22-Dec-2021
+**  Build: 3.7.2
+**  Date:  5-Jan-2022
 **  File:  host-ext-window
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-host-ext.reb)

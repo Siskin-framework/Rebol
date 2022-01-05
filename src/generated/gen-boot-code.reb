@@ -229,7 +229,7 @@
     msdos-date
     msdos-time
     octal-bytes
-    string-bytes abgr addr aes align argb at atz average bgr bgra bgro bincode bit bitset16 bitset32 bitset8 bmp bytes chacha20 chacha20poly1305 checksum codec crush dds deflate dh dng ecdh egid encodedu32 euid extern f16 f16be f16le f32 f32be f32le f64 f64be f64le fb fixed16 fixed8 float float16 gid gif gzip hdp heif ico index indexz jp2 jpeg jpegxr jpg jxr length local lzma name obgr opacity orgb pad paeth pid png pointer poly1305 raw_memory raw_size rc4 rebval rgba rgbo rsa sb secp160r1 secp192r1 secp224r1 secp256k1 secp256r1 si16 si16be si16le si24 si24be si32 si32be si32le si64 si8 signed skipbits string sub tiff tuple3 tuple4 ub ui16 ui16be ui16bebytes ui16bytes ui16le ui16lebytes ui24 ui24be ui24bebytes ui24bytes ui24le ui24lebytes ui32 ui32be ui32bebytes ui32bytes ui32le ui32lebytes ui64 ui64be ui64le ui8 ui8bytes uid up webp widget zlib
+    string-bytes abgr addr aes align argb at atz bgr bgra bgro bincode bit bitset16 bitset32 bitset8 bytes chacha20 chacha20poly1305 checksum codec crush deflate dh ecdh egid encodedu32 euid extern f16 f16be f16le f32 f32be f32le f64 f64be f64le fb fixed16 fixed8 float float16 gid gzip index indexz length local lzma name obgr opacity orgb pad pid pointer poly1305 raw_memory raw_size rc4 rebval rgba rgbo rsa sb secp160r1 secp192r1 secp224r1 secp256k1 secp256r1 si16 si16be si16le si24 si24be si32 si32be si32le si64 si8 signed skipbits string tuple3 tuple4 ub ui16 ui16be ui16bebytes ui16bytes ui16le ui16lebytes ui24 ui24be ui24bebytes ui24bytes ui24le ui24lebytes ui32 ui32be ui32bebytes ui32bytes ui32le ui32lebytes ui64 ui64be ui64le ui8 ui8bytes uid widget zlib
 ] [
     self
     root
@@ -257,44 +257,32 @@
     buf-mold
     mold-loop
     err-temps
-] #{
-656E642D6F662D736372697074006C696E6500656E642D6F662D626C6F636B00
-656E642D6F662D706172656E00776F726400776F72642D73657400776F72642D
-67657400776F72642D6C6974006E6F6E65006C6F67696300696E746567657200
-646563696D616C0070657263656E74006D6F6E65790074696D65006461746500
-6368617200626C6F636B00706172656E00737472696E670062696E6172790070
-616972007475706C650066696C6500656D61696C0075726C0069737375650074
-6167007061746800726566696E6500636F6E73747275637400426F6F74696E67
-2E2E2E00747261636500252D3032643A202535307200203A202535307200203A
-202573202535306D00203A202573002D2D3E202573003C2D2D202573203D3D00
-5061727365206D617463683A20257200506172736520696E7075743A20257300
-5061727365206261636B3A202572002A2A3A206572726F72203A202572202572
-00535441434B20457870616E646564202D204453503A202564204D41583A2025
-64000A535441434B5B25645D2025735B25645D202573000A2D2D5245424F4C20
-4B65726E656C2044756D702D2D004576616C7561746F723A0020202020437963
-6C65733A202025640020202020436F756E7465723A2025640020202020446F73
-653A20202020256400202020205369676E616C733A2025780020202020536967
-6D61736B3A20257800202020204453503A202020202025640020202020445346
-3A20202020202564004D656D6F72792F47433A002020202042616C6C6173743A
-202564002020202044697361626C653A202564002020202050726F746563743A
-2025640020202020496E66616E74733A202564006F7574206F66206D656D6F72
-7920287265712025642062797465732900696E76616C69642073657269657320
-776964746820256420676F742025642074797065202564006572726F7220616C
-72656164792063617567687400737461636B206F766572666C6F7700492F4F20
-6572726F7200746F6F206D616E7920776F72647300776F7264206C6973742062
-756666657220696E20757365006C6F636B656420736572696573006572726F72
-2072656379636C656400746F70206C6576656C206572726F72206E6F74206361
-75676874006572726F7220737461746520756E646572666C6F77006576656E74
-207175657565206F766572666C6F7720285741495420726563757273696F6E3F
-29006E6F7420617661696C61626C6520284E412900206572726F723A20002869
-6D70726F7065726C7920666F726D6174746564206572726F7229002A2A205768
-6572653A20002A2A204E6561723A200052454359434C494E473A200025642073
-6572696573006F626A2D636F70793A20256420256D0052585F496E6974005258
-5F517569740052585F43616C6C005265626F6C2042756C6B20332E372E31204C
-696E7578206C696E757820783634207063206C696E757820656C662067636320
-7836342D70632D6C696E75782D656C662032322D4465632D323032312F31353A
-323020237B373743343033454332304337353341333738363636393739413441
-303639423931304238454239417D00
+] 64#{
+ZW5kLW9mLXNjcmlwdABsaW5lAGVuZC1vZi1ibG9jawBlbmQtb2YtcGFyZW4Ad29y
+ZAB3b3JkLXNldAB3b3JkLWdldAB3b3JkLWxpdABub25lAGxvZ2ljAGludGVnZXIA
+ZGVjaW1hbABwZXJjZW50AG1vbmV5AHRpbWUAZGF0ZQBjaGFyAGJsb2NrAHBhcmVu
+AHN0cmluZwBiaW5hcnkAcGFpcgB0dXBsZQBmaWxlAGVtYWlsAHVybABpc3N1ZQB0
+YWcAcGF0aAByZWZpbmUAY29uc3RydWN0AEJvb3RpbmcuLi4AdHJhY2UAJS0wMmQ6
+ICU1MHIAIDogJTUwcgAgOiAlcyAlNTBtACA6ICVzAC0tPiAlcwA8LS0gJXMgPT0A
+UGFyc2UgbWF0Y2g6ICVyAFBhcnNlIGlucHV0OiAlcwBQYXJzZSBiYWNrOiAlcgAq
+KjogZXJyb3IgOiAlciAlcgBTVEFDSyBFeHBhbmRlZCAtIERTUDogJWQgTUFYOiAl
+ZAAKU1RBQ0tbJWRdICVzWyVkXSAlcwAKLS1SRUJPTCBLZXJuZWwgRHVtcC0tAEV2
+YWx1YXRvcjoAICAgIEN5Y2xlczogICVkACAgICBDb3VudGVyOiAlZAAgICAgRG9z
+ZTogICAgJWQAICAgIFNpZ25hbHM6ICV4ACAgICBTaWdtYXNrOiAleAAgICAgRFNQ
+OiAgICAgJWQAICAgIERTRjogICAgICVkAE1lbW9yeS9HQzoAICAgIEJhbGxhc3Q6
+ICVkACAgICBEaXNhYmxlOiAlZAAgICAgUHJvdGVjdDogJWQAICAgIEluZmFudHM6
+ICVkAG91dCBvZiBtZW1vcnkgKHJlcSAlZCBieXRlcykAaW52YWxpZCBzZXJpZXMg
+d2lkdGggJWQgZ290ICVkIHR5cGUgJWQAZXJyb3IgYWxyZWFkeSBjYXVnaHQAc3Rh
+Y2sgb3ZlcmZsb3cASS9PIGVycm9yAHRvbyBtYW55IHdvcmRzAHdvcmQgbGlzdCBi
+dWZmZXIgaW4gdXNlAGxvY2tlZCBzZXJpZXMAZXJyb3IgcmVjeWNsZWQAdG9wIGxl
+dmVsIGVycm9yIG5vdCBjYXVnaHQAZXJyb3Igc3RhdGUgdW5kZXJmbG93AGV2ZW50
+IHF1ZXVlIG92ZXJmbG93IChXQUlUIHJlY3Vyc2lvbj8pAG5vdCBhdmFpbGFibGUg
+KE5BKQAgZXJyb3I6IAAoaW1wcm9wZXJseSBmb3JtYXR0ZWQgZXJyb3IpACoqIFdo
+ZXJlOiAAKiogTmVhcjogAFJFQ1lDTElORzogACVkIHNlcmllcwBvYmotY29weTog
+JWQgJW0AUlhfSW5pdABSWF9RdWl0AFJYX0NhbGwAUmVib2wgQ29yZSAzLjcuMiBN
+YWNpbnRvc2ggbWFjb3MgeDY0IGFwcGxlIGRhcndpbiBtYWNobyBjbGFuZyB4NjQt
+YXBwbGUtZGFyd2luLW1hY2hvIDUtSmFuLTIwMjIvMTg6MzMgNjQjezhaMjAwZDV6
+SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
 } [
     ["Returns TRUE if it is this type." value [any-type!] 0]
     native: native [
@@ -1825,76 +1813,6 @@
         /to "Transcode to a new binary"
         target [word! integer! tag! string!] "Target codepage id"
     ]
-    hsv-to-rgb: native [
-        "Converts HSV (hue, saturation, value) to RGB"
-        hsv [tuple!]
-    ]
-    rgb-to-hsv: native [
-        "Converts RGB value to HSV (hue, saturation, value)"
-        rgb [tuple!]
-    ]
-    tint: native [
-        "Mixing colors (tint and or brightness)"
-        target [tuple! image!] "Target RGB color or image (modifed)"
-        rgb [tuple!] "Color to use for mixture"
-        amount [number!] "Effect amount"
-    ]
-    resize: native [
-        "Resizes an image to the given size."
-        image [image!] "Image to resize"
-        size [pair! percent! integer!]
-        {Size of the new image (integer value is used as width)}
-        /filter "Using given filter type (default is Lanczos)"
-        name [word! integer!] "One of: system/catalog/filters"
-        /blur
-        factor [number!] "The blur factor where > 1 is blurry, < 1 is sharp"
-    ]
-    premultiply: native [
-        "Premultiplies RGB channel with its alpha channel"
-        image [image!] "Image to premultiply (modified)"
-    ]
-    blur: native [
-        "Blur (Gaussian) given image"
-        image [image!] "Image to blur (modified)"
-        radius [number!] "Blur amount"
-    ]
-    image: native [
-        {Interface to basic image encoding/decoding (only on Windows so far!)}
-        /load "Image file to load or binary to decode"
-        src-file [file! binary!]
-        /save "Encodes image to file or binary"
-        dst-file [none! file! binary!] "If NONE is used, binary is made internally"
-        dst-image [none! image!] "If NONE, loaded image may be used if there is any"
-        /frame "Some image formats may contain multiple images"
-        num [integer!] "1-based index of the image to receive"
-        /as "Used to define which codec should be used"
-        type [word!] {One of: [PNG JPEG JPEGXR BMP DDS GIF TIFF] read only: [DNG ICO HEIF]}
-    ]
-    filter: native [
-        "PNG delta filter"
-        data [binary!] "Input"
-        width [number!] "Scanline width"
-        type [integer! word!] "1..4 or one of: [sub up average paeth]"
-        /skip bpp [integer!] "Bytes per pixel"
-    ]
-    unfilter: native [
-        "Reversed PNG delta filter"
-        data [binary!] "Input"
-        width [number!] "Scanline width (not counting the type byte)"
-        /as {Filter type. If not used, type is decoded from first byte on each line.}
-        type [integer! word!] "1..4 or one of: [sub up average paeth]"
-        /skip
-        bpp [integer!] "Bytes per pixel"
-    ]
-    delect: native [
-        {Parses a common form of dialects. Returns updated input block.}
-        dialect [object!] "Describes the words and datatypes of the dialect"
-        input [block!] "Input stream to parse"
-        output [block!] "Resulting values, ordered as defined (modified)"
-        /in {Search for var words in specific objects (contexts)}
-        where [block!] "Block of objects to search (non objects ignored)"
-        /all "Parse entire block, not just one command at a time"
-    ]
 ] [
     + add
     - subtract
@@ -2096,7 +2014,7 @@
 ] [
     product: 'core
     platform: 'Unknown
-    version: 3.7.1
+    version: 3.7.2
     build: object [os: arch: vendor: sys: abi: compiler: target: date: git: none]
     license: none
     catalog: object [
@@ -2119,14 +2037,14 @@
             secure-min secure-max trace halt cgi boot-level no-window
         ]
         bitsets: object [
-            crlf: make bitset! #{0024}
-            whitespace: make bitset! #{0064000080}
-            numeric: make bitset! #{000000000000FFC0}
-            alpha: make bitset! #{00000000000000007FFFFFE07FFFFFE0}
-            alpha-numeric: make bitset! #{000000000000FFC07FFFFFE07FFFFFE0}
-            hex-digits: make bitset! #{000000000000FFC07E0000007E}
-            uri: make bitset! #{000000005BFFFFF5FFFFFFE17FFFFFE2}
-            uri-component: make bitset! #{0000000041E6FFC07FFFFFE17FFFFFE2}
+            crlf: make bitset! 64#{ACQ=}
+            whitespace: make bitset! 64#{AGQAAIA=}
+            numeric: make bitset! 64#{AAAAAAAA/8A=}
+            alpha: make bitset! 64#{AAAAAAAAAAB////gf///4A==}
+            alpha-numeric: make bitset! 64#{AAAAAAAA/8B////gf///4A==}
+            hex-digits: make bitset! 64#{AAAAAAAA/8B+AAAAfg==}
+            uri: make bitset! 64#{AAAAAFv///X////hf///4g==}
+            uri-component: make bitset! 64#{AAAAAEHm/8B////hf///4g==}
         ]
         checksums: [adler32 crc24 crc32 tcp md4 md5 sha1 sha224 sha256 sha384 sha512 ripemd160]
         compressions: [gzip deflate zlib lzma crush]
@@ -2487,7 +2405,7 @@
     cr: #"^M"
     lf: newline
     crlf: "^M^/"
-    whitespace: make bitset! #{0064000080}
+    whitespace: make bitset! 64#{AGQAAIA=}
     q: :quit
     !: :not
     min: :minimum
@@ -2608,7 +2526,7 @@
         /local chars
     ] [
         if one-line [
-            chars: make bitset! [not bits #{0024}]
+            chars: make bitset! [not bits 64#{ACQ=}]
             parse str [
                 any [
                     some chars
@@ -2649,7 +2567,7 @@
         /local end
     ] [
         either all [
-            url? path end: find path make bitset! #{0000000010000001}
+            url? path end: find path make bitset! 64#{AAAAABAAAAE=}
         ] [
             all [
                 path: find/reverse end #"."
@@ -2752,8 +2670,8 @@
         target [file! url! string!]
         /local dir pos
     ] [
-        parse/all target [
-            [#"/" | 1 2 #"." opt #"/"] end (dir: dirize target) |
+        parse target [
+            [#"/" | 1 2 #"." opt #"/"] end (pos: %"" dir: dirize target) |
             pos: any [thru #"/" [end | pos:]] (
                 all [empty? dir: copy/part target at head target index? pos dir: %./]
                 all [find [%. %..] pos: to file! pos insert tail pos #"/"]
@@ -2955,45 +2873,6 @@
         buffer-write: none
         r-mask:
         w-mask: 0
-    ]
-    append system/catalog [
-        filters [
-            Point
-            Box
-            Triangle
-            Hermite
-            Hanning
-            Hamming
-            Blackman
-            Gaussian
-            Quadratic
-            Cubic
-            Catrom
-            Mitchell
-            Lanczos
-            Bessel
-            Sinc
-        ]
-    ]
-    if find system/codecs 'bmp [
-        system/codecs/bmp/suffixes: [%.bmp]
-        append append system/options/file-types system/codecs/bmp/suffixes 'bmp
-    ]
-    if find system/codecs 'png [
-        system/codecs/png/suffixes: [%.png]
-        append append system/options/file-types system/codecs/png/suffixes 'png
-    ]
-    if find system/codecs 'jpeg [
-        system/codecs/jpeg/suffixes: [%.jpg %.jpeg]
-        append append system/options/file-types system/codecs/jpeg/suffixes 'jpeg
-    ]
-    if find system/codecs 'gif [
-        system/codecs/gif/suffixes: [%.gif]
-        append append system/options/file-types system/codecs/gif/suffixes 'gif
-    ]
-    if find system/codecs 'qoi [
-        system/codecs/qoi/suffixes: [%.qoi]
-        append append system/options/file-types system/codecs/qoi/suffixes 'qoi
     ]
 ] [
     native: none
@@ -3579,12 +3458,12 @@
         case/all [
             binary? source [
                 parse source [
-                    #{0000FEFF} tmp: (tmp: iconv/to tmp 'utf-32BE 'utf8)
-                    | #{FFFE0000} tmp: (tmp: iconv/to tmp 'utf-32LE 'utf8)
-                    | #{FEFF} tmp: (tmp: iconv/to tmp 'utf-16BE 'utf8)
-                    | #{FFFE} tmp: (tmp: iconv/to tmp 'utf-16LE 'utf8)
+                    64#{AAD+/w==} tmp: (tmp: iconv/to tmp 'utf-32BE 'utf8)
+                    | 64#{//4AAA==} tmp: (tmp: iconv/to tmp 'utf-32LE 'utf8)
+                    | 64#{/v8=} tmp: (tmp: iconv/to tmp 'utf-16BE 'utf8)
+                    | 64#{//4=} tmp: (tmp: iconv/to tmp 'utf-16LE 'utf8)
                     |
-                    opt [#{EFBBBF} source:] (tmp: assert-utf8 source)
+                    opt [64#{77u/} source:] (tmp: assert-utf8 source)
                 ]
             ]
             string? source [tmp: to binary! source]
@@ -6380,7 +6259,7 @@
             /local main name warn
         ] [
             parse/all oid [
-                #{2B0E0302} (main: "Oddball OIW OID") [
+                64#{Kw4DAg==} (main: "Oddball OIW OID") [
                     #"^A" (name: 'rsa)
                     | #"^B" (name: 'md4WitRSA)
                     | #"^C" (name: 'md5WithRSA)
@@ -6392,27 +6271,27 @@
                     | #"^]" (name: 'sha1WithRSAEncryption)
                 ]
                 |
-                #{2B060105050701} (main: "PKIX private extension") [
+                64#{KwYBBQUHAQ==} (main: "PKIX private extension") [
                     #"^A" (name: 'authorityInfoAccess)
                 ]
                 |
-                #{2B060105050730} (main: "PKIX") [
+                64#{KwYBBQUHMA==} (main: "PKIX") [
                     #"^A" (name: 'ocsp)
                     | #"^B" (name: 'caIssuers)
                     | #"^C" (name: 'timeStamping)
                     | #"^E" (name: 'caRepository)
                 ]
                 |
-                #{2A8648CE3D} (main: "X9.62") [
-                    #{0201} (name: 'ecPublicKey)
-                    | #{0301} [
+                64#{KoZIzj0=} (main: "X9.62") [
+                    64#{AgE=} (name: 'ecPublicKey)
+                    | 64#{AwE=} [
                         #"^G" (name: 'secp256r1)
                         | #"^A" (name: 'secp192r1)
                     ]
                 ]
                 |
-                #{2A864886F70D01} [
-                    #{01} (main: "PKCS #1") [
+                64#{KoZIhvcNAQ==} [
+                    64#{AQ==} (main: "PKCS #1") [
                         #"^A" (name: 'rsaEncryption)
                         | #"^B" (name: 'md2WithRSAEncryption)
                         | #"^C" (name: 'md4withRSAEncryption)
@@ -6421,13 +6300,13 @@
                         | #"^K" (name: 'sha256WithRSAEncryption)
                     ] end
                     |
-                    #{07} (main: "PKCS #7") [
+                    64#{Bw==} (main: "PKCS #7") [
                         #"^A" (name: 'data)
                         | #"^B" (name: 'signedData)
                         | #"^F" (name: 'encryptedData)
                     ] end
                     |
-                    #{09} (main: "PKCS #9") [
+                    64#{CQ==} (main: "PKCS #9") [
                         #"^A" (name: 'emailAddress warn: "Deprecated, use an altName extension instead")
                         | #"^C" (name: 'contentType)
                         | #"^D" (name: 'messageDigest)
@@ -6438,21 +6317,21 @@
                         | #"4" (name: 'CMSAlgorithmProtect)
                     ] end
                     |
-                    #{0C} (main: "PKCS #12") [
-                        #{0106} (name: 'pbeWithSHAAnd40BitRC2-CBC)
-                        | #{0103} (name: 'pbeWithSHAAnd3-KeyTripleDES-CBC)
-                        | #{0A0102} (name: 'pkcs-12-pkcs-8ShroudedKeyBag)
+                    64#{DA==} (main: "PKCS #12") [
+                        64#{AQY=} (name: 'pbeWithSHAAnd40BitRC2-CBC)
+                        | 64#{AQM=} (name: 'pbeWithSHAAnd3-KeyTripleDES-CBC)
+                        | 64#{CgEC} (name: 'pkcs-12-pkcs-8ShroudedKeyBag)
                     ] end
                 ] end
                 |
-                #{2A864886F70D03} (main: "Encryption algorithm") [
+                64#{KoZIhvcNAw==} (main: "Encryption algorithm") [
                     #"^B" (name: "rc2CBC")
                     | #"^C" (name: "rc2ECB")
                     | #"^D" (name: "rc4")
                     | #"^G" (name: "des-ede3-cbc")
                 ] end
                 |
-                #{5504} (main: "X.520 DN component") [
+                64#{VQQ=} (main: "X.520 DN component") [
                     #"^C" (name: 'commonName)
                     | #"^F" (name: 'countryName)
                     | #"^G" (name: 'localityName)
@@ -6463,7 +6342,7 @@
                     | #"^O" (name: 'businessCategory)
                 ] end
                 |
-                #{551D} (main: "X.509 extension") [
+                64#{VR0=} (main: "X.509 extension") [
                     #"^A" (name: 'authorityKeyIdentifier warn: "Deprecated, use 2 5 29 35 instead")
                     | #"^D" (name: 'keyUsageRestriction warn: "Obsolete, use keyUsage/extKeyUsage instead")
                     | #"^N" (name: 'subjectKeyIdentifier)
@@ -6476,13 +6355,13 @@
                     | #"%" (name: 'extKeyUsage)
                 ] end
                 |
-                #{2B060105050703} (main: "PKIX key purpose") [
+                64#{KwYBBQUHAw==} (main: "PKIX key purpose") [
                     #"^A" (name: 'serverAuth)
                     #"^B" (name: 'clientAuth)
                     | #"^C" (name: 'codeSigning)
                 ] end
                 |
-                #{2B0601040182370201} (main: "Microsoft") [
+                64#{KwYBBAGCNwIB} (main: "Microsoft") [
                     #"^U" (name: 'individualCodeSigning)
                 ] end
             ]
@@ -6563,7 +6442,7 @@
                         (*bool: false)
                         'SEQUENCE into [
                             'OBJECT_IDENTIFIER set *oid binary!
-                            opt ['BOOLEAN #{FF} (*bool: true)]
+                            opt ['BOOLEAN 64#{/w==} (*bool: true)]
                             'OCTET_STRING set *val binary! (
                                 *oid: der-codec/decode-OID *oid
                                 if all [not empty? *val *val/1 = 48] [*val: der-codec/decode *val]
@@ -6742,8 +6621,8 @@
                         pass: either password [copy pass] [
                             ask/hide ajoin ["Key password for " mold comm ": "]
                         ]
-                        key: join checksum join #{00000000} pass 'sha1
-                        checksum join #{00000001} pass 'sha1
+                        key: join checksum join 64#{AAAAAA==} pass 'sha1
+                        checksum join 64#{AAAAAQ==} pass 'sha1
                         key: aes/decrypt/key copy/part key 32 none
                         pri: aes/decrypt/stream key pri
                     ] [
@@ -6865,7 +6744,7 @@
                                     )
                                 ]
                             ]
-                            v/OBJECT_IDENTIFIER = #{2A864886F70D010101}
+                            v/OBJECT_IDENTIFIER = 64#{KoZIhvcNAQEB}
                             parse data [
                                 'SEQUENCE into [
                                     'INTEGER set n: binary!
@@ -6961,7 +6840,7 @@
             unix: to integer! date
             if as [
                 type: to word! type
-                binary/write bin: #{} [ui32 :unix]
+                binary/write bin: 64#{} [ui32 :unix]
                 switch type [
                     binary! [return bin]
                     string! [return enbase bin 16]
@@ -7126,7 +7005,7 @@
             bin: binary zip-data
             data-pos: 0
             if only [files-to-extract: length? files]
-            unless pos: find/last/tail bin/buffer #{504B0506} [return copy []]
+            unless pos: find/last/tail bin/buffer 64#{UEsFBg==} [return copy []]
             bin/buffer: pos
             if verbose [sys/log/debug 'ZIP "End of central directory record"]
             data: binary/read bin [
@@ -7285,7 +7164,7 @@
                         continue
                     ]
                 ]
-                data: any [data #{}]
+                data: any [data 64#{}]
                 crc: checksum data 'CRC32
                 size: length? data
                 method: either any [
@@ -7300,7 +7179,7 @@
                 ]
                 either compressed-data [
                     compressed-size: length? compressed-data
-                ] [compressed-data: #{}
+                ] [compressed-data: 64#{}
                 compressed-size: 0]
                 if any [
                     none? date
@@ -7308,10 +7187,10 @@
                 ] [date: now]
                 filename-length: length? file
                 offset: indexZ? bin/buffer-write
-                unless extra [extra: #{}]
-                unless comm [comm: #{}]
+                unless extra [extra: 64#{}]
+                unless comm [comm: 64#{}]
                 binary/write bin [
-                    #{504B030414000000}
+                    64#{UEsDBBQAAAA=}
                     UI16LE :method
                     MSDOS-DATETIME :date
                     UI32LE :crc
@@ -7323,7 +7202,7 @@
                     BYTES :compressed-data
                 ]
                 binary/write dir [
-                    #{504B0102170314000000}
+                    64#{UEsBAhcDFAAAAA==}
                     UI16LE :method
                     MSDOS-DATETIME :date
                     UI32LE :crc
@@ -7361,7 +7240,7 @@
                 bin-size: length? bin/buffer
                 binary/write bin [
                     BYTES :dir/buffer
-                    #{504B0506}
+                    64#{UEsFBg==}
                     UI16LE 0
                     UI16LE 0
                     UI16LE :entries
@@ -7480,7 +7359,7 @@
                     link: STRING-BYTES 100
                 ]
                 name: to file! name
-                if #{757374617200} = copy/part bin/buffer 6 [
+                if 64#{dXN0YXIA} = copy/part bin/buffer 6 [
                     hdr2: binary/read bin [
                         STRING-BYTES 6
                         STRING-BYTES 2
@@ -7529,688 +7408,6 @@
         ]
         verbose: 1
     ]
-    sys/load-module/delay {Rebol [
-    Version: 0.1.0
-    Title: "PDF file codec"
-    Name: pdf
-    Date: none
-    Author: "Oldes"
-    Exports: none
-    Needs: none
-]system/options/log/pdf: 3 pdf: out: value: stream: obj-id: ref-id: c: n1: n2: o: g: t: x: s: e: bytes: end: len: year: month: day: hour: minute: second: z: none sec-pad: #{28BF4E5E4E758A4164004E56FFFA01082E2E00B6D0683E802F0CA9FE6453697A} rl_newline: [CRLF | LF | CR] ch_number: make bitset! #{000000000000FFC0} ch_delimiter: make bitset! #{0000000004C1000A0000001400000014} ch_str-valid: make bitset! [not bits #{00EC000000C0000000000008}] ch_sp: make bitset! #{0040000080} ch_newline: make bitset! #{0024} ch_spnl: make bitset! #{0064000080} ch_hex: make bitset! #{000000000000FFC07FFFFFE07FFFFFE0} ch_hex-str: make bitset! #{006400008000FFC07FFFFFE07FFFFFE0} ch_str: make bitset! [not bits #{0000000000C0000000000008}] ch_str-esc: make bitset! #{0000000000C0000000000008220228} ch_not-hash: make bitset! [not bits #{0000000010}] ch_not-newline: make bitset! [not bits #{0024}] ch_not-delimiter: make bitset! [not bits #{0000000004C1000A0000001400000014}] ch_name: make bitset! [not bits #{0064000084C1000A0000001400000014}] rl_comment: [#"%" not #"%" copy value some ch_not-newline rl_newline] rl_boolean: ["true" (value: true) | "false" (value: false)] rl_null: ["null" (value: none)] rl_number: [copy value [opt [#"-" | #"+"] [some ch_number opt [#"." any ch_number] | #"." some ch_number]] (value: load value)] rl_name: [#"/" copy value any ch_name (value: to ref! dehex/escape value #"#" try [value: to word! value])] rl_hex-str: [#"<" copy value any ch_hex-str #">" (value: debase value 16)] rl_str: [some ch_str | #"(" while rl_str #")" | remove "\^^/" | change [#"\" copy c 1 ch_str-esc] (select [#"n" #"^^/" #"r" #"^^M" #"t" #"^^-" #"b" #"^^H" #"f" #"^^L" #"(" #"(" #")" #")" #"\" #"\"] to char! c) | change [#"\" copy c 3 ch_number] (to char! (((to integer! c/1 - 48) << 6) + ((to integer! c/2 - 48) << 3) + ((to integer! c/3 - 48)))) | change [#"\" copy c 2 ch_number] (to char! (((to integer! c/1 - 48) << 3) + ((to integer! c/2 - 48))))] rl_date: ["(D:" copy year 4 ch_number (month: day: #"1" hour: minute: second: #"0") opt [copy month 2 ch_number] opt [copy day 2 ch_number] opt [copy hour 2 ch_number] opt [copy minute 2 ch_number] opt [copy second 2 ch_number] (value: to date! to string! rejoin [day #"-" month #"-" year #"/" hour #":" minute #":" second]) opt [#"Z" | (hour: minute: 0) copy z [#"+" | #"-"] copy hour 2 ch_number #"'" copy minute 2 ch_number #"'" (value/zone: to time! to string! rejoin [z hour #":" minute])] #")"] rl_string: [#"(" copy value while rl_str #")" (value: to string! value)] rl_ref-id: [copy n1 some ch_number some ch_sp copy n2 some ch_number (ref-id: as-pair n1: load n1 n2: load n2)] rl_reference: [rl_ref-id some ch_sp #"R" (value: ref-id)] *stack: copy [] rl_value: [rl_name | rl_reference | rl_number | rl_boolean | rl_date | rl_string | rl_hex-str | rl_dict | rl_array | rl_null] rl_dict: ["<<" (append/only *stack copy []) any ch_spnl any [rl_name (append last *stack value) any ch_spnl rl_value any ch_spnl (append/only last *stack value)] ">>" (value: make map! take/last *stack len: any [value/length 0] if pair? len [len: any [pdf/objects/:len 0]]) opt [any ch_spnl "stream" rl_newline [copy bytes len skip rl_newline "endstream" | copy bytes to "^^/endstream" 10 skip (sys/log/more 'PDF ["Length of the object" obj-id "stream is incorrect!" len "<>" length? bytes])] rl_newline (stream: make object! [spec: value data: bytes] value: stream) any ch_spnl]] rl_array: [#"[" (append/only *stack copy []) any ch_spnl any [rl_value any ch_spnl (append/only last *stack value)] #"]" (value: take/last *stack)] rl_obj: [rl_ref-id (obj-id: ref-id) some ch_sp "obj" any ch_spnl rl_value any ch_spnl "endobj" any ch_spnl] rl_xref: ["xref" rl_newline some [rl_ref-id rl_newline (sys/log/debug 'PDF ["XREF" ref-id]) n2 [copy o 10 ch_number #" " copy g 5 ch_number #" " copy t [#"n" | #"f"] any #" " rl_newline (o: load o g: load g t: to char! t repend pdf/referencies [o g t])]]] rl_trailer: ["trailer" rl_newline rl_value any ch_spnl (pdf/trailer: value)] rl_startxref: [opt rl_trailer "startxref" rl_newline copy value some ch_number rl_newline (pdf/startxref: value: load value)] rl_import-object: [any ch_spnl rl_obj (either all [object? value value/spec/Type = 'ObjStm] [import-objstm value] [put pdf/objects obj-id value])] rl_pdf: ["%PDF-" copy value [some ch_number #"." some ch_number] any ch_sp rl_newline (pdf/version: to string! value) any ch_spnl opt rl_comment rl_pdf_body any ch_spnl "%%EOF" any ch_spnl [end | opt [rl_pdf_body "%%EOF" to end]]] rl_pdf_body: [any ch_spnl any rl_import-object any ch_spnl any rl_xref any ch_spnl opt rl_startxref (sys/log/debug 'PDF ["startxref offset:" value]) any ch_spnl] decompress-obj: func [obj [object!] /local p] [try [switch obj/spec/Filter [FlateDecode [try [obj/data: decompress skip obj/data 2 'deflate obj/spec/Filter: none obj/spec/Length: length? obj/data if all [p: obj/spec/DecodeParms p/Predictor = 12 integer? p/Columns] [obj/data: unfilter obj/data p/Columns]]]]]] import-objstm: function [obj [object!]] [decompress-obj obj try/except [offsets: load to-string copy/part obj/data obj/spec/First obj-id: 0x0 foreach [id ofs] offsets [obj-id/1: id if parse skip obj/data (ofs + obj/spec/First) [rl_value to end] [put pdf/objects obj-id value]]] [sys/log/error 'PDF "Failed to unpack ObjStm" sys/log/error 'PDF system/state/last-error]] form-ref: func [ref] [ajoin [to integer! ref/1 #" " to integer! ref/2]] emit-block: func [val [block!]] [out: insert out #"[" forall val [emit-val val/1] out: insert out #"]"] emit-string: func [val [any-string!]] [out: insert out #"(" parse val [any [s: some ch_str-valid e: (out: insert/part out s e) | 1 skip s: (out: insert out select #(#"^^/" "\n" #"^^M" "\r" #"^^-" "\t" #"^^H" "\b" #"^^L" "\f" #"(" "\(" #")" "\)" #"\" "\\") s/-1)]] out: insert out #")"] emit-binary: func [val [binary!]] [out: insert out ajoin [#"<" val #">"]] emit-indent: does [unless find " [" to char! out/-1 [out: insert out #" "]] emit-val: func [val] [switch/default type?/word :val [ref! word! [out: insert insert out #"/" form val] pair! [emit-indent out: insert insert out form-ref val " R"] decimal! integer! logic! [emit-indent out: insert out form val] block! [emit-block val] map! [emit-obj val] object! [emit-stream val] string! email! [emit-string val] binary! [emit-binary val] date! [emit-string form-pdf-date val]] [ask rejoin ["Unnown value type!: " type? val copy/part mold val 10]]] emit-obj: func [obj] [out: insert out "<<" foreach [key val] obj [unless none? val [out: insert insert out "/" form key emit-val val]] out: insert out ">>"] get-xref-count: function [xrefs n] [xref: xrefs while [2 <= length? xref] [i: xref/1/1 either (i - n) <= 1 [n: i xref: skip xref 2] [break]] to integer! n] emit-stream: func [obj [object!] /local data] [unless find obj 'spec [extend obj 'spec #(Length: 0)] data: any [obj/data #{}] unless any [obj/spec/Filter 300 > length? data] [obj/spec/Filter: 'FlateDecode data: compress obj/data 'zlib] unless binary? data [data: to binary! data] obj/spec/Length: length? data emit-obj obj/spec out: insert insert insert out "stream^^M^^/" data "^^M^^/endstream"] rebol-version-str: rejoin ["Rebol/" system/product " Version " system/version] remove-metadata: function [pdf [object!]] [if all [objs: pdf/objects root: select objs pdf/trailer/Root meta: select objs id: root/Metadata] [put objs id none root/Metadata: none]] form-pdf-date: function [d [date!]] [z: any [d/zone 0:00] format/pad ["D:" -4 -2 -2 -2 -2 -2 1 -2 #"'" -2 #"'"] reduce [d/year d/month d/day d/hour d/minute d/second either z < 0:00 [#"-"] [#"+"] z/hour z/minute] #"0"] build-pdf-tree: function ["Builds PDF-tree from a loaded PDF object" pdf [object!]] [unless all [map? trailer: select pdf 'trailer map? objects: select pdf 'objects] [return none]] decode-xref: func [value /local a b c inp index xref f1 f2 f3] [if all [object? value value/spec/Type = 'XRef] [decompress-obj value index: any [value/spec/Index reduce [0 value/spec/Size]] set [a b c] value/spec/W inp: value/data foreach [id sz] index [loop sz [f1: to integer! take/part inp a f2: to integer! take/part inp b f3: to integer! take/part inp c append pdf/referencies new-line reduce [as-pair id either f1 = 2 [0] [f3] f1 f2] true ++ id]] pdf/trailer: make map! reduce/no-set [Size: value/spec/Size Root: value/spec/Root Info: value/spec/Info ID: value/spec/ID]]] register-codec [name: 'pdf type: 'application title: "Portable Document Format" suffixes: [%.pdf] decode: func ["Extract content of the PDF file" data [binary! file! url!] /local tmp info keys obj1 obj2 enc md5 key] [unless binary? data [data: read data] pdf: make object! [version: none file-size: length? data trailer: none objects: copy #() referencies: copy [] startxref: none] unless parse data rl_pdf [print "Failed to parse PDF!" return none] value: stream: obj-id: ref-id: none new-line/all/skip pdf/referencies true 3 keys: keys-of pdf/objects if all [obj1: pdf/objects/(keys/1) obj1/Linearized] [if all [keys/2 obj2: pdf/objects/(keys/2) obj2/spec/Type = 'XRef] [decode-xref obj2] parse skip data obj1/T [any ch_spnl rl_obj (pdf/trailer: value decode-xref value)] parse find/tail data to-binary "%%EOF" [any ch_spnl any rl_import-object]] if not empty? pdf/referencies [foreach [ofs id type] pdf/referencies [if type = #"n" [parse (skip data ofs - 1) rl_import-object]]] if all [pdf/trailer enc: pdf/trailer/Encrypt enc: pdf/objects/:enc] [sys/log/info 'PDF ["Encrypted using: ^^[[m" enc/Filter "v:" enc/V "r:" enc/R]] if all [pdf/trailer system/options/log/pdf > 0 map? info: try [pdf/objects/(pdf/trailer/info)]] [if info/Author [sys/log/info 'PDF ["Author:  ^^[[m" info/Author]] if info/Title [sys/log/info 'PDF ["Title:   ^^[[m" info/Title]] if info/CreationDate [sys/log/info 'PDF ["Created: ^^[[m" info/CreationDate]] if info/ModDate [sys/log/info 'PDF ["Modified:^^[[m" info/ModDate]] if info/Producer [sys/log/info 'PDF ["Producer:^^[[m" info/Producer]] if info/Creator [sys/log/info 'PDF ["Creator: ^^[[m" info/Creator]]] also pdf pdf: none] encode: func [pdf [object!] /local xref xref-pos i n last-obj-id version trailer objects info root] [objects: select pdf 'objects unless any [map? objects block? objects] [sys/log/error 'PDF "Missing valid objects list!" return none] trailer: select pdf 'trailer unless trailer [extend pdf 'trailer trailer: #(Info: none Root: none)] unless root: trailer/Root [sys/log/debug 'PDF "Trying to locate `Catalog` in PDF objects." foreach [ref obj] pdf/objects [if all [map? obj obj/Type = 'Catalog] [trailer/Root: ref break]]] unless root: trailer/Root [sys/log/error 'PDF "Missing required `Catalog` object!" return none] if info: pick pdf/objects trailer/Info [unless info/CreationDate [info/CreationDate: now] if any [not info/Creator info/Creator = "Rebol"] [info/Creator: rebol-version-str] if any [not info/Producer info/Producer = "Rebol"] [info/Producer: rebol-version-str] info/ModDate: now] unless version: select pdf 'version [version: @1.3] if decimal? version [version: form version] unless parse version [some ch_number #"." some ch_number end] [sys/log/error 'PDF ["Invalid PDF version:" mold version] return none] out: make binary! any [select pdf 'file-size 60000] out: insert out ajoin ["%PDF-" version "^^M%"] out: insert out #{E2E3CFD30D0A} xref: copy [] foreach [ref obj] pdf/objects [append xref reduce [ref -1 + index? out] out: insert insert out form-ref ref " obj^^M" emit-val obj out: insert out "^^Mendobj^^M"] xref-pos: out sort/skip xref 2 i: 0 n: get-xref-count xref i out: insert out ajoin ["xref^^M^^/0 " 1 + n "^^M^^/0000000000 65535 f^^M^^/"] for i 0 n - 1 1 [last-obj-id: to integer! xref/1/1 out: insert out format/pad [-10 #" " -5 " n^^M^^/"] reduce [xref/2 to integer! xref/1/2] #"0" xref: skip xref 2] while [not tail? xref] [i: to integer! xref/1/1 n: get-xref-count xref i i: i - 1 out: insert out ajoin ["" i + 1 #" " (n - i) "^^M^^/"] while [i < n] [last-obj-id: to integer! xref/1/1 out: insert out format/pad [-10 #" " -5 " n^^M^^/"] reduce [xref/2 to integer! xref/1/2] #"0" xref: skip xref 2 ++ i]] out: insert out "trailer^^M^^/" emit-val trailer out: insert out ajoin ["^^M^^/startxref^^M^^/" -1 + index? xref-pos "^^M^^/%%EOF^^M^^/"] head out] identify: function [data [binary!]] [parse data ["%PDF-" to end]]]}
-    sys/load-module/delay {Rebol [
-    Version: 0.2.0
-    Title: "SWF file codec"
-    Name: swf
-    Date: 25-Feb-2019
-    Author: "Oldes"
-    Exports: none
-    Needs: none
-]spriteLevel: 0 tId: 0 bin: none align: does [binary/read bin 'align] readID: does [binary/read bin 'UI16LE] readUsedID: does [binary/read bin 'UI16LE] readSTRING: does [binary/read bin 'STRING] readCount: has [count] [count: binary/read bin 'UI8 either 255 = count [binary/read bin 'UI16LE] [count]] readRECT: has [n] [binary/read bin [align n: UB 5] binary/read bin [SB :n SB :n SB :n SB :n align]] readPair: has [n] [n: binary/read/with bin 'UB 5 to pair! binary/read bin [FB :n FB :n]] readSBPair: has [n] [n: binary/read/with bin 'UB 5 to pair! binary/read bin [SB :n SB :n]] readMATRIX: does [also reduce [either binary/read bin 'bit [readPair] [1x1] either binary/read bin 'bit [readPair] [0x0] readSBPair] align] readRGBA: does [binary/read bin 'TUPLE4] readRGB: does [binary/read bin 'TUPLE3] readCXFORM: has [HasAddTerms? HasMultTerms? n tmp] [binary/read bin [HasAddTerms?: BIT HasMultTerms?: BIT n: UB 4] tmp: reduce [either HasMultTerms? [binary/read bin [SB :n SB :n SB :n]] [[256 256 256]] either HasAddTerms? [binary/read bin [SB :n SB :n SB :n]] [none]] binary/read bin 'align tmp] readCXFORMa: has [HasAddTerms? HasMultTerms? n tmp] [binary/read bin [HasAddTerms?: BIT HasMultTerms?: BIT n: UB 4] tmp: reduce [either HasMultTerms? [binary/read bin [SB :n SB :n SB :n SB :n]] [[256 256 256 256]] either HasAddTerms? [binary/read bin [SB :n SB :n SB :n SB :n]] [none]] binary/read bin 'align tmp] readGRADIENT: func [type /local n gradients a b] [binary/read bin [a: UB 2 b: UB 2 n: UB 4] reduce [a b (gradients: make block! n loop n [append gradients reduce [binary/read bin 'UI8 either tId >= 32 [readRGBA] [readRGB]]] gradients) either all [type = 19 tId = 83] [binary/read bin 'FIXED8] [none]]] readCLIPACTIONS: does [binary/read bin 'bytes] readSHAPEWITHSTYLES: does [reduce [readFILLSTYLEARRAY readLINESTYLEARRAY readSHAPERECORD]] readFILLSTYLEARRAY: has [n result] [align n: binary/read bin 'UI8 if n = 255 [n: binary/read bin 'UI16LE] result: make block! n loop n [append/only result readFILLSTYLE] result] readLINESTYLEARRAY: has [n result] [n: binary/read bin 'UI8 if n = 255 [n: binary/read bin 'UI16LE] result: make block! n loop n [append/only result readLINESTYLE] result] readFILLSTYLE: has [type] [reduce [type: binary/read bin 'UI8 case [type = 0 [binary/read bin case [find [46 84] tId [[TUPLE4 TUPLE4]] tId >= 32 ['TUPLE4] true ['TUPLE3]]] any [type = 16 type = 18 type = 19] [reduce either find [46 84] tId [[readMATRIX readMATRIX readGRADIENT type]] [[readMATRIX readGRADIENT type]]] type >= 64 [reduce either find [46 84] tId [[readUsedID readMATRIX readMATRIX]] [[readUsedID readMATRIX]]]]]] readLINESTYLE: function [] [reduce case [tId = 46 [binary/read bin [UI16LE UI16LE TUPLE4 TUPLE4]] any [tId = 67 tId = 83] [binary/read bin [width: UI16LE capStyle: UB 2 joinStyle: UB 2 hasFill?: BIT noHScale?: BIT noVScale?: BIT pixelHint?: BIT SKIPBITS 5 noClose?: BIT endCapStyle: UB 2] [width reduce [capStyle joinStyle hasFill? noHScale? noVScale? pixelHint? noClose? endCapStyle] either joinStyle = 2 [binary/read bin 'UI16LE] [none] either hasFill? [readFILLSTYLE] [readRGBA]]] tId = 84 [binary/read bin [startWidth: UI16LE endWidth: UI16LE capStyle: UB 2 joinStyle: UB 2 hasFill?: BIT noHScale?: BIT noVScale?: BIT pixelHint?: BIT SKIPBITS 5 noClose?: BIT endCapStyle: UB 2] [startWidth endWidth reduce [capStyle joinStyle hasFill? noHScale? noVScale? pixelHint? noClose? endCapStyle] either joinStyle = 2 [binary/read bin 'UI16LE] [none] either hasFill? [readFILLSTYLE] [reduce [readRGBA readRGBA]]]] true [[binary/read bin 'UI16LE either tagId = 32 [readRGBA] [readRGB]]]]] readSHAPERECORD: func [/local numFillBits numLineBits records nBits lineType states] [binary/read bin [numFillBits: UB 4 numLineBits: UB 4] records: make block! 32 until [either binary/read bin 'BIT [either binary/read bin 'BIT [if lineType <> 'line [append records lineType: 'line] nBits: 2 + binary/read/with bin 'UB 4 append records either binary/read bin 'BIT [binary/read bin [SB :nBits SB :nBits]] [reduce either binary/read bin 'BIT [[0 binary/read/with bin 'SB :nBits]] [[binary/read/with bin 'SB :nBits 0]]]] [if lineType <> 'curve [append records lineType: 'curve] nBits: 2 + binary/read/with bin 'UB 4 append records binary/read bin [SB :nBits SB :nBits SB :nBits SB :nBits]] false] [states: binary/read/with bin 'UB 5 either states = 0 [true] [lineType: none append records 'style insert/only tail records reduce [either 0 < (states and 1) [readSBPair] [none] either 0 < (states and 2) [binary/read/with bin 'UB :numFillBits] [none] either 0 < (states and 4) [binary/read/with bin 'UB :numFillBits] [none] either 0 < (states and 8) [binary/read/with bin 'UB :numLineBits] [none] either 0 < (states and 16) [reduce [readFILLSTYLEARRAY readLINESTYLEARRAY binary/read bin [numFillBits: UB 4 numLineBits: UB 4]]] [none]] false]]] align records] read-SWFTags: func [/local result tag tagLength tagData] [++ spriteLevel result: make block! 64 while [not tail? bin/buffer] [tag: binary/read bin 'UI16LE tId: (65472 and tag) >> 6 tagLength: tag and 63 if tagLength = 63 [tagLength: binary/read bin 'UI32LE] either tagLength > 0 [binary/read bin [tagData: BYTES :tagLength]] [tagData: none] repend result [tId tagData]] -- spriteLevel new-line/all/skip result true 2 result] read-PlaceObject: has [id depth] [binary/read bin [id: UI16LE depth: UI16LE] reduce [depth none none id readMATRIX either tail? bin/buffer [none] [readCXFORM]]] read-PlaceObject2: func [/local flags] [flags: binary/read bin 'BITSET8 reduce [binary/read bin 'UI16LE flags/7 none either flags/6 [binary/read bin 'UI16LE] [none] either flags/5 [readMATRIX] [none] either flags/4 [readCXFORMa] [none] either flags/3 [binary/read bin 'UI16LE] [none] either flags/2 [binary/read bin 'STRING] [none] either flags/1 [binary/read bin 'UI16LE] [none] either flags/0 [readCLIPACTIONS] [none]]] read-PlaceObject3: func [/local flags] [flags: binary/read bin 'BITSET16 reduce [binary/read bin 'UI16LE flags/7 either flags/12 [binary/read bin 'STRING] [none] either flags/6 [binary/read bin 'UI16LE] [none] either flags/5 [readMATRIX] [none] either flags/4 [readCXFORMa] [none] either flags/3 [binary/read bin 'UI16LE] [none] either flags/2 [binary/read bin 'STRING] [none] either flags/1 [binary/read bin 'UI16LE] [none] either flags/15 [readFILTERS] [none] either flags/14 [binary/read bin 'UI8] [none] either flags/13 [binary/read bin 'UI8] [none] either flags/10 [binary/read bin 'UI8] [none] either flags/9 [binary/read bin 'TUPLE4] [none] either flags/0 [readCLIPACTIONS] [none]]] read-RemoveObject: does [binary/read bin [UI16LE UI16LE]] read-RemoveObject2: does [binary/read bin 'UI16LE] read-DefineSprite: func [] [reduce [binary/read bin 'UI16LE binary/read bin 'UI16LE read-SWFTags]] read-DefineShape: func [/local result] [result: reduce [binary/read bin 'UI16LE readRECT either tId >= 67 [reduce [readRECT (binary/read bin [UB 6] binary/read bin 'BIT) binary/read bin 'BIT]] [none] readSHAPEWITHSTYLES]] read-SceneAndFrameLabelData: has [n scenes labels] [n: binary/read bin 'EncodedU32 scenes: make block! 2 * n loop n [repend scenes binary/read bin [EncodedU32 STRING]] n: binary/read bin 'EncodedU32 labels: make block! 2 * n loop n [repend labels binary/read bin [EncodedU32 STRING]] reduce [scenes labels]] read-ExportAssets: read-SymbolClass: has [count symbols] [count: binary/read bin 'UI16LE symbols: make block! (2 * count) loop count [append symbols binary/read bin [UI16LE STRING]] symbols] read-SWT-CharacterName: does [binary/read bin [UI16LE STRING]] read-ImportAssets: has [result] [reduce [binary/read bin 'STRING none read-SymbolClass]] read-ImportAssets2: has [result] [reduce [binary/read bin 'STRING binary/read bin [UI8 UI8] read-SymbolClass]] read-SetTabIndex: read-ScriptLimits: does [binary/read bin [UI16LE UI16LE]] read-FileAttributes: does [binary/read bin [BITSET8 UI24LE]] read-DefineScalingGrid: does [reduce [readUsedID readRECT]] read-DefineBitsLossless: has [BitmapID BitmapFormat BitmapWidth BitmapHeight ColorTableSize] [binary/read bin [BitmapID: UI16LE BitmapFormat: UI8 BitmapWidth: UI16LE BitmapHeight: UI16LE] ColorTableSize: either BitmapFormat = 3 [binary/read bin 'UI8] [none] reduce [BitmapID BitmapFormat BitmapWidth BitmapHeight ColorTableSize copy bin/buffer]] read-DefineBitsJPEG2: does [binary/read bin [UI16LE BYTES]] read-DefineBitsJPEG3: has [AlphaDataOffset] [binary/read bin [UI16LE AlphaDataOffset: UI32LE BYTES :AlphaDataOffset BYTES]] read-DefineBitsJPEG4: has [AlphaDataOffset] [binary/read bin [UI16LE AlphaDataOffset: UI32LE FIXED8 BYTES :AlphaDataOffset BYTES]] read-DefineSound: does [binary/read bin [UI16LE UB 4 UB 2 BIT BIT UI32LE BYTES]] read-StartSound: does [reduce [readUsedID readSOUNDINFO]] read-StartSound2: does [reduce [binary/read bin 'STRING readSOUNDINFO]] read-SoundStreamHead: has [result StreamSoundCompression] [result: binary/read bin [UB 4 UB 2 Bit Bit StreamSoundCompression: UB 4 UB 2 Bit Bit UI16LE] append result either StreamSoundCompression = 2 [binary/read bin 'SI16LE] [none] result] readSOUNDINFO: has [flags] [flags: binary/read bin 'BITSET8 reduce [flags either flags/7 [binary/read bin 'UI32LE] [none] either flags/6 [binary/read bin 'UI32LE] [none] either flags/5 [binary/read bin 'UI16LE] [none] either flags/4 [readSOUNDENVELOPE] [none]]] readSOUNDENVELOPE: has [count result] [count: binary/read bin 'UI8 result: make block! (3 * count) loop count [append result binary/read bin [UI32LE UI16LE UI16LE]] result] readBUTTONRECORDs: has [records flags id depth] [records: copy [] while [#{00} <> flags: binary/read/with bin 'BYTES 1] [repend/only records [flags: to bitset! flags binary/read bin 'UI16LE binary/read bin 'UI16LE readMATRIX either tId = 34 [readCXFORMa] [none] either all [flags/3 tId = 34] [readFILTERS] [none] either all [flags/2 tId = 34] [binary/read bin 'UI8] [none]]] new-line/all records true] readBUTTONCONDACTIONs: has [actions length CondActionSize] [actions: copy [] until [CondActionSize: binary/read bin 'UI16LE repend actions [binary/read bin 'BITSET16 readACTIONRECORDs] CondActionSize = 0] new-line/all actions true] read-DefineButton: does [reduce [binary/read bin 'UI16LE readBUTTONRECORDs readACTIONRECORDs]] read-DefineButton2: has [pos] [reduce [binary/read bin 'UI16LE binary/read bin 'BITSET8 (pos: (index? bin/buffer) + binary/read bin 'UI16LE readBUTTONRECORDs) (binary/read/with bin 'AT :pos readBUTTONCONDACTIONs)]] read-DefineButtonCxform: does [reduce [binary/read bin 'UI16LE readCXFORM]] read-DefineButtonSound: has [id] [reduce [readUsedID either 0 < id: readUsedID [reduce [id readSOUNDINFO]] [none] either 0 < id: readUsedID [reduce [id readSOUNDINFO]] [none] either 0 < id: readUsedID [reduce [id readSOUNDINFO]] [none] either 0 < id: readUsedID [reduce [id readSOUNDINFO]] [none]]] read-DefineVideoStream: does [binary/read bin [UI16LE UI16LE UI16LE UI16LE UB 4 UB 3 BIT UI8]] read-VideoFrame: does [binary/read bin [UI16LE UI16LE BYTES]] readACTIONRECORDs: read-DoAction: has [records index ActionCode length] [records: copy [] until [binary/read bin [index: INDEX ActionCode: BYTES 1] length: either (to integer! ActionCode) > 127 [binary/read bin 'UI16LE] [0] append records reduce [index - 1 ActionCode binary/read/with bin 'BYTES :length] ActionCode = #{00}] new-line/skip records true 3 records] read-DoInitAction: does [reduce [readUsedID readACTIONRECORDs]] read-DoABC: func [] [reduce [either tId = 72 [none] [binary/read/with bin 'BYTES 4] either tId = 72 [none] [binary/read bin 'STRING] binary/read bin 'BYTES]] read-DefineFont: has [id OffsetTable GlyphShapeTable last-ofs] [binary/read bin [UI16LE BYTES]] read-DefineFont3: has [fontID flags langCode fontName numGlyphs OffsetTable ofs CodeTableOffset GlyphShapeTable tmp n] [binary/read bin [fontID: UI16LE flags: BITSET8 langCode: UI8 n: UI8 fontName: BYTES :n numGlyphs: UI16LE] either numGlyphs = 0 [reduce [fontID flags langCode to string! fontName none none none]] [reduce [fontID flags langCode to string! fontName (ofs: either flags/4 ['UI32LE] ['UI16LE] binary/read/with bin 'SKIP (numGlyphs * either flags/4 [4] [2]) CodeTableOffset: binary/read bin :ofs GlyphShapeTable: make block! numGlyphs loop NumGlyphs [append/only GlyphShapeTable readSHAPERECORD] new-line/all GlyphShapeTable true) to string! binary/read/with bin 'BYTES (numGlyphs * either tId = 48 [either flags/4 [2] [1]] [either flags/4 [4] [2]]) either flags/0 [reduce [binary/read bin 'SI16LE binary/read bin 'SI16LE binary/read bin 'SI16LE (tmp: make block! numGlyphs loop NumGlyphs [append tmp binary/read bin 'SI16LE] tmp) (clear tmp loop NumGlyphs [append tmp readRECT] tmp) (binary/read bin 'BYTES)]] [none]]]] read-DefineFont4: does [binary/read bin [UI16LE BITSET8 STRING BYTES]] read-DefineText: does [reduce [readUsedID readRECT readMATRIX readTEXTRECORD]] read-DefineEditText: has [flags] [reduce [binary/read bin 'UI16LE readRECT flags: binary/read bin 'BITSET16 either flags/7 [binary/read bin 'UI16LE] [none] either flags/8 [binary/read bin 'STRING] [none] either flags/7 [binary/read bin 'UI16LE] [none] either flags/5 [binary/read bin 'TUPLE4] [none] either flags/6 [binary/read bin 'UI16LE] [none] either flags/10 [binary/read bin [UI8 UI16LE UI16LE UI16LE UI16LE]] [none] binary/read bin 'STRING either flags/0 [binary/read bin 'STRING] [none]]] readTEXTRECORD: func [/local GlyphBits AdvanceBits flags records GlyphCount glyphs] [binary/read bin [align GlyphBits: UI8 AdvanceBits: UI8] records: copy [] while [0 <> bin/buffer/1] [flags: binary/read bin 'BITSET8 append records reduce [either flags/4 [readUsedID] [none] either flags/5 [either tId = 11 [readRGB] [readRGBA]] [none] either flags/7 [binary/read bin 'SI16LE] [none] either flags/6 [binary/read bin 'SI16LE] [none] either flags/4 [binary/read bin 'UI16LE] [none] (GlyphCount: binary/read bin 'UI8 glyphs: make block! 2 * GlyphCount loop GlyphCount [append glyphs binary/read bin [UB :GlyphBits SB :AdvanceBits]] glyphs)] align] records] readKERNINGRECORDs: func [wide? /local result] [result: copy [] either wide? [loop readUI16 [append result reduce [readUI16 readUI16 readSI16]]] [loop readUI16 [append result reduce [readUI8 readUI8 readSI16]]] result] read-DefineFontInfo: has [flags] [reduce [binary/read bin 'UI16LE to string! binary/read bin 'UI8BYTES binary/read bin 'BITSET8 either tId = 13 [none] [binary/read bin 'UI8] binary/read bin 'BYTES]] read-DefineAlignZones: does [reduce [binary/read bin 'UI16LE binary/read/with bin 'UB 2 binary/read/with bin 'UB 6 readALIGNZONERECORDs]] readALIGNZONERECORDs: has [records numZoneData zoneData] [records: copy [] while [not tail? bin/buffer] [repend/only records [(numZoneData: binary/read bin 'UI8 zoneData: make block! numZoneData loop numZoneData [append zoneData binary/read bin [FLOAT16 FLOAT16]] zoneData) binary/read bin 'UI8]] records] read-CSMTextSettings: does [binary/read bin [UI16LE UB 2 UB 3 UB 3 UI32LE UI32LE UI8]] read-DefineFontName: does [binary/read bin [UI16LE STRING STRING]] readMORPHFILLSTYLEARRAY: has [count FillStyles] [FillStyles: make block! count: readCount loop count [append/only FillStyles readMORHFILLSTYLE] FillStyles] readMORPHLINESTYLEARRAY: has [count LineStyles] [LineStyles: make block! count: readCount loop count [append/only LineStyles either tId = 46 [binary/read bin [UI16LE UI16LE RGBA RGBA]] [readMORPHLINESTYLE2]] LineStyles] readMORPHLINESTYLE2: has [joinStyle hasFill?] [reduce [binary/read bin 'UI16LE binary/read bin 'UI16LE binary/read bin [UB 2 joinStyle: UB 2 hasFill?: BIT BIT BIT BIT UB 5 BIT UB 2] either joinStyle = 2 [binary/read bin 'UI16LE] [none] either hasFill? [readMORHFILLSTYLE] [binary/read bin [TUPLE4 TUPLE4]]]] readMORHFILLSTYLE: has [type] [reduce [type: binary/read bin 'UI8 reduce case [type = 0 [binary/read bin [TUPLE4 TUPLE4]] any [type = 16 type = 18 type = 19] [[readMATRIX readMATRIX readMORPHGRADIENT]] type >= 64 [[readUsedID readMATRIX readMATRIX]]]]] readMORPHGRADIENT: has [count gradients] [count: binary/read bin 'UI8 gradients: make block! count loop count [append/only gradients binary/read bin [UI8 TUPLE4 UI8 TUPLE4]] gradients] read-DefineMorphShape: does [reduce [binary/read bin 'UI16LE readRECT readRECT binary/read bin 'UI32LE readMORPHFILLSTYLEARRAY readMORPHLINESTYLEARRAY readSHAPERECORD readSHAPERECORD]] read-DefineMorphShape2: does [reduce [binary/read bin 'UI16LE readRECT readRECT readRECT readRECT (binary/read/with bin 'UB 6 binary/read bin 'BIT) binary/read bin 'BIT binary/read bin 'UI32LE readMORPHFILLSTYLEARRAY readMORPHLINESTYLEARRAY readSHAPERECORD readSHAPERECORD]] tag-decoders: make map! reduce [2 :read-DefineShape 4 :read-PlaceObject 5 :read-RemoveObject 6 :read-DefineBitsJPEG2 7 :read-DefineButton 9 :readRGB 10 :read-DefineFont 11 :read-DefineText 12 :read-DoAction 13 :read-DefineFontInfo 14 :read-DefineSound 15 :read-StartSound 17 :read-DefineButtonSound 18 :read-SoundStreamHead 20 :read-DefineBitsLossless 21 :read-DefineBitsJPEG2 22 :read-DefineShape 23 :read-DefineButtonCxform 26 :read-PlaceObject2 28 :read-RemoveObject2 32 :read-DefineShape 33 :read-DefineText 34 :read-DefineButton2 35 :read-DefineBitsJPEG3 36 :read-DefineBitsLossless 37 :read-DefineEditText 39 :read-DefineSprite 40 :read-SWT-CharacterName 43 :readSTRING 45 :read-SoundStreamHead 46 :read-DefineMorphShape 48 :read-DefineFont3 56 :read-ExportAssets 57 :read-ImportAssets 59 :read-DoInitAction 60 :read-DefineVideoStream 61 :read-VideoFrame 62 :read-DefineFontInfo 65 :read-ScriptLimits 66 :read-SetTabIndex 67 :read-DefineShape 69 :read-FileAttributes 70 :read-PlaceObject3 71 :read-ImportAssets2 72 :read-DoABC 73 :read-DefineAlignZones 74 :read-CSMTextSettings 75 :read-DefineFont3 76 :read-SymbolClass 77 :readSTRING 78 :read-DefineScalingGrid 82 :read-DoABC 83 :read-DefineShape 84 :read-DefineMorphShape2 86 :read-SceneAndFrameLabelData 88 :read-DefineFontName 89 :read-StartSound2 90 :read-DefineBitsJPEG4 91 :read-DefineFont4] register-codec [name: 'swf type: 'application title: "ShockWave Flash" suffixes: [%.swf] decode: function [data [binary!]] [if verbose > 0 [print ["^^[[1;32mDecode SWF data^^[[m (^^[[1m" length? data "^^[[mbytes )"]] swf: make object! [header: none tags: none] bin: binary data binary/read bin [compression: UI8 signature: UI16 version: UI8] unless all [signature = 22355 find [67 70 90] compression] [return none] fileSize: (binary/read bin 'UI32LE) - 8 if verbose > 0 [print ["SWF file version:" version select [67 "compressed using deflate" 70 "uncompressed" 90 "compressed using LZMA"] compression lf "Data size:" fileSize "bytes"]] switch compression [67 [binary/init bin decompress/size bin/buffer 'zlib fileSize] 90 [packed: binary/read bin 'UI32LE binary/init bin decompress/size bin/buffer 'lzma fileSize]] binary/read bin [n: UB 5] frame-size: binary/read bin [SB :n SB :n SB :n SB :n ALIGN] binary/read bin [frame-rate: UI16 frame-count: UI16LE] if verbose > 0 [print ["^^[[32mframe-size:  ^^[[0;1m" frame-size "^^[[m"] print ["^^[[32mframe-rate:  ^^[[0;1m" frame-rate "^^[[m"] print ["^^[[32mframe-count: ^^[[0;1m" frame-count "^^[[m"]] swf/header: object compose [version: (version) bounds: (frame-size) rate: (frame-rate) frames: (frame-count)] swf/tags: make block! (2 * frame-count) + 100 while [not tail? bin/buffer] [tag: binary/read bin 'UI16LE tagId: (65472 and tag) >> 6 tagLength: tag and 63 if tagLength = 63 [tagLength: binary/read bin 'UI32LE] either tagLength > 0 [binary/read bin [tagData: BYTES :tagLength]] [tagData: none] repend swf/tags [tagId tagData] if verbose > 0 [printf [-4 #" " $33 27 $0] reduce [tagId select swf-tags tagId either tagData [either verbose > 2 [mold tagData] [tmp: mold copy/part tagData 32 if 32 < length? tagData [change back tail tmp "..."] tmp]] [""]]] if all [tagData verbose > 1] [if tagData <> tmp: decode-tag tagId tagData [prin #"^^-" probe tmp]]] new-line/all/skip swf/tags true 2 return swf] decode-tag: func [id [integer!] data [binary! none!]] [tid: id bin: binary data any [tag-decoders/:id data]] identify: func ["Returns TRUE if binary looks like SWF data" data [binary!]] [parse/case data [[#"C" | #"F" | #"Z"] "WS" to end]] verbose: 2 swf-tags: make map! [0 <End> 1 <ShowFrame> 2 <DefineShape> 3 <FreeCharacter> 4 <PlaceObject> 5 <RemoveObject> 6 <DefineBitsJPEG> 7 <DefineButton> 8 <JPEGTables> 9 <SetBackgroundColor> 10 <DefineFont> 11 <DefineText> 12 <DoAction> 13 <DefineFontInfo> 14 <DefineSound> 15 <StartSound> 18 <SoundStreamHead> 17 <DefineButtonSound> 19 <SoundStreamBlock> 20 <DefineBitsLossless> 21 <DefineBitsJPEG2> 22 <DefineShape2> 23 <DefineButtonCxform> 24 <Protect> 25 <PathsArePostscript> 26 <PlaceObject2> 28 <RemoveObject2> 29 <SyncFrame> 31 <FreeAll> 32 <DefineShape3> 33 <DefineText2> 34 <DefineButton2> 35 <DefineBitsJPEG3> 36 <DefineBitsLossless2> 37 <DefineEditText> 38 <DefineVideo> 39 <DefineSprite> 40 <NameCharacter> 41 <ProductInfo> 42 <DefineTextFormat> 43 <FrameLabel> 45 <SoundStreamHead2> 46 <DefineMorphShape> 47 <GenerateFrame?> 48 <DefineFont2> 49 <GeneratorCommand> 50 <DefineCommandObject> 51 <CharacterSet> 52 <ExternalFont> 56 <ExportAssets> 57 <ImportAssets> 58 <EnableDebugger> 59 <DoInitAction> 60 <DefineVideoStream> 61 <VideoFrame> 62 <DefineFontInfo2> 63 <DebugID> 64 <ProtectDebug2> 65 <ScriptLimits> 66 <SetTabIndex> 69 <FileAttributes> 70 <PlaceObject3> 71 <Import2> 72 <DoABCDefine> 73 <DefineFontAlignZones> 74 <CSMTextSettings> 75 <DefineFont3> 76 <SymbolClass> 77 <MetaData> 78 <DefineScalingGrid> 82 <DoABC> 83 <DefineShape4> 84 <DefineMorphShape2> 86 <SceneAndFrameLabelData> 87 <DefineBinaryData> 88 <DefineFontName> 89 <StartSound2> 90 <DefineBitsJPEG4> 91 <DefineFont4> 93 <Telemetry> 1023 <DefineBitsPtr>]]}
-    sys/load-module/delay {Rebol [
-    Version: 0.3.0
-    Title: "BBcode codec"
-    Name: bbcode
-    Date: 24-Apr-2020
-    Author: "Oldes"
-    Exports: none
-    Needs: none
-]opened-tags: copy [] allow-html-tags?: false attr: copy "" short-attr: copy "" attributes: make map! 20 html: copy "" tmp: pos: none ch_space: make bitset! #{7FFFFFFF800000000000000000000001} ch_normal: make bitset! [not bits #{002400000000000800000010}] ch_attribute: make bitset! [not bits #{000000002100000A00000004}] ch_attribute1: make bitset! [not bits #{000000000100000A00000004}] ch_attribute2: make bitset! [not bits #{000000002000000A00000004}] ch_attribute3: make bitset! [not bits #{000000008000000A00000004}] ch_digits: charset [#"0" - #"9"] ch_hexa: charset [#"a" - #"f" #"A" - #"F" #"0" - #"9"] ch_name: charset [#"a" - #"z" #"A" - #"Z" #"*" #"0" - #"9"] ch_url: charset [#"a" - #"z" #"A" - #"Z" #"0" - #"9" "./:~+-%#\_=&?@"] ch_safe-value-chars: complement charset {'"} rl_newline: [CRLF | LF] rl_attribute: [(clear short-attr) any ch_space #"=" any ch_space [#"'" copy short-attr any ch_attribute1 #"'" | #"^^"" copy short-attr any ch_attribute2 #"^^"" | copy short-attr any ch_attribute3] any ch_space] rl_attributes: [(clear attributes) opt rl_attribute any [any ch_space copy tmp some ch_name any ch_space #"=" any ch_space [#"^^"" copy attr any ch_attribute2 #"^^"" | #"'" copy attr any ch_attribute1 #"'" | copy attr any ch_attribute3] any ch_space (put attributes tmp attr tmp: attr: none)]] get-attribute: func [name /default value /local tmp] [all [tmp: pick attributes name tmp: encode-value tmp default try [tmp: to type? value tmp]] any [tmp value]] form-attribute: func [name /default value] [either value: either default [get-attribute/default name value] [get-attribute name] [rejoin [#" " name {="} value {"}]] [""]] encode-value: func [value [any-string!] /local out tmp] [out: copy "" parse/all value [any [[#"'" (append out "&apos;") | #"^^"" (append out "&quot;")] | copy tmp some ch_safe-value-chars (append out tmp)]] out] close-tags: func [/only to-tag /local tag] [opened-tags: tail opened-tags while [not empty? opened-tags: back opened-tags] [tag: opened-tags/1 append html case [tag = "url" ["</a>"] find ["list" "color" "quote" "size" "align" "email"] tag [""] true [rejoin ["</" tag ">"]]] remove opened-tags if tag = to-tag [break]] opened-tags: head opened-tags] form-size: func [/local size out] [out: copy "" case/all [all [empty? short-attr empty? attributes] [return out] any [all [size: get-attribute "size" not error? try [size: to pair! size]] all [short-attr not error? try [size: to pair! short-attr] size <> 0x0]] [return rejoin [either size/x > 0 [join " width=" to integer! size/x] [""] either size/y > 0 [join " height=" to integer! size/y] [""]]] all [size: get-attribute "resize" not error? try [size: to pair! size]] [return rejoin [either size/x > 0 [join " width=" size/x] [""] either size/y > 0 [join " height=" size/y] [""]]] all [not error? try [size: to integer! get-attribute "width"] size > 0] [append out rejoin [" width=" size]] all [not error? try [size: to integer! get-attribute "height"] size > 0] [append out rejoin [" height=" size]]] any [out ""]] close-p-if-possible: func [/local p] [if all [not empty? opened-tags "p" = last opened-tags] [close-tags/only "p" if "<p></p>" = p: skip tail html -7 [clear p]]] emit-tag-p: does [append html "<p>" append opened-tags "p"] emit-tag: func [tag] [insert tail html either block? tag [rejoin tag] [tag]] enabled-tags: ["b" "i" "s" "u" "del" "h1" "h2" "h3" "h4" "h5" "h6" "span" "class" "ins" "dd" "dt" "ol" "ul" "li" "url" "list" "br" "hr" "color" "quote" "img" "size" "rebol" "align" "email" "ignore"] bbcode: func ["Converts BBCode markup into HTML" code [string! binary!] "Input with BBCode tags" /local tag err] [err: try [emit-tag-p parse code [any [(attr: none) copy tmp some ch_normal (append html tmp) | "[url]" copy tmp some ch_url opt "[/url]" (emit-tag [{<a href="} encode-value tmp {">} tmp "</a>"]) | "[anchor]" copy tmp any ch_url opt "[/anchor]" (emit-tag [{<a name="} encode-value tmp {"></a>}]) | "[email]" copy tmp some ch_url opt "[/email]" (emit-tag [{<a href="mailto:} encode-value tmp {">} tmp "</a>"]) | "[img" opt rl_attributes #"]" copy tmp some ch_url opt "[/img]" (emit-tag ["<img" form-size { src="} encode-value tmp {"} form-attribute/default "alt" "" ">"]) | "[code]" copy tmp to "[/code]" thru "]" (emit-tag ["<code>" tmp "</code>"]) | "[rebol]" copy tmp to "[/rebol]" thru "]" (emit-tag ["<code>" tmp "</code>"]) | "[/]" (close-tags) | "[br]" (emit-tag "<br>") | "[hr" any ch_space copy tmp [any ch_digits opt #"%"] any ch_space "]" (emit-tag either empty? tmp ["<hr>"] [rejoin [{<hr style="width:} tmp {">}]]) | "[images" opt rl_attributes #"]" (emit-tag-images) | "[csv" opt rl_attributes #"]" copy tmp to "[/csv" (emit-tag-csv tmp) | "[ignore]" thru "[/ignore]" | #"[" [copy tag some ch_name opt rl_attributes #"]" (if tag = "*" [tag: "li"] append html either find enabled-tags tag [if find ["li"] tag [if all [tmp: find/last opened-tags tag none? find tmp "ol" none? find tmp "ul"] [close-tags/only tag]] switch/default tag ["url" [append opened-tags "a" ajoin [{<a href="} encode-value short-attr {"} form-attribute "rel" ">"]] "color" [either all [short-attr parse short-attr [#"#" [6 ch_hexa | 3 ch_hexa]]] [append opened-tags "span" ajoin [{<span style="color: } short-attr {;">}]] [""]] "quote" [append opened-tags ["fieldset" "blockquote"] either empty? short-attr ["<fieldset><blockquote>"] [ajoin ["<fieldset><legend>" short-attr "</legend><blockquote>"]]] "list" [close-p-if-possible parse/case short-attr [["a" (tmp: {<ol style="list-style-type: lower-alpha;">}) | "A" (tmp: {<ol style="list-style-type: upper-alpha;">}) | "i" (tmp: {<ol style="list-style-type: lower-roman;">}) | "I" (tmp: {<ol style="list-style-type: upper-roman;">}) | "1" (tmp: {<ol style="list-style-type: decimal;">})] (append opened-tags "ol") | (append opened-tags "ul" tmp: "<ul>")] tmp] "size" [if none? short-attr [short-attr: ""] parse short-attr [[["-2" | "tiny" | "xx-small"] (tmp: {<span style="font-size: xx-small;">}) | ["-1" | "x-small"] (tmp: {<span style="font-size: x-small;">}) | ["0" | "small" | "normal"] (tmp: {<span style="font-size: small;">}) | ["1" | "medium"] (tmp: {<span style="font-size: medium;">}) | ["2" | "large"] (tmp: {<span style="font-size: large;">}) | ["3" | "x-large" | "huge"] (tmp: {<span style="font-size: x-large;">}) | ["4" | "xx-large"] (tmp: {<span style="font-size: xx-large;">})] end | to end (tmp: "<span>")] append opened-tags "span" tmp] "align" [if none? short-attr [short-attr: ""] parse short-attr [[["right" | "r"] (tmp: {<div style="text-align: right;">}) | ["left" | "l"] (tmp: {<div style="text-align: left;">}) | ["center" | "c"] (tmp: {<div style="text-align: center;">}) | ["justify" | "j"] (tmp: {<div style="text-align: justify;">})] end | to end (tmp: "<div>")] append opened-tags "div" tmp] "email" [either error? try [tmp: to-email short-attr] [""] [append opened-tags "a" ajoin [{<a href="mailto:} encode-value tmp {">}]]] "class" [if none? short-attr [short-attr: ""] tmp: ajoin [{<span class="} short-attr {">}] append opened-tags "span" tmp]] [if find ["h1" "h2" "h3" "h4" "h5" "h6" "ul" "ol"] tag [close-p-if-possible] append opened-tags tag ajoin either empty? short-attr [[#"<" tag #">"]] [[#"<" tag { class="} encode-value short-attr {">}]]]] [ajoin [#"[" tag #"]"]]) | #"/" copy tag some ch_name #"]" (either tmp: find/last opened-tags tag [close-tags/only tag] []) | (append html "[")] | #"<" (append html either allow-html-tags? ["<"] ["&lt;"]) | 2 rl_newline (either any [pos: find/last opened-tags "ul" pos: find/last opened-tags "ol"] [if all [pos: find/last pos "li" none? find pos "p"] [insert next pos "p" insert find/last/tail html "<li>" "<p>" close-tags/only "p"]] [close-tags/only "p"] append html "^^/^^/" emit-tag-p) | pos: rl_newline (case [#" " = pos/(-1) [append html "<br>^^/"] true [append html lf]])]] unless empty? opened-tags [close-tags] html] if error? err [append html ajoin ["^^/#[ERROR! [code: " err/code " type: " err/type " id: " err/id #"]"]] tmp: pos: none clear opened-tags also copy html clear html] register-codec [name: 'bbcode type: 'text title: "Bulletin Board Code" suffixes: [%.bbcode] decode: func ["Converts BBCode markup into HTML" code [string! binary! file! url!] "Input with BBCode tags" /local result return: [string!]] [if any [file? code url? code] [code: read code] result: bbcode code]]}
-    sys/load-module/delay {Rebol [
-    Version: 1.0.0
-    Title: "HTML entities codec"
-    Name: html-entities
-    Date: 12-May-2020
-    Author: "Oldes"
-    Exports: none
-    Needs: none
-]html-entities: #("lt" #"<" "gt" #">" "quot" #"^^"" "apos" #"'" "amp" #"&" "nbsp" #" " "brvbar" #"¦" "iexcl" #"¡" "iquest" #"¿" "sect" #"§" "uml" #"¨" "ordf" #"ª" "ordm" #"º" "laquo" #"«" "raquo" #"»" "not" #"¬" "shy" #"­" "macr" #"¯" "acute" #"´" "para" #"¶" "middot" #"·" "cedil" #"¸" "minus" #"−" "times" #"×" "divide" #"÷" "plusmn" #"±" "le" #"≤" "ge" #"≥" "sup1" #"¹" "sup2" #"²" "sup3" #"³" "frac14" #"¼" "frac12" #"½" "frac34" #"¾" "forall" #"∀" "part" #"∂" "exist" #"∃" "empty" #"∅" "nabla" #"∇" "isin" #"∈" "notin" #"∉" "ni" #"∋" "prod" #"∏" "sum" #"∑" "lowast" #"∗" "radic" #"√" "prop" #"∝" "infin" #"∞" "ang" #"∠" "and" #"∧" "or" #"∨" "cap" #"∩" "cup" #"∪" "int" #"∫" "there4" #"∴" "sim" #"∼" "cong" #"≅" "asymp" #"≈" "ne" #"≠" "equiv" #"≡" "sub" #"⊂" "sup" #"⊃" "nsub" #"⊄" "sube" #"⊆" "supe" #"⊇" "oplus" #"⊕" "otimes" #"⊗" "deg" #"°" "micro" #"µ" "copy" #"©" "reg" #"®" "trade" #"™" "curren" #"¤" "cent" #"¢" "pound" #"£" "euro" #"€" "yen" #"¥" "Alpha" #"Α" "alpha" #"α" "Beta" #"Β" "beta" #"β" "Gamma" #"Γ" "gamma" #"γ" "Delta" #"Δ" "delta" #"δ" "Epsilon" #"Ε" "epsilon" #"ε" "Zeta" #"Ζ" "zeta" #"ζ" "Eta" #"Η" "eta" #"η" "Theta" #"Θ" "theta" #"θ" "thetasym" #"ϑ" "Iota" #"Ι" "iota" #"ι" "Kappa" #"Κ" "kappa" #"κ" "Lambda" #"Λ" "lambda" #"λ" "Mu" #"Μ" "mu" #"μ" "Nu" #"Ν" "nu" #"ν" "Xi" #"Ξ" "xi" #"ξ" "Omicron" #"Ο" "omicron" #"ο" "Pi" #"Π" "pi" #"π" "piv" #"ϖ" "Rho" #"Ρ" "rho" #"ρ" "Sigma" #"Σ" "sigma" #"σ" "sigmaf" #"ς" "Tau" #"Τ" "tau" #"τ" "Upsilon" #"Υ" "upsilon" #"υ" "upsih" #"ϒ" "Phi" #"Φ" "phi" #"φ" "Chi" #"Χ" "chi" #"χ" "Psi" #"Ψ" "psi" #"ψ" "Omega" #"Ω" "omega" #"ω" "larr" #"←" "uarr" #"↑" "rarr" #"→" "darr" #"↓" "harr" #"↔" "crarr" #"↵" "spades" #"♠" "clubs" #"♣" "hearts" #"♥" "diams" #"♦" "Agrave" #"À" "agrave" #"à" "Aacute" #"Á" "aacute" #"á" "Acirc" #"Â" "acirc" #"â" "Atilde" #"Ã" "atilde" #"ã" "Auml" #"Ä" "auml" #"ä" "Aring" #"Å" "aring" #"å" "AElig" #"Æ" "aelig" #"æ" "Ccedil" #"Ç" "ccedil" #"ç" "Egrave" #"È" "egrave" #"è" "Eacute" #"É" "eacute" #"é" "Ecirc" #"Ê" "ecirc" #"ê" "Euml" #"Ë" "euml" #"ë" "Igrave" #"Ì" "igrave" #"ì" "Iacute" #"Í" "iacute" #"í" "Icirc" #"Î" "icirc" #"î" "Iuml" #"Ï" "iuml" #"ï" "ETH" #"Ð" "eth" #"ð" "Ntilde" #"Ñ" "ntilde" #"ñ" "Ograve" #"Ò" "ograve" #"ò" "Oacute" #"Ó" "oacute" #"ó" "Ocirc" #"Ô" "ocirc" #"ô" "Otilde" #"Õ" "otilde" #"õ" "Ouml" #"Ö" "ouml" #"ö" "Oslash" #"Ø" "oslash" #"ø" "Ugrave" #"Ù" "ugrave" #"ù" "Uacute" #"Ú" "uacute" #"ú" "Ucirc" #"Û" "ucirc" #"û" "Uuml" #"Ü" "uuml" #"ü" "Yacute" #"Ý" "yacute" #"ý" "yuml" #"ÿ" "THORN" #"Þ" "thorn" #"þ" "szlig" #"ß" "bull" #"•" "hellip" #"…" "fnof" #"ƒ" "perp" #"⊥" "sdot" #"⋅" "OElig" #"Œ" "oelig" #"œ" "Scaron" #"Š" "scaron" #"š" "Yuml" #"Ÿ" "circ" #"ˆ" "tilde" #"˜" "ndash" #"–" "mdash" #"—" "lsquo" #"‘" "rsquo" #"’" "sbquo" #"‚" "ldquo" #"“" "rdquo" #"”" "bdquo" #"„" "dagger" #"†" "Dagger" #"‡" "permil" #"‰" "prime" #"′" "Prime" #"″" "lsaquo" #"‹" "rsaquo" #"‹" "oline" #"‾" "lceil" #"⌈" "rceil" #"⌉" "lfloor" #"⌊" "rfloor" #"⌋" "loz" #"◊" "ensp" #" " "emsp" #" " "thinsp" #" " "zwnj" #"‌" "zwj" #"‍" "lrm" #"‎" "rlm" #"‏") any-except-&: complement charset "&" alphanum: charset [#"0" - #"9" #"a" - #"z" #"A" - #"Z"] digits: charset [#"0" - #"9"] register-codec [name: 'html-entities type: 'text title: "Reserved characters in HTML" decode: func [{Creates a new string with possible HTML entities converted to chars} text [string! binary! file!] /local out s e char] [case [file? text [text: read/string text] binary? text [text: to string! text]] out: make string! length? text parse text [any [s: some any-except-& e: (append/part out s e) | #"&" [#"#" copy char 1 4 digits #";" (append out to char! to integer! char) | s: copy char 1 10 alphanum #";" e: (char: select/case html-entities char unless char [char: #"&" e: :s] append out char) :e | (append out #"&")]]] out]]}
-    sys/load-module/delay {Rebol [
-    Version: 0.1.1
-    Title: "JSON codec"
-    Name: json
-    Date: none
-    Author: [
-        "Gregg Irwin" ^{
-^^-^^-^^-Ported from %json.r by Romano Paolo Tenca, Douglas Crockford, 
-^^-^^-^^-and Gregg Irwin.
-^^-^^-^^-Further research: json libs by Chris Ross-Gill, Kaj de Vos, and
-^^-^^-^^-@WiseGenius.
-^^-^^-^}
-        "Gabriele Santilli" "^^/^^-^^-^^-See History.^^/^^-^^-"
-        "Oldes" ^{
-^^-^^-^^-Slightly modified Red's version (0.0.4) for use in Rebol (Oldes' branch).
-^^-^^-^}
-    ]
-    Exports: [to-json load-json]
-    Needs: none
-]BOM: [UTF-8 #^{EFBBBF^} UTF-16-BE #^{FEFF^} UTF-16-LE #^{FFFE^} UTF-32-BE #^{0000FEFF^} UTF-32-LE #^{FFFE0000^}] BOM-UTF-16?: func [data [string! binary!]] [any [find/match/tail data BOM/UTF-16-BE find/match/tail data BOM/UTF-16-LE]] BOM-UTF-32?: func [data [string! binary!]] [any [find/match/tail data BOM/UTF-32-BE find/match/tail data BOM/UTF-32-LE]] enquote: func [str [string!] "(modified)"] [append insert str ^{"^} ^{"^}] high-surrogate?: func [codepoint [integer!]] [all [codepoint >= 55296 codepoint <= 56319]] low-surrogate?: func [codepoint [integer!]] [all [codepoint >= 56320 codepoint <= 57343]] translit: func ["Transliterate sub-strings in a string" string [string!] "Input (modified)" rule [block! bitset!] "What to change" xlat [block! function!] ^{Translation table or function. MUST map a string! to a string!.^} /local val] [parse string [some [change copy val rule (either block? :xlat [xlat/:val] [xlat val]) | skip]] string] json-to-red-escape-table: [^{\"^} ^{"^} "\\" "\" "\/" "/" "\b" "^^H" "\f" "^^L" "\n" "^^/" "\r" "^^M" "\t" "^^-"] red-to-json-escape-table: reverse copy json-to-red-escape-table json-esc-ch: charset ^{"t\/nrbf^} json-escaped: [#"\" json-esc-ch] red-esc-ch: charset ^{"^^-\/
-^^M^^H^^L^} decode-backslash-escapes: func [string [string!] "(modified)"] [translit string json-escaped json-to-red-escape-table] encode-backslash-escapes: func [string [string!] "(modified)"] [translit string red-esc-ch red-to-json-escape-table] ctrl-char: charset [#"^^@" - #"^^_"] ws: charset " ^^-^^/^^M" ws*: [any ws] ws+: [some ws] sep: [ws* #"," ws*] digit: charset "0123456789" non-zero-digit: charset "123456789" hex-char: charset "0123456789ABCDEFabcdef" chars: charset [not ^{\"^} #"^^@" - #"^^_"] not-word-char: charset ^{/\^^^^,[]()^{^}"#%$@:;
-  ^^-^^M<>^} word-1st: complement append union not-word-char digit #"'" word-char: complement not-word-char sign: [#"-"] int: [[non-zero-digit any digit] | digit] frac: [#"." some digit] exp: [[#"e" | #"E"] opt [#"+" | #"-"] some digit] number: [opt sign int opt frac opt exp] numeric-literal: :number string-literal: [#"^^"" copy _str [any [some chars | #"\" [#"u" 4 hex-char | json-esc-ch]]] #"^^"" (if not empty? _str: any [_str copy ""] [decode-backslash-escapes _str replace-unicode-escapes _str])] decode-unicode-char: func [^{Convert \uxxxx format (NOT simple JSON backslash escapes) to a Unicode char^} ch [string!] "4 hex digits"] [buf: ^{#"^^^^(0000)"^} if not parse ch [4 hex-char] [return none] attempt [load head change at buf 5 ch]] replace-unicode-escapes: func [s [string!] "(modified)" /local c] [parse s [any [some chars | json-escaped | change ["\u" copy c 4 hex-char] (decode-unicode-char c) ()]] s] json-object: [#"^{" (push emit _tmp: copy [] _res: _tmp) ws* opt property-list #"^}" (_res: back pop _res: change _res make map! first _res)] property-list: [property any [sep property]] property: [json-name (emit either parse _str [and [word-1st any word-char] not [#"+" | #"-"] some digit end] [to word! _str] [_str]) json-value] json-name: [ws* string-literal ws* #":"] array-list: [json-value any [sep json-value]] json-array: [#"[" (push emit _tmp: copy [] _res: _tmp) ws* opt array-list #"]" (_res: pop)] json-value: [ws* ["true" (emit true) | "false" (emit false) | "null" (emit none) | json-object | json-array | string-literal (emit _str) | copy _str numeric-literal (emit load _str) mark:] ws*] stack: copy [] push: func [val] [append/only stack val] pop: does [take/last stack] _out: none _res: none _tmp: none _str: none mark: none emit: func [value] [_res: insert/only _res value] load-json: func ["Convert a JSON string to Red data" input [string!] "The JSON string"] [_out: _res: copy [] mark: input either parse/case input json-value [pick _out 1] [make error! form reduce ["Invalid json string. Near:" either tail? mark ["<end of input>"] [mold copy/part mark 40]]]] indent: none indent-level: 0 normal-chars: none escapes: #(#"^^"" ^{\"^} #"\" "\\" #"^^H" "\b" #"^^L" "\f" #"^^/" "\n" #"^^M" "\r" #"^^-" "\t") init-state: func [ind ascii?] [indent: ind indent-level: 0 normal-chars: either ascii? [charset [32 33 35 - 91 93 - 127]] [complement charset [0 - 31 34 92]]] emit-indent: func [output level] [indent-level: indent-level + level append/dup output indent indent-level] emit-key-value: function [output sep map key] [value: select/case map :key if any-word? :key [key: form key] unless string? :key [key: mold :key] red-to-json-value output key append output sep red-to-json-value output :value] red-to-json-value: function [output value] [special-char: none switch/default type?/word :value [none! [append output "null"] logic! [append output pick ["true" "false"] value] integer! decimal! [append output value] percent! [append output to decimal! value] string! [append output #"^^"" parse value [any [mark1: some normal-chars mark2: (append/part output mark1 mark2) | set special-char skip (either escape: select escapes special-char [append output escape] [insert insert tail output "\u" to-hex/size to integer! special-char 4])]] append output #"^^""] block! [either empty? value [append output "[]"] [either indent [append output "[^^/" emit-indent output 1 red-to-json-value output first value foreach v next value [append output ",^^/" append/dup output indent indent-level red-to-json-value output :v] append output #"^^/" emit-indent output -1] [append output #"[" red-to-json-value output first value foreach v next value [append output #"," red-to-json-value output :v]] append output #"]"]] map! object! [keys: words-of value either empty? keys [append output "^{^}"] [either indent [append output "^{^^/" emit-indent output 1 emit-key-value output ": " value first keys foreach k next keys [append output ",^^/" append/dup output indent indent-level emit-key-value output ": " value :k] append output #"^^/" emit-indent output -1] [append output #"^{" emit-key-value output #":" value first keys foreach k next keys [append output #"," emit-key-value output #":" value :k]] append output #"^}"]]] [red-to-json-value output either any-block? :value [to block! :value] [either any-string? :value [form value] [mold :value]]] output] to-json: function ["Convert Red data to a JSON string" data /pretty indent [string!] "Pretty format the output, using given indentation" /ascii "Force ASCII output (instead of UTF-8)"] [result: make string! 4000 init-state indent ascii red-to-json-value result data] register-codec [name: 'json type: 'text title: "JavaScript Object Notation" suffixes: [%.json] encode: func [data [any-type!]] [to-json data] decode: func [text [string! binary! file!]] [if file? text [text: read text] if binary? text [text: to string! text] load-json text]]}
-    sys/load-module/delay {Rebol [
-    Version: 0.8.1
-    Title: "A more XML 1.0 compliant set of XML parsing tools."
-    Name: xml
-    Date: 24-Apr-2020
-    Author: ["Gavin F. McKenzie" "Oldes"]
-    Exports: none
-    Needs: none
-]register-codec [name: 'xml type: 'text title: "Extensible Markup Language" suffixes: [%.xml %.pom] decode: function ["Parses XML code and returns a tree of blocks" data [binary! string!] "XML code to parse" /trim "Removes whitespaces (from head of strings)"] [if binary? data [data: to string! data] parser/xmlTrimSpace: any [trim select options 'trim] parser/parse-xml data] verbose: 0 options: object [trim: false] xml-parse-handler: make object! [start-document: func [] [] xml-decl: func [version-info [string! none!] encoding [string! none!] standalone [string! none!]] [] document-type: func [document-type [string!] public-id [string! none!] system-id [string! none!] internal-subset [string! none!]] [] start-element: func [ns-uri [string! none!] local-name [string! none!] q-name [string!] attr-list [block!]] [] end-element: func [ns-uri [string! none!] local-name [string! none!] q-name [string!]] [] characters: func [characters [string! char! none!]] [] pi: func [pi-target [string! none!] pi [string! none!]] [] comment: func [comment [string! none!]] [] end-document: func [] [] start-prefix-mapping: func [ns-prefix-uri-pairs [block!]] [] end-prefix-mapping: func [ns-prefix-uri-pairs [block!]] [] get-parse-result: func [{
-^^-^^-^^-This function can be used to return a specific result from
-^^-^^-^^-the parse operation, such as returning the parse XML as a 
-^^-^^-^^-series of blocks similar to REBOL's built-in parse-xml.
-^^-^^-^^-By default, returning none from this function will cause the
-^^-^^-^^-return code from the REBOL parse function to be passed back
-^^-^^-^^-to the caller of the parse.}] [none]] echo-handler: make xml-parse-handler [start-document: func [] [print remold ['start-doc]] xml-decl: func [version-info [string! none!] encoding [string! none!] standalone [string! none!]] [print remold ['xml-decl 'version-info version-info 'encoding encoding 'standalone standalone]] document-type: func [document-type [string!] public-id [string! none!] system-id [string! none!] internal-subset [string! none!]] [print remold ['doc-type document-type 'public-id public-id 'system-id system-id 'internal-subset internal-subset]] start-element: func [ns-uri [string! none!] local-name [string! none!] q-name [string!] attr-list [block!]] [print remold ['start-elem ns-uri local-name q-name 'attr-list attr-list]] end-element: func [ns-uri [string! none!] local-name [string! none!] q-name [string!]] [print remold ['end-elem ns-uri local-name q-name]] characters: func [characters [string! char! none!]] [print remold ['characters characters]] pi: func [pi-target [string! none!] pi [string! none!]] [print remold ['pi pi-target pi]] comment: func [comment [string! none!]] [print remold ['comment comment]] end-document: func [] [print remold ['end-doc]] start-prefix-mapping: func [ns-prefix-uri-pairs [block!]] [print remold ['start-prefix ns-prefix-uri-pairs]] end-prefix-mapping: func [ns-prefix-uri-pairs [block!]] [print remold ['end-prefix ns-prefix-uri-pairs]]] block-handler: make xml-parse-handler [xml-doc: copy [] xml-block: none xml-content: copy "" start-document: does [xml-block: reduce ['document make map! [] none]] xml-decl: func [version-info [string! none!] encoding [string! none!] standalone [string! none!]] [xml-block/2/version: version-info xml-block/2/encoding: encoding xml-block/2/standalone: standalone] document-type: func [document-type [string!] public-id [string! none!] system-id [string! none!] internal-subset [string! none!]] [xml-block/2/doctype: document-type xml-block/2/pubid: public-id xml-block/2/sysid: system-id xml-block/2/subset: internal-subset] start-element: func [ns-uri [string! none!] local-name [string! none!] q-name [string!] attr-list [block!]] [if not empty? xml-content [add-child copy xml-content clear head xml-content] insert/only tail xml-doc xml-block xml-block: add-child copy reduce [local-name none none] if not empty? attr-list [xml-block/2: copy attr-list]] characters: func [characters [string! char! none!]] [if not none? characters [append xml-content characters]] end-element: func [ns-uri [string! none!] local-name [string! none!] q-name [string!]] [if not empty? xml-content [add-child copy xml-content clear head xml-content] pop-xml-block] add-child: func [child] [if none? third xml-block [xml-block/3: make block! 1] insert/only tail third xml-block child child] pop-xml-block: func [] [xml-block: last xml-doc remove back tail xml-doc] get-parse-result: func [] [xml-block]] ns-block-handler: make block-handler [nsinfo-stack: copy [] start-element: func [ns-uri [string! none!] local-name [string! none!] q-name [string!] attr-list [block!]] [if not empty? xml-content [add-child copy xml-content clear head xml-content] insert/only tail xml-doc xml-block xml-block: add-child copy reduce [local-name none none ns-uri] if not empty? attr-list [xml-block/2: copy attr-list]] start-prefix-mapping: func [ns-prefix-uri-pairs [block!]] [insert/only nsinfo-stack ns-prefix-uri-pairs] end-prefix-mapping: func [ns-prefix-uri-pairs [block!]] [remove nsinfo-stack]] parser: make object! [element-q-name: none element-local-name: none document-type: none system-id: none public-id: none internal-subset: none encoding: none characters: none entity-ref: none char-ref-value: none comment: none pi-target: none pi: none version-info: none encoding: none standalone: none attr-name: none attr-value: none attr-list: copy [] attr-ns-prefix: none element-ns-prefix: none ns-uri: none nsinfo-stack: copy [] nsinfo: copy [] handler: block-handler namespace-aware: no xmlLetter: charset [#"A" - #"Z" #"a" - #"z"] xmlDigit: charset [#"0" - #"9"] xmlHexDigit: charset [#"0" - #"9" #"a" - #"f" #"A" - #"F"] xmlAlpha: charset [#"A" - #"Z" #"a" - #"z"] xmlAlphaNum: charset [#"0" - #"9" #"A" - #"Z" #"a" - #"z"] xmlQuote: charset [#"^^"" #"'"] xmlSpace: charset [#" " #"^^-" #"^^M" #"^^/"] xmlNotMarkupChar: complement charset [#"<" #"&"] xmlS: [some xmlSpace] xmlEq: [[any xmlSpace] "=" [any xmlSpace]] xmlChar: [any [xmlAlphaNum | xmlSpace]] xmlCharData: [copy characters some xmlNotMarkupChar (handler/characters characters)] xmlNameProd: [[xmlLetter | #"_" | #":"] any xmlNameChar] xml10Name: xmlNameProd xmlName: xml10Name xmlNameChar: [xmlLetter | xmlDigit | #"." | #"-" | #"_" | #":"] xmlNames: [xmlName any [xmlS xmlName]] xmlNMToken: [some xmlNameChar] xmlNMTokens: [xmlNMToken any [xmlS xmlNMToken]] xmlMisc: [xmlComment | xmlPI | xmlS] xmlPERef: [#"%" xmlNameProd #"%"] xmlEntIntro: charset [#"^^^^" #"%" #"&" #"^^""] xmlEntityVal: [#"^^"" any [xmlEntIntro | xmlPERef] #"^^""] xmlContent: [any [xmlElement | xmlComment | xmlPI | xmlCDSect | xmlCharData | xmlReference]] xmlAttValueStrict: [[#"^^"" copy attr-value to #"^^"" #"^^""] | [#"'" copy attr-value to #"'" #"'"]] xmlAttValue: xmlAttValueStrict xmlAttType: [xmlStringType | xmlTokenizedType | xmlEnumeratedType] xml10AttrStrict: [copy attr-name xmlName xmlEq xmlAttValue (append append attr-list attr-name attr-value)] xmlAttribute: xml10AttrStrict xmlSTag: [#"<" copy element-q-name xmlName [(clear head attr-list clear head nsinfo) any [xmlS xmlAttribute]] [any xmlSpace] #">" xmlTrimSpace (either namespace-aware [handler/start-prefix-mapping nsinfo insert/only nsinfo-stack copy nsinfo handler/start-element ns-uri element-local-name element-q-name attr-list] [handler/start-element none element-q-name element-q-name attr-list])] xmlETag: ["</" copy element-q-name xmlName [any xmlSpace] #">" xmlTrimSpace (either namespace-aware [handler/end-element ns-uri element-local-name element-q-name handler/end-prefix-mapping first nsinfo-stack remove nsinfo-stack] [handler/end-element none element-q-name element-q-name])] xmlEmptyElemTag: [#"<" copy element-q-name xmlName [(clear head attr-list clear head nsinfo) any [xmlS xmlAttribute]] [any xmlSpace] "/>" xmlTrimSpace (either namespace-aware [handler/start-prefix-mapping nsinfo insert/only nsinfo-stack copy nsinfo handler/start-element ns-uri element-local-name element-q-name attr-list] [handler/start-element none element-q-name element-q-name attr-list] characters: none handler/characters characters either namespace-aware [handler/end-element ns-uri element-local-name element-q-name handler/end-prefix-mapping first nsinfo-stack remove nsinfo-stack] [handler/end-element none element-q-name element-q-name])] xmlEmptyElem: [#"<" copy element-q-name xmlName [(clear head attr-list clear head nsinfo) any [xmlS xmlAttribute]] [any xmlSpace] "></" xmlName [any xmlSpace] #">" xmlTrimSpace (either namespace-aware [handler/start-prefix-mapping nsinfo insert/only nsinfo-stack copy nsinfo handler/start-element ns-uri element-local-name element-q-name attr-list] [handler/start-element none element-q-name element-q-name attr-list] characters: none handler/characters characters either namespace-aware [handler/end-element ns-uri element-local-name element-q-name handler/end-prefix-mapping first nsinfo-stack remove nsinfo-stack] [handler/end-element none element-q-name element-q-name])] xmlElementStrict: [xmlEmptyElemTag | xmlEmptyElem | [xmlSTag opt xmlContent xmlETag]] xmlElement: xmlElementStrict xmlPI: ["<?" copy pi-target xmlPITarget copy pi to "?>" "?>" (handler/pi pi-target pi)] xmlPITarget: [xmlNameProd] xmlComment: ["<!--" copy comment to "-->" "-->" (handler/comment comment)] xmlDecl: [(version-info: encoding: standalone: none) "<?xml" any xmlSpace xmlVersionInfo opt [xmlS xmlEncodingDecl] opt [xmlS xmlSDDecl] any xmlSpace "?>" xmlTrimSpace (handler/xml-decl version-info encoding standalone)] xmlVersionInfo: ["version" xmlEq [#"^^"" copy version-info xmlVersionNum {"} | #"'" copy version-info xmlVersionNum "'"]] xmlVersionNum: [some [xmlVersionNumChars | "-"]] xmlVersionNumChars: charset [#"0" - #"9" #"A" - #"Z" #"a" - #"z" "_.:"] xmlEncodingDecl: [(encoding: none) "encoding" xmlEq [#"^^"" copy encoding xmlEncName {"} | #"'" copy encoding xmlEncName "'"]] xmlEncName: [xmlAlpha any [xmlEncNameChars]] xmlEncNameChars: charset [#"0" - #"9" #"A" - #"Z" #"a" - #"z" "_.-"] xmlDocument: [(handler/start-document) xmlProlog xmlElement any xmlMisc (handler/end-document)] xmlProlog: [opt xmlDecl any xmlMisc opt [xmlDocTypeDecl any xmlMisc]] xmlDocTypeDecl: [(public-id: system-id: internal-subset: none) "<!DOCTYPE" xmlS copy document-type xmlName opt [xmlS xmlExternalID] any xmlSpace opt [#"[" copy internal-subset to #"]" 1 skip] any xmlSpace ">" (handler/document-type document-type public-id system-id internal-subset)] xmlSDDecl: [(standalone: none) "standalone" xmlEq [xmlQuote copy standalone ["yes" | "no"] xmlQuote]] xmlStringType: "CDATA" xmlTokenizedType: ["ID" | "IDREF" | "IDREFS" | "ENTITY" | "ENTITIES" | "NMTOKEN" | "NMTOKENS"] xmlEnumeratedType: [] xmlReference: [xmlCharRef | xmlEntityRef] xmlEntityRef: [["&" copy entity-ref xmlNameProd ";"] (char-ref-value: convert-character-entity entity-ref either none? char-ref-value [handler/characters rejoin ["&" entity-ref ";"]] [handler/characters char-ref-value])] xmlCharRef: [[["&" [copy entity-ref ["#" some xmlDigit]] ";"] | ["&" [copy entity-ref ["#x" some xmlHexDigit]] ";"]] (char-ref-value: convert-character-entity entity-ref either none? char-ref-value [handler/characters rejoin ["&" entity-ref ";"]] [handler/characters char-ref-value])] xmlExternalID: [["SYSTEM" xmlS xmlSystemLiteral] | ["PUBLIC" xmlS xmlPubIDLiteral xmlS xmlSystemLiteral]] xmlSystemLiteral: [[#"^^"" copy system-id to #"^^"" 1 skip] | [#"'" copy system-id to #"'" 1 skip]] xmlPubIDLiteral: [[#"^^"" copy public-id to #"^^"" 1 skip] | [#"'" copy public-id to #"'" 1 skip]] xmlNDataDecl: [xmlS "NDATA" xmlS xmlNameProd] xmlCDSect: ["<![CDATA[" copy characters to "]]>" "]]>" (handler/characters characters)] xmlNSAttribute: [[copy attr-name xmlPrefixedAttName xmlEq xmlAttValue (ns-uri: copy attr-value append nsinfo reduce [attr-ns-prefix attr-value])] | [copy attr-name xmlDefaultAttName xmlEq xmlAttValue (ns-uri: copy attr-value append nsinfo reduce [attr-ns-prefix attr-value])] | [xmlAQName xmlEq xmlAttValue (append attr-list reduce [attr-name attr-value attr-ns-prefix])]] xmlPrefixedAttName: ["xmlns:" copy attr-ns-prefix xmlNCName] xmlDefaultAttName: ["xmlns" (attr-ns-prefix: none)] xmlNCName: [[xmlLetter | #"_"] any xmlNCNameChar] xmlNCNameChar: [xmlLetter | xmlDigit | #"." | #"-" | #"_"] xmlAQName: [[copy attr-ns-prefix xmlNCName #":" copy attr-name xmlNCName] | [copy attr-name xml10Name (attr-ns-prefix: none)]] xmlQName: [[copy element-ns-prefix xmlNCName #":" copy element-local-name xmlNCName (element-q-name: copy rejoin [element-ns-prefix ":" element-local-name])] | [copy element-local-name xml10Name (element-q-name: element-ns-prefix: "")]] xmlTrimSpace: none convert-character-entity: func [{
-^^-^^-^^-Accepts the name reference portion of an entity
-^^-^^-^^-reference and attempts to return the actual character
-^^-^^-^^-referenced by the entity.
-^^-^^-^^-If the conversion is not successful, the value of 
-^^-^^-^^-none is returned.
-^^-^^-^^-For example, for the ampersand character this function
-^^-^^-^^-could accept a entity-ref parameter of either "amp",
-^^-^^-^^-"#38" or "#x26".
-^^-^^-} entity-ref [string!]] [switch/default entity-ref ["lt" [return #"<"] "gt" [return #">"] "amp" [return #"&"] "quot" [return #"^^""] "apos" [return #"'"]] [either (first entity-ref) = #"#" [to char! to integer! either (second entity-ref) = #"x" [to issue! skip entity-ref 2] [skip entity-ref 1]] [none]]] parse-xml: func [{
-^^-^^-^^-Parses XML code and executes an associated event handler
-^^-^^-^^-during processing.
-^^-^^-^^-This is a more XML 1.0 compliant parse than the built-in
-^^-^^-^^-REBOL parse-xml function.
-^^-^^-} xml-string [string!] /local parse-result] [if true? xmlTrimSpace [xmlTrimSpace: [any xmlSpace]] parse-result: parse/case/all xml-string xmlDocument either handler/get-parse-result = none [parse-result] [handler/get-parse-result]] set-parse-handler: func [arg-handler [object!]] [handler: arg-handler] get-parse-handler: does [handler] set-namespace-aware: func [{
-^^-^^-^^-This function enables the namespace processing
-^^-^^-^^-of the parser.  As a result, the parser will
-^^-^^-^^-process xmlns attributes and namespace prefixes.
-^^-^^-^^-The parse-handlers will receive additional
-^^-^^-^^-namespace specific information.
-^^-^^-} arg-namespace-aware [logic!]] [namespace-aware: arg-namespace-aware either arg-namespace-aware [xmlName: xmlQName xmlAttribute: xmlNSAttribute] [xmlName: xml10Name xmlAttribute: xml10AttrStrict] namespace-aware] get-namespace-aware: does [namespace-aware]]]}
-    register-codec [
-        name: 'wav
-        type: 'sound
-        title: "Waveform Audio File Format"
-        suffixes: [%.wav %.wave]
-        decode: function [
-            data [binary!]
-        ] [
-            if verbose > 0 [
-                print ["^[[1;32mDecode WAV data^[[m (^[[1m" length? data "^[[mbytes )"]
-                w: 1 + length? form length? data
-            ]
-            bin: binary data
-            binary/read bin [
-                chunkId: BYTES 4
-                chunkSize: UI32LE
-                format: BYTES 4
-            ]
-            if all [
-                chunkId = #{52494646}
-                format = #{57415645}
-            ] [
-                data: copy []
-                chunks: copy []
-                while [8 < length? bin/buffer] [
-                    binary/read bin [
-                        id: BYTES 4
-                        size: UI32LE
-                        starts: INDEX
-                    ]
-                    ends: starts + size
-                    chunk: any [attempt [to tag! id] id]
-                    if verbose > 0 [
-                        printf [
-                            $32
-                            "CHUNK: " $1 7 $0
-                            "at: " $1 w $0
-                            "bytes: " $1 w $0
-                        ] reduce [mold chunk starts size]
-                    ]
-                    append chunks chunk
-                    switch/default chunk [
-                        <fmt > [
-                            format: binary/read bin [
-                                UI16LE
-                                UI16LE
-                                UI32LE
-                                UI32LE
-                                UI16LE
-                                UI16LE
-                            ]
-                            if size > 16 [
-                                size: size - 16
-                                append format copy/part bin/buffer size
-                                bin/buffer: skip bin/buffer size
-                            ]
-                            append/only chunks format
-                        ]
-                        <data> [
-                            binary/read/into bin [BYTES :size] tail data
-                            append chunks size
-                        ]
-                        <smpl> [
-                            sampler: binary/read bin [
-                                UI32LE
-                                UI32LE
-                                UI32LE
-                                UI32LE
-                                UI32LE
-                                UI32LE
-                                UI32LE
-                                count: UI32LE
-                                UI32LE
-                            ]
-                            append/only sampler loops: copy []
-                            loop count [
-                                binary/read/into bin [
-                                    UI32LE
-                                    UI32LE
-                                    UI32LE
-                                    UI32LE
-                                    UI32LE
-                                    UI32LE
-                                ] loops
-                            ]
-                            append/only chunks sampler
-                        ]
-                        <fact> [
-                            binary/read/into bin [BYTES :size] tail chunks
-                        ]
-                        <cue > [
-                            count: binary/read bin 'UI32LE
-                            append/only chunks cues: copy []
-                            loop count [
-                                binary/read/into bin [
-                                    UI32LE
-                                    UI32LE
-                                    UI32LE
-                                    UI32LE
-                                    UI32LE
-                                    UI32LE
-                                ] tail cues
-                            ]
-                            new-line/skip cues true 6
-                        ]
-                        <_PMX> [
-                            binary/read bin [tmp: BYTES :size]
-                            try [tmp: to string! tmp]
-                            append chunks tmp
-                            if verbose > 1 [printf [$33 tmp $0] ""]
-                        ]
-                    ] [
-                        binary/read/into bin [BYTES :size] tail chunks
-                    ]
-                    if ends <> index? bin/buffer [
-                        cause-error 'script 'bad-bad ["WAV decode" "invalid chunk end"]
-                    ]
-                ]
-            ]
-            either any [empty? chunks none? format] [
-                none
-            ] [
-                new-line/skip chunks true 2
-                object compose/only [
-                    type: 'wave
-                    rate: (format/3)
-                    channels: (format/2)
-                    bits: (format/6)
-                    chunks: (chunks)
-                    data: (
-                        case [
-                            empty? data [none]
-                            find [8 16 32] format/6 [make vector! reduce ['integer! format/6 rejoin data]]
-                            'else data
-                        ]
-                    )
-                ]
-            ]
-        ]
-        encode: function [
-            spec [object! vector!]
-        ] [
-            case [
-                vector? spec [
-                    bitsPerSample: spec/size
-                    data: to binary! spec
-                    spec: []
-                ]
-                vector? spec/data [
-                    bitsPerSample: spec/data/size
-                    data: to binary! spec/data
-                ]
-                binary? spec/data [
-                    bitsPerSample: select spec 'bits
-                    data: spec/data
-                ]
-                'else [
-                    print "*** Unsupported data!"
-                    return none
-                ]
-            ]
-            out: binary (128 + length? data)
-            binary/write out [#{524946460000000057415645}]
-            if bitsPerSample [blockAlign: bitsPerSample / 8]
-            chunks: select spec 'chunks
-            unless chunks [
-                channels: any [select spec 'channels 1]
-                sampleRate: any [select spec 'rate 44100]
-                bitsPerSample: any [bitsPerSample 16]
-                blockAlign: bitsPerSample / 8
-                chunks: reduce [
-                    <fmt > reduce [
-                        1
-                        channels
-                        sampleRate
-                        (channels * sampleRate * blockAlign)
-                        blockAlign
-                        bitsPerSample
-                    ]
-                    <data> length? data
-                ]
-            ]
-            foreach [tag value] chunks [
-                switch tag [
-                    <fmt > [
-                        binary/write out reduce [
-                            'BYTES "fmt "
-                            'UI32LE 16 + any [length? value/7 0]
-                            'UI16LE value/1
-                            'UI16LE value/2
-                            'UI32LE value/3
-                            'UI32LE value/4
-                            'UI16LE value/2 * any [blockAlign value/5]
-                            'UI16LE any [bitsPerSample value/6]
-                            'BYTES any [value/7 #{}]
-                        ]
-                    ]
-                    <data> [
-                        value: copy/part data value
-                        bytes: length? value
-                        binary/write out reduce [
-                            'BYTES "data"
-                            'UI32LE bytes
-                            'BYTES value
-                        ]
-                        data: skip data bytes
-                    ]
-                    <fact> [
-                        value: to binary! value
-                        binary/write out reduce [
-                            'BYTES "fact"
-                            'UI32LE length? value
-                            'BYTES value
-                        ]
-                    ]
-                ]
-            ]
-            bytes: (length? out/buffer) - 8
-            binary/write out [AT 5 UI32LE :bytes]
-            out/buffer
-        ]
-        identify: func [
-            "Returns TRUE if binary looks like WAV data"
-            data [binary!]
-        ] [
-            parse data [#{52494646} 4 skip #{57415645} to end]
-        ]
-        verbose: 3
-    ]
-    system/options/log/ico: 2
-    register-codec [
-        name: 'ico
-        type: 'image
-        title: "Windows icon or cursor file"
-        suffixes: [%.ico %.cur]
-        decode: function [
-            "Extract content of the ICO file"
-            data [binary! file! url!]
-        ] [
-            unless binary? data [data: read data]
-            sys/log/info 'ICO ["^[[1;32mDecode ICO data^[[m (^[[1m" length? data "^[[mbytes )"]
-            bin: binary data
-            binary/read bin [tmp: UI16LE type: UI16LE num: UI16LE]
-            unless all [tmp = 0 any [type = 1 type = 2]] [return none]
-            icons: copy []
-            repeat n num [
-                binary/read bin [
-                    width: UI8
-                    height: UI8
-                    colors: UI8
-                    UI8
-                    planes: UI16LE
-                    bpp: UI16LE
-                    size: UI32LE
-                    ofs: UI32LE
-                ]
-                binary/read bin [
-                    pos: INDEX
-                    ATz :ofs
-                    data: BYTES :size
-                    AT :pos
-                ]
-                if width = 0 [width: 256]
-                if height = 0 [height: 256]
-                sys/log/more 'ICO ["Image^[[1;33m" n "^[[0;36mbpp:^[[33m" bpp "^[[36mcolors:^[[33m" colors "^[[36msize:^[[33m" as-pair width height]
-                append/only icons reduce [width bpp data]
-            ]
-            icons
-        ]
-        encode: function [
-            data [block!]
-        ] [
-            out: binary 30000
-            images: copy []
-            parse data [
-                some [
-                    set file: file! (
-                        bin: read/binary file
-                        if size: codecs/png/size? bin [
-                            append/only images reduce ['png to integer! size/1 32 bin]
-                        ]
-                    )
-                ]
-            ]
-            imgs: length? images
-            offset: 6 + (imgs * 16)
-            img-data: clear #{}
-            binary/write out [UI16LE 0 UI16LE 1 UI16LE :imgs]
-            forall images [
-                set [type: size: bpp: bin:] images/1
-                bytes: length? bin
-                if size = 256 [size: 0]
-                binary/write out [
-                    UI8 :size
-                    UI8 :size
-                    UI16LE 0
-                    UI16LE 0
-                    UI16LE :bpp
-                    UI32LE :bytes
-                    UI32LE :offset
-                ]
-                append img-data bin
-                offset: offset + length? bin
-            ]
-            binary/write out img-data
-            copy out/buffer
-        ]
-        identify: function [data [binary!]] [
-            parse data [#{0000} [#{0100} | #{0200}] to end]
-        ]
-    ]
-    if find codecs 'png [
-        extend codecs/png 'size? func ["Return PNG image size or none" bin [binary!]] [
-            if all [
-                parse bin [
-                    #{89504E470D0A1A0A}
-                    thru #{49484452}
-                    bin: to end
-                ]
-                8 <= length? bin
-            ] [
-                to pair! binary/read bin [UI32 UI32]
-            ]
-        ]
-        extend codecs/png 'chunks function [
-            {Decode PNG into block of chunks (or encode back to binary from a block)}
-            data [binary! file! url! block!] "Input data"
-            /only tags [block!]
-        ] [
-            if block? data [
-                if #{49484452} <> data/1 [
-                    sys/log/error 'PNG ["First chunk must be IHDR, but is:" as-red mold to string! tag]
-                    return none
-                ]
-                out: binary 10000
-                binary/write out #{89504E470D0A1A0A}
-                foreach [tag dat] data [
-                    if tag = #{49454E44} [continue]
-                    unless all [binary? tag 4 = length? tag binary? dat] [
-                        sys/log/error 'PNG ["Wrong chunk input!" as-red tag]
-                        return none
-                    ]
-                    len: length? dat
-                    binary/write out [ui32be :len]
-                    tmp: out/buffer-write
-                    binary/write out [:tag :dat]
-                    crc: checksum tmp 'crc32
-                    binary/write out [ui32be :crc]
-                ]
-                binary/write out #{0000000049454E44AE426082}
-                return copy out/buffer
-            ]
-            if only [
-                forall tags [
-                    unless binary? tags/1 [change tags to binary! form tags/1]
-                ]
-            ]
-            unless binary? data [data: read data]
-            sys/log/info 'PNG ["^[[1;32mDecode PNG data^[[m (^[[1m" length? data "^[[mbytes )"]
-            unless parse data [#{89504E470D0A1A0A} data: to end] [return none]
-            bin: binary data
-            out: make block! 12
-            num: try/except [-40 + query/mode console:// 'window-cols] [40]
-            while [8 < length? bin/buffer] [
-                len: binary/read bin 'ui32be
-                tag: copy/part bin/buffer 4
-                if all [tags none? find tags tag] [
-                    sys/log/more 'PNG rejoin [form tag #" " as-red to string! tag " ^[[33m" pad len 10 "^[[35mignored"]
-                    bin/buffer: skip bin/buffer len + 8
-                    continue
-                ]
-                crc: checksum/part bin/buffer 'crc32 len + 4
-                bin/buffer: skip bin/buffer 4
-                dat: binary/read/with bin 'BYTES len
-                if crc <> binary/read bin 'si32be [
-                    sys/log/error 'PNG "CRC check failed!"
-                    return none
-                ]
-                info: switch/default tag [
-                    #{49484452}
-                    [binary/read dat [UI32 UI32 UI8 UI8 UI8 UI8 UI8]]
-                    #{70485973}
-                    [binary/read dat [UI32 UI32 UI8]]
-                    #{69545874}
-                    #{74455874}
-                    [to string! dat]
-                ] [dat]
-                info: mold/flat/part info num + 3
-                if num < length? info [change skip tail info -3 "..."]
-                sys/log/more 'PNG rejoin [form tag #" " as-red to string! tag " ^[[33m" pad len 10 info]
-                append/only append out tag dat
-            ]
-            new-line/skip out true 2
-            out
-        ]
-    ]
-    if find codecs 'jpeg [
-        extend codecs/jpeg 'size? function ["Return JPEG image size or none" img [file! url! binary!]] [
-            unless binary? img [img: read/binary img]
-            unless img: find/tail img #{FFD8} [return none]
-            while [2 <= length? img] [
-                if img/1 <> 255 [break]
-                switch img/2 [
-                    192
-                    193
-                    194
-                    195
-                    [
-                        binary/read img [
-                            skip 5
-                            h: UI16
-                            w: UI16
-                        ]
-                        return as-pair w h
-                    ]
-                    217 [break]
-                    218 0 [
-                        unless img: find img 255 [return none]
-                        continue
-                    ]
-                ]
-                img: skip img 2
-                img: skip img binary/read img 'ui16
-            ]
-            none
-        ]
-    ]
-    if find codecs 'gif [
-        extend codecs/gif 'size? function ["Return GIF image size or none" img [file! url! binary!]] [
-            unless binary? img [img: read/binary/part img 16]
-            parse img [
-                ["GIF87a" | "GIF89a"] img: (
-                    return to pair! binary/read img [UI16LE UI16LE]
-                )
-            ]
-            none
-        ]
-    ]
-    if find codecs 'bmp [
-        extend codecs/bmp 'size? function ["Return BMP image size or none" img [file! url! binary!]] [
-            unless binary? img [img: read/binary/part img 32]
-            unless find/match img #{424D} [return none]
-            try [return to pair! binary/read img [SKIP 18 UI32LE UI32LE]]
-            none
-        ]
-    ]
-    if find codecs 'dds [
-        extend codecs/dds 'size? function ["Return DDS image size or none" img [file! url! binary!]] [
-            unless binary? img [img: read/binary/part img 32]
-            unless find/match img #{444453207C000000} [return none]
-            try [return to pair! reverse binary/read img [SKIP 12 UI32LE UI32LE]]
-            none
-        ]
-    ]
-    if find codecs 'qoi [
-        extend codecs/qoi 'size? function ["Return QOI image size or none" img [file! url! binary!]] [
-            unless binary? img [img: read/binary/part img 32]
-            unless find/match img #{716F6966} [return none]
-            try [return to pair! binary/read img [SKIP 4 UI32BE UI32BE]]
-            none
-        ]
-    ]
-    to-itime: func [
-        {Returns a standard internet time string (two digits for each segment)}
-        time [time! number! block! none!]
-    ] [
-        time: make time! time
-        format/pad [-2 #":" -2 #":" -2] reduce [
-            time/hour time/minute to integer! time/second
-        ] #"0"
-    ]
-    to-idate: func [
-        "Returns a standard Internet date string."
-        date [date!]
-        /gmt "Converts local time to GMT (Greenwich Mean Time)"
-        /local zone
-    ] [
-        either date/zone [
-            either gmt [
-                date/time: date/time - date/zone
-                date/zone: none
-                zone: "GMT"
-            ] [
-                zone: form date/zone
-                remove find zone ":"
-                if #"-" <> first zone [insert zone #"+"]
-                if 4 >= length? zone [insert next zone #"0"]
-            ]
-        ] [zone: "GMT"]
-        reform [
-            pick ["Mon," "Tue," "Wed," "Thu," "Fri," "Sat," "Sun,"] date/weekday
-            date/day
-            pick ["Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"] date/month
-            date/year
-            to-itime any [date/time 0:00]
-            zone
-        ]
-    ]
-    to-date: wrap [
-        digit: charset [#"0" - #"9"]
-        alpha: charset [#"a" - #"z" #"A" - #"Z"]
-        function [
-            "Converts to date! value."
-            value [any-type!] "May be also a standard Internet date string/binary"
-            /utc "Returns the date with UTC zone"
-        ] [
-            if all [
-                any [string? value binary? value]
-                parse value [
-                    5 skip
-                    copy day: 1 2 digit space
-                    copy month: 3 alpha space
-                    copy year: 1 4 digit space
-                    copy time: to space space
-                    copy zone: to end
-                ]
-            ] [
-                if zone = "GMT" [zone: "+0"]
-                value: to string! rejoin [day "-" month "-" year "/" time zone]
-            ]
-            if all [value: to date! value utc] [value/timezone: 0]
-            value
-        ]
-    ]
-    black: 0.0.0
-    coal: 64.64.64
-    gray: 128.128.128
-    pewter: 170.170.170
-    silver: 192.192.192
-    snow: 240.240.240
-    white: 255.255.255
-    blue: 0.0.255
-    green: 0.255.0
-    red: 255.0.0
-    cyan: 0.255.255
-    magenta: 255.0.255
-    yellow: 255.255.0
-    yello: 255.240.120
-    navy: 0.0.128
-    leaf: 0.128.0
-    teal: 0.128.128
-    maroon: 128.0.0
-    olive: 128.128.0
-    purple: 128.0.128
-    orange: 255.150.10
-    oldrab: 72.72.16
-    brown: 139.69.19
-    coffee: 76.26.0
-    sienna: 160.82.45
-    crimson: 220.20.60
-    violet: 72.0.90
-    brick: 178.34.34
-    pink: 255.164.200
-    gold: 255.205.40
-    tanned: 222.184.135
-    beige: 255.228.196
-    ivory: 255.255.240
-    linen: 250.240.230
-    khaki: 179.179.126
-    rebolor: 142.128.110
-    wheat: 245.222.129
-    aqua: 40.100.130
-    forest: 0.48.0
-    water: 80.108.142
-    papaya: 255.80.37
-    sky: 164.200.255
-    mint: 100.136.116
-    reblue: 38.58.108
-    base-color: 200.200.200
-    sys/load-module/delay {Rebol [
-    Version: 1.1.4
-    Title: "Prebol - Official REBOL Preprocessor"
-    Name: prebol
-    Date: none
-    Author: ["Carl Sassenrath" "Holger Kruse" "Oldes"]
-    Exports: [process-source]
-    Needs: none
-]error: func [msg] [if block? msg [msg: reform msg] sys/log/error 'prebol msg halt] include-source-comment?: true process-source: func [blk [any-block!] "Block of source to process" size [integer!] "Starting size" /only "Don't use recursive processing" /local file data expr cmd else tmp path include-cmds header do-expr base] [base: system/options/binary-base system/options/binary-base: 64 do-expr: func [expr /local result] [set/any 'result try [do :expr] if function? :result [set/any 'result try [do :result]] case [unset? :result [error [mold cmd "must return a value or none:" mold expr]] error? :result [error result]] :result] include-cmds: [#include [data: load/all file if data/1 = 'rebol [header: make object! [title: "" author: ""] header: make header data/2 remove/part data 2 if include-source-comment? [insert data compose [comment (rejoin ["^^/#### Include: " mold file "^^/#### Title:   " mold header/title "^^/#### Author:  " mold header/author "^^/----"])] insert tail data compose [comment (rejoin ["---- end of include " mold file " ----"])]]] data] #include-string [read file] #include-binary [read/binary file] #include-block [data: load/all file if data/1 = 'rebol [remove/part data 2] head insert/only copy [] data] #include-eval [set/any 'data do file head insert/only copy [] data]] while [not tail? blk] [either issue? blk/1 [cmd: blk/1 either find include-cmds cmd [file: blk/2 if paren? :file [file: do-expr to block! :file] if not file? file [error ["Invalid" mold cmd "file expression:" mold file]] if not exists? file [error [mold cmd "file not found:" mold file]] size: size + size? file if error? data: try select include-cmds cmd [error data] remove/part blk 2 insert blk data] [switch/default cmd [#do [expr: blk/2 remove/part blk 2 if data: do-expr expr [insert blk :data]] #if [expr: blk/2 data: blk/3 remove/part blk 3 if do-expr expr [insert blk :data]] #either [expr: blk/2 data: blk/3 else: blk/4 remove/part blk 4 insert blk either do-expr expr [:data] [:else]] #include-files [tmp: copy [] path: dirize blk/2 foreach file blk/3 [size: size + size? join path to-file file data: read/binary join path to-file file repend tmp [file data]] remove/part blk 3 insert/only blk tmp] #comments [include-source-comment?: either find [false off] blk/2 [false] [true] blk: skip blk 2]] [blk: next blk]]] [blk: next blk]] unless only [foreach item head blk [if block? :item [size: process-source item size]]] system/options/binary-base: base size]}
-    sys/load-module/delay {Rebol [
-    Version: 2.1.0
-    Title: "MySQL Protocol"
-    Name: mysql
-    Date: 27-May-2020
-    Author: none
-    Exports: [connect-sql send-sql sql-escape to-sql-binary to-sql mysql-map-rebol-values]
-    Needs: none
-]append system/options/log [mysql: 1] mysql-driver: make object! [sql-buffer: make string! 1024 not-squote: complement charset "'" not-dquote: complement charset {"} copy*: get in system/contexts/lib 'copy insert*: get in system/contexts/lib 'insert close*: get in system/contexts/lib 'close std-header-length: 4 std-comp-header-length: 3 end-marker: 254 change-type-handler: none defs: compose/deep [cmd [sleep 0 quit 1 init-db 2 query 3 field-list 4 create-db 5 drop-db 6 reload 7 shutdown 8 statistics 9 process-kill 12 debug 13 ping 14 change-user 17] refresh [grant 1 log 2 tables 4 hosts 8 status 16 threads 32 slave 64 master 128] types [0 decimal 1 tiny 2 short 3 long 4 float 5 double 6 null 7 timestamp 8 longlong 9 int24 10 date 11 time 12 datetime 13 year 14 newdate 15 var-char 16 bit 246 new-decimal 247 enum 248 set 249 tiny-blob 250 medium-blob 251 long-blob 252 blob 253 var-string 254 string 255 geometry] flag [not-null 1 primary-key 2 unique-key 4 multiple-key 8 blob 16 unsigned 32 zero-fill 64 binary 128 enum 256 auto-increment 512 timestamp 1024 set 2048 num 32768] client [long-password 1 found-rows 2 long-flag 4 connect-with-db 8 no-schema 16 compress 32 odbc 64 local-files 128 ignore-space 256 protocol-41 512 interactive 1024 ssl 2048 ignore-sigpipe 4096 transactions 8196 reserved 16384 secure-connection 32768 multi-queries 65536 multi-results 131072 ps-multi-results (shift 1 18) plugin-auth (shift 1 19) ssl-verify-server-cert (shift 1 30) remember-options (shift 1 31)]] locals-class: make object! [seq-num: 0 last-status: stream-end?: more-results?: false expecting: none packet-len: 0 last-activity: now/precise next-packet-length: 0 current-cmd: state: packet-state: none o-buf: buf: make binary! 4 data-in-buf?: current-result: none results: copy [] result-options: none current-cmd-data: none query-start-time: none auto-commit: on delimiter: #";" newlines?: value? 'new-line last-insert-id: make block! 1 affected-rows: 0 init: protocol: version: thread-id: crypt-seed: capabilities: error-code: error-msg: conv-list: character-set: server-status: seed-length: auth-v11: none] result-class: make object! [query-start-time: 0 query-finish-time: 0 n-columns: affected-rows: warnings: 0 server-status: 0 last-insert-id: 0 rows: make block! 1 columns: make block! 1] result-option-class: make object! [named?: off auto-conv?: on flat?: off newlines?: off verbose?: off] column-class: make object! [table: name: length: type: flags: decimals: none catalog: db: org_table: org_name: charsetnr: length: default: none] month: ["Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"] my-to-date: func [v /local mm dd yy] [any [attempt [yy: copy*/part v 4 mm: copy*/part skip v 5 2 dd: copy*/part skip v 8 2 either (to-integer mm) <> 0 [to date! rejoin [dd "-" month/(to-integer mm) "-" yy]] [to date! rejoin ["01-Jan-" yy]]] 1-Jan-0000]] my-to-datetime: func [v /local mm dd yy h m] [any [attempt [yy: copy*/part v 4 mm: copy*/part skip v 5 2 dd: copy*/part skip v 8 2 h: copy*/part skip v 11 2 m: copy*/part skip v 14 2 either (to-integer mm) <> 0 [to date! rejoin [dd "-" month/(to-integer mm) "-" yy "/" h ":" m]] [to date! rejoin ["01-Jan-" yy "/" h ":" m]]] 1-Jan-0000/0:00]] conv-model: [decimal [to decimal! to string!] tiny [to integer! to string!] short [to integer! to string!] long [to integer! to string!] float [to decimal! to string!] double [to decimal! to string!] null [to string!] timestamp [to string!] longlong [to integer! to string!] int24 [to integer! to string!] date [my-to-date to string!] time [to time! to string!] datetime [my-to-datetime to string!] year [to integer! to string!] newdate [to string!] var-char [to string!] bit none new-decimal [to decimal! to string!] enum [to string!] set [to string!] tiny-blob none medium-blob none long-blob none blob none tiny-text [to string!] medium-text [to string!] long-text [to string!] text [to string!] var-string [to string!] string [to string!] geometry [to string!]] set 'change-type-handler func [p [port!] type [word!] blk [block!]] [head change/only next find p/locals/conv-list type blk] convert-types: func [p [port!] rows [block!] /local row i convert-body action cols col conv-func tmp] [cols: p/locals/current-result/columns convert-body: make block! 1 action: [if tmp: pick row (i)] foreach col cols [i: index? find cols col if 'none <> conv-func: select p/locals/conv-list col/type [append convert-body append/only compose action head insert* at compose [change at row (i) :tmp] 5 conv-func]] if not empty? convert-body [either p/locals/result-options/flat? [while [not tail? rows] [row: rows do convert-body rows: skip rows length? cols]] [foreach row rows :convert-body]]] decode: func [int [integer!] /features /flags /type /local list name value] [either type [any [select defs/types int 'unknown]] [list: make block! 10 foreach [name value] either flags [defs/flag] [defs/client] [if value = (int and value) [append list :name]] list]] encode-refresh: func [blk [block!] /local total name value] [total: 0 foreach name blk [either value: select defs/refresh :name [total: total + value] [net-error reform ["Unknown argument:" :name]]] total] sql-chars: charset sql-want: {^^@
-^^-^^M^^H'"\} sql-no-chars: complement sql-chars escaped: make map! [#"^^@" "\0" #"^^/" "\n" #"^^-" "\t" #"^^M" "\r" #"^^H" "\b" #"'" "\'" #"^^"" {\"} #"\" "\\"] set 'sql-escape func [value [string!] /local c] [parse/all value [any [c: sql-chars (c: change/part c select escaped c/1 1) :c | sql-no-chars]] value] set 'to-sql-binary func [value [binary!] /local i] [m: make string! 10 + (2 * length? value) append m "_binary 0x" forall value [i: to integer! first value append m pick "0123456789ABCDEF" (to integer! i / 16) + 1 append m pick "0123456789ABCDEF" (i // 16) + 1] m] set 'to-sql func [value /local res] [switch/default type?/word value [none! ["NULL"] date! [rejoin ["'" value/year "-" value/month "-" value/day either value: value/time [rejoin [" " value/hour ":" value/minute ":" value/second]] [""] "'"]] time! [join "'" [value/hour ":" value/minute ":" value/second "'"]] money! [head remove find mold value "$"] string! [join "'" [sql-escape copy* value "'"]] binary! [to-sql-binary value] block! [if empty? value: reduce value [return "()"] res: append make string! 100 #"(" forall value [repend res [to-sql value/1 #","]] head change back tail res #")"]] [either any-string? value [to-sql form value] [form value]]] set 'mysql-map-rebol-values func [data [block!] /local args sql mark] [args: reduce next data sql: copy* pick data 1 mark: sql while [mark: find mark #"?"] [mark: insert* remove mark either tail? args ["NULL"] [to-sql args/1] if not tail? args [args: next args]] sql] show-server: func [obj [object!]] [sys/log/more 'MySQL [newline "----- Server ------" newline "Version:" obj/version newline "Protocol version:" obj/protocol newline "Thread ID:" obj/thread-id newline "Crypt Seed:" obj/crypt-seed newline "Capabilities:" mold decode/features obj/capabilities newline "Seed length:" obj/seed-length newline "-------------------"]] scrambler: make object! [to-pair: func [value [integer!]] [system/words/to-pair reduce [value 1]] xor-pair: func [p1 p2] [to-pair p1/x xor p2/x] or-pair: func [p1 p2] [to-pair p1/x or p2/x] and-pair: func [p1 p2] [to-pair p1/x and p2/x] remainder-pair: func [val1 val2 /local new] [val1: either negative? val1/x [abs val1/x + 2147483647.0] [val1/x] val2: either negative? val2/x [abs val2/x + 2147483647.0] [val2/x] to-pair to-integer val1 // val2] floor: func [value] [value: to-integer either negative? value [value - 0.999999999999999] [value] either negative? value [complement value] [value]] hash-v9: func [data [string!] /local nr nr2 byte] [nr: 1.345345e9x1 nr2: 7x1 foreach byte data [if all [byte <> #" " byte <> #"^^-"] [byte: to-pair to-integer byte nr: xor-pair nr (((and-pair 63x1 nr) + nr2) * byte) + (nr * 256x1) nr2: nr2 + byte]] nr] hash-v10: func [data [string!] /local nr nr2 adding byte] [nr: 1.345345e9x1 adding: 7x1 nr2: to-pair to-integer #12345671 foreach byte data [if all [byte <> #" " byte <> #"^^-"] [byte: to-pair to-integer byte nr: xor-pair nr (((and-pair 63x1 nr) + adding) * byte) + (nr * 256x1) nr2: nr2 + xor-pair nr (nr2 * 256x1) adding: adding + byte]] nr: and-pair nr to-pair to-integer #7FFFFFFF nr2: and-pair nr2 to-pair to-integer #7FFFFFFF reduce [nr nr2]] crypt-v9: func [data [string!] seed [string!] /local new max-value clip-max hp hm nr seed1 seed2 d b i] [new: make string! length? seed max-value: to-pair to-integer #01FFFFFF clip-max: func [value] [remainder-pair value max-value] hp: hash-v9 seed hm: hash-v9 data nr: clip-max xor-pair hp hm seed1: nr seed2: nr / 2x1 foreach i seed [seed1: clip-max ((seed1 * 3x1) + seed2) seed2: clip-max (seed1 + seed2 + 33x1) d: seed1/x / to-decimal max-value/x append new to-char floor (d * 31) + 64] new] crypt-v10: func [data [string!] seed [string!] /local new max-value clip-max pw msg seed1 seed2 d b i] [new: make string! length? seed max-value: to-pair to-integer #3FFFFFFF clip-max: func [value] [remainder-pair value max-value] pw: hash-v10 seed msg: hash-v10 data seed1: clip-max xor-pair pw/1 msg/1 seed2: clip-max xor-pair pw/2 msg/2 foreach i seed [seed1: clip-max ((seed1 * 3x1) + seed2) seed2: clip-max (seed1 + seed2 + 33x1) d: seed1/x / to-decimal max-value/x append new to-char floor (d * 31) + 64] seed1: clip-max (seed1 * 3x1) + seed2 seed2: clip-max seed1 + seed2 + 33x0 d: seed1/x / to-decimal max-value/x b: to-char floor (d * 31) forall new [new/1: new/1 xor b] head new] crypt-v11: func [data [binary!] seed [binary!] /local key1 key2] [key1: checksum data 'sha1 key2: checksum key1 'sha1 key1 xor checksum rejoin [(to-binary seed) key2] 'sha1] scramble: func [data [string! none!] port [port!] /v10 /local seed] [if any [none? data empty? data] [return make binary! 0] seed: port/locals/crypt-seed if v10 [return crypt-v10 data copy*/part seed 8] either port/locals/protocol > 9 [either port/locals/auth-v11 [crypt-v11 to-binary data seed] [crypt-v10 data seed]] [crypt-v9 data seed]]] scramble: get in scrambler 'scramble b0: b1: b2: b3: int: int24: long: string: field: len: byte: s: none byte-char: complement charset [] null: to-char 0 ws: charset " ^^-^^M^^/" read-bin-string: [[copy string to null null] | [copy string to end]] read-string: [read-bin-string (string: to string! string)] read-byte: [copy byte byte-char (byte: to integer! :byte)] read-int: [read-byte (b0: byte) read-byte (b1: byte int: b0 + (256 * b1))] read-int24: [read-byte (b0: byte) read-byte (b1: byte) read-byte (b2: byte int24: b0 + (256 * b1) + (65536 * b2))] read-long: [read-byte (b0: byte) read-byte (b1: byte) read-byte (b2: byte) read-byte (b3: byte long: to-integer b0 or (shift b1 8) or (shift b2 16) or (shift b3 24))] read-long64: [read-long (low: long) read-long (long64: (shift long 32) or low)] read-length: [#"ü" read-int (len: int) | #"ý" read-int24 (len: int24) | #"þ" read-long64 (len: long64) | read-byte (len: byte)] read-field: ["û" (field: none) | read-length copy field [len byte-char]] read-cmd: func [port [port!] cmd [integer!] /local res] [either cmd = defs/cmd/statistics [to-string read-packet port] [res: read-packet port either all [cmd = defs/cmd/ping zero? port/locals/last-status] [true] [none]]] write-byte: func [value [integer!] /local b] [b: skip to binary! value 7] write-int: func [value [integer!]] [join write-byte value // 256 write-byte value / 256] write-int24: func [value [integer!]] [join write-byte value // 256 [write-byte (to integer! value / 256) and 255 write-byte (to integer! value / 65536) and 255]] write-long: func [value [integer!]] [join write-byte value // 256 [write-byte (to integer! value / 256) and 255 write-byte (to integer! value / 65536) and 255 write-byte (to integer! value / 16777216) and 255]] write-string: func [value [string! none! binary!] /local t] [if none? value [return make binary! 0] to-binary join value to char! 0] pack-packet: func [port [port!] data /local header] [while [16777215 <= length? data] [header: join #{FFFFFF} write-byte port/locals/seq-num: port/locals/seq-num + 1 insert data header data: skip data 16777215 + length? header] header: join write-int24 length? data write-byte port/locals/seq-num: port/locals/seq-num + 1 insert data header head data] send-packet: func [port [port!] data [binary!] /local tcp-port header] [write port pack-packet port data] send-cmd: func [port [port!] cmd [integer!] cmd-data] compose/deep [port/locals/seq-num: -1 port/locals/current-cmd: cmd send-packet port rejoin [write-byte cmd port/locals/current-cmd-data: switch/default cmd [(defs/cmd/quit) [""] (defs/cmd/shutdown) [""] (defs/cmd/statistics) [""] (defs/cmd/debug) [""] (defs/cmd/ping) [""] (defs/cmd/field-list) [write-string pick cmd-data 1] (defs/cmd/reload) [write-byte encode-refresh cmd-data] (defs/cmd/process-kill) [write-long pick cmd-data 1] (defs/cmd/change-user) [rejoin [write-string pick cmd-data 1 write-string scramble pick cmd-data 2 port write-string pick cmd-data 3]]] [either string? cmd-data [cmd-data] [pick cmd-data 1]]] port/locals/state: 'sending-cmd] insert-query: func [port [port!] data [string! block!]] [sys/log/more 'MySQL ["insert-query:" data] send-cmd port defs/cmd/query data none] insert-all-queries: func [port [port!] data [string!] /local s e res d] [d: port/locals/delimiter parse/all s: data [any [#"#" thru newline | #"'" any ["\\" | "\'" | "''" | not-squote] #"'" | #"^^"" any [{\"} | {""} | not-dquote] #"^^"" | #"`" thru #"`" | "begin" thru "end" | e: d (clear sql-buffer insert*/part sql-buffer s e res: insert-query port sql-buffer) any [ws] s: | skip]] if not tail? s [res: insert-query port s] res] insert-cmd: func [port [port!] data [block!] /local type] [type: select defs/cmd data/1 either type [send-cmd port type next data] [cause-error 'user 'message reform ["Unknown command" data/1]]] on-error-packet: func [port [port!] /local pl] [pl: port/locals parse next port/data case [pl/capabilities and defs/client/protocol-41 [[read-int (pl/error-code: int) 6 skip read-string (pl/error-msg: string)]] any [none? pl/protocol pl/protocol > 9] [[read-int (pl/error-code: int) read-string (pl/error-msg: string)]] true [pl/error-code: 0 [read-string (pl/error-msg: string)]]] cause-error 'mysql 'message reduce [pl/error-code pl/error-msg]] parse-a-packet: func [port [port!] /local pl status rules] [pl: port/locals sys/log/debug 'MySQL ["parsing a packet:" mold port/data] pl/last-status: status: to integer! port/data/1 pl/error-code: pl/error-msg: none switch status [255 [pl/state: 'idle on-error-packet port return 'ERR] 254 [if pl/packet-len < 9 [if pl/packet-len = 5 [parse/all/case next port/data [read-int (pl/current-result/warnings: int) read-int (pl/more-results?: not zero? int and 8)]] return 'EOF]] 0 [if none? pl/expecting [rules: copy [read-length (pl/current-result/affected-rows: len) read-length (pl/current-result/last-insert-id: len) read-int (pl/more-results?: not zero? int and 8) read-int (pl/current-result/server-status: int)] if pl/capabilities and defs/client/protocol-41 [append rules [read-int (pl/current-result/warnings: int)]] parse/all/case next port/data rules] return 'OK] 251 [return 'FB]] return 'OTHER] start-next-cmd: func [port [port!] /local pl qry] [pl: port/locals either empty? pl/o-buf [pl/state: 'idle] [qry: take pl/o-buf do-tcp-insert port qry/1 qry/2]] emit-event: func [port evt-type /local mysql-port pl] [pl: port/locals mysql-port: pl/mysql-port sys/log/more 'MySQL ["Event:^^[[22m" evt-type] case compose [(evt-type = 'read) [sys/log/more 'MySQL ["emitting result (" length? pl/results ")"] mysql-port/data: convert-results port pl/results pl/result-options append system/ports/system make event! [type: evt-type port: mysql-port]] (any [evt-type = 'wrote evt-type = 'connect evt-type = 'close]) [append system/ports/system make event! [type: evt-type port: mysql-port]]] [cause-error 'user 'message rejoin ["Unsupported event: " type]]] process-a-packet: func [port [port!] buf [binary!] "the packet buffer" /local pl col row mysql-port pkt-type blob-to-text text-type infile-data] [pl: port/locals mysql-port: pl/mysql-port sys/log/more 'MySQL ["processing a packet in state:" pl/state] sys/log/debug 'MySQL ["buf:" mold buf] switch pl/state [reading-greeting [process-greeting-packet port buf send-packet port pack-auth-packet port pl/state: 'sending-auth-pack sys/log/more 'MySQL ["state changed to sending-auth-pack"] pl/stream-end?: true] reading-auth-resp [either all [1 = length? buf buf/1 = #"þ"] [send-packet port write-string scramble/v10 port/pass port pl/state: 'sending-old-auth-pack sys/log/more 'MySQL ["state changed to sending-old-auth-pack"]] [if buf/1 = 255 [pl/state: 'init on-error-packet port] sys/log/more 'MySQL "handshaked" emit-event port 'connect start-next-cmd port] pl/stream-end?: true] reading-old-auth-resp [if buf/1 = #"^^@" [emit-event port 'connect start-next-cmd port] pl/stream-end?: true] reading-cmd-resp [sys/log/more 'MySQL ["read a cmd response for" pl/current-cmd] switch/default parse-a-packet port [OTHER [case [any [pl/current-cmd = defs/cmd/query pl/current-cmd = defs/cmd/field-list] [parse/all/case buf [read-length (if zero? pl/current-result/n-columns: len [pl/stream-end?: true sys/log/more 'MySQL ["stream ended because of 0 columns"]] sys/log/more 'MySQL ["Read number of columns:" len])] pl/state: 'reading-fields] 'else [cause-error 'user 'message reduce ["Unexpected response" pl]]]] OK [pl/stream-end?: not pl/more-results? pl/current-result/query-finish-time: now/precise append pl/results pl/current-result either pl/stream-end? [emit-event port 'read sys/log/more 'MySQL ["Stream ended by an OK packet"] start-next-cmd port exit] [pl/current-result: make result-class [query-start-time: pl/current-result/query-start-time]]] FB [unless parse next buf [read-string (file-name: string)] [cause-error 'user 'message reduce ["unrecognized LOCAL INFILE request:" buf]] if error? err: try [infile-data: read to file! file-name] [pl/stream-end?: true do err] write port join pack-packet port write-string infile-data pack-packet port #{} pl/stream-end?: true pl/state: 'sending-infile-data]] [cause-error 'user 'message reduce ["Unexpected number of fields" pl]] sys/log/more 'MySQL ["stream-end? after reading-cmd-resp:" pl/stream-end?]] reading-fields [pkt-type: 'OTHER if 0 != to integer! first buf [pkt-type: parse-a-packet port] switch/default pkt-type [OTHER [col: make column-class [] either pl/capabilities and defs/client/protocol-41 [parse/all/case buf [read-field (col/catalog: to string! field) read-field (col/db: to string! field) read-field (col/table: to string! field) read-field (col/org_table: to string! field) read-field (col/name: to string! field) read-field (col/org_name: to string! field) read-byte read-int (col/charsetnr: int) read-long (col/length: long) read-byte (col/type: decode/type byte) read-int (col/flags: decode/flags int) read-byte (col/decimals: byte) read-int read-length (col/default: len)]] [parse/all/case buf [read-field (col/table: to string! field) read-field (col/name: to string! field) read-length (col/length: len) read-length (col/type: decode/type len) read-length (col/flags: decode/flags len) read-byte (col/decimals: byte)]] blob-to-text: [blob text tinyblob tinytext mediumblob mediumtext longblob longtext] unless none? text-type: select blob-to-text col/type [unless find col/flags 'binary [col/type: text-type]] if none? pl/current-result/columns [pl/current-result/columns: make block! pl/current-result/n-columns] append pl/current-result/columns :col pl/state: 'reading-fields] EOF [case compose [(pl/current-cmd = defs/cmd/query) [pl/state: 'reading-rows] (pl/current-cmd = defs/cmd/field-list) [sys/log/more 'MySQL ["result ended for field-list"] pl/current-result/query-finish-time: now/precise append pl/results pl/current-result pl/stream-end?: not pl/more-results? either pl/stream-end? [emit-event port 'read start-next-cmd port exit] [pl/current-result: make result-class [query-start-time: pl/current-result/query-start-time]]] 'else [cause-error 'user 'message reduce ["unexpected EOF" pl]]]]] [cause-error 'user 'message reduce ["Unexpected fields" pl]]] reading-rows [pkt-type: 'OTHER if 0 != to integer! first buf [pkt-type: parse-a-packet port] switch/default pkt-type [OTHER FB [row: make block! pl/current-result/n-columns parse/all/case buf [pl/current-result/n-columns [read-field (append row field)]] if none? pl/current-result/rows [pl/current-result/rows: make block! 10] either pl/result-options/flat? [insert* tail pl/current-result/rows row] [insert*/only tail pl/current-result/rows row] pl/state: 'reading-rows] EOF [if pl/result-options/auto-conv? [convert-types port pl/current-result/rows] if pl/result-options/newlines? [either pl/result-options/flat? [new-line/skip pl/current-result/rows true pl/current-result/n-columns] [new-line/all pl/current-result/rows true]] pl/current-result/query-finish-time: now/precise sys/log/more 'MySQL ["Length of rows in current result:" length? pl/current-result/rows] append pl/results pl/current-result either pl/more-results? [pl/stream-end?: false pl/state: 'reading-cmd-resp pl/current-result: make result-class [query-start-time: pl/query-start-time]] [pl/stream-end?: true sys/log/more 'MySQL ["Emitting read event because of no more results"] emit-event port 'read start-next-cmd port exit]]] [cause-error 'user 'message reduce ["Unexpected row" pl]]] idle [sys/log/more 'MySQL ["unprocessed message from server" tcp-port/data] break]] [cause-error 'user 'message rejoin [rejoin ["never be here in read" pl/state]]]] tcp-port-param: none process-greeting-packet: func [port [port!] data [binary!] /local pl tcp-port feature-supported?] [sys/log/more 'MySQL ["processing a greeting packet"] tcp-port: port pl: port/locals if data/1 = 255 [parse/all skip data 1 [read-int (pl/error-code: int) read-string (pl/error-msg: string)] cause-error 'Access 'message reduce [pl/error-code pl/error-msg]] parse/all data [read-byte (pl/protocol: byte) read-string (pl/version: string) read-long (pl/thread-id: long) read-bin-string (pl/crypt-seed: string) read-int (pl/capabilities: int) read-byte (pl/character-set: byte) read-int (pl/server-status: int) read-int (pl/capabilities: (shift int 16) or pl/capabilities) read-byte (pl/seed-length: byte) 10 skip read-bin-string (if string [pl/crypt-seed: join copy* pl/crypt-seed string pl/auth-v11: yes]) to end] if pl/protocol = -1 [close* tcp-port cause-error 'user 'message [{Server configuration denies access to locals source
-Port closed!}]] feature-supported?: func ['feature] [(select defs/client feature) and pl/capabilities] tcp-port-param: defs/client/found-rows or defs/client/connect-with-db tcp-port-param: either pl/capabilities and defs/client/protocol-41 [tcp-port-param or defs/client/long-password or defs/client/transactions or defs/client/protocol-41 or defs/client/secure-connection or defs/client/multi-queries or defs/client/multi-results or defs/client/local-files] [tcp-port-param and complement defs/client/long-password]] pack-auth-packet: func [port [port!] /local pl auth-pack path key] [pl: port/locals path: to binary! skip port/spec/path 1 auth-pack: either pl/capabilities and defs/client/protocol-41 [rejoin [write-long tcp-port-param write-long to integer! #1000000 write-byte pl/character-set "^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@^^@" write-string any [port/spec/user ""] write-byte length? key: scramble port/spec/pass port key write-string any [path "^^@"]]] [rejoin [write-int tcp-port-param write-int24 (length? port/spec/user) + (length? port/spec/pass) + 7 + std-header-length write-string any [port/spec/user ""] write-string key: scramble port/pass port write-string any [path ""]]] auth-pack] clear-data: func [port] [clear port/data] tcp-awake: func [event /local tcp-port mysql-port pl packet-len] [tcp-port: event/port mysql-port: tcp-port/locals/mysql-port pl: tcp-port/locals pl/last-activity: now/precise sys/log/more 'MySQL ["tcp event:" event/type] switch event/type [error [cause-error 'Access 'read-error reduce [event/port "unknown" event] return true] lookup [open tcp-port] connect [read tcp-port pl/packet-state: 'reading-packet-head pl/next-packet-length: std-header-length pl/state: 'reading-greeting pl/stream-end?: false] read [sys/log/debug 'MySQL ["buffer:" mold tcp-port/data] sys/log/more 'MySQL ["current buffer length:" length? tcp-port/data] while [true] [sys/log/more 'MySQL ["next-len:" pl/next-packet-length ", buf: " length? tcp-port/data] either pl/next-packet-length > length? tcp-port/data [read tcp-port break] [switch/default pl/packet-state [reading-packet-head [parse/all tcp-port/data [read-int24 (pl/packet-len: int24) read-byte (pl/seq-num: byte)] pl/packet-state: 'reading-packet pl/next-packet-length: pl/packet-len remove/part tcp-port/data std-header-length] reading-packet [either pl/packet-len < 16777215 [sys/log/more 'MySQL ["a COMPLETE packet is received"] either pl/data-in-buf? [append/part pl/buf tcp-port/data pl/packet-len process-a-packet tcp-port pl/buf clear pl/buf pl/data-in-buf?: false] [process-a-packet tcp-port tcp-port/data]] [sys/log/more 'MySQL ["a CHUNK of a packet is received"] pl/data-in-buf?: true append/part pl/buf tcp-port/data pl/packet-len] pl/packet-state: 'reading-packet-head pl/next-packet-length: std-header-length remove/part tcp-port/data pl/packet-len if pl/stream-end? [sys/log/more 'MySQL ["stream ended, exiting"] break]]] [cause-error 'user 'message reduce [rejoin ["should never be here: read " pl/state]]]]]] wrote [switch/default pl/state [sending-cmd [pl/state: 'reading-cmd-resp emit-event tcp-port 'wrote pl/current-result: make result-class [query-start-time: pl/query-start-time] pl/results: make block! 1 pl/more-results?: false pl/stream-end?: false unless all [empty? pl/results empty? pl/current-result/rows] [cause-error 'user 'message ["rows is not properly initialized"]]] sending-auth-pack [pl/state: 'reading-auth-resp] sending-old-auth-pack [pl/state: 'reading-old-auth-resp] sending-infile-data [pl/state: 'reading-cmd-resp pl/stream-end?: false]] [cause-error 'user 'message reduce [rejoin ["never be here in wrote " pl/state]]] read tcp-port pl/packet-state: 'reading-packet-head pl/next-packet-length: std-header-length] close [sys/log/more 'MySQL ["TCP port closed"] close tcp-port emit-event tcp-port 'close return true]] false] tcp-insert: func ["write/cache the data" port [port!] data [string! block!] options [object!]] [either 'idle = port/locals/state [do-tcp-insert port data options] [append/only port/locals/o-buf reduce [data options]]] do-tcp-insert: func ["actually write the data to the tcp port" port [port!] data [string! block!] options [object!] /local pl res] [pl: port/locals pl/result-options: options pl/query-start-time: now/precise if all [string? data data/1 = #"["] [data: load data] res: either block? data [if empty? data [cause-error 'user 'message ["No data!"]] either string? data/1 [insert-query port mysql-map-rebol-values data] [insert-cmd port data]] [either port/locals/capabilities and defs/client/protocol-41 [insert-query port data] [insert-all-queries port data]] res] open-tcp-port: func [port [port!] "mysql port" /local conn] [conn: make port! [scheme: 'tcp host: port/spec/host port-id: port/spec/port-id ref: rejoin [tcp:// host ":" port-id port/spec/path] user: port/spec/user pass: port/spec/pass path: port/spec/path timeout: port/spec/timeout] conn/locals: make locals-class [state: 'init mysql-port: port o-buf: make block! 10 conv-list: copy conv-model current-result: make result-class [] result-options: make result-option-class []] conn/awake: :tcp-awake open conn conn] convert-results: func [{convert the results to old format for compatibility} port [port!] "tcp port" results [block!] opts [object!] /local ret tmp name-fields r] [either any [port/locals/current-cmd != defs/cmd/query] [return results] [r: make block! length? results foreach ret results [unless opts/verbose? [either opts/named? [name-fields: func [rows [block!] columns [block!] /local tmp n] [tmp: make block! 2 * length? rows repeat n length? columns [append tmp columns/:n/name append tmp rows/:n] tmp] either opts/flat? [if ret/n-columns < length? ret/rows [cause-error 'user 'message [{/flat and /name-fields can't be used for this case, because of multiple rows}]] ret: name-fields ret/rows ret/columns] [rows: ret/rows forall rows [change/only rows name-fields first rows ret/columns] ret: rows]] [ret: ret/rows]] append/only r ret] return either 1 = length? r [r/1] [r]]] extend system/catalog/errors 'MySQL make object! [code: 1000 type: "MySQL-errors" message: ["[" :arg1 "]" :arg2]]] sys/make-scheme [name: 'mysql title: "MySQL Driver" spec: make system/standard/port-spec-net [path: %"" port-id: 3306 timeout: 120 user: pass: none] info: make system/standard/file-info [] awake: func [event [event!] /local pl cb mode spec] [sys/log/more 'MySQL ["mysql port event:" event/type] pl: event/port/locals pl/last-activity: now/precise switch/default event/type [connect [spec: event/port/spec spec/pass: none spec/ref: rejoin [mysql:// spec/user #"@" spec/host #":" spec/port-id spec/path] sys/log/info 'MySQL ["Connected:^^[[22m" spec/ref] pl/handshaked?: true if pl/exit-wait-after-handshaked? [return true]] read [sys/log/more 'MySQL ["pending requests:" mold pl/pending-requests "block size:" pl/pending-block-size] mode: first pl/pending-requests switch/default mode [async [cb: second pl/pending-requests case [function? :cb [cb event/port/data] any [word? cb path? cb] [sys/log/more 'MySQL ["a word/path callback:" mold cb] set cb event/port/data] block? cb [do cb] none? cb [sys/log/more 'MySQL ["a none callback, ignored"]] 'else [cause-error 'user 'message reduce [rejoin ["unsupported callback:" mold cb]]]] remove/part pl/pending-requests pl/pending-block-size] sync [sys/log/more 'MySQL ["got response (" length? event/port/data ")"] remove/part pl/pending-requests pl/pending-block-size return true]] [cause-error 'user 'message reduce [rejoin ["unsupported query mode: " mold mode]]]] wrote [] close [sys/log/more 'MySQL ["port closed"] cause-error 'Access 'not-connected reduce [event/port none none]]] [cause-error 'user 'message reduce [rejoin ["unsupported event type on mysql port:" event/type]]] false] actor: [open: func [port [port! url!]] [if none? port/spec/host [http-error "Missing host address"] port/locals: make object! [handshaked?: false exit-wait-after-handshaked?: false pending-requests: copy [] pending-block-size: 2 last-activity: now/precise async?: false tcp-port: mysql-driver/open-tcp-port port] port/awake: :awake return port] open?: func [port [port!]] [all [open? port/locals/tcp-port port/locals/handshaked?]] close: func [port [port!] /local tcp-port] [tcp-port: port/locals/tcp-port tcp-port/spec/timeout: 4 if open? tcp-port [try [mysql-driver/send-cmd tcp-port mysql-driver/defs/cmd/quit []]] close tcp-port sys/log/info 'MySQL ["Closed:^^[[22m" port/spec/ref] tcp-port/awake: none port/state: none port] insert: func [port [port!] data [block!] {hackish: if the first element in the block is an object, then it's an option object} /local tcp-port options pl query] [pl: port/locals tcp-port: pl/tcp-port options: data/1 either object? options [either all [logic? :options/async? not :options/async?] [append pl/pending-requests reduce ['sync none]] [if options/named? [cause-error 'user 'message ["/named can't be used with /async"]] append pl/pending-requests reduce ['async :options/async?]] query: data/2] [append pl/pending-requests reduce ['sync none] query: data] sys/log/debug 'MySQL ["inserting a query:" mold data mold pl/pending-requests] mysql-driver/tcp-insert tcp-port query options] copy: func [port [port!] /part data [integer!]] [either part [copy/part port/data data] [copy port/data]]]] send-sql: func [port [port!] data [string! block!] /flat "return a flatten block" /raw "do not do type conversion" /named /async cb [word! path! function! block! none!] {call send-sql asynchronously: set result to word, call function with the result or evaluate the block} /verbose "return detailed info" /local result pl old-handshaked? ret-from-wait] [pl: port/locals unless any [async open? port] [cause-error 'Access 'not-connected reduce [port none none]] data: reduce [make mysql-driver/result-option-class [flat?: flat auto-conv?: not raw named?: named verbose?: verbose async?: either async [:cb] [off]] data] insert port data unless async [old-handshaked?: pl/handshaked? while [pl/last-activity + port/spec/timeout >= now/precise] [ret-from-wait: wait/only [port port/locals/tcp-port port/spec/timeout] either port = ret-from-wait [return port/data] [if port? ret-from-wait [assert [ret-from-wait = port/locals/tcp-port] print ["******* Unexpected wakeup from tcp-port *********"]] throw-timeout port]] throw-timeout port]] throw-timeout: func [port [port!]] [cause-error 'Access 'timeout to url! rejoin [port/spec/scheme "://" port/spec/host #":" port/spec/port-id]] connect-sql: func [{Opens connection to MySQL port (waits for a handshake)} port [port! url!] "MySQL port or url" /local p] [if any [url? port not open? port] [port: open port] port/locals/exit-wait-after-handshaked?: true p: wait/only [port port/locals/tcp-port port/spec/timeout] if port? p [return port] throw-timeout port]}
 ] [[
     version: 0.3.5
     title: "REBOL 3 HTTP protocol scheme"
@@ -8498,8 +7695,8 @@ Port closed!}]] feature-supported?: func ['feature] [(select defs/client feature
                     d2: find/tail d1 crlf2bin
                 ]
                 all [
-                    d1: find conn/data #{0A}
-                    d2: find/tail d1 #{0A0A}
+                    d1: find conn/data 64#{Cg==}
+                    d2: find/tail d1 64#{Cgo=}
                     sys/log/debug 'HTML "Server using malformed line separator of #{0A0A}"
                 ]
             ]
@@ -8635,8 +7832,8 @@ Port closed!}]] feature-supported?: func ['feature] [(select defs/client feature
         ]
         res
     ]
-    crlfbin: #{0D0A}
-    crlf2bin: #{0D0A0D0A}
+    crlfbin: 64#{DQo=}
+    crlf2bin: 64#{DQoNCg==}
     crlf2: to string! crlf2bin
     http-response-headers: construct [
         Content-Length:
@@ -9057,10 +8254,10 @@ Port closed!}]] feature-supported?: func ['feature] [(select defs/client feature
         APPLICATION: 23
     ] 'TLS-protocol-type
     *Protocol-version: enum [
-        SSLv3: #{0300}
-        TLS1.0: #{0301}
-        TLS1.1: #{0302}
-        TLS1.2: #{0303}
+        SSLv3: 64#{AwA=}
+        TLS1.0: 64#{AwE=}
+        TLS1.1: 64#{AwI=}
+        TLS1.2: 64#{AwM=}
     ] 'TLS-Protocol-version
     *Handshake: enum [
         HELLO_REQUEST: 0
@@ -9075,64 +8272,64 @@ Port closed!}]] feature-supported?: func ['feature] [(select defs/client feature
         FINISHED: 20
     ] 'TLS-Handshake-type
     *Cipher-suite: enum [
-        TLS_RSA_WITH_NULL_MD5: #{0001}
-        TLS_RSA_WITH_NULL_SHA: #{0002}
-        TLS_RSA_WITH_NULL_SHA256: #{003B}
-        TLS_RSA_WITH_RC4_128_MD5: #{0004}
-        TLS_RSA_WITH_RC4_128_SHA: #{0005}
-        TLS_RSA_WITH_3DES_EDE_CBC_SHA: #{000A}
-        TLS_RSA_WITH_AES_128_CBC_SHA: #{002F}
-        TLS_RSA_WITH_AES_256_CBC_SHA: #{0035}
-        TLS_RSA_WITH_AES_128_CBC_SHA256: #{003C}
-        TLS_RSA_WITH_AES_256_CBC_SHA256: #{003D}
-        TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA: #{000D}
-        TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA: #{0010}
-        TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA: #{0013}
-        TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA: #{0016}
-        TLS_DH_DSS_WITH_AES_128_CBC_SHA: #{0030}
-        TLS_DH_RSA_WITH_AES_128_CBC_SHA: #{0031}
-        TLS_DHE_DSS_WITH_AES_128_CBC_SHA: #{0032}
-        TLS_DHE_RSA_WITH_AES_128_CBC_SHA: #{0033}
-        TLS_DH_DSS_WITH_AES_256_CBC_SHA: #{0036}
-        TLS_DH_RSA_WITH_AES_256_CBC_SHA: #{0037}
-        TLS_DHE_DSS_WITH_AES_256_CBC_SHA: #{0038}
-        TLS_DHE_RSA_WITH_AES_256_CBC_SHA: #{0039}
-        TLS_DH_DSS_WITH_AES_128_CBC_SHA256: #{003E}
-        TLS_DH_RSA_WITH_AES_128_CBC_SHA256: #{003F}
-        TLS_DHE_DSS_WITH_AES_128_CBC_SHA256: #{0040}
-        TLS_DHE_RSA_WITH_AES_128_CBC_SHA256: #{0067}
-        TLS_DH_DSS_WITH_AES_256_CBC_SHA256: #{0068}
-        TLS_DH_RSA_WITH_AES_256_CBC_SHA256: #{0069}
-        TLS_DHE_DSS_WITH_AES_256_CBC_SHA256: #{006A}
-        TLS_DHE_RSA_WITH_AES_256_CBC_SHA256: #{006B}
-        TLS_DH_anon_WITH_RC4_128_MD5: #{0018}
-        TLS_DH_anon_WITH_3DES_EDE_CBC_SHA: #{001B}
-        TLS_DH_anon_WITH_AES_128_CBC_SHA: #{0034}
-        TLS_DH_anon_WITH_AES_256_CBC_SHA: #{003A}
-        TLS_DH_anon_WITH_AES_128_CBC_SHA256: #{006C}
-        TLS_DH_anon_WITH_AES_256_CBC_SHA256: #{006D}
-        TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256: #{CCA8}
-        TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256: #{CCA9}
-        TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384: #{C028}
-        TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256: #{C02F}
-        TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384: #{C030}
-        TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256: #{C02B}
-        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384: #{C02C}
-        TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256: #{C027}
-        TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA: #{C013}
-        TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA: #{C009}
-        TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA: #{C014}
-        TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA: #{C00A}
+        TLS_RSA_WITH_NULL_MD5: 64#{AAE=}
+        TLS_RSA_WITH_NULL_SHA: 64#{AAI=}
+        TLS_RSA_WITH_NULL_SHA256: 64#{ADs=}
+        TLS_RSA_WITH_RC4_128_MD5: 64#{AAQ=}
+        TLS_RSA_WITH_RC4_128_SHA: 64#{AAU=}
+        TLS_RSA_WITH_3DES_EDE_CBC_SHA: 64#{AAo=}
+        TLS_RSA_WITH_AES_128_CBC_SHA: 64#{AC8=}
+        TLS_RSA_WITH_AES_256_CBC_SHA: 64#{ADU=}
+        TLS_RSA_WITH_AES_128_CBC_SHA256: 64#{ADw=}
+        TLS_RSA_WITH_AES_256_CBC_SHA256: 64#{AD0=}
+        TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA: 64#{AA0=}
+        TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA: 64#{ABA=}
+        TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA: 64#{ABM=}
+        TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA: 64#{ABY=}
+        TLS_DH_DSS_WITH_AES_128_CBC_SHA: 64#{ADA=}
+        TLS_DH_RSA_WITH_AES_128_CBC_SHA: 64#{ADE=}
+        TLS_DHE_DSS_WITH_AES_128_CBC_SHA: 64#{ADI=}
+        TLS_DHE_RSA_WITH_AES_128_CBC_SHA: 64#{ADM=}
+        TLS_DH_DSS_WITH_AES_256_CBC_SHA: 64#{ADY=}
+        TLS_DH_RSA_WITH_AES_256_CBC_SHA: 64#{ADc=}
+        TLS_DHE_DSS_WITH_AES_256_CBC_SHA: 64#{ADg=}
+        TLS_DHE_RSA_WITH_AES_256_CBC_SHA: 64#{ADk=}
+        TLS_DH_DSS_WITH_AES_128_CBC_SHA256: 64#{AD4=}
+        TLS_DH_RSA_WITH_AES_128_CBC_SHA256: 64#{AD8=}
+        TLS_DHE_DSS_WITH_AES_128_CBC_SHA256: 64#{AEA=}
+        TLS_DHE_RSA_WITH_AES_128_CBC_SHA256: 64#{AGc=}
+        TLS_DH_DSS_WITH_AES_256_CBC_SHA256: 64#{AGg=}
+        TLS_DH_RSA_WITH_AES_256_CBC_SHA256: 64#{AGk=}
+        TLS_DHE_DSS_WITH_AES_256_CBC_SHA256: 64#{AGo=}
+        TLS_DHE_RSA_WITH_AES_256_CBC_SHA256: 64#{AGs=}
+        TLS_DH_anon_WITH_RC4_128_MD5: 64#{ABg=}
+        TLS_DH_anon_WITH_3DES_EDE_CBC_SHA: 64#{ABs=}
+        TLS_DH_anon_WITH_AES_128_CBC_SHA: 64#{ADQ=}
+        TLS_DH_anon_WITH_AES_256_CBC_SHA: 64#{ADo=}
+        TLS_DH_anon_WITH_AES_128_CBC_SHA256: 64#{AGw=}
+        TLS_DH_anon_WITH_AES_256_CBC_SHA256: 64#{AG0=}
+        TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256: 64#{zKg=}
+        TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256: 64#{zKk=}
+        TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384: 64#{wCg=}
+        TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256: 64#{wC8=}
+        TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384: 64#{wDA=}
+        TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256: 64#{wCs=}
+        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384: 64#{wCw=}
+        TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256: 64#{wCc=}
+        TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA: 64#{wBM=}
+        TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA: 64#{wAk=}
+        TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA: 64#{wBQ=}
+        TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA: 64#{wAo=}
     ] 'TLS-Cipher-suite
     *EllipticCurves: enum [
-        secp192r1: #{0013}
-        secp224k1: #{0014}
-        secp224r1: #{0015}
-        secp256k1: #{0016}
-        secp256r1: #{0017}
-        secp384r1: #{0018}
-        secp521r1: #{0019}
-        x25519: #{001D}
+        secp192r1: 64#{ABM=}
+        secp224k1: 64#{ABQ=}
+        secp224r1: 64#{ABU=}
+        secp256k1: 64#{ABY=}
+        secp256r1: 64#{ABc=}
+        secp384r1: 64#{ABg=}
+        secp521r1: 64#{ABk=}
+        x25519: 64#{AB0=}
     ] 'EllipticCurves
     *HashAlgorithm: enum [
         none: 0
@@ -9188,11 +8385,11 @@ Port closed!}]] feature-supported?: func ['feature] [(select defs/client feature
         Unsupported_extension: 110
     ] 'TLS-Alert
     *TLS-Extension: enum [
-        ServerName: #{0000}
-        SupportedGroups: #{000A}
-        SignatureAlgorithms: #{000D}
-        KeyShare: #{0033}
-        RenegotiationInfo: #{FF01}
+        ServerName: 64#{AAA=}
+        SupportedGroups: 64#{AAo=}
+        SignatureAlgorithms: 64#{AA0=}
+        KeyShare: 64#{ADM=}
+        RenegotiationInfo: 64#{/wE=}
     ] 'TLS-Extension
     _log-error: func [msg] [
         if block? msg [msg: reform msg]
@@ -9227,40 +8424,40 @@ Port closed!}]] feature-supported?: func ['feature] [(select defs/client feature
     ]
     log-error: :_log-error
     suported-cipher-suites: rejoin [
-        #{CCA9}
-        #{CCA8}
-        #{C027}
-        #{C014}
-        #{C013}
-        #{C00A}
-        #{C009}
-        #{006B}
-        #{0067}
-        #{003D}
-        #{003C}
-        #{0035}
-        #{002F}
-        #{0038}
-        #{0032}
-        #{0039}
-        #{0033}
+        64#{zKk=}
+        64#{zKg=}
+        64#{wCc=}
+        64#{wBQ=}
+        64#{wBM=}
+        64#{wAo=}
+        64#{wAk=}
+        64#{AGs=}
+        64#{AGc=}
+        64#{AD0=}
+        64#{ADw=}
+        64#{ADU=}
+        64#{AC8=}
+        64#{ADg=}
+        64#{ADI=}
+        64#{ADk=}
+        64#{ADM=}
     ]
     supported-signature-algorithms: rejoin [
-        #{0601}
-        #{0602}
-        #{0501}
-        #{0502}
-        #{0401}
-        #{0402}
-        #{0403}
-        #{0201}
-        #{0202}
+        64#{BgE=}
+        64#{BgI=}
+        64#{BQE=}
+        64#{BQI=}
+        64#{BAE=}
+        64#{BAI=}
+        64#{BAM=}
+        64#{AgE=}
+        64#{AgI=}
     ]
     supported-elliptic-curves: rejoin [
-        #{0017}
-        #{0015}
-        #{0014}
-        #{0013}
+        64#{ABc=}
+        64#{ABU=}
+        64#{ABQ=}
+        64#{ABM=}
     ]
     TLS-init-cipher-suite: func [
         {Initialize context for current cipher-suite. Returns false if unknown suite is used.}
@@ -9306,6 +8503,16 @@ Port closed!}]] feature-supported?: func ['feature] [(select defs/client feature
                 ]
             )
         ]
+    ]
+    pad-bin: function [
+        "Left binary padding"
+        bin [binary!]
+        len [integer!]
+    ] [
+        if len > n: length? bin [
+            insert/dup copy bin 0 len - n
+        ]
+        bin
     ]
     make-TLS-error: func [
         "Make an error for the TLS protocol"
@@ -9387,14 +8594,14 @@ Port closed!}]] feature-supported?: func ['feature] [(select defs/client feature
                 ]
             ]
             binary/write tail extensions compose [
-                #{000A}
+                64#{AAo=}
                 UI16 (2 + length? supported-elliptic-curves)
                 UI16 (length? supported-elliptic-curves)
                 :supported-elliptic-curves
             ]
-            append extensions #{000B00020100}
-            append extensions #{FF01000100}
-            append extensions #{00120000}
+            append extensions 64#{AAsAAgEA}
+            append extensions 64#{/wEAAQA=}
+            append extensions 64#{ABIAAA==}
             length-signatures: 2 + length? supported-signature-algorithms
             length-extensions: 4 + length-signatures + length? extensions
             length-message: 41 + length-extensions + length? suported-cipher-suites
@@ -9452,7 +8659,7 @@ Port closed!}]] feature-supported?: func ['feature] [(select defs/client feature
                 ECDHE_ECDSA
                 ECDHE_RSA [
                     log-more ["W[" ctx/seq-write "] Using ECDH key-method"]
-                    insert key-data #{04}
+                    insert key-data 64#{BA==}
                     key-data-len-bytes: 1
                 ]
                 RSA [
@@ -9547,7 +8754,7 @@ Port closed!}]] feature-supported?: func ['feature] [(select defs/client feature
         ctx [object!]
     ] [
         log-more "alert-close-notify"
-        message: encrypt-data ctx #{0100}
+        message: encrypt-data ctx 64#{AQA=}
         with ctx [
             binary/write out [
                 UI8 21
@@ -9568,8 +8775,8 @@ Port closed!}]] feature-supported?: func ['feature] [(select defs/client feature
             ]
         ] [read ctx/sha-port]
         unencrypted: rejoin [
-            #{14}
-            #{00000C}
+            64#{FA==}
+            64#{AAAM}
             prf "client finished" ctx/legacy? seed ctx/master-secret 12
         ]
         TLS-update-messages-hash ctx unencrypted length? unencrypted
@@ -9738,13 +8945,13 @@ Port closed!}]] feature-supported?: func ['feature] [(select defs/client feature
             mid: to integer! (len + 1) * 0.5
             s-1: copy/part secret mid
             s-2: copy at secret (len - mid + 1)
-            p-md5: copy #{}
+            p-md5: copy 64#{}
             a: seed
             while [output-length > length? p-md5] [
                 a: checksum/with a 'md5 s-1
                 append p-md5 checksum/with rejoin [a seed] 'md5 s-1
             ]
-            p-sha1: copy #{}
+            p-sha1: copy 64#{}
             a: seed
             while [output-length > length? p-sha1] [
                 a: checksum/with a 'sha1 s-2
@@ -10172,7 +9379,10 @@ Port closed!}]] feature-supported?: func ['feature] [(select defs/client feature
                                 rsa_fixed_dh [
                                     log-more "Checking signature using RSA_fixed_DH"
                                     der: decode 'der signature
-                                    signature: join der/2/2 der/2/4
+                                    n: select [secp256r1 32 secp384r1 48 secp521r1 66] ctx/pub-exp
+                                    x: pad-bin der/2/2 n
+                                    y: pad-bin der/2/4 n
+                                    signature: join x y
                                     ecdsa/verify/curve ctx/pub-key message-hash signature ctx/pub-exp
                                 ]
                             ]
@@ -10447,178 +9657,5 @@ Port closed!}]] feature-supported?: func ['feature] [(select defs/client feature
             ]
         ]
         set-verbose: :tls-verbosity
-    ]
-] [
-    version: 0.0.1
-    title: "WHOIS Protocol"
-    name: none
-    type: none
-    date: 30-Apr-2019
-    file: %prot-whois.r
-    author: "Oldes"
-    needs: none
-    options: none
-    checksum: none
-    purpose: {
-^-^-Low level WHOIS protocol implementation, which may be used to write
-^-^-more advanced WHOIS command}
-    links: [
-        https://www.iana.org/domains/root/db
-        https://github.com/rfc1036/whois
-        https://simonecarletti.com/blog/2012/03/whois-protocol/
-    ]
-    usage: [
-        read whois://seznam.cz
-        write whois://whois.nic.cz "seznam.cz"
-    ]
-] [
-    append system/options/log [whois: 1]
-    sys/make-scheme [
-        name: 'whois
-        title: "WHOIS Protocol"
-        spec: make system/standard/port-spec-net [port-id: 43 timeout: 15]
-        awake: func [event /local port parent] [
-            sys/log/debug 'WHOIS ["Awake:^[[22m" event/type]
-            port: event/port
-            parent: port/locals
-            switch event/type [
-                lookup [open port]
-                connect [
-                    parent/state/state: 'ready
-                    either parent/data [
-                        write port parent/data
-                    ] [return true]
-                ]
-                read [read port]
-                wrote [parent/state/state: 'reading read port]
-                close [
-                    parent/state/state: none
-                    parent/data: none
-                    close port
-                    return true
-                ]
-                error [
-                    parent/state/state: make error! [
-                        type: 'Access
-                        id: 'Protocol
-                        arg1: to integer! event/offset/x
-                    ]
-                ]
-            ]
-            false
-        ]
-        actor: [
-            open: func [
-                port [port!]
-                /local conn
-            ] [
-                if all [
-                    port/state
-                    conn: port/state/connection
-                ] [
-                    case [
-                        none? port/state/state [open conn]
-                        all [port/state/state = 'ready port/data] [
-                            write conn port/data
-                        ]
-                    ]
-                    return port
-                ]
-                if none? port/spec/host [port/spec/host: "whois.iana.org"]
-                port/state: object [
-                    state: 'inited
-                    connection:
-                    awake: :port/awake
-                    close?: false
-                ]
-                port/state/connection: conn: make port! [
-                    scheme: 'tcp
-                    host: port/spec/host
-                    port-id: port/spec/port-id
-                    ref: rejoin [tcp:// host #":" port-id]
-                ]
-                conn/locals: port
-                conn/awake: :awake
-                open conn
-                port
-            ]
-            open?: func [port [port!]] [
-                not none? all [
-                    port/state
-                    open? port/state/connection
-                ]
-            ]
-            close: func [port [port!]] [
-                if open? port [
-                    close port/state/connection
-                    port/state: none
-                ]
-            ]
-            write: func [
-                port [port!]
-                target [string! tuple!]
-                /local conn
-            ] [
-                port/spec/path: target
-                if tuple? target [
-                    target: join
-                    any [
-                        select [
-                            "whois.ripe.net" "-V Md5.2 "
-                            "whois.iana.org" ""
-                        ] port/spec/host
-                        "n + "
-                    ]
-                    target
-                ]
-                sys/log/info 'WHOIS ["Query:^[[22m" target "^[[1mfrom:^[[22m" port/spec/host]
-                port/data: join target CRLF
-                open port
-                conn: port/state/connection
-                either port? wait [conn port/spec/timeout] [
-                    port/actor/on-result port
-                ] [
-                    do make error! [type: 'Access id: 'Timeout arg1: port/spec/ref]
-                ]
-            ]
-            read: func [
-                port [port!]
-                /local target
-            ] [
-                target: port/spec/host
-                try [target: to tuple! target]
-                port/spec/host: "whois.iana.org"
-                port/actor/write port target
-            ]
-            on-result: func [
-                port [port!]
-                /local result refer
-            ] [
-                result: port/state/connection/data
-                if result [
-                    try [result: to string! result]
-                    sys/log/info 'WHOIS ajoin ["Result:^/^[[22m" result]
-                    if all [
-                        parse result [
-                            [
-                                thru "^/whois: " |
-                                thru "^/   Registrar WHOIS Server: "
-                            ] copy refer to LF to end
-                        ]
-                        any [
-                            tuple? port/spec/path
-                            find port/spec/path #"."
-                        ]
-                        port/spec/host <> refer: trim/all refer
-                    ] [
-                        close port/state/connection
-                        port/state: none
-                        port/spec/host: refer
-                        return port/actor/write port port/spec/path
-                    ]
-                ]
-                result
-            ]
-        ]
     ]
 ]]]
