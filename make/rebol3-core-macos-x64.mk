@@ -20,14 +20,14 @@ UP= ..
 CD= ./
 
 # Paths used by make:
-R= /Users/oldes/GIT/Rebol
-O= /Users/oldes/GIT/Rebol/make/tmp/clang-x64/rebol3-core-macos-x64
-S= /Users/oldes/GIT/Rebol/src
+R= $UP
+O= $CD/tmp/clang-x64/rebol3-core-macos-x64
+S= $R/src
 
 USE_FLAGS=
 
 INCLUDES= \
-	-I/Users/oldes/GIT/Rebol/src/include/
+	-I$S/include/
 
 DEFINES= \
 	-D_FILE_OFFSET_BITS=64 \

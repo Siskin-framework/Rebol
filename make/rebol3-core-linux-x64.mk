@@ -20,14 +20,14 @@ UP= ..
 CD= ./
 
 # Paths used by make:
-R= /mnt/c/Dev/Builder/tree/rebol/Rebol
-O= /mnt/c/Dev/Builder/tree/rebol/Rebol/make/tmp/gcc-x64/rebol3-core-linux-x64
-S= /mnt/c/Dev/Builder/tree/rebol/Rebol/src
+R= $UP
+O= $CD/tmp/gcc-x64/rebol3-core-linux-x64
+S= $R/src
 
 USE_FLAGS=
 
 INCLUDES= \
-	-I../src/include/
+	-I$S/include/
 
 DEFINES= \
 	-D_FILE_OFFSET_BITS=64 \
