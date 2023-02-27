@@ -11,7 +11,7 @@
 **
 **  Title: Boot Definitions
 **  Build: 3.7.2
-**  Date:  5-Jan-2022
+**  Date:  27-Feb-2023
 **  File:  bootdefs.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -24,7 +24,7 @@
 #define REBOL_UPD 2
 #define REBOL_SYS 0
 #define REBOL_VAR 0
-#define REBOL_VERSION "Rebol Core 3.7.2 Macintosh macos x64 apple darwin macho clang x64-apple-darwin-macho 5-Jan-2022/18:33 64#{8Z200d5zH7iCR8IqUcdyeeYOhiw=}"
+#define REBOL_VERSION "Rebol Core 3.7.2 Linux linux x64 pc linux elf gcc x64-pc-linux-elf 27-Feb-2023/12:05 #{B9ACBD59E641232E73E92A6AE92AE7DCF399711F}"
 
 /***********************************************************************
 **
@@ -46,7 +46,7 @@
 #define RS_EXTENSION           79
 #define RS_VERSION             82
 #define RS_MAX	83
-#define RS_SIZE	1651
+#define RS_SIZE	1645
 
 /***********************************************************************
 **

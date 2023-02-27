@@ -257,32 +257,44 @@
     buf-mold
     mold-loop
     err-temps
-] 64#{
-ZW5kLW9mLXNjcmlwdABsaW5lAGVuZC1vZi1ibG9jawBlbmQtb2YtcGFyZW4Ad29y
-ZAB3b3JkLXNldAB3b3JkLWdldAB3b3JkLWxpdABub25lAGxvZ2ljAGludGVnZXIA
-ZGVjaW1hbABwZXJjZW50AG1vbmV5AHRpbWUAZGF0ZQBjaGFyAGJsb2NrAHBhcmVu
-AHN0cmluZwBiaW5hcnkAcGFpcgB0dXBsZQBmaWxlAGVtYWlsAHVybABpc3N1ZQB0
-YWcAcGF0aAByZWZpbmUAY29uc3RydWN0AEJvb3RpbmcuLi4AdHJhY2UAJS0wMmQ6
-ICU1MHIAIDogJTUwcgAgOiAlcyAlNTBtACA6ICVzAC0tPiAlcwA8LS0gJXMgPT0A
-UGFyc2UgbWF0Y2g6ICVyAFBhcnNlIGlucHV0OiAlcwBQYXJzZSBiYWNrOiAlcgAq
-KjogZXJyb3IgOiAlciAlcgBTVEFDSyBFeHBhbmRlZCAtIERTUDogJWQgTUFYOiAl
-ZAAKU1RBQ0tbJWRdICVzWyVkXSAlcwAKLS1SRUJPTCBLZXJuZWwgRHVtcC0tAEV2
-YWx1YXRvcjoAICAgIEN5Y2xlczogICVkACAgICBDb3VudGVyOiAlZAAgICAgRG9z
-ZTogICAgJWQAICAgIFNpZ25hbHM6ICV4ACAgICBTaWdtYXNrOiAleAAgICAgRFNQ
-OiAgICAgJWQAICAgIERTRjogICAgICVkAE1lbW9yeS9HQzoAICAgIEJhbGxhc3Q6
-ICVkACAgICBEaXNhYmxlOiAlZAAgICAgUHJvdGVjdDogJWQAICAgIEluZmFudHM6
-ICVkAG91dCBvZiBtZW1vcnkgKHJlcSAlZCBieXRlcykAaW52YWxpZCBzZXJpZXMg
-d2lkdGggJWQgZ290ICVkIHR5cGUgJWQAZXJyb3IgYWxyZWFkeSBjYXVnaHQAc3Rh
-Y2sgb3ZlcmZsb3cASS9PIGVycm9yAHRvbyBtYW55IHdvcmRzAHdvcmQgbGlzdCBi
-dWZmZXIgaW4gdXNlAGxvY2tlZCBzZXJpZXMAZXJyb3IgcmVjeWNsZWQAdG9wIGxl
-dmVsIGVycm9yIG5vdCBjYXVnaHQAZXJyb3Igc3RhdGUgdW5kZXJmbG93AGV2ZW50
-IHF1ZXVlIG92ZXJmbG93IChXQUlUIHJlY3Vyc2lvbj8pAG5vdCBhdmFpbGFibGUg
-KE5BKQAgZXJyb3I6IAAoaW1wcm9wZXJseSBmb3JtYXR0ZWQgZXJyb3IpACoqIFdo
-ZXJlOiAAKiogTmVhcjogAFJFQ1lDTElORzogACVkIHNlcmllcwBvYmotY29weTog
-JWQgJW0AUlhfSW5pdABSWF9RdWl0AFJYX0NhbGwAUmVib2wgQ29yZSAzLjcuMiBN
-YWNpbnRvc2ggbWFjb3MgeDY0IGFwcGxlIGRhcndpbiBtYWNobyBjbGFuZyB4NjQt
-YXBwbGUtZGFyd2luLW1hY2hvIDUtSmFuLTIwMjIvMTg6MzMgNjQjezhaMjAwZDV6
-SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
+] #{
+656E642D6F662D736372697074006C696E6500656E642D6F662D626C6F636B00
+656E642D6F662D706172656E00776F726400776F72642D73657400776F72642D
+67657400776F72642D6C6974006E6F6E65006C6F67696300696E746567657200
+646563696D616C0070657263656E74006D6F6E65790074696D65006461746500
+6368617200626C6F636B00706172656E00737472696E670062696E6172790070
+616972007475706C650066696C6500656D61696C0075726C0069737375650074
+6167007061746800726566696E6500636F6E73747275637400426F6F74696E67
+2E2E2E00747261636500252D3032643A202535307200203A202535307200203A
+202573202535306D00203A202573002D2D3E202573003C2D2D202573203D3D00
+5061727365206D617463683A20257200506172736520696E7075743A20257300
+5061727365206261636B3A202572002A2A3A206572726F72203A202572202572
+00535441434B20457870616E646564202D204453503A202564204D41583A2025
+64000A535441434B5B25645D2025735B25645D202573000A2D2D5245424F4C20
+4B65726E656C2044756D702D2D004576616C7561746F723A0020202020437963
+6C65733A202025640020202020436F756E7465723A2025640020202020446F73
+653A20202020256400202020205369676E616C733A2025780020202020536967
+6D61736B3A20257800202020204453503A202020202025640020202020445346
+3A20202020202564004D656D6F72792F47433A002020202042616C6C6173743A
+202564002020202044697361626C653A202564002020202050726F746563743A
+2025640020202020496E66616E74733A202564006F7574206F66206D656D6F72
+7920287265712025642062797465732900696E76616C69642073657269657320
+776964746820256420676F742025642074797065202564006572726F7220616C
+72656164792063617567687400737461636B206F766572666C6F7700492F4F20
+6572726F7200746F6F206D616E7920776F72647300776F7264206C6973742062
+756666657220696E20757365006C6F636B656420736572696573006572726F72
+2072656379636C656400746F70206C6576656C206572726F72206E6F74206361
+75676874006572726F7220737461746520756E646572666C6F77006576656E74
+207175657565206F766572666C6F7720285741495420726563757273696F6E3F
+29006E6F7420617661696C61626C6520284E412900206572726F723A20002869
+6D70726F7065726C7920666F726D6174746564206572726F7229002A2A205768
+6572653A20002A2A204E6561723A200052454359434C494E473A200025642073
+6572696573006F626A2D636F70793A20256420256D0052585F496E6974005258
+5F517569740052585F43616C6C005265626F6C20436F726520332E372E32204C
+696E7578206C696E757820783634207063206C696E757820656C662067636320
+7836342D70632D6C696E75782D656C662032372D4665622D323032332F31323A
+303520237B423941434244353945363431323332453733453932413641453932
+414537444346333939373131467D00
 } [
     ["Returns TRUE if it is this type." value [any-type!] 0]
     native: native [
@@ -2037,14 +2049,14 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
             secure-min secure-max trace halt cgi boot-level no-window
         ]
         bitsets: object [
-            crlf: make bitset! 64#{ACQ=}
-            whitespace: make bitset! 64#{AGQAAIA=}
-            numeric: make bitset! 64#{AAAAAAAA/8A=}
-            alpha: make bitset! 64#{AAAAAAAAAAB////gf///4A==}
-            alpha-numeric: make bitset! 64#{AAAAAAAA/8B////gf///4A==}
-            hex-digits: make bitset! 64#{AAAAAAAA/8B+AAAAfg==}
-            uri: make bitset! 64#{AAAAAFv///X////hf///4g==}
-            uri-component: make bitset! 64#{AAAAAEHm/8B////hf///4g==}
+            crlf: make bitset! #{0024}
+            whitespace: make bitset! #{0064000080}
+            numeric: make bitset! #{000000000000FFC0}
+            alpha: make bitset! #{00000000000000007FFFFFE07FFFFFE0}
+            alpha-numeric: make bitset! #{000000000000FFC07FFFFFE07FFFFFE0}
+            hex-digits: make bitset! #{000000000000FFC07E0000007E}
+            uri: make bitset! #{000000005BFFFFF5FFFFFFE17FFFFFE2}
+            uri-component: make bitset! #{0000000041E6FFC07FFFFFE17FFFFFE2}
         ]
         checksums: [adler32 crc24 crc32 tcp md4 md5 sha1 sha224 sha256 sha384 sha512 ripemd160]
         compressions: [gzip deflate zlib lzma crush]
@@ -2405,7 +2417,7 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
     cr: #"^M"
     lf: newline
     crlf: "^M^/"
-    whitespace: make bitset! 64#{AGQAAIA=}
+    whitespace: make bitset! #{0064000080}
     q: :quit
     !: :not
     min: :minimum
@@ -2526,7 +2538,7 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
         /local chars
     ] [
         if one-line [
-            chars: make bitset! [not bits 64#{ACQ=}]
+            chars: make bitset! [not bits #{0024}]
             parse str [
                 any [
                     some chars
@@ -2567,7 +2579,7 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
         /local end
     ] [
         either all [
-            url? path end: find path make bitset! 64#{AAAAABAAAAE=}
+            url? path end: find path make bitset! #{0000000010000001}
         ] [
             all [
                 path: find/reverse end #"."
@@ -3458,12 +3470,12 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
         case/all [
             binary? source [
                 parse source [
-                    64#{AAD+/w==} tmp: (tmp: iconv/to tmp 'utf-32BE 'utf8)
-                    | 64#{//4AAA==} tmp: (tmp: iconv/to tmp 'utf-32LE 'utf8)
-                    | 64#{/v8=} tmp: (tmp: iconv/to tmp 'utf-16BE 'utf8)
-                    | 64#{//4=} tmp: (tmp: iconv/to tmp 'utf-16LE 'utf8)
+                    #{0000FEFF} tmp: (tmp: iconv/to tmp 'utf-32BE 'utf8)
+                    | #{FFFE0000} tmp: (tmp: iconv/to tmp 'utf-32LE 'utf8)
+                    | #{FEFF} tmp: (tmp: iconv/to tmp 'utf-16BE 'utf8)
+                    | #{FFFE} tmp: (tmp: iconv/to tmp 'utf-16LE 'utf8)
                     |
-                    opt [64#{77u/} source:] (tmp: assert-utf8 source)
+                    opt [#{EFBBBF} source:] (tmp: assert-utf8 source)
                 ]
             ]
             string? source [tmp: to binary! source]
@@ -6259,7 +6271,7 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
             /local main name warn
         ] [
             parse/all oid [
-                64#{Kw4DAg==} (main: "Oddball OIW OID") [
+                #{2B0E0302} (main: "Oddball OIW OID") [
                     #"^A" (name: 'rsa)
                     | #"^B" (name: 'md4WitRSA)
                     | #"^C" (name: 'md5WithRSA)
@@ -6271,27 +6283,27 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
                     | #"^]" (name: 'sha1WithRSAEncryption)
                 ]
                 |
-                64#{KwYBBQUHAQ==} (main: "PKIX private extension") [
+                #{2B060105050701} (main: "PKIX private extension") [
                     #"^A" (name: 'authorityInfoAccess)
                 ]
                 |
-                64#{KwYBBQUHMA==} (main: "PKIX") [
+                #{2B060105050730} (main: "PKIX") [
                     #"^A" (name: 'ocsp)
                     | #"^B" (name: 'caIssuers)
                     | #"^C" (name: 'timeStamping)
                     | #"^E" (name: 'caRepository)
                 ]
                 |
-                64#{KoZIzj0=} (main: "X9.62") [
-                    64#{AgE=} (name: 'ecPublicKey)
-                    | 64#{AwE=} [
+                #{2A8648CE3D} (main: "X9.62") [
+                    #{0201} (name: 'ecPublicKey)
+                    | #{0301} [
                         #"^G" (name: 'secp256r1)
                         | #"^A" (name: 'secp192r1)
                     ]
                 ]
                 |
-                64#{KoZIhvcNAQ==} [
-                    64#{AQ==} (main: "PKCS #1") [
+                #{2A864886F70D01} [
+                    #{01} (main: "PKCS #1") [
                         #"^A" (name: 'rsaEncryption)
                         | #"^B" (name: 'md2WithRSAEncryption)
                         | #"^C" (name: 'md4withRSAEncryption)
@@ -6300,13 +6312,13 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
                         | #"^K" (name: 'sha256WithRSAEncryption)
                     ] end
                     |
-                    64#{Bw==} (main: "PKCS #7") [
+                    #{07} (main: "PKCS #7") [
                         #"^A" (name: 'data)
                         | #"^B" (name: 'signedData)
                         | #"^F" (name: 'encryptedData)
                     ] end
                     |
-                    64#{CQ==} (main: "PKCS #9") [
+                    #{09} (main: "PKCS #9") [
                         #"^A" (name: 'emailAddress warn: "Deprecated, use an altName extension instead")
                         | #"^C" (name: 'contentType)
                         | #"^D" (name: 'messageDigest)
@@ -6317,21 +6329,21 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
                         | #"4" (name: 'CMSAlgorithmProtect)
                     ] end
                     |
-                    64#{DA==} (main: "PKCS #12") [
-                        64#{AQY=} (name: 'pbeWithSHAAnd40BitRC2-CBC)
-                        | 64#{AQM=} (name: 'pbeWithSHAAnd3-KeyTripleDES-CBC)
-                        | 64#{CgEC} (name: 'pkcs-12-pkcs-8ShroudedKeyBag)
+                    #{0C} (main: "PKCS #12") [
+                        #{0106} (name: 'pbeWithSHAAnd40BitRC2-CBC)
+                        | #{0103} (name: 'pbeWithSHAAnd3-KeyTripleDES-CBC)
+                        | #{0A0102} (name: 'pkcs-12-pkcs-8ShroudedKeyBag)
                     ] end
                 ] end
                 |
-                64#{KoZIhvcNAw==} (main: "Encryption algorithm") [
+                #{2A864886F70D03} (main: "Encryption algorithm") [
                     #"^B" (name: "rc2CBC")
                     | #"^C" (name: "rc2ECB")
                     | #"^D" (name: "rc4")
                     | #"^G" (name: "des-ede3-cbc")
                 ] end
                 |
-                64#{VQQ=} (main: "X.520 DN component") [
+                #{5504} (main: "X.520 DN component") [
                     #"^C" (name: 'commonName)
                     | #"^F" (name: 'countryName)
                     | #"^G" (name: 'localityName)
@@ -6342,7 +6354,7 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
                     | #"^O" (name: 'businessCategory)
                 ] end
                 |
-                64#{VR0=} (main: "X.509 extension") [
+                #{551D} (main: "X.509 extension") [
                     #"^A" (name: 'authorityKeyIdentifier warn: "Deprecated, use 2 5 29 35 instead")
                     | #"^D" (name: 'keyUsageRestriction warn: "Obsolete, use keyUsage/extKeyUsage instead")
                     | #"^N" (name: 'subjectKeyIdentifier)
@@ -6355,13 +6367,13 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
                     | #"%" (name: 'extKeyUsage)
                 ] end
                 |
-                64#{KwYBBQUHAw==} (main: "PKIX key purpose") [
+                #{2B060105050703} (main: "PKIX key purpose") [
                     #"^A" (name: 'serverAuth)
                     #"^B" (name: 'clientAuth)
                     | #"^C" (name: 'codeSigning)
                 ] end
                 |
-                64#{KwYBBAGCNwIB} (main: "Microsoft") [
+                #{2B0601040182370201} (main: "Microsoft") [
                     #"^U" (name: 'individualCodeSigning)
                 ] end
             ]
@@ -6442,7 +6454,7 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
                         (*bool: false)
                         'SEQUENCE into [
                             'OBJECT_IDENTIFIER set *oid binary!
-                            opt ['BOOLEAN 64#{/w==} (*bool: true)]
+                            opt ['BOOLEAN #{FF} (*bool: true)]
                             'OCTET_STRING set *val binary! (
                                 *oid: der-codec/decode-OID *oid
                                 if all [not empty? *val *val/1 = 48] [*val: der-codec/decode *val]
@@ -6621,8 +6633,8 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
                         pass: either password [copy pass] [
                             ask/hide ajoin ["Key password for " mold comm ": "]
                         ]
-                        key: join checksum join 64#{AAAAAA==} pass 'sha1
-                        checksum join 64#{AAAAAQ==} pass 'sha1
+                        key: join checksum join #{00000000} pass 'sha1
+                        checksum join #{00000001} pass 'sha1
                         key: aes/decrypt/key copy/part key 32 none
                         pri: aes/decrypt/stream key pri
                     ] [
@@ -6744,7 +6756,7 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
                                     )
                                 ]
                             ]
-                            v/OBJECT_IDENTIFIER = 64#{KoZIhvcNAQEB}
+                            v/OBJECT_IDENTIFIER = #{2A864886F70D010101}
                             parse data [
                                 'SEQUENCE into [
                                     'INTEGER set n: binary!
@@ -6840,7 +6852,7 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
             unix: to integer! date
             if as [
                 type: to word! type
-                binary/write bin: 64#{} [ui32 :unix]
+                binary/write bin: #{} [ui32 :unix]
                 switch type [
                     binary! [return bin]
                     string! [return enbase bin 16]
@@ -7005,7 +7017,7 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
             bin: binary zip-data
             data-pos: 0
             if only [files-to-extract: length? files]
-            unless pos: find/last/tail bin/buffer 64#{UEsFBg==} [return copy []]
+            unless pos: find/last/tail bin/buffer #{504B0506} [return copy []]
             bin/buffer: pos
             if verbose [sys/log/debug 'ZIP "End of central directory record"]
             data: binary/read bin [
@@ -7164,7 +7176,7 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
                         continue
                     ]
                 ]
-                data: any [data 64#{}]
+                data: any [data #{}]
                 crc: checksum data 'CRC32
                 size: length? data
                 method: either any [
@@ -7179,7 +7191,7 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
                 ]
                 either compressed-data [
                     compressed-size: length? compressed-data
-                ] [compressed-data: 64#{}
+                ] [compressed-data: #{}
                 compressed-size: 0]
                 if any [
                     none? date
@@ -7187,10 +7199,10 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
                 ] [date: now]
                 filename-length: length? file
                 offset: indexZ? bin/buffer-write
-                unless extra [extra: 64#{}]
-                unless comm [comm: 64#{}]
+                unless extra [extra: #{}]
+                unless comm [comm: #{}]
                 binary/write bin [
-                    64#{UEsDBBQAAAA=}
+                    #{504B030414000000}
                     UI16LE :method
                     MSDOS-DATETIME :date
                     UI32LE :crc
@@ -7202,7 +7214,7 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
                     BYTES :compressed-data
                 ]
                 binary/write dir [
-                    64#{UEsBAhcDFAAAAA==}
+                    #{504B0102170314000000}
                     UI16LE :method
                     MSDOS-DATETIME :date
                     UI32LE :crc
@@ -7240,7 +7252,7 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
                 bin-size: length? bin/buffer
                 binary/write bin [
                     BYTES :dir/buffer
-                    64#{UEsFBg==}
+                    #{504B0506}
                     UI16LE 0
                     UI16LE 0
                     UI16LE :entries
@@ -7359,7 +7371,7 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
                     link: STRING-BYTES 100
                 ]
                 name: to file! name
-                if 64#{dXN0YXIA} = copy/part bin/buffer 6 [
+                if #{757374617200} = copy/part bin/buffer 6 [
                     hdr2: binary/read bin [
                         STRING-BYTES 6
                         STRING-BYTES 2
@@ -7695,8 +7707,8 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
                     d2: find/tail d1 crlf2bin
                 ]
                 all [
-                    d1: find conn/data 64#{Cg==}
-                    d2: find/tail d1 64#{Cgo=}
+                    d1: find conn/data #{0A}
+                    d2: find/tail d1 #{0A0A}
                     sys/log/debug 'HTML "Server using malformed line separator of #{0A0A}"
                 ]
             ]
@@ -7832,8 +7844,8 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
         ]
         res
     ]
-    crlfbin: 64#{DQo=}
-    crlf2bin: 64#{DQoNCg==}
+    crlfbin: #{0D0A}
+    crlf2bin: #{0D0A0D0A}
     crlf2: to string! crlf2bin
     http-response-headers: construct [
         Content-Length:
@@ -8254,10 +8266,10 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
         APPLICATION: 23
     ] 'TLS-protocol-type
     *Protocol-version: enum [
-        SSLv3: 64#{AwA=}
-        TLS1.0: 64#{AwE=}
-        TLS1.1: 64#{AwI=}
-        TLS1.2: 64#{AwM=}
+        SSLv3: #{0300}
+        TLS1.0: #{0301}
+        TLS1.1: #{0302}
+        TLS1.2: #{0303}
     ] 'TLS-Protocol-version
     *Handshake: enum [
         HELLO_REQUEST: 0
@@ -8272,64 +8284,64 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
         FINISHED: 20
     ] 'TLS-Handshake-type
     *Cipher-suite: enum [
-        TLS_RSA_WITH_NULL_MD5: 64#{AAE=}
-        TLS_RSA_WITH_NULL_SHA: 64#{AAI=}
-        TLS_RSA_WITH_NULL_SHA256: 64#{ADs=}
-        TLS_RSA_WITH_RC4_128_MD5: 64#{AAQ=}
-        TLS_RSA_WITH_RC4_128_SHA: 64#{AAU=}
-        TLS_RSA_WITH_3DES_EDE_CBC_SHA: 64#{AAo=}
-        TLS_RSA_WITH_AES_128_CBC_SHA: 64#{AC8=}
-        TLS_RSA_WITH_AES_256_CBC_SHA: 64#{ADU=}
-        TLS_RSA_WITH_AES_128_CBC_SHA256: 64#{ADw=}
-        TLS_RSA_WITH_AES_256_CBC_SHA256: 64#{AD0=}
-        TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA: 64#{AA0=}
-        TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA: 64#{ABA=}
-        TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA: 64#{ABM=}
-        TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA: 64#{ABY=}
-        TLS_DH_DSS_WITH_AES_128_CBC_SHA: 64#{ADA=}
-        TLS_DH_RSA_WITH_AES_128_CBC_SHA: 64#{ADE=}
-        TLS_DHE_DSS_WITH_AES_128_CBC_SHA: 64#{ADI=}
-        TLS_DHE_RSA_WITH_AES_128_CBC_SHA: 64#{ADM=}
-        TLS_DH_DSS_WITH_AES_256_CBC_SHA: 64#{ADY=}
-        TLS_DH_RSA_WITH_AES_256_CBC_SHA: 64#{ADc=}
-        TLS_DHE_DSS_WITH_AES_256_CBC_SHA: 64#{ADg=}
-        TLS_DHE_RSA_WITH_AES_256_CBC_SHA: 64#{ADk=}
-        TLS_DH_DSS_WITH_AES_128_CBC_SHA256: 64#{AD4=}
-        TLS_DH_RSA_WITH_AES_128_CBC_SHA256: 64#{AD8=}
-        TLS_DHE_DSS_WITH_AES_128_CBC_SHA256: 64#{AEA=}
-        TLS_DHE_RSA_WITH_AES_128_CBC_SHA256: 64#{AGc=}
-        TLS_DH_DSS_WITH_AES_256_CBC_SHA256: 64#{AGg=}
-        TLS_DH_RSA_WITH_AES_256_CBC_SHA256: 64#{AGk=}
-        TLS_DHE_DSS_WITH_AES_256_CBC_SHA256: 64#{AGo=}
-        TLS_DHE_RSA_WITH_AES_256_CBC_SHA256: 64#{AGs=}
-        TLS_DH_anon_WITH_RC4_128_MD5: 64#{ABg=}
-        TLS_DH_anon_WITH_3DES_EDE_CBC_SHA: 64#{ABs=}
-        TLS_DH_anon_WITH_AES_128_CBC_SHA: 64#{ADQ=}
-        TLS_DH_anon_WITH_AES_256_CBC_SHA: 64#{ADo=}
-        TLS_DH_anon_WITH_AES_128_CBC_SHA256: 64#{AGw=}
-        TLS_DH_anon_WITH_AES_256_CBC_SHA256: 64#{AG0=}
-        TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256: 64#{zKg=}
-        TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256: 64#{zKk=}
-        TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384: 64#{wCg=}
-        TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256: 64#{wC8=}
-        TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384: 64#{wDA=}
-        TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256: 64#{wCs=}
-        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384: 64#{wCw=}
-        TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256: 64#{wCc=}
-        TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA: 64#{wBM=}
-        TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA: 64#{wAk=}
-        TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA: 64#{wBQ=}
-        TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA: 64#{wAo=}
+        TLS_RSA_WITH_NULL_MD5: #{0001}
+        TLS_RSA_WITH_NULL_SHA: #{0002}
+        TLS_RSA_WITH_NULL_SHA256: #{003B}
+        TLS_RSA_WITH_RC4_128_MD5: #{0004}
+        TLS_RSA_WITH_RC4_128_SHA: #{0005}
+        TLS_RSA_WITH_3DES_EDE_CBC_SHA: #{000A}
+        TLS_RSA_WITH_AES_128_CBC_SHA: #{002F}
+        TLS_RSA_WITH_AES_256_CBC_SHA: #{0035}
+        TLS_RSA_WITH_AES_128_CBC_SHA256: #{003C}
+        TLS_RSA_WITH_AES_256_CBC_SHA256: #{003D}
+        TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA: #{000D}
+        TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA: #{0010}
+        TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA: #{0013}
+        TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA: #{0016}
+        TLS_DH_DSS_WITH_AES_128_CBC_SHA: #{0030}
+        TLS_DH_RSA_WITH_AES_128_CBC_SHA: #{0031}
+        TLS_DHE_DSS_WITH_AES_128_CBC_SHA: #{0032}
+        TLS_DHE_RSA_WITH_AES_128_CBC_SHA: #{0033}
+        TLS_DH_DSS_WITH_AES_256_CBC_SHA: #{0036}
+        TLS_DH_RSA_WITH_AES_256_CBC_SHA: #{0037}
+        TLS_DHE_DSS_WITH_AES_256_CBC_SHA: #{0038}
+        TLS_DHE_RSA_WITH_AES_256_CBC_SHA: #{0039}
+        TLS_DH_DSS_WITH_AES_128_CBC_SHA256: #{003E}
+        TLS_DH_RSA_WITH_AES_128_CBC_SHA256: #{003F}
+        TLS_DHE_DSS_WITH_AES_128_CBC_SHA256: #{0040}
+        TLS_DHE_RSA_WITH_AES_128_CBC_SHA256: #{0067}
+        TLS_DH_DSS_WITH_AES_256_CBC_SHA256: #{0068}
+        TLS_DH_RSA_WITH_AES_256_CBC_SHA256: #{0069}
+        TLS_DHE_DSS_WITH_AES_256_CBC_SHA256: #{006A}
+        TLS_DHE_RSA_WITH_AES_256_CBC_SHA256: #{006B}
+        TLS_DH_anon_WITH_RC4_128_MD5: #{0018}
+        TLS_DH_anon_WITH_3DES_EDE_CBC_SHA: #{001B}
+        TLS_DH_anon_WITH_AES_128_CBC_SHA: #{0034}
+        TLS_DH_anon_WITH_AES_256_CBC_SHA: #{003A}
+        TLS_DH_anon_WITH_AES_128_CBC_SHA256: #{006C}
+        TLS_DH_anon_WITH_AES_256_CBC_SHA256: #{006D}
+        TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256: #{CCA8}
+        TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256: #{CCA9}
+        TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384: #{C028}
+        TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256: #{C02F}
+        TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384: #{C030}
+        TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256: #{C02B}
+        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384: #{C02C}
+        TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256: #{C027}
+        TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA: #{C013}
+        TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA: #{C009}
+        TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA: #{C014}
+        TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA: #{C00A}
     ] 'TLS-Cipher-suite
     *EllipticCurves: enum [
-        secp192r1: 64#{ABM=}
-        secp224k1: 64#{ABQ=}
-        secp224r1: 64#{ABU=}
-        secp256k1: 64#{ABY=}
-        secp256r1: 64#{ABc=}
-        secp384r1: 64#{ABg=}
-        secp521r1: 64#{ABk=}
-        x25519: 64#{AB0=}
+        secp192r1: #{0013}
+        secp224k1: #{0014}
+        secp224r1: #{0015}
+        secp256k1: #{0016}
+        secp256r1: #{0017}
+        secp384r1: #{0018}
+        secp521r1: #{0019}
+        x25519: #{001D}
     ] 'EllipticCurves
     *HashAlgorithm: enum [
         none: 0
@@ -8385,11 +8397,11 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
         Unsupported_extension: 110
     ] 'TLS-Alert
     *TLS-Extension: enum [
-        ServerName: 64#{AAA=}
-        SupportedGroups: 64#{AAo=}
-        SignatureAlgorithms: 64#{AA0=}
-        KeyShare: 64#{ADM=}
-        RenegotiationInfo: 64#{/wE=}
+        ServerName: #{0000}
+        SupportedGroups: #{000A}
+        SignatureAlgorithms: #{000D}
+        KeyShare: #{0033}
+        RenegotiationInfo: #{FF01}
     ] 'TLS-Extension
     _log-error: func [msg] [
         if block? msg [msg: reform msg]
@@ -8424,40 +8436,40 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
     ]
     log-error: :_log-error
     suported-cipher-suites: rejoin [
-        64#{zKk=}
-        64#{zKg=}
-        64#{wCc=}
-        64#{wBQ=}
-        64#{wBM=}
-        64#{wAo=}
-        64#{wAk=}
-        64#{AGs=}
-        64#{AGc=}
-        64#{AD0=}
-        64#{ADw=}
-        64#{ADU=}
-        64#{AC8=}
-        64#{ADg=}
-        64#{ADI=}
-        64#{ADk=}
-        64#{ADM=}
+        #{CCA9}
+        #{CCA8}
+        #{C027}
+        #{C014}
+        #{C013}
+        #{C00A}
+        #{C009}
+        #{006B}
+        #{0067}
+        #{003D}
+        #{003C}
+        #{0035}
+        #{002F}
+        #{0038}
+        #{0032}
+        #{0039}
+        #{0033}
     ]
     supported-signature-algorithms: rejoin [
-        64#{BgE=}
-        64#{BgI=}
-        64#{BQE=}
-        64#{BQI=}
-        64#{BAE=}
-        64#{BAI=}
-        64#{BAM=}
-        64#{AgE=}
-        64#{AgI=}
+        #{0601}
+        #{0602}
+        #{0501}
+        #{0502}
+        #{0401}
+        #{0402}
+        #{0403}
+        #{0201}
+        #{0202}
     ]
     supported-elliptic-curves: rejoin [
-        64#{ABc=}
-        64#{ABU=}
-        64#{ABQ=}
-        64#{ABM=}
+        #{0017}
+        #{0015}
+        #{0014}
+        #{0013}
     ]
     TLS-init-cipher-suite: func [
         {Initialize context for current cipher-suite. Returns false if unknown suite is used.}
@@ -8594,14 +8606,14 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
                 ]
             ]
             binary/write tail extensions compose [
-                64#{AAo=}
+                #{000A}
                 UI16 (2 + length? supported-elliptic-curves)
                 UI16 (length? supported-elliptic-curves)
                 :supported-elliptic-curves
             ]
-            append extensions 64#{AAsAAgEA}
-            append extensions 64#{/wEAAQA=}
-            append extensions 64#{ABIAAA==}
+            append extensions #{000B00020100}
+            append extensions #{FF01000100}
+            append extensions #{00120000}
             length-signatures: 2 + length? supported-signature-algorithms
             length-extensions: 4 + length-signatures + length? extensions
             length-message: 41 + length-extensions + length? suported-cipher-suites
@@ -8659,7 +8671,7 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
                 ECDHE_ECDSA
                 ECDHE_RSA [
                     log-more ["W[" ctx/seq-write "] Using ECDH key-method"]
-                    insert key-data 64#{BA==}
+                    insert key-data #{04}
                     key-data-len-bytes: 1
                 ]
                 RSA [
@@ -8754,7 +8766,7 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
         ctx [object!]
     ] [
         log-more "alert-close-notify"
-        message: encrypt-data ctx 64#{AQA=}
+        message: encrypt-data ctx #{0100}
         with ctx [
             binary/write out [
                 UI8 21
@@ -8775,8 +8787,8 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
             ]
         ] [read ctx/sha-port]
         unencrypted: rejoin [
-            64#{FA==}
-            64#{AAAM}
+            #{14}
+            #{00000C}
             prf "client finished" ctx/legacy? seed ctx/master-secret 12
         ]
         TLS-update-messages-hash ctx unencrypted length? unencrypted
@@ -8945,13 +8957,13 @@ SDdpQ1I4SXFVY2R5ZWVZT2hpdz19AA==
             mid: to integer! (len + 1) * 0.5
             s-1: copy/part secret mid
             s-2: copy at secret (len - mid + 1)
-            p-md5: copy 64#{}
+            p-md5: copy #{}
             a: seed
             while [output-length > length? p-md5] [
                 a: checksum/with a 'md5 s-1
                 append p-md5 checksum/with rejoin [a seed] 'md5 s-1
             ]
-            p-sha1: copy 64#{}
+            p-sha1: copy #{}
             a: seed
             while [output-length > length? p-sha1] [
                 a: checksum/with a 'sha1 s-2
