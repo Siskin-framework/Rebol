@@ -30,10 +30,10 @@
 #ifndef REBOL_OPTIONS_H
 
 // native codecs ******************************************************/
-#define INCLUDE_BMP_CODEC     // used in u-bmp.c file
-#define INCLUDE_PNG_CODEC     // used in u-png.c file
-#define INCLUDE_JPG_CODEC     // used in u-jpg.c file
-#define INCLUDE_GIF_CODEC     // used in u-gif.c file
+//#define INCLUDE_BMP_CODEC     // used in u-bmp.c file
+//#define INCLUDE_PNG_CODEC     // used in u-png.c file
+//#define INCLUDE_JPG_CODEC     // used in u-jpg.c file
+//#define INCLUDE_GIF_CODEC     // used in u-gif.c file
 
 // native WAV codec was just a prove of concept, don't use it
 // there is more feature full Rebol implementation instead
@@ -41,24 +41,24 @@
 
 
 // optional compression & encoding *************************************/
-#define	INCLUDE_LZMA          // used in u-lzma.c, n-string.c and u-compress.c files
-#define INCLUDE_BASE85        // adds support for enbase/debase with base 85 (ASCII85)
+//#define	INCLUDE_LZMA          // used in u-lzma.c, n-string.c and u-compress.c files
+//#define INCLUDE_BASE85        // adds support for enbase/debase with base 85 (ASCII85)
 
 
 // optional devices ***************************************************/
-#define INCLUDE_MIDI_DEVICE
+//#define INCLUDE_MIDI_DEVICE
 
 
 // optional natives ***************************************************/
-#define INCLUDE_IMAGE_NATIVES
+//#define INCLUDE_IMAGE_NATIVES
 
 
 // otional checksums **************************************************/
 #define INCLUDE_MBEDTLS       // used for checksum implementation so far (for crypt later)
-#define INCLUDE_MD4           // checksum: MD4 (unsecure)
-#define INCLUDE_RIPEMD160     // checksum: RIPE-MD-160 (requires USE_MBEDTLS)
-#define INCLUDE_SHA224
-#define INCLUDE_SHA384
+//#define INCLUDE_MD4           // checksum: MD4 (unsecure)
+//#define INCLUDE_RIPEMD160     // checksum: RIPE-MD-160 (requires USE_MBEDTLS)
+//#define INCLUDE_SHA224
+//#define INCLUDE_SHA384
 
 
 // unfinished features ************************************************/

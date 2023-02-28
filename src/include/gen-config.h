@@ -25,8 +25,8 @@
 #define INCLUDE_MBEDTLS
 #define COLOR_CONSOLE
 #define INCLUDE_CRYPTOGRAPHY
-#define INCLUDE_SHA224
-#define INCLUDE_SHA384
+//#define INCLUDE_SHA224
+//#define INCLUDE_SHA384
 
 //**************************************************************//
 #include "opt-dependencies.h" // checks for above options
