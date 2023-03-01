@@ -1,39 +1,29 @@
-[![Rebol CI](https://github.com/Oldes/Rebol3/actions/workflows/main.yml/badge.svg)](https://github.com/Oldes/Rebol3/actions/workflows/main.yml)
-[![Build Rebol](https://github.com/Oldes/Rebol3/actions/workflows/build-all.yml/badge.svg)](https://github.com/Oldes/Rebol3/actions/workflows/build-all.yml)
-[![Gitter](https://badges.gitter.im/rebol3/community.svg)](https://gitter.im/rebol3/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![Chocolatey](https://raw.githubusercontent.com/Oldes/media/master/install-from-choco.svg)](https://chocolatey.org/packages/rebol3)
 
-# Rebol [R3] Source Code Distribution
+# Rebol [R3] Source Code Distribution (bootstrap)
 
-Purpose of this **Rebol fork** is to push the origial [Carl's source](https://github.com/rebol/rebol) to be usable at least like Rebol 2,
-but keep the source code clean and project easy to build. Use [CHANGES.md](https://github.com/Oldes/Rebol3/blob/master/CHANGES.md) file to see changes made in this branch.
+## Important note!
+This branch is supposed to be used only to get a bootstrapped Rebol build (without need to use any other precompiled binary).
+This temporary Rebol should not be used for anything else than to build the correct version for given platform.
+Information provided in `system/build` info may not be correct!
 
-### Issues reporting
+## Usage
 
-Preferred way for issue reporting is using [dedicated issue repository](https://github.com/Oldes/Rebol-issues/issues). It's a fork of the original Rebol issue repository, which was filled with issues from [CureCode issue tracker](https://www.curecode.org/rebol3/view-tickets.rsp), which was used before Rebol was on Github. I'm not using the original Rebol issue repository, because I was not allowed to even add labels to my own issues. It was later moved under Metaeducation account and is used for Ren-C development anyway.
+Modify existing files in the `/make` directory (if needed) and use classic `make` to build the bootstrap.
+For example:
+```
+make -f rebol-linux-bootstrap-32bit.mk
+```
+If the compilation would not fail, you can use Rebol Siskin-builder script to build the normal Rebol using:
+```
+git clone https://github.com/Siskin-Framework/Builder --depth 1
+cd Builder
+./rebol-linux-bootstrap-32bit siskin.r3 rebol
+```
+The last command should download the latest Rebol repository and provide an interactive input of available targets for current platform (linux).
 
-### Screenshots
-
-![](https://github.com/Oldes/media/blob/master/screens/rebol-windows-terminal.PNG?raw=true "Rebol in Windows Terminal")
-
-![](https://github.com/Oldes/media/blob/master/screens/rebol-ubuntu-terminal.jpg?raw=true "Rebol in Linux Terminal")
-
-#### Building a customized CLI application using compile DSL:
-![](https://raw.githubusercontent.com/Oldes/media/master/screens/build-siskin.gif "Building a Rebol based utility")
-
-### Other Rebol related projects
-
-If you are looking for other _Rebol like languages_, you may want to check also:
-
-* [Arturo](https://github.com/arturo-lang/arturo) language written in Nim
-* [Boron](http://urlan.sourceforge.net/boron/) language written in C
-* [Red](https://github.com/red/red) language written in Red bootstrapped from Rebol2
-* [Red.js](https://github.com/ALANVF/Red.js) web runtime for Red written in Haxe
-* [Ren-C](https://github.com/metaeducation/ren-c) another living Rebol3 fork
-* [Rye](https://github.com/refaktor/rye) language written in Go
-* [Topaz](https://github.com/giesse/Project-SnowBall) experimental Rebol like language being compiled to JS
-* [World](https://github.com/Geomol/World) language written in C
-
-
-There is also [Shinxin's fork](https://github.com/zsx/r3), which I was initially using for _chery-picking_,
-as it contains modifications from Atronix and Saphirion. But its use is now limited as it depends on non-public modules and also there is not much life visible recently.
+If the platform is not a linux, you may need to modify the `siskin.r3` file to modify value in the `system/platform`.
+The value is protected, so one would do for example:
+```
+unprotect 'system/platform
+system/platform: 'OpenBSD
+```
