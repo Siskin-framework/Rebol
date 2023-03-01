@@ -1,4 +1,5 @@
 /* Copyright 2014, Kenneth MacKay. Licensed under the BSD 2-clause license. */
+#ifdef USE_ECC
 
 #include "uECC.h"
 #include "uECC_vli.h"
@@ -1646,3 +1647,5 @@ void uECC_point_mult(uECC_word_t *result,
 }
 
 #endif /* uECC_ENABLE_VLI_API */
+
+#endif // USE_ECC

@@ -526,7 +526,7 @@ typedef struct {
 
 }
 
-
+#ifdef USE_ECC
 static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 	uECC_Curve curve = NULL;
 	switch (curve_type) {
@@ -568,6 +568,7 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 	}
 	return curve;
 }
+#endif
 
 /***********************************************************************
 **
@@ -586,6 +587,9 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 //  ]
 ***********************************************************************/
 {
+#ifndef USE_ECC
+	return R_FALSE;
+#else
 	REBVAL *val_handle  = D_ARG(1);
 	REBOOL  ref_init    = D_REF(2);
 	REBVAL *val_curve   = D_ARG(3);
@@ -651,6 +655,7 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 		return R_ARG3;
 	}
 	return R_ARG1;
+#endif
 }
 
 
@@ -670,6 +675,9 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 //  ]
 ***********************************************************************/
 {
+#ifndef USE_ECC
+	return R_FALSE;
+#else
 	REBVAL *val_key     = D_ARG(1);
 	REBVAL *val_hash    = D_ARG(2);
 	REBOOL  ref_sign    = D_REF(3);
@@ -732,6 +740,7 @@ static uECC_Curve get_ecc_curve(REBCNT curve_type) {
 		}
 	}
 	return R_UNSET;
+#endif
 }
 
 
