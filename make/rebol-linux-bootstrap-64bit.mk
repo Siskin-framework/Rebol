@@ -1,7 +1,7 @@
 # Siskin Builder generated makefile #
 #####################################
 
-PRODUCT= rebol3-core-linux-x86
+PRODUCT= rebol-linux-bootstrap-64bit
 
 # For the build toolchain:
 CC=	   $(TOOLS)gcc
@@ -21,7 +21,7 @@ CD= ./
 
 # Paths used by make:
 R= $(UP)
-O= $(CD)/tmp/gcc-x64/rebol3-core-linux-x86
+O= $(CD)/tmp/gcc-64bit/rebol-linux-bootstrap-64bit
 S= $(R)/src
 
 USE_FLAGS=
@@ -30,6 +30,9 @@ INCLUDES= \
 	-I$S/include/
 
 DEFINES= \
+	-D_FILE_OFFSET_BITS=64 \
+	-DTO_LINUX_X64 \
+	-D__LP64__ \
 	-DREBOL_OPTIONS_FILE=\"gen-config.h\" \
 	-DENDIAN_LITTLE \
 	-DREB_EXE
