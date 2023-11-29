@@ -31,7 +31,7 @@ jobs:
         run: |
           cd make/
           make -f rebol-linux-bootstrap-64bit.mk
-          mv ./rebol-linux-bootstrap-64bit ./rebol
+          mv ./rebol-linux-bootstrap-64bit ../rebol
 
       - name: Test 64bit Rebol bootstrap
         run: ./rebol -v
