@@ -1,4 +1,4 @@
-name: 'Rebol CI'
+name: 'Rebol Boostrap CI'
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
