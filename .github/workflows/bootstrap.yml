@@ -34,7 +34,7 @@ jobs:
           mv ./rebol-linux-bootstrap-64bit ./rebol
 
       - name: Test 64bit Rebol bootstrap
-        run: ./make/rebol-linux-bootstrap-64bit -v
+        run: ./rebol -v
 
       - name: Compile real Rebol/Bulk using the Siskin Builder
         run: |
