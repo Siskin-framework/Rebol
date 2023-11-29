@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Mezzanine: File Related"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -42,7 +43,7 @@ clean-path: func [
 	out: make file length? file ; same datatype
 	cnt: 0 ; back dir counter
 
-	parse/all reverse file [
+	parse reverse file [
 		some [
 			;pp: (?? pp)
 			"../" (++ cnt)
@@ -88,10 +89,14 @@ input: func [
 	][
 		system/ports/input: port: open [scheme: 'console]
 	]
-	if hide [ modify port 'echo false ]
-	if line: read port [ line: to string! line ]
-	if hide [ modify port 'echo true ]
-	line
+	either hide [
+		also request-password prin LF
+	][
+		all [
+			line: read port
+			to string! line
+		]
+	]
 ]
 
 ask: func [
@@ -101,7 +106,7 @@ ask: func [
 	/char "Waits only on single key press and returns char as a result"
 ][
 	prin question
-	also apply :input [hide] prin LF
+	input/:hide
 ]
 
 confirm: func [
@@ -140,7 +145,7 @@ dir-tree: func [
 		value prefix changeprefix directory depth
 		; --
 		newprefix addprefix formed
-		filtered contents str
+		contents str
 ][
 	unless value [
 		directory: dirize switch type?/word :path [
@@ -150,7 +155,7 @@ dir-tree: func [
 			word! path! [to-file path]
 		]
 		if #"/" <> first directory [insert directory what-dir]
-		value: contents: try/except [read directory][
+		value: contents: try/with [read directory][
 			print ["Not found:" :directory]
 			exit
 		]
@@ -198,12 +203,19 @@ dir-tree: func [
 		"^[[31;1m    "
 	]
 
-	if d [ ; are we considering directories only?
-		filtered: make block! length? value
-		forall value [
-			if dir? value/1 [append filtered value/1]
+	sort/compare value func[a b][
+		;; custom sort, where directories are before files
+		case [
+			dir? a [ either dir? b [a < b][ true ]]
+			dir? b [ false ]
+			a < b
 		]
-		value: :filtered
+	]
+
+	if d [ ; are we considering directories only?
+		forall value [
+			unless dir? value/1 [clear value]
+		]
 	]						
 	forall value [
 		either 1 = length? value [							; if this is last element
@@ -245,6 +257,8 @@ list-dir: closure/with [
 		max-depth [integer!] 
 ][
 	if f [r: l: false]
+	if same? :path '~ [path: :~]
+
 	recursive?: any [r max-depth]
 	files-only?: f
 	apply :dir-tree [
@@ -260,17 +274,20 @@ list-dir: closure/with [
 		/local info date time size
 	][
 		info: query/mode value [name size date]
+		unless info [
+			return ajoin [
+				"^[[1;35m *** Invalid symbolic link:  ^[[0;35m"
+				second split-path value
+				"^[[m"
+			]
+		]
 		if depth = 0 [
 			return ajoin ["^[[33;1mDIR: ^[[32;1m" to-local-file info/1 "^[[m"]
 		]
-		;@@ TODO: rewrite this date/time formating once it will be possible
-		;@@       with some better method!
+
 		date: info/3
 		date/zone: 0
-		time: date/time
-		time: format/pad [2 #":" 2 ] reduce [time/hour time/minute] #"0"
-		date: format/pad [-11] date/date #"0"
-		date: ajoin [" ^[[32m" date "  " time "^[[m "]
+		date: ajoin [" ^[[32m" format-date-time date "dd-mmm-yyyy  hh:mm" "^[[m "]
 
 		size: any [info/2 0]
 		if size >= 100'000'000 [size: join to integer! round (size / 1'000'000) "M"]

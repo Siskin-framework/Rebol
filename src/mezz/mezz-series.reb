@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Mezzanine: Series Helpers"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -47,7 +48,7 @@ extend: func [
 	word [any-word!]
 	val
 ][
-	if :val [append obj reduce [to-set-word word :val]]
+	if :val [put obj to-set-word word :val]
 	:val
 ]
 
@@ -57,9 +58,7 @@ rejoin: func [
 	;/with "separator"
 ][
 	if empty? block: reduce block [return block]
-	append either series? first block [copy first block][
-		form first block
-	] next block
+	append either series? block/1 [copy block/1][form block/1] next block
 ]
 
 remold: func [
@@ -68,8 +67,10 @@ remold: func [
 	/only {For a block value, mold only its contents, no outer []}
 	/all  {Mold in serialized format}
 	/flat {No indentation}
+	/part {Limit the length of the result}
+	limit [integer!]
 ][
-	apply :mold [reduce :value only all flat]
+	mold/:only/:all/:flat/:part reduce :value limit
 ]
 
 charset: func [
@@ -243,7 +244,7 @@ reword: func [
 				if any [set-word? :w lit-word? :w] [w: to word! :w]
 				lib/case [
 					wtype = type? :w none
-					wtype <> binary! [w: to wtype :w]
+					wtype <> binary! [w: mold :w]
 					any-string? :w [w: to binary! :w]
 					'else [w: to binary! to string! :w]
 				]
@@ -286,7 +287,7 @@ reword: func [
 		if wtype <> type? char [char: to wtype char]
 		[a: any [to char b: char [escape | none]] to end fout]
 	]
-	either case [parse/case source rule] [parse source rule]
+	parse/:case source rule
 	; Return end of output with /into, head otherwise
 	either into [output] [head output]
 ]
@@ -294,7 +295,7 @@ reword: func [
 
 move: func [
 	"Move a value or span of values in a series."
-	source [series!] "Source series (modified)"
+	source [series! gob!] "Source series (modified)"
 	offset [integer!] "Offset to move by, or index to move to"
 	/part "Move part of a series"
 	length [integer!] "The length of the part to move"
@@ -359,7 +360,7 @@ deduplicate: func [
     /skip "Treat the series as records of fixed size"
     size [integer!]
 ] [
-    head insert set also apply :unique [set case skip size] clear set
+    head insert set also unique/:case/:skip :set :size clear set
 ]
 
 alter: func [
@@ -375,9 +376,7 @@ alter: func [
 			append series :value true
 		]
 	]
-	to logic! unless remove (
-		either case [find/case series :value] [find series :value]
-	) [append series :value]
+	to logic! unless remove (find/:case series :value) [append series :value]
 ]
 
 supplement: func [
@@ -389,9 +388,7 @@ supplement: func [
 ][
 	result: series ; to return series at same position if value is found
 	any[
-		either case [
-			find/case series :value
-		][  find      series :value ]
+		find/:case series :value
 		append series :value
 	]
 	result
@@ -405,7 +402,7 @@ collect: func [
 ][
 	unless output [output: make block! 16]
 	do func [keep] body func [value [any-type!] /only] [
-		output: apply :insert [output :value none none only]
+		output: insert/:only output :value
 		:value
 	]
 	either into [output] [head output]
@@ -433,7 +430,7 @@ format: function [
 	/pad p {Pattern to use instead of spaces}
 ][
 	p: any [p #" "]
-	unless block? :rules [rules: reduce [:rules]]
+	unless block? :rules  [rules:  reduce [:rules ]]
 	unless block? :values [values: reduce [:values]]
 
 	; Compute size of output (for better mem usage):
@@ -445,6 +442,7 @@ format: function [
 			string!  [length? rule]
 			char!    [1]
 			money!   [2 + length? form rule]
+			tag!     [length? rule] ;@@ does not handle variadic length results (for example month names)!
 		][0]
 	]
 
@@ -469,7 +467,19 @@ format: function [
 			]
 			string!  [out: change out rule]
 			char!    [out: change out rule]
-			money!   [out: change out replace rejoin ["^[[" next form rule #"m"] #"." #";"]
+			money!   [out: change out replace ajoin ["^[[" next form rule #"m"] #"." #";"]
+			tag! [
+				out: change out switch/default type?/word val: first+ values [
+					date! time! [
+						format-date-time val rule
+					]
+					;TODO: other types formatting...
+				][	
+					; when there is not expected value, ignore it and output just the rule
+					-- values
+					form rule
+				]
+			]
 		]
 	]
 
@@ -477,6 +487,71 @@ format: function [
 	if not tail? values [append out values]
 	head out
 ]
+
+format-date-time: function/with [
+	value [date! time!]
+	rule  [string! tag!]
+][
+	;-- inspired by https://github.com/greggirwin/red-formatting/blob/master/format-date-time.red
+	tmp: to string! rule
+	either time? value [
+		d: now
+		t: value
+	][
+		d: value
+		t: any [d/time 0:0:0]
+	]
+	either parse/case tmp [
+	any [
+		  change "dddd" (pick system/locale/days d/weekday)
+		| change "ddd"  (copy/part pick system/locale/days d/weekday 3)
+		| change "dd"   (pad/with d/day -2 #"0")
+		| change #"d"   (d/day)
+		| change "mmmm" (pick system/locale/months d/month)
+		| change "mmm"  (copy/part pick system/locale/months d/month 3)
+		| change "mm"   (pad/with either as-time? [t/minute][d/month] -2 #"0") (as-time?: true)
+		| change #"m"   (either as-time? [t/minute][d/month]) (as-time?: true)
+		| change "yyyy" (pad/with d/year -4 #"0")
+		| change "yy"   (skip tail form d/year -2)
+		| change #"y"   (d/year)
+		| change "hh"   (pad/with t/hour -2 #"0") (as-time?: true)
+		| change #"h"   (t/hour) (as-time?: true)
+		|
+		[ change "ss"   (pad/with to integer! t/second -2 #"0")
+		| change #"s"   (to integer! t/second)
+		] opt [
+			#"." s: some #"s" e: (
+				n: (index? e) - (index? s)
+				v: any [find/tail form t/second #"." ""]
+				either n <= length? v [
+					; trim result if it is too long
+					clear skip v n
+				][	; or pad it if too short
+					v: pad/with v n #"0"
+				]
+				change/part s v e
+			)
+		]
+		| change "MM"   (pad/with d/month -2 #"0") (as-time?: true)
+		| change #"M"   (d/month) (as-time?: true)
+		| change [opt #"±" "zz:zz"] (zone/with d/zone #":")
+		| change [opt #"±" "zzzz" ] (zone d/zone)
+		| change "unixepoch" (to integer! d)
+		| skip ;@@ or better limit to just some delimiters?
+		]
+	][ tmp ][ form rule ]
+][
+	zone: function[z [time! none!] /with sep][
+		z: any [z 0:0]
+		ajoin [
+			pick "-+" negative? z
+			pad/with absolute z/hour -2 #"0"
+			any [sep ""]
+			pad/with z/minute 2 #"0"
+		]
+	]
+]
+
 
 printf: func [
 	"Formatted print."
@@ -502,21 +577,20 @@ split: function [
 		return res
 	]
 	if at [
-		return reduce either integer? dlm [
-			[
-				copy/part series dlm
-				copy lib/at series dlm + 1
+		unless integer? :dlm [
+			return reduce either dlm: find series :dlm [
+				dlm: index? dlm
+				[
+					copy/part   series dlm - 1 ; excluding the delimiter
+					copy lib/at series dlm + 1
+				]
+			][
+				[copy series]
 			]
-		][
-			;-- Without adding a /tail refinement, we don't know if they want
-			;	to split at the head or tail of the delimiter, so we'll exclude
-			;	the delimiter from the result entirely. They know what the dlm
-			;	was that they passed in, so they can add it back to either side
-			;	of the result if they want to.
-			[
-				copy/part series find series :dlm
-				copy find/tail series :dlm
-			]
+		]
+		return reduce [
+			copy/part   series dlm
+			copy lib/at series dlm + 1
 		]
 	]
 	;print ['split 'parts? parts mold series mold dlm]
@@ -596,6 +670,55 @@ split: function [
 
 		res
 	]
+]
+
+combine: func [
+	"Combines a block of values with a possibility to ignore by its types. Content of parens is evaluated."
+	data  [block!] "Input values"
+	/with "Add delimiter between values"
+	 delimiter 
+	/into "Output results into a serie of required type"
+	 out [series!]
+	/ignore  "Fine tune, what value types will be ignored"
+	 ignored [typeset!] "Default is: #[typeset! [none! unset! error! any-function!]]"
+	/only "Insert a block as a single value"
+	/local val rule append-del append-val block-rule
+][
+	out: any [out make string! 15]
+	ignored: any [ignored make typeset! [none! unset! error! any-function!]]
+
+	append-del: either/only delimiter [
+		(unless empty? out [append out :delimiter])
+	][]
+
+	append-val: [
+		opt [
+			if (not find ignored type? :val)[
+				append-del (append out :val)
+			]
+		]
+	]
+
+	block-rule: either/only only [
+		set val block! append-del (
+			if any-string? out [val: mold val]
+			append/only out :val
+		)
+	][	ahead block! into rule]
+
+	parse data rule: [
+		any [
+			block-rule
+			|
+			[
+				  set val paren!    (set/any 'val try :val)
+				| set val get-word! (set/any 'val get/any :val)
+				| set val skip
+			]
+			append-val
+		]
+	]
+	out
 ]
 
 find-all: func [

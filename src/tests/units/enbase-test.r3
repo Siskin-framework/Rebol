@@ -35,6 +35,34 @@ Rebol [
 	--test-- "enbase-64" --assert #{00FF00} = debase enbase next bin 64 64
 ===end-group===
 
+===start-group=== "enbase/flat"
+	bin: read/binary %units/files/rbgw.gif
+	--test-- "enbase/flat 2"
+		--assert (enbase bin 2) == {
+0100011101001001010001100011100000110111011000010000001000000000
+0000001000000000111100100000000000000000110010000000000000000000
+0000000000000000110010000000000011001000000000001111111111111111
+1111111100100110010001011100100100100110010001011100100100100110
+0100010111001001001001100100010111001001001000011111100100000100
+0000000100000000000000000000010000000000001011000000000000000000
+0000000000000000000000100000000000000010000000000000000000000011
+000000110000100000100001100100110000000000111011}
+		--assert (enbase/flat bin 2) == {0100011101001001010001100011100000110111011000010000001000000000000000100000000011110010000000000000000011001000000000000000000000000000000000001100100000000000110010000000000011111111111111111111111100100110010001011100100100100110010001011100100100100110010001011100100100100110010001011100100100100001111110010000010000000001000000000000000000000100000000000010110000000000000000000000000000000000000000100000000000000010000000000000000000000011000000110000100000100001100100110000000000111011}
+	
+	--test-- "enbase/flat 16"
+		--assert (enbase bin 16) == {
+47494638376102000200F20000C800000000C800C800FFFFFF2645C92645C926
+45C92645C921F90401000004002C0000000002000200000303082193003B}
+		--assert (enbase/flat bin 16) == {47494638376102000200F20000C800000000C800C800FFFFFF2645C92645C92645C92645C921F90401000004002C0000000002000200000303082193003B}
+	
+	--test-- "enbase/flat 64"
+		--assert (enbase bin 64) == {
+R0lGODdhAgACAPIAAMgAAAAAyADIAP///yZFySZFySZFySZFySH5BAEAAAQALAAA
+AAACAAIAAAMDCCGTADs=}
+		--assert (enbase/flat bin 64) == {R0lGODdhAgACAPIAAMgAAAAAyADIAP///yZFySZFySZFySZFySH5BAEAAAQALAAAAAACAAIAAAMDCCGTADs=}
+
+===end-group===
+
 ===start-group=== "debase 64"
 	--test-- "debase 64 1"          
 		--assert strict-equal? "A simple string" to string! debase "QSBzaW1wbGUgc3RyaW5n" 64
@@ -79,13 +107,24 @@ Rebol [
 		} 64]
 	--test-- "debase 64 url 3"
 		key1: "qL8R4QIcQ_ZsRqOAbeRfcZhilN_MksRtDaErMA=="
-		bin: try [debase/url key1 64]
-		--assert true? all [binary? bin key1 = enbase/url bin 64]
-		;debase is working also when input is missing the padding
 		key2: "qL8R4QIcQ_ZsRqOAbeRfcZhilN_MksRtDaErMA"
+		bin: try [debase/url key1 64]
+		--assert true? all [binary? bin key2 = enbase/url bin 64]
+		;debase is working also when input is missing the padding
 		--assert bin = try [debase/url key2 64]
 
 ===end-group===
+
+
+===start-group=== "enbase 64 - safe URL variant"
+	--test-- "enbase/url"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2548
+	--assert "YQ==" == enbase "a" 64
+	--assert "YWE=" == enbase "aa" 64
+	--assert "YQ"   == enbase/url "a" 64
+	--assert "YWE"  == enbase/url "aa" 64
+===end-group===
+
 
 ===start-group=== "debase 16"
 
@@ -140,6 +179,11 @@ Rebol [
 		--assert "Zm9vZm9v"  = enbase/part "foofoo" 64 6
 		--assert "Zm9v"  = enbase/part "foošřž" 64 3
 		--assert "Zm9v"  = enbase/part skip "šřžfoo" 3 64 3
+	--test-- "enbase/part with series as a length"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2500
+		--assert "YWI=" = enbase/part s: "abcd" 64 skip s 2
+		--assert "Y2Q=" = enbase/part s: tail "abcd" 64 skip s -2
+		--assert "Y2Q=" = enbase/part s: tail "abcd" 64 -2
 ===end-group===
 
 ===start-group=== "debase/part"
@@ -163,6 +207,11 @@ Rebol [
 		--assert #{666F6F666F6F}  = debase/part "Zm9vZm9v" 64 8
 		--assert #{666F6F666F6F}  = debase/part "Zm9vZm9v!!!" 64 8
 		--assert #{666F6F666F6F}  = debase/part "Zm9vZm9vščř" 64 8
+	--test-- "debase/part with series as a length"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2500
+		--assert #{6162} = debase/part s: "YWI=XXXX" 64 find s #"X"
+		--assert #{6162} = debase/part s: tail "XXXYWI=" 64 -4
+		--assert #{6162} = debase/part s: tail "XXXYWI=" 64 find/tail/reverse s #"X"
 ===end-group===
 
 if any [
@@ -236,6 +285,54 @@ if any [
 			--assert error? try [debase {s8W-"} 85]
 		--test-- "debase/part 85"
 			--assert #{68656C6C6F} = debase/part "BOu!rDZ!!!!!" 85 7
+	===end-group===
+]
+
+if any [
+	not error? err: try [enbase #{} 36]
+	err/id <> 'feature-na
+][
+	base36-int-tests: [
+		0          "0"
+		1          "1"
+		36         "10"
+		64         "1S"
+		1024       "SG"
+		19930503   "BV6H3"
+		1843067821 "UHBC8D"
+		3951668550778163018 "U0TPLAQIV70Q"
+	]
+	
+	===start-group=== "de/enbase-36"
+		--test-- "enbase debase 36"
+			--assert ""  = enbase debase ""  36 36
+			--assert "0" = enbase debase "0" 36 36
+			--assert "1" = enbase debase "1" 36 36
+			--assert "0" = enbase debase "000" 36 36
+			--assert "1" = enbase debase "001" 36 36
+
+		--test-- "enbase int 36"    
+			foreach [inp out] base36-int-tests [
+				--assert out = enbase to binary! inp 36
+			]
+
+		--test-- "debase int 36"    
+			foreach [out inp] base36-int-tests [
+				--assert out = to integer! debase inp 36
+			]
+
+		--test-- "enbase 36"
+			--assert "0" = enbase #{00} 36
+			--assert "0" = enbase #{00000000} 36
+			--assert "0" = enbase #{0000000000000000} 36
+			--assert "3W5E11264SGSF" = enbase #{FFFFFFFFFFFFFFFF} 36
+
+		--test-- "debase 36 errors"
+			--assert all [error? e: try [debase "00000000000000" 36] e/id = 'invalid-data]
+			--assert all [error? e: try [debase "0.0" 36] e/id = 'invalid-data]
+		--test-- "enbase 36 errors"
+			--assert all [error? e: try [enbase #{000000000000000000} 36] e/id = 'out-of-range]
+
 	===end-group===
 ]
 

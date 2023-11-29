@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -138,19 +139,20 @@ REBREQ *req;		//!!! move this global
 
 /***********************************************************************
 **
-*/	static int Event_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int Event_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 **		Internal port handler for events.
 **
 ***********************************************************************/
 {
+	REBSER *port;
 	REBVAL *spec;
 	REBVAL *state;
 	REBCNT result;
 	REBVAL *arg;
 	REBVAL save_port;
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 
 	arg = D_ARG(2);
 	*D_RET = *D_ARG(1);
@@ -219,7 +221,7 @@ act_blk:
 	case A_FIND: // add it
 
 	default:
-		Trap_Action(REB_PORT, action);
+		Trap1(RE_NO_PORT_ACTION, Get_Action_Word(action));
 	}
 
 	return R_RET;

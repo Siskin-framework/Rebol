@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2019 Rebol Open Source Developers
+**  Copyright 2012-2022 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,10 +53,11 @@
 
 /***********************************************************************
 **
-*/	static int MIDI_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int MIDI_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 ***********************************************************************/
 {
+	REBSER *port;
 	REBREQ *req;
 	REBINT result;
 	REBVAL *arg;
@@ -66,7 +67,7 @@
 
 	//printf("MIDI_Actor action: %i\n", action);
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 
 	req = Use_Port_State(port, RDI_MIDI, sizeof(REBREQ));
 
@@ -195,7 +196,7 @@
 		return R_NONE;
 
 	default:
-		Trap_Action(REB_PORT, action);
+		Trap1(RE_NO_PORT_ACTION, Get_Action_Word(action));
 	}
 
 	return R_ARG1; // port

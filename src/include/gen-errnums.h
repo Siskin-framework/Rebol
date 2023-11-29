@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Error Structure and Constants
-**  Build: 3.7.2
-**  Date:  5-Jan-2022
+**  Build: 3.15.0
+**  Date:  29-Nov-2023
 **  File:  errnums.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -46,7 +46,7 @@
 {
 	RE_BREAK = 0,                 // 0 "no loop to break"
 	RE_RETURN,                    // 1 "return or exit not in function"
-	RE_THROW,                     // 2 ["no catch for throw:" :arg1]
+	RE_THROW,                     // 2 ["no catch for throw:" :arg2 "with value:" :arg1]
 	RE_CONTINUE,                  // 3 "no loop to continue"
 	RE_HALT,                      // 4 ["halted by user or script"]
 	RE_QUIT,                      // 5 ["user script quit"]
@@ -126,8 +126,12 @@
 	RE_PARSE_VARIABLE,            // 356 ["PARSE - expected a variable, not:" :arg1]
 	RE_PARSE_COMMAND,             // 357 ["PARSE - command cannot be used as variable:" :arg1]
 	RE_PARSE_SERIES,              // 358 ["PARSE - input must be a series:" :arg1]
-	RE_INVALID_HANDLE,            // 359 "invalid handle"
-	RE_INVALID_VALUE_FOR,         // 360 ["invalid value" :arg1 "for:" :arg2]
+	RE_PARSE_NO_COLLECT,          // 359 "PARSE - KEEP is used without a wrapping COLLECT"
+	RE_PARSE_INTO_BAD,            // 360 {PARSE - COLLECT INTO/AFTER expects a series! argument}
+	RE_PARSE_INTO_TYPE,           // 361 {PARSE - COLLECT INTO/AFTER expects a series! of compatible datatype}
+	RE_INVALID_HANDLE,            // 362 "invalid handle"
+	RE_INVALID_VALUE_FOR,         // 363 ["invalid value" :arg1 "for:" :arg2]
+	RE_HANDLE_EXISTS,             // 364 ["handle already exists under id" :arg1 "and have different size"]
 	RE_SCRIPT_MAX,
 
 	RE_ZERO_DIVIDE = 400,         // 400 "attempt to divide by zero"
@@ -140,38 +144,39 @@
 	RE_ALREADY_OPEN,              // 502 ["port is already open:" :arg1]
 	RE_NO_CONNECT,                // 503 ["cannot connect:" :arg1 "reason:" :arg2]
 	RE_NOT_CONNECTED,             // 504 ["port is not connected:" :arg1]
-	RE_NO_SCRIPT,                 // 505 ["script not found:" :arg1]
-	RE_NO_SCHEME_NAME,            // 506 ["new scheme must have a name:" :arg1]
-	RE_NO_SCHEME,                 // 507 ["missing port scheme:" :arg1]
-	RE_INVALID_SPEC,              // 508 ["invalid spec or options:" :arg1]
-	RE_INVALID_PORT,              // 509 ["invalid port object (invalid field values)"]
-	RE_INVALID_ACTOR,             // 510 ["invalid port actor (must be native or object)"]
-	RE_INVALID_PORT_ARG,          // 511 ["invalid port argument:" arg1]
-	RE_NO_PORT_ACTION,            // 512 ["this port does not support:" :arg1]
-	RE_PROTOCOL,                  // 513 ["protocol error:" :arg1]
-	RE_INVALID_CHECK,             // 514 ["invalid checksum (tampered file):" :arg1]
-	RE_WRITE_ERROR,               // 515 ["write failed:" :arg1 "reason:" :arg2]
-	RE_READ_ERROR,                // 516 ["read failed:" :arg1 "reason:" :arg2]
-	RE_READ_ONLY,                 // 517 ["read-only - write not allowed:" :arg1]
-	RE_NO_BUFFER,                 // 518 ["port has no data buffer:" :arg1]
-	RE_TIMEOUT,                   // 519 ["port action timed out:" :arg1]
-	RE_CANNOT_CLOSE,              // 520 ["cannot close port" :arg1 "reason:" :arg2]
-	RE_NO_CREATE,                 // 521 ["cannot create:" :arg1]
-	RE_NO_DELETE,                 // 522 ["cannot delete:" :arg1]
-	RE_NO_RENAME,                 // 523 ["cannot rename:" :arg1]
-	RE_BAD_FILE_PATH,             // 524 ["bad file path:" :arg1]
-	RE_BAD_FILE_MODE,             // 525 ["bad file mode:" :arg1]
-	RE_SECURITY,                  // 526 ["security violation:" :arg1 " (refer to SECURE function)"]
-	RE_SECURITY_LEVEL,            // 527 ["attempt to lower security to" :arg1]
-	RE_SECURITY_ERROR,            // 528 ["invalid" :arg1 "security policy:" :arg2]
-	RE_NO_CODEC,                  // 529 ["cannot decode or encode (no codec):" :arg1]
-	RE_BAD_MEDIA,                 // 530 ["bad media data (corrupt image, sound, video)"]
-	RE_NO_EXTENSION,              // 531 ["cannot open extension:" :arg1]
-	RE_BAD_EXTENSION,             // 532 ["invalid extension format:" :arg1]
-	RE_EXTENSION_INIT,            // 533 ["extension cannot be initialized (check version):" :arg1]
-	RE_CALL_FAIL,                 // 534 ["external process failed:" :arg1]
-	RE_PERMISSION_DENIED,         // 535 ["permission denied"]
-	RE_PROCESS_NOT_FOUND,         // 536 ["process not found:" :arg1]
+	RE_NOT_READY,                 // 505 ["port is not ready:" :arg1]
+	RE_NO_SCRIPT,                 // 506 ["script not found:" :arg1]
+	RE_NO_SCHEME_NAME,            // 507 ["new scheme must have a name:" :arg1]
+	RE_NO_SCHEME,                 // 508 ["missing port scheme:" :arg1]
+	RE_INVALID_SPEC,              // 509 ["invalid spec or options:" :arg1]
+	RE_INVALID_PORT,              // 510 ["invalid port object (invalid field values)"]
+	RE_INVALID_ACTOR,             // 511 ["invalid port actor (must be native or object)"]
+	RE_INVALID_PORT_ARG,          // 512 ["invalid port argument:" arg1]
+	RE_NO_PORT_ACTION,            // 513 ["this port does not support:" :arg1]
+	RE_PROTOCOL,                  // 514 ["protocol error:" :arg1]
+	RE_INVALID_CHECK,             // 515 ["invalid checksum (tampered file):" :arg1]
+	RE_WRITE_ERROR,               // 516 ["write failed:" :arg1 "reason:" :arg2]
+	RE_READ_ERROR,                // 517 ["read failed:" :arg1 "reason:" :arg2]
+	RE_READ_ONLY,                 // 518 ["read-only - write not allowed:" :arg1]
+	RE_NO_BUFFER,                 // 519 ["port has no data buffer:" :arg1]
+	RE_TIMEOUT,                   // 520 ["port action timed out:" :arg1]
+	RE_CANNOT_CLOSE,              // 521 ["cannot close port" :arg1 "reason:" :arg2]
+	RE_NO_CREATE,                 // 522 ["cannot create:" :arg1]
+	RE_NO_DELETE,                 // 523 ["cannot delete:" :arg1]
+	RE_NO_RENAME,                 // 524 ["cannot rename:" :arg1]
+	RE_BAD_FILE_PATH,             // 525 ["bad file path:" :arg1]
+	RE_BAD_FILE_MODE,             // 526 ["bad file mode:" :arg1]
+	RE_SECURITY,                  // 527 ["security violation:" :arg1 " (refer to SECURE function)"]
+	RE_SECURITY_LEVEL,            // 528 ["attempt to lower security to" :arg1]
+	RE_SECURITY_ERROR,            // 529 ["invalid" :arg1 "security policy:" :arg2]
+	RE_NO_CODEC,                  // 530 ["cannot decode or encode (no codec):" :arg1]
+	RE_BAD_MEDIA,                 // 531 ["bad media data (corrupt image, sound, video)"]
+	RE_NO_EXTENSION,              // 532 ["cannot open extension:" :arg1 "reason:" :arg2]
+	RE_BAD_EXTENSION,             // 533 ["invalid extension format:" :arg1]
+	RE_EXTENSION_INIT,            // 534 ["extension cannot be initialized (check version):" :arg1]
+	RE_CALL_FAIL,                 // 535 ["external process failed:" :arg1]
+	RE_PERMISSION_DENIED,         // 536 ["permission denied"]
+	RE_PROCESS_NOT_FOUND,         // 537 ["process not found:" :arg1]
 	RE_ACCESS_MAX,
 
 	RE_COMMAND_FAIL = 600,        // 600 [:arg1]

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -166,8 +167,8 @@ static REBSER *make_string(REBVAL *arg, REBOOL make)
 		ser = Copy_String(VAL_SERIES(arg), VAL_INDEX(arg), VAL_LEN(arg));
 	}
 	// MAKE/TO <type> <any-word>
-	else if (ANY_WORD(arg)) {
-		ser = Copy_Mold_Value(arg, TRUE);
+	else if (ANY_WORD(arg) || ANY_PATH(arg)) {
+		ser = Copy_Form_Value(arg, TRUE);
 		//ser = Append_UTF8(0, Get_Word_Name(arg), -1);
 	}
 	// MAKE/TO <type> #"A"
@@ -233,7 +234,7 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	// MAKE/TO BINARY! <vector!>
 	case REB_VECTOR:
 		// result is in little-endian!
-		ser = Copy_Bytes(VAL_BIN_DATA(arg), VAL_LEN(arg) * VAL_VEC_WIDTH(arg));
+		ser = Copy_Bytes(VAL_DATA(arg), VAL_LEN(arg) * VAL_VEC_WIDTH(arg));
 		break;
 
 	case REB_BLOCK:
@@ -502,9 +503,9 @@ static struct {
 		}
 	}
 	else if (ANY_BINSTR(val)) {
-		i = VAL_INDEX(val);
-		if (i >= VAL_TAIL(val)) return PE_BAD_SET;
-		c = GET_ANY_CHAR(VAL_SERIES(val), i);
+		// for example: s: "abc" s/2: "xyz" s == "axc"
+		if (VAL_INDEX(val) >= VAL_TAIL(val)) return PE_BAD_SET;
+		c = GET_ANY_CHAR(VAL_SERIES(val), VAL_INDEX(val));
 	}
 	else
 		return PE_BAD_SELECT;
@@ -583,6 +584,8 @@ static struct {
 	if (action != A_MAKE && action != A_TO) {
 		index = (REBINT)VAL_INDEX(value);
 		tail  = (REBINT)VAL_TAIL(value);
+		if (index > tail)
+			VAL_INDEX(value) = index = tail;
 	}
 
 	// Check must be in this order (to avoid checking a non-series value);
@@ -632,7 +635,7 @@ find:
 
 		if (ANY_BINSTR(arg)) len = VAL_LEN(arg);
 
-		if (args & AM_FIND_PART) tail = index + Partial(value, 0, D_ARG(ARG_FIND_LENGTH), 0);
+		if (args & AM_FIND_PART) tail = index + Partial(value, 0, D_ARG(ARG_FIND_RANGE), 0);
 		ret = 1; // skip size
 		if (args & AM_FIND_SKIP) {
 			ret = Partial(value, 0, D_ARG(ARG_FIND_SIZE), 0);
@@ -716,6 +719,7 @@ zero_str:
 		index = VAL_INDEX(value); // /part can change index
 
 		// take/last:
+		if (tail <= index) goto is_none;
 		if (D_REF(5)) index = tail - len;
 		if (index < 0 || index >= tail) {
 			if (!D_REF(2)) goto is_none;
@@ -794,8 +798,10 @@ zero_str:
 			(args & (AM_TRIM_HEAD | AM_TRIM_TAIL | AM_TRIM_LINES | AM_TRIM_ALL | AM_TRIM_WITH)))
 		)
 			Trap0(RE_BAD_REFINES);
-
-		Trim_String(VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), args, D_ARG(ARG_TRIM_STR));
+		if (IS_BINARY(value))
+			Trim_Binary(VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), args, D_ARG(ARG_TRIM_STR));
+		else
+			Trim_String(VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), args, D_ARG(ARG_TRIM_STR));
 		break;
 
 	case A_SWAP:

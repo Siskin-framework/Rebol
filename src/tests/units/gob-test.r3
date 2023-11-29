@@ -26,6 +26,23 @@ Rebol [
 		--assert 1   = indexz? atz g 1
 ===end-group===
 
+
+===start-group=== "MOVE gob!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1796
+	g: make gob! [] 
+	append g make gob! 1x1
+	append g make gob! 2x2
+	append g make gob! 3x3
+	--test-- "move gob!"
+		move g 1 
+		--assert {[make gob! [offset: 0x0 size: 2x2] make gob! [offset: 0x0 size: 1x1] make gob! [offset: 0x0 size: 3x3]]} = mold/flat g/pane
+		move g -1
+		--assert {[make gob! [offset: 0x0 size: 1x1] make gob! [offset: 0x0 size: 3x3] make gob! [offset: 0x0 size: 2x2]]} = mold/flat g/pane
+		move g 2
+		--assert {[make gob! [offset: 0x0 size: 3x3] make gob! [offset: 0x0 size: 2x2] make gob! [offset: 0x0 size: 1x1]]} = mold/flat g/pane
+===end-group===
+
+
 ===start-group=== "gob issues"
 	--test-- "issue-185"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/185
@@ -107,6 +124,55 @@ Rebol [
 			error? e: try [make gob! append [data:] make unset! none]
 			e/id = 'need-value
 		]
+	--test-- "issue-992"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/992
+		--assert gob? load mold/all make gob! []
+
+	--test-- "first+ gob!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/810
+		foreach w [a b c] [set w make gob! compose [text: (to-string w)]]
+		repend a [b c]
+		--assert b = first+ a
+		--assert c = first+ a
+		--assert none? first+ a
+
+	--test-- "invalid pick/poke"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1379
+		g: make gob! []
+		--assert all [error? e: try [poke g 'offset 1x1] e/id = 'invalid-arg]
+		--assert all [error? e: try [pick g 'offset    ] e/id = 'invalid-arg]
+
+	--test-- "equality"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1490
+		--assert not equal? (make gob! []) (make gob! []) ; not equal by design
+
+	--test-- "take gob"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1797
+		g: make gob! []
+		a: make gob! [text: "A"]
+		b: make gob! [text: "B"]
+		c: make gob! [text: "C"]
+		clear g repend g [a b c]
+		--assert all [
+			1 = index? g
+			b = take next g
+			1 = index? g
+			2 = length? g
+		]
+		--assert all [
+			c = first take/part next g 1
+			1 = index? g
+			1 = length? g
+		]
+		--assert none? take tail g
+
+		clear g repend g [a b c]
+		--assert all [
+			(reduce [b c]) = take/part next g 10
+			1 = index? g
+			1 = length? g
+		]
+		
 
 ===end-group===
 

@@ -1,5 +1,5 @@
 REBOL [
-	Title:   "REBOL 3 codec: PuTTY Private Key"
+	Title:   "Codec: PuTTY Private Key"
 	Author:  "Oldes"
 	Rights:  "Copyright (C) 2020 Oldes. All rights reserved."
 	License: "BSD-3"
@@ -27,7 +27,7 @@ register-codec [
 		 sp:   charset " ^-^/^M"
 		!sp:   complement sp
 		!crlf: complement charset "^M^/"
-		try/except [
+		try/with [
 			parse data [
 				"PuTTY-User-Key-File-" ["1:" (vers: 1) | "2:" (vers: 2)]
 					any sp copy type some !sp some sp
@@ -63,14 +63,16 @@ register-codec [
 			pri: debase pri 64
 
 			if encr = "aes256-cbc" [
-				try/except [
+				try/with [
 					pass: either password [copy pass][
 						ask/hide ajoin ["Key password for " mold comm ": "]
 					]
 					key: join checksum join #{00000000} pass 'sha1
 					          checksum join #{00000001} pass 'sha1
-					key: aes/decrypt/key copy/part key 32 none
-					pri: aes/decrypt/stream key pri
+					aes: open crypt:aes-256-cbc#decrypt
+					modify aes 'key copy/part key 32
+					pri: take write aes :pri
+					close aes
 				][
 					;clean pass data in memory
 					forall pass [pass/1: random 255]

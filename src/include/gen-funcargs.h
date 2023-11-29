@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Function Argument Enums
-**  Build: 3.7.2
-**  Date:  5-Jan-2022
+**  Build: 3.15.0
+**  Date:  29-Nov-2023
 **  File:  func-args.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: pre-make)
@@ -19,11 +19,34 @@
 ***********************************************************************/
 
 
+enum act_append_arg {
+	ARG_APPEND_0,
+	ARG_APPEND_SERIES,
+	ARG_APPEND_VALUE,
+	ARG_APPEND_PART,
+	ARG_APPEND_RANGE,
+	ARG_APPEND_ONLY,
+	ARG_APPEND_DUP,
+	ARG_APPEND_COUNT,
+};
+
+enum act_append_mask {
+	AM_APPEND_SERIES = 1 << 0,
+	AM_APPEND_VALUE = 1 << 1,
+	AM_APPEND_PART = 1 << 2,
+	AM_APPEND_RANGE = 1 << 3,
+	AM_APPEND_ONLY = 1 << 4,
+	AM_APPEND_DUP = 1 << 5,
+	AM_APPEND_COUNT = 1 << 6,
+};
+
+#define ALL_APPEND_REFS (AM_APPEND_PART|AM_APPEND_ONLY|AM_APPEND_DUP)
+
 enum act_copy_arg {
 	ARG_COPY_0,
 	ARG_COPY_VALUE,
 	ARG_COPY_PART,
-	ARG_COPY_LENGTH,
+	ARG_COPY_RANGE,
 	ARG_COPY_DEEP,
 	ARG_COPY_TYPES,
 	ARG_COPY_KINDS,
@@ -32,7 +55,7 @@ enum act_copy_arg {
 enum act_copy_mask {
 	AM_COPY_VALUE = 1 << 0,
 	AM_COPY_PART = 1 << 1,
-	AM_COPY_LENGTH = 1 << 2,
+	AM_COPY_RANGE = 1 << 2,
 	AM_COPY_DEEP = 1 << 3,
 	AM_COPY_TYPES = 1 << 4,
 	AM_COPY_KINDS = 1 << 5,
@@ -45,7 +68,7 @@ enum act_find_arg {
 	ARG_FIND_SERIES,
 	ARG_FIND_VALUE,
 	ARG_FIND_PART,
-	ARG_FIND_LENGTH,
+	ARG_FIND_RANGE,
 	ARG_FIND_ONLY,
 	ARG_FIND_CASE,
 	ARG_FIND_SAME,
@@ -64,7 +87,7 @@ enum act_find_mask {
 	AM_FIND_SERIES = 1 << 0,
 	AM_FIND_VALUE = 1 << 1,
 	AM_FIND_PART = 1 << 2,
-	AM_FIND_LENGTH = 1 << 3,
+	AM_FIND_RANGE = 1 << 3,
 	AM_FIND_ONLY = 1 << 4,
 	AM_FIND_CASE = 1 << 5,
 	AM_FIND_SAME = 1 << 6,
@@ -103,7 +126,7 @@ enum act_select_arg {
 	ARG_SELECT_SERIES,
 	ARG_SELECT_VALUE,
 	ARG_SELECT_PART,
-	ARG_SELECT_LENGTH,
+	ARG_SELECT_RANGE,
 	ARG_SELECT_ONLY,
 	ARG_SELECT_CASE,
 	ARG_SELECT_SAME,
@@ -120,7 +143,7 @@ enum act_select_mask {
 	AM_SELECT_SERIES = 1 << 0,
 	AM_SELECT_VALUE = 1 << 1,
 	AM_SELECT_PART = 1 << 2,
-	AM_SELECT_LENGTH = 1 << 3,
+	AM_SELECT_RANGE = 1 << 3,
 	AM_SELECT_ONLY = 1 << 4,
 	AM_SELECT_CASE = 1 << 5,
 	AM_SELECT_SAME = 1 << 6,
@@ -140,7 +163,7 @@ enum act_insert_arg {
 	ARG_INSERT_SERIES,
 	ARG_INSERT_VALUE,
 	ARG_INSERT_PART,
-	ARG_INSERT_LENGTH,
+	ARG_INSERT_RANGE,
 	ARG_INSERT_ONLY,
 	ARG_INSERT_DUP,
 	ARG_INSERT_COUNT,
@@ -150,7 +173,7 @@ enum act_insert_mask {
 	AM_INSERT_SERIES = 1 << 0,
 	AM_INSERT_VALUE = 1 << 1,
 	AM_INSERT_PART = 1 << 2,
-	AM_INSERT_LENGTH = 1 << 3,
+	AM_INSERT_RANGE = 1 << 3,
 	AM_INSERT_ONLY = 1 << 4,
 	AM_INSERT_DUP = 1 << 5,
 	AM_INSERT_COUNT = 1 << 6,
@@ -216,6 +239,7 @@ enum act_read_arg {
 	ARG_READ_STRING,
 	ARG_READ_BINARY,
 	ARG_READ_LINES,
+	ARG_READ_ALL,
 };
 
 enum act_read_mask {
@@ -227,9 +251,10 @@ enum act_read_mask {
 	AM_READ_STRING = 1 << 5,
 	AM_READ_BINARY = 1 << 6,
 	AM_READ_LINES = 1 << 7,
+	AM_READ_ALL = 1 << 8,
 };
 
-#define ALL_READ_REFS (AM_READ_PART|AM_READ_SEEK|AM_READ_STRING|AM_READ_BINARY|AM_READ_LINES)
+#define ALL_READ_REFS (AM_READ_PART|AM_READ_SEEK|AM_READ_STRING|AM_READ_BINARY|AM_READ_LINES|AM_READ_ALL)
 
 enum act_write_arg {
 	ARG_WRITE_0,
@@ -244,6 +269,7 @@ enum act_write_arg {
 	ARG_WRITE_ACCESS,
 	ARG_WRITE_LINES,
 	ARG_WRITE_BINARY,
+	ARG_WRITE_ALL,
 };
 
 enum act_write_mask {
@@ -258,9 +284,10 @@ enum act_write_mask {
 	AM_WRITE_ACCESS = 1 << 8,
 	AM_WRITE_LINES = 1 << 9,
 	AM_WRITE_BINARY = 1 << 10,
+	AM_WRITE_ALL = 1 << 11,
 };
 
-#define ALL_WRITE_REFS (AM_WRITE_PART|AM_WRITE_SEEK|AM_WRITE_APPEND|AM_WRITE_ALLOW|AM_WRITE_LINES|AM_WRITE_BINARY)
+#define ALL_WRITE_REFS (AM_WRITE_PART|AM_WRITE_SEEK|AM_WRITE_APPEND|AM_WRITE_ALLOW|AM_WRITE_LINES|AM_WRITE_BINARY|AM_WRITE_ALL)
 
 enum act_query_arg {
 	ARG_QUERY_0,
@@ -281,7 +308,7 @@ enum act_take_arg {
 	ARG_TAKE_0,
 	ARG_TAKE_SERIES,
 	ARG_TAKE_PART,
-	ARG_TAKE_LENGTH,
+	ARG_TAKE_RANGE,
 	ARG_TAKE_DEEP,
 	ARG_TAKE_LAST,
 };
@@ -289,7 +316,7 @@ enum act_take_arg {
 enum act_take_mask {
 	AM_TAKE_SERIES = 1 << 0,
 	AM_TAKE_PART = 1 << 1,
-	AM_TAKE_LENGTH = 1 << 2,
+	AM_TAKE_RANGE = 1 << 2,
 	AM_TAKE_DEEP = 1 << 3,
 	AM_TAKE_LAST = 1 << 4,
 };
@@ -300,7 +327,7 @@ enum act_remove_arg {
 	ARG_REMOVE_0,
 	ARG_REMOVE_SERIES,
 	ARG_REMOVE_PART,
-	ARG_REMOVE_LENGTH,
+	ARG_REMOVE_RANGE,
 	ARG_REMOVE_KEY,
 	ARG_REMOVE_KEY_ARG,
 };
@@ -308,7 +335,7 @@ enum act_remove_arg {
 enum act_remove_mask {
 	AM_REMOVE_SERIES = 1 << 0,
 	AM_REMOVE_PART = 1 << 1,
-	AM_REMOVE_LENGTH = 1 << 2,
+	AM_REMOVE_RANGE = 1 << 2,
 	AM_REMOVE_KEY = 1 << 3,
 	AM_REMOVE_KEY_ARG = 1 << 4,
 };
@@ -379,4 +406,48 @@ enum act_request_dir_mask {
 };
 
 #define ALL_REQUEST_DIR_REFS (AM_REQUEST_DIR_TITLE|AM_REQUEST_DIR_DIR|AM_REQUEST_DIR_KEEP)
+
+enum act_catch_arg {
+	ARG_CATCH_0,
+	ARG_CATCH_BLOCK,
+	ARG_CATCH_NAME,
+	ARG_CATCH_WORD,
+	ARG_CATCH_ALL,
+	ARG_CATCH_QUIT,
+	ARG_CATCH_WITH,
+	ARG_CATCH_CALLBACK,
+};
+
+enum act_catch_mask {
+	AM_CATCH_BLOCK = 1 << 0,
+	AM_CATCH_NAME = 1 << 1,
+	AM_CATCH_WORD = 1 << 2,
+	AM_CATCH_ALL = 1 << 3,
+	AM_CATCH_QUIT = 1 << 4,
+	AM_CATCH_WITH = 1 << 5,
+	AM_CATCH_CALLBACK = 1 << 6,
+};
+
+#define ALL_CATCH_REFS (AM_CATCH_NAME|AM_CATCH_ALL|AM_CATCH_QUIT|AM_CATCH_WITH)
+
+enum act_try_arg {
+	ARG_TRY_0,
+	ARG_TRY_BLOCK,
+	ARG_TRY_ALL,
+	ARG_TRY_WITH,
+	ARG_TRY_HANDLER,
+	ARG_TRY_EXCEPT,
+	ARG_TRY_CODE,
+};
+
+enum act_try_mask {
+	AM_TRY_BLOCK = 1 << 0,
+	AM_TRY_ALL = 1 << 1,
+	AM_TRY_WITH = 1 << 2,
+	AM_TRY_HANDLER = 1 << 3,
+	AM_TRY_EXCEPT = 1 << 4,
+	AM_TRY_CODE = 1 << 5,
+};
+
+#define ALL_TRY_REFS (AM_TRY_ALL|AM_TRY_WITH|AM_TRY_EXCEPT)
 

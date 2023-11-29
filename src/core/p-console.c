@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,10 +42,11 @@
 
 /***********************************************************************
 **
-*/	static int Console_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int Console_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 ***********************************************************************/
 {
+	REBSER *port;
 	REBREQ *req;
 	REBINT result;
     REBVAL *arg;
@@ -52,10 +54,9 @@
 	REBCNT args = 0;
 	REBVAL *spec;
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 
 	arg = D_ARG(2);
-	*D_RET = *D_ARG(1);
 
 	//O: known limitation: works only with default system's imput port (not for custom console ports) 
 	req = Host_Lib->std_io;
@@ -85,11 +86,13 @@
 
 		if (req->actual == 1 && req->data[0] == '\x1B') return R_NONE; // CTRL-C
 
+		if (GET_FLAG(req->modes, RDM_READ_LINE)) {
 #ifdef TO_WINDOWS
-		if (req->actual > 1 && GET_FLAG(req->modes, RDM_READ_LINE)) req->actual -= 2; // remove CRLF from tail
+			if (req->actual > 1) req->actual -= 2; // remove CRLF from tail
 #else
-		if (req->actual > 0) req->actual -= 1; // remove LF from tail
+			if (req->actual > 0) req->actual -= 1; // remove LF from tail
 #endif
+		}
 
 		// Convert to string or block of strings.
 		args = Find_Refines(ds, ALL_READ_REFS);
@@ -100,6 +103,10 @@
 		} else {
 			Set_Binary(ds, Copy_Bytes(req->data, req->actual));
 		}
+		return R_RET;
+
+	case A_WRITE:
+		Prin_Value(arg, 0, FALSE, FALSE);
 		break;
 
 	case A_UPDATE:
@@ -153,13 +160,17 @@
 		}
 
 		Ret_Query_Console(req, D_RET, D_ARG(ARG_QUERY_FIELD), spec);
+		return R_RET;
+
+	case A_FLUSH:
+		OS_DO_DEVICE(req, RDC_FLUSH);
 		break;
 
 	default:
-		Trap_Action(REB_PORT, action);
+		Trap1(RE_NO_PORT_ACTION, Get_Action_Word(action));
 	}
 
-	return R_RET;
+	return R_ARG1; //= port
 }
 
 /***********************************************************************

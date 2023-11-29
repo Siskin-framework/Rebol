@@ -27,9 +27,46 @@ S= $(R)/src
 USE_FLAGS=
 
 INCLUDES= \
-	-I$S/include/
+	-I$(S)/include/
 
 DEFINES= \
+	-DTO_LINUX \
+	-DMBEDTLS_ASN1_PARSE_C \
+	-DMBEDTLS_ASN1_WRITE_C \
+	-DMBEDTLS_CTR_DRBG_C \
+	-DMBEDTLS_AES_C \
+	-DMBEDTLS_DHM_C \
+	-DMBEDTLS_ECDSA_C \
+	-DMBEDTLS_ECP_C \
+	-DMBEDTLS_ECDH_C \
+	-DMBEDTLS_BIGNUM_C \
+	-DMBEDTLS_ENTROPY_C \
+	-DMBEDTLS_OID_C \
+	-DMBEDTLS_PKCS1_V15 \
+	-DMBEDTLS_ASN1_PARSE_C \
+	-DMBEDTLS_ASN1_WRITE_C \
+	-DMBEDTLS_CTR_DRBG_C \
+	-DMBEDTLS_AES_C \
+	-DMBEDTLS_DHM_C \
+	-DMBEDTLS_ECDSA_C \
+	-DMBEDTLS_ECP_C \
+	-DMBEDTLS_ECDH_C \
+	-DMBEDTLS_BIGNUM_C \
+	-DMBEDTLS_ENTROPY_C \
+	-DMBEDTLS_OID_C \
+	-DMBEDTLS_PKCS1_V15 \
+	-DMBEDTLS_ASN1_PARSE_C \
+	-DMBEDTLS_ASN1_WRITE_C \
+	-DMBEDTLS_CTR_DRBG_C \
+	-DMBEDTLS_AES_C \
+	-DMBEDTLS_DHM_C \
+	-DMBEDTLS_ECDSA_C \
+	-DMBEDTLS_ECP_C \
+	-DMBEDTLS_ECDH_C \
+	-DMBEDTLS_BIGNUM_C \
+	-DMBEDTLS_ENTROPY_C \
+	-DMBEDTLS_OID_C \
+	-DMBEDTLS_PKCS1_V15 \
 	-DREBOL_OPTIONS_FILE=\"gen-config.h\" \
 	-DENDIAN_LITTLE \
 	-DREB_EXE
@@ -105,9 +142,31 @@ OBJS = \
 	$O/src/core/m-gc.o \
 	$O/src/core/m-pools.o \
 	$O/src/core/m-series.o \
+	$O/src/core/mbedtls/aes.o \
+	$O/src/core/mbedtls/asn1parse.o \
+	$O/src/core/mbedtls/asn1write.o \
+	$O/src/core/mbedtls/bignum.o \
+	$O/src/core/mbedtls/bignum_core.o \
+	$O/src/core/mbedtls/cipher.o \
+	$O/src/core/mbedtls/cipher_wrap.o \
+	$O/src/core/mbedtls/constant_time.o \
+	$O/src/core/mbedtls/ctr_drbg.o \
+	$O/src/core/mbedtls/dhm.o \
+	$O/src/core/mbedtls/ecdh.o \
+	$O/src/core/mbedtls/ecdsa.o \
+	$O/src/core/mbedtls/ecp.o \
+	$O/src/core/mbedtls/ecp_curves.o \
+	$O/src/core/mbedtls/entropy.o \
+	$O/src/core/mbedtls/entropy_poll.o \
+	$O/src/core/mbedtls/gcm.o \
+	$O/src/core/mbedtls/hash_info.o \
+	$O/src/core/mbedtls/md.o \
 	$O/src/core/mbedtls/md5.o \
+	$O/src/core/mbedtls/oid.o \
 	$O/src/core/mbedtls/platform.o \
 	$O/src/core/mbedtls/platform_util.o \
+	$O/src/core/mbedtls/rsa.o \
+	$O/src/core/mbedtls/rsa_alt_helpers.o \
 	$O/src/core/mbedtls/sha1.o \
 	$O/src/core/mbedtls/sha256.o \
 	$O/src/core/mbedtls/sha512.o \
@@ -122,6 +181,7 @@ OBJS = \
 	$O/src/core/n-system.o \
 	$O/src/core/p-checksum.o \
 	$O/src/core/p-console.o \
+	$O/src/core/p-crypt.o \
 	$O/src/core/p-dir.o \
 	$O/src/core/p-dns.o \
 	$O/src/core/p-event.o \
@@ -163,19 +223,11 @@ OBJS = \
 	$O/src/core/t-utype.o \
 	$O/src/core/t-vector.o \
 	$O/src/core/t-word.o \
-	$O/src/core/u-aes.o \
-	$O/src/core/u-bigint.o \
 	$O/src/core/u-bincode.o \
-	$O/src/core/u-chacha20.o \
 	$O/src/core/u-compress.o \
-	$O/src/core/u-dh.o \
 	$O/src/core/u-iconv.o \
 	$O/src/core/u-mbedtls.o \
 	$O/src/core/u-parse.o \
-	$O/src/core/u-poly1305.o \
-	$O/src/core/u-rc4.o \
-	$O/src/core/u-rsa.o \
-	$O/src/core/u-uECC.o \
 	$O/src/core/u-zlib.o \
 	$O/src/os/dev-dns.o \
 	$O/src/os/dev-net.o \
@@ -298,14 +350,80 @@ $O/src/core/m-pools.o: $R/src/core/m-pools.c
 $O/src/core/m-series.o: $R/src/core/m-series.c
 	$(CC) $R/src/core/m-series.c $(CFLAGS) -o $O/src/core/m-series.o
 
+$O/src/core/mbedtls/aes.o: $R/src/core/mbedtls/aes.c
+	$(CC) $R/src/core/mbedtls/aes.c $(CFLAGS) -o $O/src/core/mbedtls/aes.o
+
+$O/src/core/mbedtls/asn1parse.o: $R/src/core/mbedtls/asn1parse.c
+	$(CC) $R/src/core/mbedtls/asn1parse.c $(CFLAGS) -o $O/src/core/mbedtls/asn1parse.o
+
+$O/src/core/mbedtls/asn1write.o: $R/src/core/mbedtls/asn1write.c
+	$(CC) $R/src/core/mbedtls/asn1write.c $(CFLAGS) -o $O/src/core/mbedtls/asn1write.o
+
+$O/src/core/mbedtls/bignum.o: $R/src/core/mbedtls/bignum.c
+	$(CC) $R/src/core/mbedtls/bignum.c $(CFLAGS) -o $O/src/core/mbedtls/bignum.o
+
+$O/src/core/mbedtls/bignum_core.o: $R/src/core/mbedtls/bignum_core.c
+	$(CC) $R/src/core/mbedtls/bignum_core.c $(CFLAGS) -o $O/src/core/mbedtls/bignum_core.o
+
+$O/src/core/mbedtls/cipher.o: $R/src/core/mbedtls/cipher.c
+	$(CC) $R/src/core/mbedtls/cipher.c $(CFLAGS) -o $O/src/core/mbedtls/cipher.o
+
+$O/src/core/mbedtls/cipher_wrap.o: $R/src/core/mbedtls/cipher_wrap.c
+	$(CC) $R/src/core/mbedtls/cipher_wrap.c $(CFLAGS) -o $O/src/core/mbedtls/cipher_wrap.o
+
+$O/src/core/mbedtls/constant_time.o: $R/src/core/mbedtls/constant_time.c
+	$(CC) $R/src/core/mbedtls/constant_time.c $(CFLAGS) -o $O/src/core/mbedtls/constant_time.o
+
+$O/src/core/mbedtls/ctr_drbg.o: $R/src/core/mbedtls/ctr_drbg.c
+	$(CC) $R/src/core/mbedtls/ctr_drbg.c $(CFLAGS) -o $O/src/core/mbedtls/ctr_drbg.o
+
+$O/src/core/mbedtls/dhm.o: $R/src/core/mbedtls/dhm.c
+	$(CC) $R/src/core/mbedtls/dhm.c $(CFLAGS) -o $O/src/core/mbedtls/dhm.o
+
+$O/src/core/mbedtls/ecdh.o: $R/src/core/mbedtls/ecdh.c
+	$(CC) $R/src/core/mbedtls/ecdh.c $(CFLAGS) -o $O/src/core/mbedtls/ecdh.o
+
+$O/src/core/mbedtls/ecdsa.o: $R/src/core/mbedtls/ecdsa.c
+	$(CC) $R/src/core/mbedtls/ecdsa.c $(CFLAGS) -o $O/src/core/mbedtls/ecdsa.o
+
+$O/src/core/mbedtls/ecp.o: $R/src/core/mbedtls/ecp.c
+	$(CC) $R/src/core/mbedtls/ecp.c $(CFLAGS) -o $O/src/core/mbedtls/ecp.o
+
+$O/src/core/mbedtls/ecp_curves.o: $R/src/core/mbedtls/ecp_curves.c
+	$(CC) $R/src/core/mbedtls/ecp_curves.c $(CFLAGS) -o $O/src/core/mbedtls/ecp_curves.o
+
+$O/src/core/mbedtls/entropy.o: $R/src/core/mbedtls/entropy.c
+	$(CC) $R/src/core/mbedtls/entropy.c $(CFLAGS) -o $O/src/core/mbedtls/entropy.o
+
+$O/src/core/mbedtls/entropy_poll.o: $R/src/core/mbedtls/entropy_poll.c
+	$(CC) $R/src/core/mbedtls/entropy_poll.c $(CFLAGS) -o $O/src/core/mbedtls/entropy_poll.o
+
+$O/src/core/mbedtls/gcm.o: $R/src/core/mbedtls/gcm.c
+	$(CC) $R/src/core/mbedtls/gcm.c $(CFLAGS) -o $O/src/core/mbedtls/gcm.o
+
+$O/src/core/mbedtls/hash_info.o: $R/src/core/mbedtls/hash_info.c
+	$(CC) $R/src/core/mbedtls/hash_info.c $(CFLAGS) -o $O/src/core/mbedtls/hash_info.o
+
+$O/src/core/mbedtls/md.o: $R/src/core/mbedtls/md.c
+	$(CC) $R/src/core/mbedtls/md.c $(CFLAGS) -o $O/src/core/mbedtls/md.o
+
 $O/src/core/mbedtls/md5.o: $R/src/core/mbedtls/md5.c
 	$(CC) $R/src/core/mbedtls/md5.c $(CFLAGS) -o $O/src/core/mbedtls/md5.o
+
+$O/src/core/mbedtls/oid.o: $R/src/core/mbedtls/oid.c
+	$(CC) $R/src/core/mbedtls/oid.c $(CFLAGS) -o $O/src/core/mbedtls/oid.o
 
 $O/src/core/mbedtls/platform.o: $R/src/core/mbedtls/platform.c
 	$(CC) $R/src/core/mbedtls/platform.c $(CFLAGS) -o $O/src/core/mbedtls/platform.o
 
 $O/src/core/mbedtls/platform_util.o: $R/src/core/mbedtls/platform_util.c
 	$(CC) $R/src/core/mbedtls/platform_util.c $(CFLAGS) -o $O/src/core/mbedtls/platform_util.o
+
+$O/src/core/mbedtls/rsa.o: $R/src/core/mbedtls/rsa.c
+	$(CC) $R/src/core/mbedtls/rsa.c $(CFLAGS) -o $O/src/core/mbedtls/rsa.o
+
+$O/src/core/mbedtls/rsa_alt_helpers.o: $R/src/core/mbedtls/rsa_alt_helpers.c
+	$(CC) $R/src/core/mbedtls/rsa_alt_helpers.c $(CFLAGS) -o $O/src/core/mbedtls/rsa_alt_helpers.o
 
 $O/src/core/mbedtls/sha1.o: $R/src/core/mbedtls/sha1.c
 	$(CC) $R/src/core/mbedtls/sha1.c $(CFLAGS) -o $O/src/core/mbedtls/sha1.o
@@ -348,6 +466,9 @@ $O/src/core/p-checksum.o: $R/src/core/p-checksum.c
 
 $O/src/core/p-console.o: $R/src/core/p-console.c
 	$(CC) $R/src/core/p-console.c $(CFLAGS) -o $O/src/core/p-console.o
+
+$O/src/core/p-crypt.o: $R/src/core/p-crypt.c
+	$(CC) $R/src/core/p-crypt.c $(CFLAGS) -o $O/src/core/p-crypt.o
 
 $O/src/core/p-dir.o: $R/src/core/p-dir.c
 	$(CC) $R/src/core/p-dir.c $(CFLAGS) -o $O/src/core/p-dir.o
@@ -472,23 +593,11 @@ $O/src/core/t-vector.o: $R/src/core/t-vector.c
 $O/src/core/t-word.o: $R/src/core/t-word.c
 	$(CC) $R/src/core/t-word.c $(CFLAGS) -o $O/src/core/t-word.o
 
-$O/src/core/u-aes.o: $R/src/core/u-aes.c
-	$(CC) $R/src/core/u-aes.c $(CFLAGS) -o $O/src/core/u-aes.o
-
-$O/src/core/u-bigint.o: $R/src/core/u-bigint.c
-	$(CC) $R/src/core/u-bigint.c $(CFLAGS) -o $O/src/core/u-bigint.o
-
 $O/src/core/u-bincode.o: $R/src/core/u-bincode.c
 	$(CC) $R/src/core/u-bincode.c $(CFLAGS) -o $O/src/core/u-bincode.o
 
-$O/src/core/u-chacha20.o: $R/src/core/u-chacha20.c
-	$(CC) $R/src/core/u-chacha20.c $(CFLAGS) -o $O/src/core/u-chacha20.o
-
 $O/src/core/u-compress.o: $R/src/core/u-compress.c
 	$(CC) $R/src/core/u-compress.c $(CFLAGS) -o $O/src/core/u-compress.o
-
-$O/src/core/u-dh.o: $R/src/core/u-dh.c
-	$(CC) $R/src/core/u-dh.c $(CFLAGS) -o $O/src/core/u-dh.o
 
 $O/src/core/u-iconv.o: $R/src/core/u-iconv.c
 	$(CC) $R/src/core/u-iconv.c $(CFLAGS) -o $O/src/core/u-iconv.o
@@ -498,18 +607,6 @@ $O/src/core/u-mbedtls.o: $R/src/core/u-mbedtls.c
 
 $O/src/core/u-parse.o: $R/src/core/u-parse.c
 	$(CC) $R/src/core/u-parse.c $(CFLAGS) -o $O/src/core/u-parse.o
-
-$O/src/core/u-poly1305.o: $R/src/core/u-poly1305.c
-	$(CC) $R/src/core/u-poly1305.c $(CFLAGS) -o $O/src/core/u-poly1305.o
-
-$O/src/core/u-rc4.o: $R/src/core/u-rc4.c
-	$(CC) $R/src/core/u-rc4.c $(CFLAGS) -o $O/src/core/u-rc4.o
-
-$O/src/core/u-rsa.o: $R/src/core/u-rsa.c
-	$(CC) $R/src/core/u-rsa.c $(CFLAGS) -o $O/src/core/u-rsa.o
-
-$O/src/core/u-uECC.o: $R/src/core/u-uECC.c
-	$(CC) $R/src/core/u-uECC.c $(CFLAGS) -o $O/src/core/u-uECC.o
 
 $O/src/core/u-zlib.o: $R/src/core/u-zlib.c
 	$(CC) $R/src/core/u-zlib.c $(CFLAGS) -o $O/src/core/u-zlib.o

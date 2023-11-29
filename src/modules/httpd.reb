@@ -1,13 +1,13 @@
 Rebol [
-	Title: "HTTPD Scheme"
-	Date: 02-Jul-2020
+	Title:  "HTTPD Scheme"
+	Type:    module
+	Name:    httpd
+	Date:    23-Jun-2023
+	Version: 0.8.2
 	Author: ["Andreas Bolka" "Christopher Ross-Gill" "Oldes"]
-	File: %httpd.reb
-	Name: 'httpd
-	Type: 'module
-	Version: 0.6.0
 	Exports: [http-server decode-target to-CLF-idate]
-	Rights: http://opensource.org/licenses/Apache-2.0
+	Home:    https://github.com/Oldes/Rebol-HTTPd
+	Rights:  http://opensource.org/licenses/Apache-2.0
 	Purpose: {
 		A Tiny Webserver Scheme for Rebol 3 (Oldes' branch)
 		Features:
@@ -16,15 +16,14 @@ Rebol [
 		* using _actors_ for main actions which may be customized
 		* implemented `keep-alive` behaviour
 		* sends `Not modified` response if file was not modified in given time
-		* client can stop server
+		* client can stop the server
 	}
 	TODO: {
 		* support for multidomain serving using `Host` header field
 		* add support for other methods - PUT, DELETE, TRACE, CONNECT, OPTIONS?
 		* better error handling
-		* test in real life
 	}
-	Usage: {Check %tests/test-httpd.r3 script how to start a simple server}
+	Usage: {Check %server-test.r3 script how to start a simple server}
 	History: [
 		04-Nov-2009 "Andreas Bolka" {A Tiny HTTP Server
 		https://github.com/earl/rebol3/blob/master/scripts/shttpd.r}
@@ -32,8 +31,12 @@ Rebol [
 		https://gist.github.com/rgchris/73510e7d643eb0a6b9fa69b849cd9880}
 		01-Apr-2019 "Oldes" {Rewritten to be usable in real life situations.}
 		10-May-2020 "Oldes" {Implemented directory listing, logging and multipart POST processing}
-		02-Jul-2020 "Oldes" {Added possibility to stop server and return data from client (useful for OAuth2)}
+		02-Jul-2020 "Oldes" {Added possibility to stop the server from a client and return data to it (useful for OAuth2)}
+		06-Dec-2022 "Oldes" {Added minimal support for WebSocket connections}
+		09-Jan-2023 "Oldes" {New home: https://github.com/Oldes/Rebol-HTTPd}
+		09-May-2023 "Oldes" {Root-less configuration possibility (default)}
 	]
+	Needs: [3.11.0 mime-types]
 ]
 
 append system/options/log [httpd: 1]
@@ -54,7 +57,7 @@ decode-target: wrap [
 		
 		result: object [file: none values: make block! 8 fragment: none original: target]
 		unless target [return result]
-		parse/all to binary! target [
+		parse to binary! target [
 			opt [
 				copy val any chars (result/file: val) [
 					  #"?" 
@@ -194,39 +197,40 @@ to-CLF-idate: func [
 ;------------------------------------------------------------------------
 sys/make-scheme [
 	Title: "HTTP Server"
-	Name: 'httpd
+	Name:  'httpd
 
 	Actor: [
-		Open: func [port [port!]][
-			; probe port/spec
-			sys/log/info 'HTTPD ["Opening server at port:^[[22m" port/spec/port-id]
-			port/locals: make object! [
+		Open: func [port [port!] /local spec][
+			spec: port/spec
+			sys/log/info 'HTTPD ["Opening server at port:^[[22m" spec/port]
+			port/extra: make object! [
 				subport: open compose [
 					scheme: 'tcp
-					port-id: (port/spec/port-id)
+					port: (spec/port)
 				]
 				subport/awake: :port/scheme/awake-server
-				subport/locals: make object! [
+				subport/extra: make object! [
 					parent: port
 					config: none
 					clients: make block! 16
 				]
-				subport/locals/config:
+				subport/extra/config:
 				config: make object! [
-					root: system/options/home
+					root:  none
 					index: [%index.html %index.htm]
 					keep-alive: true
-					server-name: "Rebol3-HTTPD"
+					list-dir?:  true
+					server-name: "Rebol3-HTTPd"
 				]
 			]
-			port/state: port/locals/subport/locals/clients
+			port/state: port/extra/subport/extra/clients
 			port/awake: :awake-client
 			port
 		]
 
 		Close: func [port [port!]][
-			sys/log/info 'HTTPD ["Closing server at port:^[[22m" port/spec/port-id]
-			close port/locals/subport
+			sys/log/info 'HTTPD ["Closing server at port:^[[22m" port/spec/port]
+			close port/extra/subport
 		]
 
 		On-Accept: func [ctx [object!]][ true ]
@@ -237,7 +241,7 @@ sys/make-scheme [
 			/local target path info index modified If-Modified-Since
 		][
 			target: ctx/inp/target
-			target/file: path: join dirize ctx/config/root next clean-path/only target/file
+			target/file: path: join ctx/config/root next clean-path/only target/file
 			ctx/out/header/Date: to-idate/gmt now
 			ctx/out/status: 200
 			either exists? path [
@@ -341,6 +345,21 @@ sys/make-scheme [
 			]
 		]
 
+		On-Read-Websocket: func[
+			"Process READ action on client's port using websocket"
+			ctx [object!]
+			final? [logic!]   "Indicates that this is the final fragment in a message."
+			opcode [integer!] "Defines the interpretation of the 'Payload data'."
+		][
+			;@@ this is just a placeholder!
+		]
+		On-Close-Websocket: func[
+			"Process READ action on client's port using websocket"
+			ctx [object!] code [integer!]
+		][
+			;@@ this is just a placeholder!
+		]
+
 		On-List-Dir: func[
 			ctx [object!] target [object!]
 			/local path dir out size date files dirs
@@ -353,7 +372,7 @@ sys/make-scheme [
 			dir: target/file
 			path: join "/" find/match/tail dir ctx/config/root
 		
-			try/except [
+			try/with [
 				out: make string! 2000
 				append out ajoin [
 					{<html><head><title>Index of } path
@@ -397,10 +416,23 @@ sys/make-scheme [
 			sys/log/more 'HTTPD ["Target not found:^[[1m" mold target/file]
 			ctx/out/status: 404
 		]
+
+		WS-handshake: func[ctx /local key][
+			if all [
+				"websocket" = select ctx/inp/header 'Upgrade
+				key: select ctx/inp/header 'Sec-WebSocket-Key
+			][
+				ctx/out/status: 101
+				ctx/out/header/Upgrade: "websocket"
+				ctx/out/header/Connection: "Upgrade"
+				ctx/out/header/Sec-WebSocket-Accept: enbase checksum join key "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" 'sha1 64
+			]
+		]
 	]
 
 	Status-Codes: make map! [
 		100 "Continue"
+		101 "Switching Protocols"
 		200 "OK"
 		201 "Created"
 		202 "Accepted"
@@ -461,79 +493,52 @@ sys/make-scheme [
 		;511 "Network Authentication Required"
 	]
 
-	MIME-Types: make map! [
-		%.txt   "text/plain"
-		%.html  "text/html"
-		%.htm   "text/html"
-		%.js    "text/javascript"
-		%.css   "text/css"
-		%.csv   "text/csv"
-		%.ics   "text/calendar"
-		%.gif   "image/gif"
-		%.png   "image/png"
-		%.jpg   "image/jpeg"
-		%.jpeg  "image/jpeg"
-		%.ico   "image/x-icon"
-		%.svg   "image/svg+xml"
-		%.json  "application/json"
-		%.pdf   "application/pdf"
-		%.swf   "application/x-shockwave-flash"
-		%.wasm  "application/wasm"
-		%.xls   "application/vnd.ms-excel"
-		%.xlsx  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-		%.zip   "application/zip"
-		%.7z    "application/x-7z-compressed"
-		%.doc   "application/msword"
-		%.wav   "audio/wav"
-		%.mid   "audio/midi"
-		%.midi  "audio/x-midi"
-		%.otf   "font/otf"
-		%.ttf   "font/ttf"
-		%.woff  "font/woff"
-		%.woff2 "font/woff2"
-		%.xhtml "application/xhtml+xml"
-	]
-
 	Respond: function [port [port!]][
-		ctx: port/locals
+		ctx: port/extra
 		out: ctx/out
 		sys/log/info 'HTTPD ["Respond:^[[22m" out/status status-codes/(out/status) length? out/content]
 		; send the response header
 		buffer: make binary! 1024
 		append buffer ajoin ["HTTP/" ctx/inp/version #" " out/status #" " status-codes/(out/status) CRLF]
 
-		unless out/header/Content-Type [
-			if out/target [
-				out/header/Content-Type: pick MIME-Types suffix? out/target
-			]
-			if all [
-				none? out/header/Content-Type ; no mime found above
-				string? out/content
-			][
-				out/header/Content-Type: "text/html; charset=UTF-8"
-			]
-		]		
-
-		out/header/Content-Length: either out/content [
-			if string? out/content [
-				; must be converted to binary to have proper length if not ascii
-				out/content: to binary! out/content
-			]
-			length? out/content
+		either "websocket" = out/header/upgrade [
+			ctx/inp/method: "websocket"
+			try [ctx/inp/version: to integer! ctx/inp/header/Sec-WebSocket-Version]
+			port/awake: :Awake-Websocket
 		][
-			0
-		]
+			unless out/header/Content-Type [
+				if out/target [
+					out/header/Content-Type: mime-type? out/target
+				]
+				if all [
+					none? out/header/Content-Type ; no mime found above
+					string? out/content
+				][
+					out/header/Content-Type: "text/html; charset=UTF-8"
+				]
+			]		
 
-		if keep-alive: ctx/config/keep-alive [
-			if logic? keep-alive  [
-				; using defaults
-				ctx/config/keep-alive:
-				keep-alive: [15 100] ; [timeout max-requests]
+			out/header/Content-Length: either out/content [
+				if string? out/content [
+					; must be converted to binary to have proper length if not ascii
+					out/content: to binary! out/content
+				]
+				length? out/content
+			][
+				0
 			]
-			ctx/out/header/Connection: "keep-alive"
-			ctx/out/header/Keep-Alive: ajoin ["timeout=" keep-alive/1 ", max=" keep-alive/2]
+
+			if keep-alive: ctx/config/keep-alive [
+				if logic? keep-alive  [
+					; using defaults
+					ctx/config/keep-alive:
+					keep-alive: [15 100] ; [timeout max-requests]
+				]
+				ctx/out/header/Connection: "keep-alive"
+				ctx/out/header/Keep-Alive: ajoin ["timeout=" keep-alive/1 ", max=" keep-alive/2]
+			]
+			out/header/Server: ctx/config/server-name
 		]
-		out/header/Server: ctx/config/server-name
 		
 		;probe out/header
 		foreach [name value] out/header [
@@ -549,7 +554,7 @@ sys/make-scheme [
 			out/content: none
 		]
 
-		try/except [
+		try/with [
 			write port buffer
 		][
 			;@@TODO: handle it without `print`; using on-error?
@@ -560,7 +565,7 @@ sys/make-scheme [
 	]
 
 	Do-log: function [ctx][
-		try/except [
+		try/with [
 			msg: ajoin [
 				ctx/remote-ip
 				{ - - [} to-CLF-idate now {] "}
@@ -597,7 +602,7 @@ sys/make-scheme [
 			event [event!]
 		][
 			port: event/port
-			ctx: port/locals
+			ctx: port/extra
 			inp: ctx/inp
 			out: ctx/out
 
@@ -609,7 +614,7 @@ sys/make-scheme [
 				READ [
 					sys/log/more 'HTTPD ["bytes:^[[1m" length? port/data]
 					either header-end: find/tail port/data CRLF2BIN [
-						try/except [
+						try/with [
 							if none? ctx/state [
 								with inp [
 									parse copy/part port/data header-end [
@@ -636,7 +641,7 @@ sys/make-scheme [
 									break
 								]
 							]
-							actor/on-read port/locals
+							actor/on-read port/extra
 						][
 							print system/state/last-error
 							ctx/state: 'error
@@ -667,7 +672,7 @@ sys/make-scheme [
 									close out/content ; closing source port
 									End-Client port
 								][
-									try/except [
+									try/with [
 										write port buffer
 									][
 										print "** Write failed (2)!"
@@ -692,7 +697,7 @@ sys/make-scheme [
 				]
 				CLOSE [
 					sys/log/info 'HTTPD ["Closing:^[[22m" ctx/remote]
-					if pos: find ctx/parent/locals/clients port [ remove pos ]
+					if pos: find ctx/parent/extra/clients port [ remove pos ]
 					close port
 				]
 			]
@@ -705,12 +710,113 @@ sys/make-scheme [
 			ACCEPT [ New-Client event/port ]
 			CLOSE  [
 				close event/port
-				close event/port/locals/parent
+				close event/port/extra/parent
 			]
 		]
 		true
 	]
 
+	Awake-Websocket: function [
+		event [event!]
+	][
+		port: event/port
+		ctx: port/extra
+
+		sys/log/more 'HTTPD ["Awake Websocket:^[[1m" ctx/remote "^[[22m" event/type]
+
+		ctx/timeout: now + 0:0:30
+
+		switch event/type [
+			READ [
+				ready?: false
+				data: head port/data
+				sys/log/more 'HTTPD ["bytes:^[[1m" length? data]
+				try/with [
+					while [2 < length? data][
+						final?: data/1 & 128 = 128
+						opcode: data/1 & 15
+						mask?:  data/2 & 128 = 128
+						len:    data/2 & 127
+						data: skip data 2
+						;? final? ? opcode ? len
+
+						;@@ Not removing bytes until we make sure, that there is enough data!
+						case [
+							len = 126 [
+								if 2 >= length? data [break]
+								len: binary/read data 'UI16
+								data: skip data 2
+							]
+							len = 127 [
+								if 8 >= length? data [break]
+								len: binary/read data 'UI64
+								data: skip data 8
+							]
+						]
+						if (4 + length? data) < len [break]
+						data: truncate data ;; removes already processed bytes from the head
+						either mask? [
+							masks:   take/part data 4
+							request-data: masks xor take/part data len
+						][
+							request-data: take/part data len
+						]
+						ready?: true
+						ctx/inp/content: truncate/part request-data len
+						if opcode = 8 [
+							sys/log/more 'HTTPD "WS Connection Close Frame!"
+							code: 0
+							if all [
+								2 <= len
+								2 <= length? request-data
+							][
+								code: to integer! take/part request-data 2
+								sys/log/more 'HTTPD ["WS Close reason:" as-red code]
+							]
+							actor/On-Close-Websocket ctx code
+							event/type: 'CLOSE
+							Awake-Websocket event
+							exit
+						]
+						actor/On-Read-Websocket ctx final? opcode
+					]
+				][
+					print system/state/last-error
+				]
+				either ready? [
+					;; there was complete input...
+					write port either all [
+						series? content: ctx/out/content
+						not empty? content
+					][
+						content: to binary! content
+						clear ctx/out/content
+						len: length? content
+						;print len
+						;prin "out: " ? content
+						bin: binary len
+						binary/write bin case [
+							len < 127                     [ [UI8 129 UI8          :len :content] ]
+							all [ len > 126 len <= 65535 ][ [UI8 129 UI8 126 UI16 :len :content] ]
+							len > 65535                   [ [UI8 129 UI8 127 UI64 :len :content] ]	  
+						]
+						head bin/buffer
+					][	"" ]
+				][
+					;; needs more data!
+					read port
+				]
+			]
+			WROTE [
+				read port
+			]
+			CLOSE [
+				sys/log/info 'HTTPD ["Closing:^[[22m" ctx/remote]
+				if pos: find ctx/parent/extra/clients port [ remove pos ]
+				close port
+			]
+		]
+	]
 
 
 	New-Client: func[port [port!] /local client info err][
@@ -723,7 +829,7 @@ sys/make-scheme [
 			return false
 		]
 		client/awake: :Awake-Client
-		client/locals: make object! [
+		client/extra: make object! [
 			state: none
 			parent: port
 			remote-ip: info/remote-ip
@@ -748,27 +854,27 @@ sys/make-scheme [
 			requests: 0   ; number of already served requests per connection
 		]
 		;? port
-		client/locals/config: port/locals/config
-		append port/locals/clients client
+		client/extra/config: port/extra/config
+		append port/extra/clients client
 
-		sys/log/info 'HTTPD ["New client:^[[1;31m" client/locals/remote]
-		try/except [read client][
-			print ["** Failed to read new client:" client/locals/remote]
+		sys/log/info 'HTTPD ["New client:^[[1;31m" client/extra/remote]
+		try/with [read client][
+			print ["** Failed to read new client:" client/extra/remote]
 			print system/state/last-error
 		]
 	]
 
 	End-Client: function [port [port!]][
-		ctx: port/locals
+		ctx: port/extra
 		Do-log ctx
-		clients: ctx/parent/locals/clients
+		clients: ctx/parent/extra/clients
 		keep-alive: ctx/config/keep-alive
 		
 		either all [
 			keep-alive
 			open? port
 			ctx/requests <= keep-alive/2 ; limit to max requests
-			"close" <> select port/locals/inp/Header 'Connection ; client don't want or cannot handle persistent connection
+			"close" <> select port/extra/inp/Header 'Connection ; client don't want or cannot handle persistent connection
 		][
 			ctx/requests: ctx/requests + 1
 			sys/log/info 'HTTPD ["Keep-alive:^[[22m" ctx/remote "requests:" ctx/requests]
@@ -778,7 +884,7 @@ sys/make-scheme [
 			ctx/out/Header: make map! 12
 			ctx/state: none
 			; set new timeout
-			ctx/timeout: now + ctx/config/keep-alive/1 
+			ctx/timeout: now + to time! ctx/config/keep-alive/1 
 			read port
 		][
 			; close client connection
@@ -801,10 +907,10 @@ sys/make-scheme [
 		;sys/log/debug 'HTTPD ["Check-Clients:" length? port/state #"-" now]
 		if block? port/state [
 			foreach client reverse copy port/state [
-				;sys/log/debug 'HTTPD ["Checking:" client/locals/remote client/locals/timeout]
+				;sys/log/debug 'HTTPD ["Checking:" client/extra/remote client/extra/timeout]
 				try [
 					if all [
-						date? tmc: client/locals/timeout
+						date? tmc: client/extra/timeout
 						tm >= tmc
 					][
 						Awake-Client make event! [type: 'CLOSE port: client]
@@ -827,16 +933,18 @@ http-server: function [
 	server: open join httpd://: port
 	if config [
 		if object? spec [ spec: body-of spec ]
-		case [
-			file? spec/root [spec/root: dirize clean-path spec/root]
-			none? spec/root [spec/root: what-dir]
+		if root: select spec 'root [
+			spec/root: case [
+				file? :root [attempt [dirize to-real-file clean-path root]]
+				'current-dir = :root [what-dir]
+			]
 		]
-		append server/locals/config spec
+		append server/extra/config spec
 	]
-	
-	unless system/options/quiet [
-		? server/locals/config
-	]
+
+	sys/log/info 'HTTPD ["Root directory: " as-green server/extra/config/root]
+
+	;unless system/options/quiet [? server/extra/config]
 
 	if actor [
 		append server/actor either block? actions [
@@ -845,7 +953,7 @@ http-server: function [
 	]
 	unless no-wait [
 		forever [
-			p: wait [server server/locals/subport 15]
+			p: wait [server server/extra/subport 15]
 			if all [port? p not open? p] [
 				return p/data
 			]

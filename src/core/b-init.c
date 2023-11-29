@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2023 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,9 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#ifdef SHOW_SIZEOFS
+#include <stdio.h>
+#endif
 
 #define EVAL_DOSE 10000
 
@@ -95,6 +98,7 @@ extern const REBYTE Str_Banner[];
 	printf("%u %s\n", (REBCNT)sizeof(REBUDT), "utype");
 	printf("%u %s\n", (REBCNT)sizeof(REBDCI), "deci");
 	printf("%u %s\n", (REBCNT)sizeof(REBHAN), "handle");
+	printf("%u %s\n", (REBCNT)sizeof(REBHOB), "hob");
 	printf("%u %s\n", (REBCNT)sizeof(REBALL), "all");
 #endif
 
@@ -106,7 +110,7 @@ extern const REBYTE Str_Banner[];
 		ASSERT(sizeof(REBVAL) == 16,   RP_REBVAL_ALIGNMENT);
 		//ASSERT1(sizeof(REBGOB) == 64,  RP_BAD_SIZE);
 	}
-	ASSERT1(sizeof(REBDAT) == 4,   RP_BAD_SIZE);
+	STATIC_ASSERT(sizeof(REBDAT) == 4); // RP_BAD_SIZE
 }
 
 
@@ -118,6 +122,7 @@ extern const REBYTE Str_Banner[];
 {
 	if (rargs->options & RO_VERS) {
 		Out_Str(cb_cast(REBOL_VERSION), 0, FALSE);
+		Out_Str(cb_cast("\n"), 0, FALSE);
 		OS_EXIT(0);
 	}
 }
@@ -261,8 +266,11 @@ extern const REBYTE Str_Banner[];
 		Make_Native(value, Copy_Block(spec, 0), (REBFUN)A_TYPE, REB_ACTION);
 	}
 
-	value = Append_Frame(Lib_Context, 0, SYM_DATATYPES);
-	*value = Boot_Block->types;
+	// In Rebol2 there was a global `datatypes` value holding block with all datatypes names
+	// In Rebol3 there is system/catalog/datatypes with block of all datatypes, so the old
+	// global value is not needed anymore. I hope. Oldes.
+	//value = Append_Frame(Lib_Context, 0, SYM_DATATYPES);
+	//*value = Boot_Block->types;
 }
 
 
@@ -359,11 +367,17 @@ extern const REBYTE Str_Banner[];
 /*
 //	version: native [
 //		"Return Rebol version string"
+//		/data "loadable version"
 //	]
 ***********************************************************************/
 {
-	const REBYTE*version = BOOT_STR(RS_VERSION, 0);
-	Set_String(ds, Copy_Bytes(version, strlen(cs_cast(version))));
+	const REBYTE*version;
+	if (D_REF(1)) {
+		version = BOOT_STR(RS_VERSION, 0);
+	} else {
+		version = cb_cast(REBOL_VERSION);
+	}
+	Set_String(ds, Copy_Bytes(version, LEN_BYTES(version)));
 	return R_RET;
 }
 
@@ -383,7 +397,7 @@ extern const REBYTE Str_Banner[];
 		val = Append_Frame(Lib_Context, word, 0);
 		// Find the related function:
 		func = Find_Word_Value(Lib_Context, VAL_WORD_SYM(word+1));
-		if (!func) Crash(9912);
+		if (!func) { Crash(9912); return; }
 		*val = *func;
 		VAL_SET(val, REB_OP);
 		VAL_SET_EXT(val, VAL_TYPE(func));
@@ -609,18 +623,15 @@ extern const REBYTE Str_Banner[];
 	SET_OBJECT(value, frame);
 	SET_OBJECT(ROOT_SYSTEM, frame);
 
-	// Create system/datatypes block:
-//	value = Get_System(SYS_DATATYPES, 0);
+	// Create system/catalog/datatypes block:
 	value = Get_System(SYS_CATALOG, CAT_DATATYPES);
-	frame = VAL_SERIES(value);
-	Extend_Series(frame, REB_MAX-1);
+	frame = Make_Block(REB_MAX - 1);
+	Set_Block(value, frame);
+	// expects, that first values in the Lib_Context are the datatypes!
+	// not using &Boot_Block->types, because it contains only words!
 	for (n = 1; n <= REB_MAX; n++) {
 		Append_Val(frame, FRM_VALUES(Lib_Context) + n);
 	}
-
-	// Create system/catalog/datatypes block:
-//	value = Get_System(SYS_CATALOG, CAT_DATATYPES);
-//	Set_Block(value, Copy_Blk(VAL_SERIES(&Boot_Block->types)));
 
 	// Create system/catalog/actions block:
 	value = Get_System(SYS_CATALOG, CAT_ACTIONS);
@@ -763,6 +774,9 @@ extern const REBYTE Str_Banner[];
 #endif
 #ifdef INCLUDE_WAV_CODEC
 	Init_WAV_Codec();
+#endif
+#ifdef INCLUDE_REBIN_CODEC
+	Init_REBIN_Codec();
 #endif
 }
 
@@ -971,6 +985,8 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 **
 */	void Init_Year(void)
 /*
+**		Used when scaning dates with short year.. like: 1/2/98
+**
 ***********************************************************************/
 {
 	REBOL_DAT dat;
@@ -978,6 +994,33 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	OS_GET_TIME(&dat);
 	Current_Year = dat.year;
 }
+
+/***********************************************************************
+**
+*/	void Init_Compression(void)
+/*
+**		Fill system/catalog/compressions with optional compressions
+**
+***********************************************************************/
+{
+	REBVAL *blk;
+	REBVAL  tmp;
+	#define add_compression(sym) Init_Word(&tmp, sym); VAL_SET_LINE(&tmp); Append_Val(VAL_SERIES(blk), &tmp);
+	blk = Get_System(SYS_CATALOG, CAT_COMPRESSIONS);
+	if (blk && IS_BLOCK(blk)) {
+		#ifdef INCLUDE_BROTLI
+		add_compression(SYM_BROTLI);
+		#endif
+		#ifdef INCLUDE_CRUSH
+		add_compression(SYM_CRUSH);
+		#endif
+		#ifdef INCLUDE_LZMA
+		add_compression(SYM_LZMA);
+		#endif
+	}
+}
+	
+
 
 
 /***********************************************************************
@@ -1065,6 +1108,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	PG_Boot_Phase = BOOT_ERRORS;
 
 	Init_Year();
+	Init_Compression();
 
 	// Special pre-made error:
 	ser = Make_Error(RE_STACK_OVERFLOW, 0, 0, 0);

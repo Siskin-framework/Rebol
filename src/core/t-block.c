@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -149,19 +150,32 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 	}
 	// Find a datatype in block:
 	else if (IS_DATATYPE(target) || IS_TYPESET(target)) {
-		for (; index >= start && index < end; index += skip) {
-			value = BLK_SKIP(series, index);
-			// Used if's so we can trace it...
-			if (IS_DATATYPE(target)) {
-				if ((REBINT)VAL_TYPE(value) == VAL_DATATYPE(target)) return index;
-				if (IS_DATATYPE(value) && VAL_DATATYPE(value) == VAL_DATATYPE(target)) return index;
+		if (flags & AM_FIND_ONLY) {
+			// not checking value types, only if value and target are really same
+			for (; index >= start && index < end; index += skip) {
+				value = BLK_SKIP(series, index);
+				if (VAL_TYPE(value) == VAL_TYPE(target)) {
+					if (IS_DATATYPE(target)) {
+						if (VAL_DATATYPE(value) == VAL_DATATYPE(target))
+							return index;
+					}
+					else if (EQUAL_TYPESET(value, target))
+						return index;
+				}
+				if (flags & AM_FIND_MATCH) break;
 			}
-			if (IS_TYPESET(target)) {
-				if (TYPE_CHECK(target, VAL_TYPE(value))) return index;
-				//if (IS_DATATYPE(value) && TYPE_CHECK(target, VAL_DATATYPE(value))) return index; //@@ issues/256
-				if (IS_TYPESET(value) && EQUAL_TYPESET(value, target)) return index;
+		} else {
+			for (; index >= start && index < end; index += skip) {
+				value = BLK_SKIP(series, index);
+				// Used if's so we can trace it...
+				if (IS_DATATYPE(target)) {
+					if ((REBINT)VAL_TYPE(value) == VAL_DATATYPE(target))
+						return index;
+				}
+				else if (TYPE_CHECK(target, VAL_TYPE(value)))
+						return index;
+				if (flags & AM_FIND_MATCH) break;
 			}
-			if (flags & AM_FIND_MATCH) break;
 		}
 		return NOT_FOUND;
 	}
@@ -507,45 +521,6 @@ static struct {
 
 /***********************************************************************
 **
-*/	static void Trim_Block(REBSER *ser, REBCNT index, REBCNT flags)
-/*
-**		See Trim_String().
-**
-***********************************************************************/
-{
-	REBVAL *blk = BLK_HEAD(ser);
-	REBCNT out = index;
-	REBCNT end = ser->tail;
-
-	if (flags & AM_TRIM_TAIL) {
-		for (; end >= (index+1); end--) {
-			if (VAL_TYPE(blk+end-1) > REB_NONE) break;
-		}
-		Remove_Series(ser, end, ser->tail - end);
-		if (!(flags & AM_TRIM_HEAD) || index >= end) return;
-	}
-
-	if (flags & AM_TRIM_HEAD) {
-		for (; index < end; index++) {
-			if (VAL_TYPE(blk+index) > REB_NONE) break;
-		}
-		Remove_Series(ser, out, index - out);
-	}
-
-	if (flags == 0) {
-		for (; index < end; index++) {
-			if (VAL_TYPE(blk+index) > REB_NONE) {
-				*BLK_SKIP(ser, out) = blk[index];
-				out++;
-			}
-		}
-		Remove_Series(ser, out, end - out);
-	}
-}
-
-
-/***********************************************************************
-**
 */	void Shuffle_Block(REBVAL *value, REBFLG secure)
 /*
 ***********************************************************************/
@@ -634,8 +609,8 @@ static struct {
 	REBVAL  *arg = D_ARG(2);
 	REBVAL  *arg2;
 	REBSER  *ser;
-	REBINT	index;
-	REBINT	tail;
+	REBCNT	index;
+	REBLEN	tail;
 	REBINT	len;
 	REBVAL  val;
 	REBCNT	args;
@@ -657,9 +632,11 @@ static struct {
 		return R_RET;
 	}
 
-	index = (REBINT)VAL_INDEX(value);
-	tail  = (REBINT)VAL_TAIL(value);
+	index = VAL_INDEX(value);
+	tail  = VAL_TAIL(value);
 	ser   = VAL_SERIES(value);
+	if (index > tail)
+		VAL_INDEX(value) = index = tail;
 
 	// Check must be in this order (to avoid checking a non-series value);
 	if (action >= A_TAKE && action <= A_SORT && IS_PROTECT_SERIES(ser))
@@ -724,7 +701,7 @@ pick_it:
 	case A_TAKE:
 		// take/part:
 		if (D_REF(ARG_TAKE_PART)) {
-			len = Partial1(value, D_ARG(ARG_TAKE_LENGTH));
+			len = Partial1(value, D_ARG(ARG_TAKE_RANGE));
 			if (len == 0) {
 zero_blk:
 				Set_Block(D_RET, Make_Block(0));
@@ -735,8 +712,9 @@ zero_blk:
 
 		index = VAL_INDEX(value); // /part can change index
 		// take/last:
+		if (tail <= index) goto is_none;
 		if (D_REF(ARG_TAKE_LAST)) index = tail - len;
-		if (index < 0 || index >= tail) {
+		if (index >= tail) {
 			if (!D_REF(ARG_TAKE_PART)) goto is_none;
 			goto zero_blk;
 		}
@@ -787,7 +765,7 @@ zero_blk:
 		args = Find_Refines(ds, ALL_FIND_REFS);
 //		if (ANY_BLOCK(arg) || args) {
 			len = ANY_BLOCK(arg) ? VAL_BLK_LEN(arg) : 1;
-			if (args & AM_FIND_PART) tail = index + Partial1(value, D_ARG(ARG_FIND_LENGTH));
+			if (args & AM_FIND_PART) tail = index + Partial1(value, D_ARG(ARG_FIND_RANGE));
 			ret = 1;
 			if (args & AM_FIND_SKIP) ret = Int32s(D_ARG(ARG_FIND_SIZE), 1);
 			ret = Find_Block(ser, index, tail, arg, len, args, ret);
@@ -839,7 +817,7 @@ zero_blk:
 	case A_COPY: // /PART len /DEEP /TYPES kinds
 #if 0
 		args = D_REF(ARG_COPY_DEEP) ? COPY_ALL : 0;
-		len = Partial1(value, D_ARG(ARG_COPY_LENGTH));
+		len = Partial1(value, D_ARG(ARG_COPY_RANGE));
 		index = (REBINT)VAL_INDEX(value);
 //		VAL_SERIES(value) = (len > 0) ? Copy_Block_Deep(ser, index, len, args) : Make_Block(0);
 		VAL_INDEX(value) = 0;
@@ -854,7 +832,7 @@ zero_blk:
 			if (IS_DATATYPE(arg)) types |= TYPESET(VAL_DATATYPE(arg));
 			else types |= VAL_TYPESET(arg);
 		}
-		len = Partial1(value, D_ARG(ARG_COPY_LENGTH));
+		len = Partial1(value, D_ARG(ARG_COPY_RANGE));
 		VAL_SERIES(value) = Copy_Block_Values(ser, VAL_INDEX(value), VAL_INDEX(value)+len, types);
 		VAL_INDEX(value) = 0;
 	}
@@ -865,7 +843,6 @@ zero_blk:
 
 	case A_TRIM:
 		args = Find_Refines(ds, ALL_TRIM_REFS);
-		if (args & ~(AM_TRIM_HEAD|AM_TRIM_TAIL)) Trap0(RE_BAD_REFINES);
 		Trim_Block(ser, index, args);
 		break;
 

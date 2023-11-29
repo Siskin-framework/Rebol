@@ -55,19 +55,19 @@
 {
 	REBVAL *val = D_ARG(2);
 
-	if (D_REF(3)) {
-		REBINT n = 0;
-		if (D_REF(1)) {
-			if (IS_INTEGER(val)) n = Int32(val);
-			else if (IS_TRUE(val)) n = 100;
-		}
-		OS_EXIT(n);
-	}
+	/* not using quit/now anymore... see https://github.com/Oldes/Rebol-issues/issues/1743 */
+	//if (D_REF(3)) {
+	//	REBINT n = 0;
+	//	if (D_REF(1)) {
+	//		if (IS_INTEGER(val)) n = Int32(val);
+	//		else if (IS_TRUE(val)) n = 100;
+	//	}
+	//	OS_EXIT(n);
+	//}
 
 	Halt_Code(RE_QUIT, val); // NONE if /return not set
 	DEAD_END;
 }
-
 
 /***********************************************************************
 **
@@ -97,12 +97,26 @@
 		SET_INT32(TASK_BALLAST, 0);
 	}
 
-	count = Recycle();
+	count = Recycle(TRUE);
 
 	DS_Ret_Int(count);
 	return R_RET;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(release)
+/*
+***********************************************************************/
+{
+	REBVAL *val = D_ARG(1);
+
+	if (IS_CONTEXT_HANDLE(val)) {
+		Free_Hob(VAL_HANDLE_CTX(val));
+		return R_TRUE;
+	}
+	return R_FALSE;
+}
 
 /***********************************************************************
 **

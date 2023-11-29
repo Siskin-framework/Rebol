@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Mezzanine: Save"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -95,7 +96,7 @@ save: function [
 	]
 
 	; (Maybe /all should be the default? See CureCode.)
-	data: either all [mold/all/only :value] [mold/only :value]
+	data: mold/only/:all :value
 	append data newline ; mold does not append a newline? Nope.
 
 	case/all [
@@ -113,7 +114,8 @@ save: function [
 		file? where [write where data] ; WRITE converts to UTF-8, saves overhead
 		url? where [write where data]  ; But some schemes don't support it
 		none? where [data] ; just return the UTF-8 binary
-		'else [append where data] ; string! or binary!, insert data
+		binary? where [append where data]
+		'else [append where mold data] ; Using mold when appending data to string!
 	]
 ]
 

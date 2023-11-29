@@ -46,7 +46,7 @@ do*: func [
 	;       Currently, load of URL has no special block forms.
 
 	; Load the data, first so it will error before change-dir
-	data: load/header/type value 'unbound ; unbound so DO-NEEDS runs before INTERN
+	data: load/header/as value 'unbound ; unbound so DO-NEEDS runs before INTERN
 	; Get the header and advance 'data to the code position
 	hdr: first+ data  ; object or none
 	; data is a block! here, with the header object in the first position back
@@ -89,7 +89,7 @@ do*: func [
 			; Eval the block or make the module, returned
 			either mod? [ ; Import the module and set the var
 				spec: reduce [hdr data do-needs/no-user hdr]
-				also import catch/quit [make module! spec]
+				also import (catch/quit [make module! spec])
 					if var [set var tail data]
 			][
 				do-needs hdr  ; Load the script requirements
@@ -227,7 +227,7 @@ assert-utf8: function [
 
 log: func [
 	"Prints out debug message"
-	id [word!] "Source of the log message"
+	'id [any-word!] "Source of the log message"
 	msg        "Output message"
 	/info
 	/more
@@ -236,12 +236,12 @@ log: func [
 	/local level
 ][
 	if error [
-		msg: form either block? msg [reduce msg][msg]
-		foreach line parse/all msg #"^/" [
+		msg: trim/head/tail form either block? msg [reduce msg][msg]
+		foreach line split-lines msg [
 			print ajoin [
 				" ^[[35m[" id "] ^[[1m"
 				either line/1 = #"*" []["** Error: "]
-				copy/part line 100
+				copy/part line 200 ;@@ I am not sure with this line length limit
 				"^[[0m"
 			]
 		]

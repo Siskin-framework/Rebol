@@ -52,6 +52,10 @@ Rebol [
 		--assert 1-Jan-2000/10:00 = make date! [1-1-2000 10:0]
 		--assert 1-Jan-2000/10:00+2:00 = make date! [1-1-2000 10:0 2:0]
 		--assert 5-Jan-2000/4:00 = make date! [1-1-2000 100:0]
+
+	--test-- "zero year"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1062
+		--assert 1-Jan-0000 = make date! [1 1 0]
 		
 	--test-- "invalid input"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/878
@@ -62,23 +66,25 @@ Rebol [
 
 ===start-group=== "#[date! ...]"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1034
-	--test-- "#[date!] valid"
+	--test-- "#[date! ...] valid"
 		--assert 1-Feb-0003 = #[date! 1 2 3]
 		--assert 1-Feb-0003/4:00 = #[date! 1 2 3 4:0]
 		--assert 1-Feb-0003/4:00+5:00 = #[date! 1 2 3 4:0 5:0]
 		;@@ https://github.com/Oldes/Rebol-wishes/issues/1
+		;@@ https://github.com/Oldes/Rebol-issues/issues/991
 		--assert 1-Jan-2000 = #[date! 1-1-2000]
 		--assert 1-Jan-2000/10:00 = #[date! 1-1-2000 10:0]
 		--assert 1-Jan-2000/10:00+2:00 = #[date! 1-1-2000 10:0 2:0]
 		--assert 5-Jan-2000/4:00 = #[date! 1-1-2000 100:0]
 
-	--test-- "#[date!] invalid"
-		--assert error? try [load {#[date!]}]
+	--test-- "#[date! ...] invalid"
 		--assert error? try [load {#[date! 1]}]
 		--assert error? try [load {#[date! 1 2]}]
 		--assert error? try [load {#[date! 1 2 3 x]}]
 		--assert error? try [load {#[date! 1 2 3 4:0 x]}]
 		--assert error? try [load {#[date! 1 2 3 4:0 5:0 3]}]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2508
+		--assert datatype? try [load {#[date!]}] 
 
 ===end-group===
 
@@ -96,6 +102,7 @@ Rebol [
 ===start-group=== "Various date issues"
 	--test-- "issue 1637"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1637
+		;@@ https://github.com/Oldes/Rebol-issues/issues/994
 		d: now/date
 		--assert none? d/time
 		--assert none? d/zone
@@ -196,6 +203,15 @@ Rebol [
 		--assert all [date?  d: try [load {27-Jan-2009/13:50+5:45}] d/zone = 5:45]
 		--assert all [error? e: try [load {27-Jan-2009/15:05+24:00}]  e/id = 'invalid]
 		--assert all [error? e: try [load {27-Jan-2009/15:05-+26:00}] e/id = 'invalid]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/973
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+5:30 }] d/zone =   5:30] ; Sri Lanka
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+5:45 }] d/zone =   5:45] ; Kathmandu, Nepal
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+8:45 }] d/zone =   8:45] ; Caiguna, Western Australia
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+12:45}] d/zone =  12:45] ; Chatham Islands, New Zealand (dst)
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+13:00}] d/zone =  13:00] ; Tonga
+		--assert all [date?  d: try [load {24-Jun-2009/1:00+14:00}] d/zone =  14:00] ; Line Islands, Kiribati
+		--assert all [date?  d: try [load {24-Jun-2009/1:00-12:00}] d/zone = -12:00]
+		--assert all [date?  d: try [load {24-Jun-2009/1:00-13:00}] d/zone = -13:00]
 
 	--test-- "poke on date not supported"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1074
@@ -242,6 +258,17 @@ Rebol [
 		--assert n = (d/utc: n) ; result is passed thru
 		--assert d = 27-Nov-2020/17:15:57 ; but d is now adjusted
 
+	--test-- "/weekday"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1063
+		monday: 6-7-09
+		tuesday: 7-7-09
+		--assert 1 = monday/weekday
+		--assert 2 = tuesday/weekday
+
+	--test-- "numerical accessors"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1292
+		d: now repeat i 15 [try [d/:i: i]]
+		--assert "11-Jan-0001/13:08:09+12:00" = mold d
 
 ===end-group===
 
@@ -283,6 +310,7 @@ Rebol [
 ===end-group===
 
 ===start-group=== "Internet date"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1511
 	--test-- "TO-ITIME (Normalized time as used in TO-IDATE"
 		--assert "09:04:05" = to-itime 9:4:5
 		--assert "13:24:05" = to-itime 13:24:5.21
@@ -299,10 +327,26 @@ Rebol [
 		--assert 28-Mar-2019/0:00 = to-date to-binary "Thu, 28 Mar 2019 00:00:00 +0000"
 		--assert 4-Apr-2019/19:41:46 = to-date "Thu, 04 Apr 2019 19:41:46 GMT"
 		--assert 1-Apr-2019/21:50:04 = to-date "Mon, 1 Apr 2019 21:50:04 GMT"
-
+		--assert 30-Jul-2013/2:17:58-7:00 = to-date "Tue, 30 Jul 2013 02:17:58 -0700 (PDT)"
+	--test-- "TO-DATE {1-1-2000 00:00:00}"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1362
+		--assert 1-Jan-2000/0:00 == to-date "1-1-2000 00:00:00"
+		--assert 1-Jan-2000/0:00 == to-date "1-1-2000 00:00"
 
 ===end-group===
 
+===start-group=== "Julian date"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2551
+	--test-- "Julian accessor"
+		date: 10-Jun-2023/20:47:53+2:00
+		--assert date/julian = (2400000.5 + to decimal! date) ;; conversion using TO counts with Modified Julian Date
+		--assert 2460106.28325231 = date/julian
+		--assert 2460106.28325231 = pick date 'julian
+	--test-- "Julian date setter"
+		--assert 2415020.5 = date/julian: 2415020.5
+		--assert date = 1-Jan-1900/0:00
+
+===end-group===
 
 ===start-group=== "QUERY date"
 	date: 8-Apr-2020/12:04:32+2:00
@@ -316,11 +360,11 @@ Rebol [
 		--assert date/time = query/mode date 'time
 		--assert [2020 4] = query/mode date [year month]
 		--assert [month: 4 year: 2020] = query/mode date [month: year:]
-		--assert equal? query/mode date all-date-words [2020 4 8 12:04:32 8-Apr-2020 2:00 12 4 32 3 99 2:00 8-Apr-2020/10:04:32 99]
+		--assert equal? query/mode date all-date-words [2020 4 8 12:04:32 8-Apr-2020 2:00 12 4 32 3 99 2:00 8-Apr-2020/10:04:32 2458947.91981481]
 	
 	--test-- "query/mode date"
 		date: 8-Apr-2020 ; no time!
-		--assert equal? query/mode date all-date-words [2020 4 8 #[none] 2020-04-08 #[none] #[none] #[none] #[none] 3 99 #[none] 2020-04-08 99]
+		--assert equal? query/mode date all-date-words [2020 4 8 #[none] 2020-04-08 #[none] #[none] #[none] #[none] 3 99 #[none] 2020-04-08 2458948.0]
 
 ===end-group===
 

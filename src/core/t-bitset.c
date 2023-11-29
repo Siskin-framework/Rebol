@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -700,9 +701,18 @@ set_bits:
 		Trap_Arg(arg);
 
 	case A_REMOVE:	// #"a" "abc"  remove/key bs "abcd"
-		if (D_REF(ARG_REMOVE_PART)) Trap0(RE_BAD_REFINES);
-		if (!D_REF(ARG_REMOVE_KEY)) Trap0(RE_MISSING_ARG); // /key required
-		if (Set_Bits(VAL_SERIES(value), D_ARG(ARG_REMOVE_KEY_ARG), FALSE)) break;
+		if (D_REF(ARG_REMOVE_KEY)) {
+			if (D_REF(ARG_REMOVE_PART))
+				Trap0(RE_BAD_REFINES);
+			arg = D_ARG(ARG_REMOVE_KEY_ARG);
+		} else if (D_REF(ARG_REMOVE_PART)) {
+			arg = D_ARG(ARG_REMOVE_RANGE);
+			// remove/part is allowed only with block, string, binary and char
+			if (!(IS_BLOCK(arg) || IS_STRING(arg) || IS_BINARY(arg) || IS_CHAR(arg)))
+				Trap_Arg(arg);
+		}
+		else Trap0(RE_MISSING_ARG); // /key or /part is required
+		if (Set_Bits(VAL_SERIES(value), arg, FALSE)) break;
 		Trap_Arg(D_ARG(3));
 
 	case A_COPY:
@@ -731,7 +741,7 @@ set_bits:
 	case A_XOR:
 		if (!IS_BITSET(arg) && !IS_BINARY(arg))
 			Trap_Math_Args(VAL_TYPE(arg), action);
-		VAL_SERIES(value) = ser = Xandor_Binary(action, value, arg);
+		VAL_SERIES(value) = ser = Xandor_Bitset(action, value, arg);
 		Trim_Tail_Zeros(ser);
 		break;
 

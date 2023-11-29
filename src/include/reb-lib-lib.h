@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: REBOL Host/Extension API
-**  Build: 3.7.2
-**  Date:  5-Jan-2022
+**  Build: 3.15.0
+**  Date:  29-Nov-2023
 **  File:  reb-lib-lib.reb
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-reb-lib.reb)
@@ -62,4 +62,8 @@ RL_LIB Ext_Lib = {
 	RL_Register_Handle,
 	RL_Make_Handle_Context,
 	RL_Free_Handle_Context,
+	RL_Decode_UTF8_Char,
+	RL_Register_Handle_Spec,
+	RL_To_Local_Path,
+	RL_To_Rebol_Path,
 };

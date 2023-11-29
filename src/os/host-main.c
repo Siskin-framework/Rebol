@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2021-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -107,7 +108,7 @@ extern void Init_Ext_Test(void);	// see: host-ext-test.c
 #endif
 
 // Host bare-bones stdio functs:
-extern REBREQ *Open_StdIO(void);
+extern REBREQ *Open_StdIO(REBOOL cgi);
 extern void Close_StdIO(void);
 extern void Put_Str(REBYTE *buf);
 extern REBYTE *Get_Str(void);
@@ -120,21 +121,28 @@ void Host_Repl(void) {
 //	REBOOL why_alert = TRUE;
 
 #define MAX_CONT_LEVEL 1024
+#define INPUT_NO_STRING 0
+#define INPUT_SINGLE_LINE_STRING 1
+#define INPUT_MULTI_LINE_STRING 2
+#define INPUT_RAW_STRING 3
+
 	REBYTE cont_str[] = CONTIN_STR;
 	REBCNT cont_level = 0;
 	REBYTE cont_stack[MAX_CONT_LEVEL] = { 0 };
 
 	REBCNT input_max = 32768;
-	int input_len = 0;
+	REBLEN input_len = 0;
 	REBYTE *input = OS_Make(input_max);
 
 	REBYTE *tmp;
 	REBYTE *line;
-	int line_len;
+	REBLEN line_len;
 
 	REBYTE *utf8byte;
-	BOOL inside_short_str = FALSE;
+	int raw_str_level = 0;
 	int long_str_level = 0;
+	int n = 0;
+	int state = INPUT_NO_STRING;
 
 	while (TRUE) {
 		if (cont_level > 0) {
@@ -153,6 +161,7 @@ void Host_Repl(void) {
 				cont_level = 0;
 				input_len = 0;
 				input[0] = 0;
+				raw_str_level = 0;
 				continue;
 			}
 			RESET_COLOR;
@@ -162,45 +171,88 @@ void Host_Repl(void) {
 		line_len = 0;
 		for (utf8byte = line; *utf8byte; utf8byte++) {
 			line_len++;
-			switch (*utf8byte) {
-			case '^':
-				if (*(utf8byte + 1) != 0) {
+			if (state == INPUT_NO_STRING)
+			{
+				switch (*utf8byte) {
+				case '"':
+					state = INPUT_SINGLE_LINE_STRING;
+					break;
+				case '[':
+				case '(':
+					if (cont_level < MAX_CONT_LEVEL) cont_stack[cont_level] = *utf8byte;
+					cont_level++;
+					break;
+				case ']':
+				case ')':
+					if (cont_level > 0) cont_level--;
+					break;
+				case '{':
+					if (cont_level < MAX_CONT_LEVEL) cont_stack[cont_level] = *utf8byte;
+					cont_level++;
+					long_str_level++;
+					state = INPUT_MULTI_LINE_STRING;
+					break;
+				case '%':
+					if (utf8byte[1] == '"') continue;
+					n = 1;
+					while (utf8byte[n] == '%') n++;
+					if (utf8byte[n] == '{') {
+						raw_str_level = n;
+						if (cont_level < MAX_CONT_LEVEL) cont_stack[cont_level] = '{';
+						cont_level++;
+						state = INPUT_RAW_STRING;
+					}
+					line_len += n;
+					utf8byte += n;
+					break;
+				}
+			}
+
+			else if (state == INPUT_SINGLE_LINE_STRING)
+			{
+				if (*utf8byte == '^' && utf8byte[1]) {
 					line_len++;
 					utf8byte++;
 				}
-				break;
-			case '"':
-				if (long_str_level == 0) inside_short_str = !inside_short_str;
-				break;
-			case '[':
-			case '(':
-				if (!inside_short_str && long_str_level == 0) {
-					if (cont_level < MAX_CONT_LEVEL) cont_stack[cont_level] = *utf8byte;
-					cont_level++;
+				else if (*utf8byte == '"') {
+					state = INPUT_NO_STRING;
 				}
-				break;
-			case ']':
-			case ')':
-				if (!inside_short_str && long_str_level == 0) {
-					cont_level--;
+			}
+
+			else if (state == INPUT_MULTI_LINE_STRING)
+			{
+				if (*utf8byte == '^' && utf8byte[1]) {
+					line_len++;
+					utf8byte++;
 				}
-				break;
-			case '{':
-				if (!inside_short_str) {
+				else if (*utf8byte == '{') {
 					if (cont_level < MAX_CONT_LEVEL) cont_stack[cont_level] = *utf8byte;
 					cont_level++;
 					long_str_level++;
 				}
-				break;
-			case '}':
-				if (!inside_short_str) {
+				else if (*utf8byte == '}') {
 					cont_level--;
-					if (long_str_level > 0) long_str_level--;
+					long_str_level--;
+					if (long_str_level == 0) state = INPUT_NO_STRING;
 				}
-				break;
+			}
+
+			else if (state == INPUT_RAW_STRING)
+			{
+				if (*utf8byte == '}' && utf8byte[1] == '%') {
+					n = 1;
+					while (utf8byte[n] == '%') n++;
+					if (raw_str_level < n) {
+						raw_str_level = 0;
+						line_len += n;
+						utf8byte += n;
+						cont_level--;
+						state = INPUT_NO_STRING;
+					}
+				}
 			}
 		}
-		inside_short_str = FALSE;
+		if (state == INPUT_SINGLE_LINE_STRING) state = INPUT_NO_STRING;
 
 		if (input_len + line_len > input_max) {
 			// limit maximum input size to 2GB (it should be more than enough)
@@ -229,6 +281,7 @@ void Host_Repl(void) {
 
 		input_len = 0;
 		cont_level = 0;
+		raw_str_level = 0;
 
 		RESET_COLOR;
 
@@ -281,8 +334,9 @@ int main(int argc, char **argv) {
 	argv = (char**)CommandLineToArgvW(GetCommandLineW(), &argc);
 	// Use title string as defined in resources file (.rc) with hardcoded ID 101
 	LoadStringW(App_Instance, 101, App_Title, MAX_TITLE_LENGTH);
-#ifdef INCLUDE_IMAGE_OS_CODEC 
-	CoInitialize(0);
+#if defined(INCLUDE_IMAGE_OS_CODEC) || defined(INCLUDE_AUDIO_DEVICE) 
+	//CoInitialize(0);
+	HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
 #endif
 
 #else //non Windows platforms
@@ -291,14 +345,17 @@ int main(int argc, char **argv) {
 	REBYTE vers[8];
 	REBINT n;
 	REBREQ *std_io;
+	REBOOL cgi;
+
+	Parse_Args(argc, (REBCHR **)argv, &Main_Args);
+
+	cgi = Main_Args.options & RO_CGI;
 
 	// Must be done before an console I/O can occur. Does not use reb-lib,
 	// so this device should open even if there are other problems.
-	std_io = Open_StdIO();  // also sets up interrupt handler
+	std_io = Open_StdIO(cgi);  // also sets up interrupt handler
 
 	Host_Lib = &Host_Lib_Init;
-
-	Parse_Args(argc, (REBCHR **)argv, &Main_Args);
 
 	vers[0] = 5; // len
 	RL_Version(&vers[0]);
@@ -338,7 +395,7 @@ int main(int argc, char **argv) {
 #endif
 
 	if (
-		!(Main_Args.options & RO_CGI)
+		!cgi
 		&& (
 			!Main_Args.script // no script was provided
 			|| n  < 0         // script halted or had error

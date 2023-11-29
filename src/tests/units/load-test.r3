@@ -20,6 +20,14 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "Load/as"
+	--test-- "load/as markup"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1985
+		--assert [<a> "b" </c>] == load/as "<a>b</c>" 'markup
+		--assert [<a> "b" </c>] == load/as #{3C613E623C2F633E} 'markup
+
+===end-group===
+
 ===start-group=== "Load/header"
 	--test-- "issue-663"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/663
@@ -88,6 +96,12 @@ Rebol [
 			error? e: try [load #{789DE3}] ;- no crash!
 			e/id = 'invalid-chars
 		]
+	--test-- "issue-2302"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2302
+		--assert all [
+			error? e: try [load %units/files/invalid-decimal.r]
+			e/near = "(line 4) 4line"
+		]
 
 ===end-group===
 
@@ -152,6 +166,24 @@ Rebol [
 		bin: save/header none [1] true
 		--assert bin = #{5245424F4C205B5D0A310A}
 		--assert 1 = load bin
+
+	--test-- "save/header to string"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1065
+		save/header s: "script: "  "1" []
+		--assert s = "script: #{5245424F4C205B5D0A2231220A}"
+		--assert #{5245424F4C205B5D0A2231220A} = save/header #{}  "1" []
+
+	--test-- "save/header unicode"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1953
+		--assert all [
+			try [
+				save/header %issue-1065.reb [][Jazyk: "čeština"]
+				s: load/header %issue-1065.reb
+			]
+			s/1/Jazyk == "čeština"
+		]
+		delete %issue-1065.reb
+
 ===end-group===
 
 

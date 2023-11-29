@@ -104,9 +104,13 @@
     fail
     reject
     while
+    collect
+    keep
     return
     limit
     ??
+    case
+    no-case
     accept
     break
     skip
@@ -146,12 +150,16 @@
     crc32
     md4
     md5
-    ripemd160
     sha1
     sha224
     sha256
     sha384
     sha512
+    ripemd160
+    sha3-224
+    sha3-256
+    sha3-384
+    sha3-512
     identify
     decode
     encode
@@ -200,6 +208,14 @@
     echo
     line
     error
+    brk
+    dtr
+    rts
+    play
+    local-ip
+    local-port
+    remote-ip
+    remote-port
     bits
     crash
     crash-dump
@@ -229,7 +245,63 @@
     msdos-date
     msdos-time
     octal-bytes
-    string-bytes abgr addr aes align argb at atz bgr bgra bgro bincode bit bitset16 bitset32 bitset8 bytes chacha20 chacha20poly1305 checksum codec crush deflate dh ecdh egid encodedu32 euid extern f16 f16be f16le f32 f32be f32le f64 f64be f64le fb fixed16 fixed8 float float16 gid gzip index indexz length local lzma name obgr opacity orgb pad pid pointer poly1305 raw_memory raw_size rc4 rebval rgba rgbo rsa sb secp160r1 secp192r1 secp224r1 secp256k1 secp256r1 si16 si16be si16le si24 si24be si32 si32be si32le si64 si8 signed skipbits string tuple3 tuple4 ub ui16 ui16be ui16bebytes ui16bytes ui16le ui16lebytes ui24 ui24be ui24bebytes ui24bytes ui24le ui24lebytes ui32 ui32be ui32bebytes ui32bytes ui32le ui32lebytes ui64 ui64be ui64le ui8 ui8bytes uid widget zlib
+    string-bytes
+    secp192r1
+    secp224r1
+    secp256r1
+    secp384r1
+    secp521r1
+    bp256r1
+    bp384r1
+    bp512r1
+    curve25519
+    secp192k1
+    secp224k1
+    secp256k1
+    curve448
+    init-vector
+    aes-128-ecb
+    aes-192-ecb
+    aes-256-ecb
+    aes-128-cbc
+    aes-192-cbc
+    aes-256-cbc
+    aes-128-ccm
+    aes-192-ccm
+    aes-256-ccm
+    aes-128-gcm
+    aes-192-gcm
+    aes-256-gcm
+    camellia-128-ecb
+    camellia-192-ecb
+    camellia-256-ecb
+    camellia-128-cbc
+    camellia-192-cbc
+    camellia-256-cbc
+    camellia-128-ccm
+    camellia-192-ccm
+    camellia-256-ccm
+    camellia-128-gcm
+    camellia-192-gcm
+    camellia-256-gcm
+    aria-128-ecb
+    aria-192-ecb
+    aria-256-ecb
+    aria-128-cbc
+    aria-192-cbc
+    aria-256-cbc
+    aria-128-ccm
+    aria-192-ccm
+    aria-256-ccm
+    aria-128-gcm
+    aria-192-gcm
+    aria-256-gcm
+    chacha20
+    chacha20-poly1305
+    tag-length
+    aad-length
+    file-checksum
+    xaudio-voice abgr addr aes after algorithm align area argb at atz bgr bgra bgro bincode bit bitset16 bitset32 bitset8 brotli bytes chacha20poly1305 checksum codec crop crush crypt decrypt deflate dhm direction ecdh egid encodedu32 encrypt euid extern f16 f16be f16le f32 f32be f32le f64 f64be f64le fb fixed16 fixed8 float float16 gid gzip index indexz internal iv length local lzma lzw name obgr opacity orgb pad pick pid pointer poly1305 raw_memory raw_size rc4 rebval rgba rgbo rsa sb si16 si16be si16le si24 si24be si32 si32be si32le si64 si8 signed skipbits string tuple3 tuple4 ub ui16 ui16be ui16bebytes ui16bytes ui16le ui16lebytes ui24 ui24be ui24bebytes ui24bytes ui24le ui24lebytes ui32 ui32be ui32bebytes ui32bytes ui32le ui32lebytes ui64 ui64be ui64le ui8 ui8bytes uid unset widget zlib
 ] [
     self
     root
@@ -264,38 +336,38 @@
 646563696D616C0070657263656E74006D6F6E65790074696D65006461746500
 6368617200626C6F636B00706172656E00737472696E670062696E6172790070
 616972007475706C650066696C6500656D61696C0075726C0069737375650074
-6167007061746800726566696E6500636F6E73747275637400426F6F74696E67
-2E2E2E00747261636500252D3032643A202535307200203A202535307200203A
-202573202535306D00203A202573002D2D3E202573003C2D2D202573203D3D00
-5061727365206D617463683A20257200506172736520696E7075743A20257300
-5061727365206261636B3A202572002A2A3A206572726F72203A202572202572
-00535441434B20457870616E646564202D204453503A202564204D41583A2025
-64000A535441434B5B25645D2025735B25645D202573000A2D2D5245424F4C20
-4B65726E656C2044756D702D2D004576616C7561746F723A0020202020437963
-6C65733A202025640020202020436F756E7465723A2025640020202020446F73
-653A20202020256400202020205369676E616C733A2025780020202020536967
-6D61736B3A20257800202020204453503A202020202025640020202020445346
-3A20202020202564004D656D6F72792F47433A002020202042616C6C6173743A
-202564002020202044697361626C653A202564002020202050726F746563743A
-2025640020202020496E66616E74733A202564006F7574206F66206D656D6F72
-7920287265712025642062797465732900696E76616C69642073657269657320
-776964746820256420676F742025642074797065202564006572726F7220616C
-72656164792063617567687400737461636B206F766572666C6F7700492F4F20
-6572726F7200746F6F206D616E7920776F72647300776F7264206C6973742062
-756666657220696E20757365006C6F636B656420736572696573006572726F72
-2072656379636C656400746F70206C6576656C206572726F72206E6F74206361
-75676874006572726F7220737461746520756E646572666C6F77006576656E74
-207175657565206F766572666C6F7720285741495420726563757273696F6E3F
-29006E6F7420617661696C61626C6520284E412900206572726F723A20002869
-6D70726F7065726C7920666F726D6174746564206572726F7229002A2A205768
-6572653A20002A2A204E6561723A200052454359434C494E473A200025642073
-6572696573006F626A2D636F70793A20256420256D0052585F496E6974005258
-5F517569740052585F43616C6C005265626F6C20436F726520332E372E32204C
-696E7578206C696E757820783634207063206C696E757820656C662067636320
-7836342D70632D6C696E75782D656C662032372D4665622D323032332F31323A
-303520237B423941434244353945363431323332453733453932413641453932
-414537444346333939373131467D00
-} [
+6167007061746800726566696E6500636F6E737472756374006D617000426F6F
+74696E672E2E2E00747261636500252D3032643A202535307200203A20253530
+7200203A202573202535306D00203A202573002D2D3E202573003C2D2D202573
+203D3D005061727365206D617463683A20257200506172736520696E7075743A
+202573005061727365206261636B3A202572002A2A3A206572726F72203A2025
+7220257200535441434B20457870616E646564202D204453503A202564204D41
+583A202564000A535441434B5B25645D2025735B25645D202573000A2D2D5245
+424F4C204B65726E656C2044756D702D2D004576616C7561746F723A00202020
+204379636C65733A202025640020202020436F756E7465723A20256400202020
+20446F73653A20202020256400202020205369676E616C733A20257800202020
+205369676D61736B3A20257800202020204453503A2020202020256400202020
+204453463A20202020202564004D656D6F72792F47433A002020202042616C6C
+6173743A202564002020202044697361626C653A202564002020202050726F74
+6563743A2025640020202020496E66616E74733A202564006F7574206F66206D
+656D6F727920287265712025642062797465732900696E76616C696420736572
+69657320776964746820256420676F742025642074797065202564006572726F
+7220616C72656164792063617567687400737461636B206F766572666C6F7700
+492F4F206572726F7200746F6F206D616E7920776F72647300776F7264206C69
+73742062756666657220696E20757365006C6F636B6564207365726965730065
+72726F722072656379636C656400746F70206C6576656C206572726F72206E6F
+7420636175676874006572726F7220737461746520756E646572666C6F770065
+76656E74207175657565206F766572666C6F7720285741495420726563757273
+696F6E3F29006E6F7420617661696C61626C6520284E412900206572726F723A
+200028696D70726F7065726C7920666F726D6174746564206572726F7229002A
+2A2057686572653A20002A2A204E6561723A200052454359434C494E473A2000
+256420736572696573006F626A2D636F70793A20256420256D0052585F496E69
+740052585F517569740052585F43616C6C005265626F6C20436F726520332E31
+352E30204C696E75782064656269616E20783634207063206C696E757820656C
+6620676363207836342D70632D6C696E75782D656C662032392D4E6F762D3230
+32332F31313A313120237B383230354336363835433135333239313134343733
+383345423542453244453235454537394438377D20676C6962635F322E333620
+2231322200} [
     ["Returns TRUE if it is this type." value [any-type!] 0]
     native: native [
         "Creates native function (for internal usage only)."
@@ -457,7 +529,7 @@
         series [series! gob! port! bitset! typeset! object! map! none!]
         value [any-type!]
         /part "Limits the search to a given length or position"
-        length [number! series! pair!]
+        range [number! series! pair!]
         /only "Treats a series value as only a single value"
         /case "Characters are case-sensitive"
         /same {Use "same?" as comparator}
@@ -476,7 +548,7 @@
         series [series! port! map! object! module! none!]
         value [any-type!]
         /part "Limits the search to a given length or position"
-        length [number! series! pair!]
+        range [number! series! pair!]
         /only "Treats a series value as only a single value"
         /case "Characters are case-sensitive"
         /same {Use "same?" as comparator}
@@ -506,8 +578,8 @@
     copy: action [
         "Copies a series, object, or other value."
         value [series! port! map! object! bitset! any-function! error!] "At position"
-        /part "Limits to a given length or position"
-        length [number! series! pair!]
+        /part "Limits to a given length or end position"
+        range [number! series! pair!]
         /deep "Also copies series values within the block"
         /types "What datatypes to copy"
         kinds [typeset! datatype!]
@@ -516,14 +588,14 @@
         "Removes and returns one or more elements."
         series [series! port! gob! none!] "At position (modified)"
         /part "Specifies a length or end position"
-        length [number! series! pair!]
+        range [number! series! pair!]
         /deep "Also copies series values within the block"
         /last "Take it from the tail end"
     ]
     put: action [
         {Replaces the value following a key, and returns the new value.}
-        series [any-block! map!] "(modified)"
-        key [scalar! any-string! any-word! binary!]
+        series [any-block! map! port! object!] "(modified)"
+        key [any-type!]
         value [any-type!] "The new value (returned)"
         /case "Perform a case-sensitive search"
     ]
@@ -532,7 +604,7 @@
         series [series! port! map! gob! object! bitset!] "At position (modified)"
         value [any-type!] "The value to insert"
         /part "Limits to a given length or position"
-        length [number! series! pair!]
+        range [number! series! pair!]
         /only {Only insert a block as a single value (not the contents of the block)}
         /dup "Duplicates the insert a specified number of times"
         count [number! pair!]
@@ -542,7 +614,7 @@
         series [series! port! map! gob! object! bitset!] "Any position (modified)"
         value [any-type!] "The value to insert"
         /part "Limits to a given length or position"
-        length [number! series! pair!]
+        range [number! series! pair!]
         /only {Only insert a block as a single value (not the contents of the block)}
         /dup "Duplicates the insert a specified number of times"
         count [number! pair!]
@@ -551,7 +623,7 @@
         "Removes element(s); returns same position."
         series [series! gob! port! bitset! none! map!] "At position (modified)"
         /part "Removes multiple elements or to a given position"
-        length [number! series! pair! char!]
+        range [number! series! pair! char!]
         /key "Removes a key from map."
         key-arg [any-type!]
     ]
@@ -560,7 +632,7 @@
         series [series! gob! port! struct!] "At position (modified)"
         value [any-type!] "The new value"
         /part {Limits the amount to change to a given length or position}
-        length [number! series! pair!]
+        range [number! series! pair!]
         /only {Only change a block as a single value (not the contents of the block)}
         /dup "Duplicates the change a specified number of times"
         count [number! pair!]
@@ -576,7 +648,7 @@
         series [series! port! map! gob! bitset! none!] "At position, if ordered collection (modified)"
     ]
     trim: action [
-        {Removes spaces from strings or nones from blocks or objects.}
+        {Removes spaces from strings, nulls from binary, nones from blocks or objects.}
         series [series! object! error! module!] "Series (modified) or object (made)"
         /head "Removes only from the head"
         /tail "Removes only from the tail"
@@ -594,7 +666,7 @@
         {Reverses the order of elements; returns at same position.}
         series [series! gob! tuple! pair!] "At position (modified)"
         /part "Limits to a given length or position"
-        length [number! series!]
+        range [number! series!]
     ]
     sort: action [
         "Sorts a series; default sort order is ascending."
@@ -604,8 +676,8 @@
         size [integer!] "Size of each record"
         /compare "Comparator offset, block or function"
         comparator [integer! block! any-function!]
-        /part "Sort only part of a series"
-        length [number! series!] "Length of series to sort"
+        /part "Limits the sorting to a given length or position"
+        range [number! series!]
         /all "Compare all fields"
         /reverse "Reverse sort order"
     ]
@@ -641,6 +713,7 @@
         /string {Convert UTF and line terminators to standard text string}
         /binary "Preserves contents exactly"
         /lines "Convert to block of strings (implies /string)"
+        /all {Response may include additional information (source relative)}
     ]
     write: action [
         {Writes to a file, URL, or port - auto-converts text strings.}
@@ -655,6 +728,7 @@
         access [block!]
         /lines "Write each value in a block as a separate line"
         /binary "Preserves contents exactly"
+        /all {Response may include additional information (source relative)}
     ]
     open?: action [
         "Returns TRUE if port is open."
@@ -681,10 +755,16 @@
         from [port! file! url! block!]
         to [port! file! url! block!]
     ]
+    flush: action [
+        "Flush output stream buffer."
+        port [port!]
+    ]
 ] [
     ajoin: native [
-        {Reduces and joins a block of values into a new string.}
+        {Reduces and joins a block of values into a new string. Ignores none and unset values.}
         block [block!]
+        /with delimiter [any-type!]
+        /all "Do not ignore none and unset values"
     ]
     also: native [
         {Returns the first value, but also evaluates the second.}
@@ -713,6 +793,7 @@
     attempt: native [
         {Tries to evaluate a block and returns result or NONE on error.}
         block [block!]
+        /safer "Capture all possible errors and exceptions"
     ]
     break: native [
         {Breaks out of a loop, while, until, repeat, foreach, etc.}
@@ -729,7 +810,9 @@
         block [block!] "Block to evaluate"
         /name "Catches a named throw"
         word [word! block!] "One or more names"
+        /all "Catches all throws, named and unnamed"
         /quit "Special catch for QUIT native"
+        /with callback [block! function!] "Code to be evaluated on a catch"
     ]
     comment: native [
         "Ignores the argument value and returns nothing."
@@ -857,6 +940,10 @@
         size [integer!]
         /torture "Constant recycle (for internal debugging)"
     ]
+    release: native [
+        {Release internal resources of the handle. Returns true on success.}
+        handle [handle!]
+    ]
     reduce: native [
         {Evaluates expressions and returns multiple results.}
         value
@@ -887,8 +974,9 @@
         {Selects a choice and evaluates the block that follows it.}
         value "Target value"
         cases [block!] "Block of cases to check"
-        /default case "Default case if no others found"
+        /default def "Default case if no others found"
         /all "Evaluate all matches (not just first one)"
+        /case "Perform a case-sensitive comparison"
     ]
     throw: native [
         "Throws control back to a previous catch."
@@ -903,9 +991,12 @@
         /function "Traces functions only (less output)"
     ]
     try: native [
-        {Tries to DO a block and returns its value or an error.}
-        block [block!]
-        /except "On exception, evaluate this code block"
+        {Tries to DO a block and returns its value or an error!.}
+        block [block! paren!]
+        /all {Catch also BREAK, CONTINUE, RETURN, EXIT and THROW exceptions.}
+        /with {On error, evaluate the handler and return its result}
+        handler [block! any-function!]
+        /except "** DEPRERCATED **"
         code [block! any-function!]
     ]
     unless: native [
@@ -931,7 +1022,7 @@
     bind: native [
         "Binds words to the specified context."
         word [block! any-word!] "A word or block (modified) (returned)"
-        context [any-word! any-object!] "A reference to the target context"
+        context [any-word! object! module! port!] "A reference to the target context"
         /copy {Bind and return a deep copy of a block, don't modify original}
         /only "Bind only first block (not deep)"
         /new "Add to context any new words found"
@@ -955,18 +1046,19 @@
     debase: native [
         "Decodes binary-coded string to binary value."
         value [binary! any-string!] "The string to decode"
-        base [integer!] "Binary base to use: 85, 64, 16, or 2"
+        base [integer!] "Binary base to use: 85, 64, 36, 16, or 2"
         /url {Base 64 Decoding with URL and Filename Safe Alphabet}
         /part "Limit the length of the input"
-        limit [integer!]
+        limit [integer! binary! any-string!]
     ]
     enbase: native [
         "Encodes a string into a binary-coded string."
-        value [binary! string!] "If string, will be UTF8 encoded"
-        base [integer!] "Binary base to use: 85, 64, 16, or 2"
+        value [binary! any-string!] "If string, will be UTF8 encoded"
+        base [integer!] "Binary base to use: 85, 64, 36, 16, or 2"
         /url {Base 64 Encoding with URL and Filename Safe Alphabet}
         /part "Limit the length of the input"
-        limit [integer!]
+        limit [integer! binary! any-string!]
+        /flat "No line breaks"
     ]
     decloak: native [
         {Decodes a binary string scrambled previously by encloak.}
@@ -1003,39 +1095,39 @@
     ]
     difference: native [
         "Returns the special difference of two values."
-        set1 [block! string! binary! bitset! date! typeset!] "First data set"
-        set2 [block! string! binary! bitset! date! typeset!] "Second data set"
+        set1 [block! string! bitset! date! typeset! map!] "First data set"
+        set2 [block! string! bitset! date! typeset! map!] "Second data set"
         /case "Uses case-sensitive comparison"
         /skip "Treat the series as records of fixed size"
         size [integer!]
     ]
     exclude: native [
         {Returns the first data set less the second data set.}
-        set1 [block! string! binary! bitset! typeset!] "First data set"
-        set2 [block! string! binary! bitset! typeset!] "Second data set"
+        set1 [block! string! bitset! typeset! map!] "First data set"
+        set2 [block! string! bitset! typeset! map!] "Second data set"
         /case "Uses case-sensitive comparison"
         /skip "Treat the series as records of fixed size"
         size [integer!]
     ]
     intersect: native [
         "Returns the intersection of two data sets."
-        set1 [block! string! binary! bitset! typeset!] "first set"
-        set2 [block! string! binary! bitset! typeset!] "second set"
+        set1 [block! string! bitset! typeset! map!] "first set"
+        set2 [block! string! bitset! typeset! map!] "second set"
         /case "Uses case-sensitive comparison"
         /skip "Treat the series as records of fixed size"
         size [integer!]
     ]
     union: native [
         "Returns the union of two data sets."
-        set1 [block! string! binary! bitset! typeset!] "first set"
-        set2 [block! string! binary! bitset! typeset!] "second set"
+        set1 [block! string! bitset! typeset! map!] "first set"
+        set2 [block! string! bitset! typeset! map!] "second set"
         /case "Use case-sensitive comparison"
         /skip "Treat the series as records of fixed size"
         size [integer!]
     ]
     unique: native [
         "Returns the data set with duplicates removed."
-        set1 [block! string! binary! bitset! typeset!]
+        set1 [block! string! bitset! typeset! map!]
         /case "Use case-sensitive comparison (except bitsets)"
         /skip "Treat the series as records of fixed size"
         size [integer!]
@@ -1056,7 +1148,7 @@
         {Converts URL-style hex encoded (%xx) strings. If input is UTF-8 encode, you should first convert it to binary!}
         value [any-string! binary!] "The string to dehex"
         /escape char [char!] {Can be used to change the default escape char #"%"}
-        /url "Decode + as a space"
+        /uri {Decode space from a special char (#"+" by default or #"_" when escape char is #"=")}
     ]
     enhex: native [
         {Converts string into URL-style hex encodeding (%xx) when needed.}
@@ -1065,6 +1157,7 @@
         char [char!]
         /except {Can be used to specify, which chars can be left unescaped}
         unescaped [bitset!] {By default it is URI bitset when value is file or url, else URI-Component}
+        /uri {Encode space using a special char (#"+" by default or #"_" when escape char is #"=")}
     ]
     get: native [
         {Gets the value of a word or path, or values of an object.}
@@ -1079,8 +1172,7 @@
     parse: native [
         {Parses a string or block series according to grammar rules.}
         input [series!] "Input series to parse"
-        rules [block! string! char! none!] {Rules to parse by (none = ",;")}
-        /all {For simple rules (not blocks) parse all chars including whitespace}
+        rules [block!] "Rules to parse"
         /case "Uses case-sensitive comparison"
     ]
     set: native [
@@ -1118,11 +1210,15 @@
     ]
     value?: native [
         "Returns TRUE if the word has a value."
-        value
+        value [word!]
     ]
     to-value: native [
         "Returns the value if it is a value, NONE if unset."
         value [any-type!]
+    ]
+    split-lines: native [
+        "Given a string series, split lines on CR-LF."
+        value [string!]
     ]
     print: native [
         "Outputs a value followed by a line break."
@@ -1167,11 +1263,14 @@
         path [file! string!]
     ]
     transcode: native [
-        {Translates UTF-8 binary source to values. Returns [value binary].}
-        source [binary!] "Must be Unicode UTF-8 encoded"
+        {Translates UTF-8 binary source to values. Returns one or several values in a block.}
+        source [binary! string!] {UTF-8 input buffer; string argument will be UTF-8 encoded}
         /next {Translate next complete value (blocks as single value)}
+        /one {Translate next complete value (returns the value only)}
         /only "Translate only a single value (blocks dissected)"
         /error {Do not cause errors - return error object as value in place}
+        /line {Return also information about number of lines scaned}
+        count [integer!] "Initial line number"
     ]
     echo: native [
         "Copies console output to a file."
@@ -1391,6 +1490,9 @@
         name [file!]
         /keep "Keep previous directory path"
     ]
+    request-password: native [
+        {Asks user for input without echoing, and the entered password is not stored in the command history.}
+    ]
     ascii?: native [
         {Returns TRUE if value or string is in ASCII character range (below 128).}
         value [any-string! char! integer!]
@@ -1533,6 +1635,7 @@
     ]
     version: native [
         "Return Rebol version string"
+        /data "loadable version"
     ]
     pickz: native [
         {Returns the value at the specified position. (0-based wrapper over PICK action)}
@@ -1545,6 +1648,13 @@
         index [integer!] "Zero based"
         value [any-type!] "The new value (returned)"
     ]
+    swap-endian: native [
+        "Swaps byte order (endianness)"
+        value [binary!] "At position (modified)"
+        /width bytes [integer!] "2, 4 or 8 (default is 2)"
+        /part "Limits to a given length or position"
+        range [number! series!]
+    ]
     collect-words: native [
         {Collect unique words used in a block (used for context construction).}
         block [block!]
@@ -1554,6 +1664,17 @@
         words [any-object! block! none!] "Words to ignore"
         /as "Datatype of the words in the returned block"
         type [datatype!] "Any word type"
+    ]
+    with: native [
+        "Evaluates a block binded to the specified context"
+        context [object! module! port!] "A reference to the target context"
+        body [block!] "A code to be evaluated"
+    ]
+    truncate: native [
+        {Removes all bytes/values from series' head to its current index position}
+        series [series!] "Series to be truncated"
+        /part {Also shorten resulted series to a length or end position}
+        range [number! series!]
     ]
     to-real-file: native [
         {Returns canonicalized absolute pathname. On Posix resolves symbolic links and returns NONE if file does not exists!}
@@ -1656,7 +1777,7 @@
     ]
     checksum: native [
         "Computes a checksum, CRC, hash, or HMAC."
-        data [binary! string!] "If string, it will be UTF8 encoded"
+        data [binary! string! file!] {If string, it will be UTF8 encoded. File is dispatched to file-checksum function.}
         method [word!] "One of `system/catalog/checksums` and HASH"
         /with {Extra value for HMAC key or hash table size; not compatible with TCP/CRC24/CRC32/ADLER32 methods.}
         spec [any-string! binary! integer!] {String or binary for MD5/SHA* HMAC key, integer for hash table size.}
@@ -1666,29 +1787,18 @@
     compress: native [
         "Compresses data."
         data [binary! string!] "If string, it will be UTF8 encoded"
-        method [word!] "zlib deflate gzip lzma"
+        method [word!] "One of `system/catalog/compressions`"
         /part length "Length of source data"
         /level lvl [integer!] "Compression level 0-9"
     ]
     decompress: native [
         "Decompresses data."
         data [binary!] "Source data to decompress"
-        method [word!] "zlib deflate gzip lzma"
+        method [word!] "One of `system/catalog/compressions`"
         /part "Limits source data to a given length or position"
         length [number! series!] "Length of compressed data (must match end marker)"
         /size
         bytes [integer!] "Number of uncompressed bytes."
-    ]
-    stack: native [
-        "Returns stack backtrace or other values."
-        offset [integer!] "Relative backward offset"
-        /block "Block evaluation position"
-        /word "Function or object name, if known"
-        /func "Function value"
-        /args "Block of args (may be modified)"
-        /size "Current stack size (in value units)"
-        /depth "Stack depth (frames)"
-        /limit "Stack bounds (auto expanding)"
     ]
     complement?: native [
         "Returns TRUE if the bitset is complemented"
@@ -1702,16 +1812,6 @@
         ctx [handle!] "Stream cipher context."
         data [binary!] "Data to encrypt/decrypt."
     ]
-    aes: native [
-        {Encrypt/decrypt data using AES algorithm. Returns stream cipher context handle or encrypted/decrypted data.}
-        /key {Provided only for the first time to get stream HANDLE!}
-        crypt-key [binary!] "Crypt key (16 or 32 bytes)."
-        iv [none! binary!] "Optional initialization vector (16 bytes)."
-        /decrypt {Use the crypt-key for decryption (default is to encrypt)}
-        /stream
-        ctx [handle!] "Stream cipher context."
-        data [binary!] "Data to encrypt/decrypt."
-    ]
     rsa-init: native [
         {Creates a context which is than used to encrypt or decrypt data using RSA}
         n [binary!] "Modulus"
@@ -1720,30 +1820,27 @@
         d [binary!] "Private exponent"
         p [binary!] "Prime number 1"
         q [binary!] "Prime number 2"
-        dP [binary! none!] "Exponent1: d mod (p-1)"
-        dQ [binary! none!] "Exponent2: d mod (q-1)"
-        qInv [binary!] "Coefficient: (inverse of q) mod p"
     ]
     rsa: native [
         {Encrypt/decrypt/sign/verify data using RSA cryptosystem. Only one refinement must be used!}
         rsa-key [handle!] "RSA context created using `rsa-init` function"
-        data [binary! none!] {Data to work with. Use NONE to release the RSA handle resources!}
+        data [binary!] "Data to work with."
         /encrypt "Use public key to encrypt data"
         /decrypt "Use private key to decrypt data"
-        /sign "Use private key to sign data"
-        /verify "Use public key to verify signed data"
+        /sign {Use private key to sign data. Result is PKCS1 v1.5 binary}
+        /verify {Use public key to verify signed data (returns TRUE or FALSE)}
+        signature [binary!] "Result of the /sign call"
+        /hash "Signature's message digest algorithm"
+        algorithm [word! none!]
     ]
     dh-init: native [
         {Generates a new Diffie-Hellman private/public key pair}
         g [binary!] "Generator"
         p [binary!] "Field prime"
-        /into
-        dh-key [handle!] "Existing DH key handle"
     ]
     dh: native [
         "Diffie-Hellman key exchange"
         dh-key [handle!] "DH key created using `dh-init` function"
-        /release "Releases internal DH key resources"
         /public "Returns public key as a binary"
         /secret "Computes secret result using peer's public key"
         public-key [binary!] "Peer's public key"
@@ -1752,57 +1849,25 @@
         "Elliptic-curve Diffie-Hellman key exchange"
         key [handle! none!] {Keypair to work with, may be NONE for /init refinement}
         /init "Initialize ECC keypair."
-        type [word!] {One of supported curves: [secp256k1 secp256r1 secp224r1 secp192r1 secp160r1]}
+        type [word!] {One of supported curves: system/catalog/elliptic-curves}
         /curve "Returns handles curve type"
         /public "Returns public key as a binary"
         /secret "Computes secret result using peer's public key"
         public-key [binary!] "Peer's public key"
-        /release "Releases internal ECDH key resources"
+    ]
+    generate: native [
+        "Generate specified cryptographic key"
+        type [word!] "Key type: system/catalog/elliptic-curves"
     ]
     ecdsa: native [
         "Elliptic Curve Digital Signature Algorithm"
         key [handle! binary!] {Keypair to work with, created using ECDH function, or raw binary key (needs /curve)}
         hash [binary!] "Data to sign or verify"
-        /sign {Use private key to sign data, returns 64 bytes of signature}
+        /sign {Use private key to sign data, returns ASN1 encoded result}
         /verify {Use public key to verify signed data, returns true or false}
-        signature [binary!] "Signature (64 bytes)"
+        signature [binary!] "ASN1 encoded"
         /curve "Used if key is just a binary"
-        type [word!] {One of supported curves: [secp256k1 secp256r1 secp224r1 secp192r1 secp160r1]}
-    ]
-    chacha20: native [
-        {Encrypt/decrypt data using ChaCha20 algorithm. Returns stream cipher context handle or encrypted/decrypted data.}
-        ctx [handle! binary!] {ChaCha20 handle and or binary key for initialization (16 or 32 bytes)}
-        /init
-        nonce [binary!] "Initialization nonce (IV) - 8 or 12 bytes."
-        count [integer!] "A 32-bit block count parameter"
-        /aad sequence [integer!] "Sequence number used with /init to modify nonce"
-        /stream
-        data [binary!] "Data to encrypt/decrypt."
-        /into
-        out [binary!] "Output buffer (NOT YET IMPLEMENTED)"
-    ]
-    poly1305: native [
-        "poly1305 message-authentication"
-        ctx [handle! binary!] {poly1305 handle and or binary key for initialization (32 bytes)}
-        /update data [binary!] "data to authenticate"
-        /finish {finish data stream and return raw result as a binary}
-        /verify {finish data stream and compare result with expected result (MAC)}
-        mac [binary!] "16 bytes of verification MAC"
-    ]
-    chacha20poly1305: native [
-        "..."
-        ctx [none! handle!]
-        /init
-        local-key [binary!]
-        local-iv [binary!]
-        remote-key [binary!]
-        remote-iv [binary!]
-        /encrypt
-        data-out [binary!]
-        aad-out [binary!]
-        /decrypt
-        data-in [binary!]
-        aad-in [binary!]
+        type [word!] {One of supported curves: system/catalog/elliptic-curves}
     ]
     binary: native [
         "Entry point of the binary DSL (Bincode)"
@@ -1856,7 +1921,7 @@
         type: "throw error"
         break: "no loop to break"
         return: "return or exit not in function"
-        throw: ["no catch for throw:" :arg1]
+        throw: ["no catch for throw:" :arg2 "with value:" :arg1]
         continue: "no loop to continue"
         halt: ["halted by user or script"]
         quit: ["user script quit"]
@@ -1942,8 +2007,12 @@
         parse-variable: ["PARSE - expected a variable, not:" :arg1]
         parse-command: ["PARSE - command cannot be used as variable:" :arg1]
         parse-series: ["PARSE - input must be a series:" :arg1]
+        parse-no-collect: "PARSE - KEEP is used without a wrapping COLLECT"
+        parse-into-bad: {PARSE - COLLECT INTO/AFTER expects a series! argument}
+        parse-into-type: {PARSE - COLLECT INTO/AFTER expects a series! of compatible datatype}
         invalid-handle: "invalid handle"
         invalid-value-for: ["invalid value" :arg1 "for:" :arg2]
+        handle-exists: ["handle already exists under id" :arg1 "and have different size"]
     ]
     Math: [
         code: 400
@@ -1960,6 +2029,7 @@
         already-open: ["port is already open:" :arg1]
         no-connect: ["cannot connect:" :arg1 "reason:" :arg2]
         not-connected: ["port is not connected:" :arg1]
+        not-ready: ["port is not ready:" :arg1]
         no-script: ["script not found:" :arg1]
         no-scheme-name: ["new scheme must have a name:" :arg1]
         no-scheme: ["missing port scheme:" :arg1]
@@ -1986,7 +2056,7 @@
         security-error: ["invalid" :arg1 "security policy:" :arg2]
         no-codec: ["cannot decode or encode (no codec):" :arg1]
         bad-media: ["bad media data (corrupt image, sound, video)"]
-        no-extension: ["cannot open extension:" :arg1]
+        no-extension: ["cannot open extension:" :arg1 "reason:" :arg2]
         bad-extension: ["invalid extension format:" :arg1]
         extension-init: ["extension cannot be initialized (check version):" :arg1]
         call-fail: ["external process failed:" :arg1]
@@ -2026,19 +2096,57 @@
 ] [
     product: 'core
     platform: 'Unknown
-    version: 3.7.2
-    build: object [os: arch: vendor: sys: abi: compiler: target: date: git: none]
-    license: none
+    version: 3.15.0
+    build: object [os: os-version: abi: sys: arch: libc: vendor: target: compiler: date: git: none]
+    user: construct [
+        name: none
+        data: #()
+    ]
+    options: object [
+        boot:
+        path:
+        home:
+        data:
+        modules:
+        none
+        flags:
+        script:
+        args:
+        do-arg:
+        import:
+        debug:
+        secure:
+        version:
+        boot-level:
+        none
+        quiet: false
+        binary-base: 16
+        decimal-digits: 15
+        probe-limit: 16000
+        module-paths: none
+        default-suffix: %.reb
+        file-types: []
+        mime-types: none
+        result-types: none
+        log: #(
+            rebol: 1
+            http: 1
+            tls: 1
+            zip: 1
+            tar: 1
+        )
+        domain-name: none
+    ]
     catalog: object [
-        datatypes: []
+        datatypes: none
         actions: none
         natives: none
         handles: none
         errors: none
         reflectors: [
             spec [any-function! any-object! vector! datatype! struct!]
-            body [any-function! any-object! map!]
-            words [any-function! any-object! map! date! handle!]
+            body [any-function! any-object! map! struct!]
+            words [any-function! any-object! map! date! handle! struct!]
             values [any-object! map! struct!]
             types [any-function!]
             title [any-function! datatype! module!]
@@ -2050,16 +2158,101 @@
         ]
         bitsets: object [
             crlf: make bitset! #{0024}
+            space: make bitset! #{0040000080}
             whitespace: make bitset! #{0064000080}
             numeric: make bitset! #{000000000000FFC0}
             alpha: make bitset! #{00000000000000007FFFFFE07FFFFFE0}
             alpha-numeric: make bitset! #{000000000000FFC07FFFFFE07FFFFFE0}
             hex-digits: make bitset! #{000000000000FFC07E0000007E}
+            plus-minus: make bitset! #{000000000014}
             uri: make bitset! #{000000005BFFFFF5FFFFFFE17FFFFFE2}
             uri-component: make bitset! #{0000000041E6FFC07FFFFFE17FFFFFE2}
+            quoted-printable: make bitset! #{FFFFFFFFFFFFFFFBFFFFFFFFFFFFFFFF}
         ]
-        checksums: [adler32 crc24 crc32 tcp md4 md5 sha1 sha224 sha256 sha384 sha512 ripemd160]
-        compressions: [gzip deflate zlib lzma crush]
+        checksums: []
+        compressions: [deflate zlib gzip]
+        elliptic-curves: []
+        ciphers: []
+        event-types: [
+            ignore
+            interrupt
+            device
+            callback
+            custom
+            error
+            init
+            open
+            close
+            connect
+            accept
+            read
+            write
+            wrote
+            lookup
+            ready
+            done
+            time
+            show
+            hide
+            offset
+            resize
+            active
+            inactive
+            minimize
+            maximize
+            restore
+            move
+            down
+            up
+            alt-down
+            alt-up
+            aux-down
+            aux-up
+            key
+            key-up
+            scroll-line
+            scroll-page
+            drop-file
+            click
+            change
+            focus
+            unfocus
+            scroll
+            control
+            control-up
+        ]
+        event-keys: [
+            page-up
+            page-down
+            end
+            home
+            left
+            up
+            right
+            down
+            insert
+            delete
+            f1
+            f2
+            f3
+            f4
+            f5
+            f6
+            f7
+            f8
+            f9
+            f10
+            f11
+            f12
+            paste-start
+            paste-end
+            escape
+            shift
+            control
+            alt
+            pause
+            capital
+        ]
     ]
     contexts: construct [
         root:
@@ -2085,8 +2278,38 @@
         ]
         last-error: none
         last-result: none
+        wait-list: []
     ]
-    modules: object []
+    modules: object [
+        help: none
+        blend2d: https://github.com/Siskin-framework/Rebol-Blend2D/releases/download/0.0.18.1/
+        blurhash: https://github.com/Siskin-framework/Rebol-BlurHash/releases/download/1.0.0/
+        easing: https://github.com/Siskin-framework/Rebol-Easing/releases/download/1.0.0/
+        mathpresso: https://github.com/Siskin-framework/Rebol-MathPresso/releases/download/0.1.0/
+        miniaudio: https://github.com/Oldes/Rebol-MiniAudio/releases/download/0.11.18.0/
+        sqlite: https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.42.0.0/
+        triangulate: https://github.com/Siskin-framework/Rebol-Triangulate/releases/download/1.6.0.0/
+        httpd: https://src.rebol.tech/modules/httpd.reb
+        prebol: https://src.rebol.tech/modules/prebol.reb
+        spotify: https://src.rebol.tech/modules/spotify.reb
+        unicode-utils: https://src.rebol.tech/modules/unicode-utils.reb
+        daytime: https://src.rebol.tech/mezz/prot-daytime.reb
+        mail: https://src.rebol.tech/mezz/prot-mail.reb
+        mysql: https://src.rebol.tech/mezz/prot-mysql.reb
+        csv: https://src.rebol.tech/mezz/codec-csv.reb
+        ico: https://src.rebol.tech/mezz/codec-ico.reb
+        pdf: https://src.rebol.tech/mezz/codec-pdf.reb
+        swf: https://src.rebol.tech/mezz/codec-swf.reb
+        xml: https://src.rebol.tech/mezz/codec-xml.reb
+        json: https://src.rebol.tech/mezz/codec-json.reb
+        plist: https://src.rebol.tech/mezz/codec-plist.reb
+        bbcode: https://src.rebol.tech/mezz/codec-bbcode.reb
+        html-entities: https://src.rebol.tech/mezz/codec-html-entities.reb
+        mime-field: https://src.rebol.tech/mezz/codec-mime-field.reb
+        mime-types: https://src.rebol.tech/mezz/codec-mime-types.reb
+        quoted-printable: https://src.rebol.tech/mezz/codec-quoted-printable.reb
+        window: none
+    ]
     codecs: object []
     dialects: construct [
         secure:
@@ -2095,13 +2318,14 @@
         text:
         rebcode:
     ]
-    schemes: object []
+    schemes: make block! 20
     ports: object [
-        wait-list: []
+        system:
+        event:
         input:
         output:
         echo:
-        system:
+        mail:
         callback: none
     ]
     locale: object [
@@ -2116,37 +2340,6 @@
         days: [
             "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday"
         ]
-    ]
-    options: object [
-        boot:
-        path:
-        home:
-        none
-        flags:
-        script:
-        args:
-        do-arg:
-        import:
-        debug:
-        secure:
-        version:
-        boot-level:
-        none
-        quiet: false
-        binary-base: 16
-        decimal-digits: 15
-        probe-limit: 16000
-        module-paths: [%./]
-        default-suffix: %.reb
-        file-types: []
-        result-types: none
-        log: #(
-            rebol: 1
-            http: 1
-            tls: 1
-            zip: 1
-            tar: 1
-        )
     ]
     script: construct [
         title:
@@ -2206,11 +2399,12 @@
         port: construct [
             spec:
             scheme:
+            parent:
             actor:
             awake:
             state:
+            extra:
             data:
-            locals:
         ]
         port-spec-head: construct [
             title:
@@ -2220,18 +2414,46 @@
         port-spec-file: make port-spec-head [
             path: none
         ]
-        port-spec-net: make port-spec-file [
+        port-spec-net: make port-spec-head [
             host: none
-            port-id: 80
+            port: 80
+            path:
+            target:
+            query:
+            fragment: none
         ]
         port-spec-checksum: make port-spec-head [
             scheme: 'checksum
             method: none
         ]
+        port-spec-crypt: make port-spec-head [
+            scheme: 'crypt
+            direction: 'encrypt
+            algorithm:
+            init-vector:
+            key: none
+        ]
         port-spec-midi: make port-spec-head [
             scheme: 'midi
             device-in:
             device-out: none
+        ]
+        port-spec-serial: make port-spec-head [
+            path: none
+            speed: 115200
+            data-size: 8
+            parity: none
+            stop-bits: 1
+            flow-control: none
+        ]
+        port-spec-audio: make port-spec-head [
+            scheme: 'audio
+            source: none
+            channels: 2
+            rate: 44100
+            bits: 16
+            sample-type: 1
+            loop-count: 0
         ]
         file-info: construct [
             name:
@@ -2314,7 +2536,6 @@
     view: object [
         screen-gob: none
         handler: none
-        event-port: none
         metrics: construct [
             screen-size:
             border-size:
@@ -2323,77 +2544,8 @@
             work-origin:
             work-size: 0x0
         ]
-        event-types: [
-            ignore
-            interrupt
-            device
-            callback
-            custom
-            error
-            init
-            open
-            close
-            connect
-            accept
-            read
-            write
-            wrote
-            lookup
-            ready
-            done
-            time
-            show
-            hide
-            offset
-            resize
-            active
-            inactive
-            minimize
-            maximize
-            restore
-            move
-            down
-            up
-            alt-down
-            alt-up
-            aux-down
-            aux-up
-            key
-            key-up
-            scroll-line
-            scroll-page
-            drop-file
-            click
-            change
-            focus
-            unfocus
-            scroll
-        ]
-        event-keys: [
-            page-up
-            page-down
-            end
-            home
-            left
-            up
-            right
-            down
-            insert
-            delete
-            f1
-            f2
-            f3
-            f4
-            f5
-            f6
-            f7
-            f8
-            f9
-            f10
-            f11
-            f12
-        ]
     ]
+    license: none
 ] [
     on: true
     off: false
@@ -2417,6 +2569,9 @@
     cr: #"^M"
     lf: newline
     crlf: "^M^/"
+    comma: #","
+    dot: #"."
+    dbl-quote: #"^""
     whitespace: make bitset! #{0064000080}
     q: :quit
     !: :not
@@ -2438,7 +2593,7 @@
         spec [block!] {Help string (opt) followed by arg words (and opt type and string)}
         body [block!] "The body block of the function"
         /with "Define or use a persistent object (self)"
-        object [object! block! map!] "The object or spec"
+        object [any-object! block! map!] "The object or spec"
         /extern words [block!] "These words are not local"
     ] [
         unless find spec: copy/deep spec /local [append spec [
@@ -2446,7 +2601,7 @@
         ]]
         body: copy/deep body
         insert find/tail spec /local collect-words/deep/set/ignore body either with [
-            unless object? object [object: make object! object]
+            unless any-object? object [object: make object! object]
             bind body object
             append append append copy spec 'self words-of object words
         ] [
@@ -2515,7 +2670,7 @@
         /dup "Duplicates the insert a specified number of times"
         count [number! pair!]
     ] [
-        apply :append [series reduce :value part length only dup count]
+        append/:part/:only/:dup :series reduce :value :length :count
     ]
     join: func [
         "Concatenates values."
@@ -2737,7 +2892,7 @@
     none
     probe: func [
         {Debug print a molded value and returns that same value.}
-        value [any-type!]
+        value [any-type!] {The output is truncated to size defined in: system/options/probe-limit}
         /local len
     ] [
         len: system/options/probe-limit
@@ -2752,30 +2907,18 @@
         {Debug print a word, path, or block of such, followed by its molded value.}
         'name "Word, path or block to obtain values."
     ] [
-        case [
-            any [
-                word? :name
-                path? :name
+        unless block? name [name: reduce [name]]
+        foreach word name [
+            either any [
+                word? :word
+                path? :word
             ] [
-                prin ajoin ["^[[1;32m" mold :name "^[[0m: ^[[32m"]
-                prin either value? :name [mold/all get/any :name] ["#[unset!]"]
+                prin ajoin ["^[[1;32m" mold :word "^[[0m: ^[[32m"]
+                prin try/with [mold/all get/any :word] [["^[[1;35mError:" system/state/last-error/id]]
                 print "^[[0m"
+            ] [
+                print ajoin ["^[[1;32m" mold/all word "^[[0m"]
             ]
-            block? :name [
-                foreach word name [
-                    either any [
-                        word? :word
-                        path? :word
-                    ] [
-                        prin ajoin ["^[[1;32m" mold :word "^[[0m: ^[[32m"]
-                        prin either value? :word [mold/all get/any :word] ["#[unset!]"]
-                        print "^[[0m"
-                    ] [
-                        print ajoin ["^[[1;32m" mold/all word "^[[0m"]
-                    ]
-                ]
-            ]
-            true [print ajoin ["^[[1;32m" mold/all :name "^[[0m"]]
         ]
         exit
     ]
@@ -2833,6 +2976,9 @@
     ]
     immediate!: make typeset! [
         none! logic! scalar! date! any-word! datatype! typeset! event!
+    ]
+    copyable!: make typeset! [
+        series! port! map! object! bitset! any-function! error!
     ]
     system/options/result-types: make typeset! [
         immediate! series! bitset! image! object! map! gob! handle! struct!
@@ -2898,7 +3044,7 @@
         var [word!] "Variable updated with new block position"
         /local data file spec dir hdr scr mod?
     ] [
-        data: load/header/type value 'unbound
+        data: load/header/as value 'unbound
         hdr: first+ data
         mod?: 'module = select hdr 'type
         either all [string? value not mod?] [
@@ -2929,7 +3075,7 @@
             set/any 'value try [
                 either mod? [
                     spec: reduce [hdr data do-needs/no-user hdr]
-                    also import catch/quit [make module! spec]
+                    also import (catch/quit [make module! spec])
                     if var [set var tail data]
                 ] [
                     do-needs hdr
@@ -3032,7 +3178,7 @@
     ]
     log: func [
         "Prints out debug message"
-        id [word!] "Source of the log message"
+        'id [any-word!] "Source of the log message"
         msg "Output message"
         /info
         /more
@@ -3041,12 +3187,12 @@
         /local level
     ] [
         if error [
-            msg: form either block? msg [reduce msg] [msg]
-            foreach line parse/all msg #"^/" [
+            msg: trim/head/tail form either block? msg [reduce msg] [msg]
+            foreach line split-lines msg [
                 print ajoin [
                     " ^[[35m[" id "] ^[[1m"
                     either line/1 = #"*" [] ["** Error: "]
-                    copy/part line 100
+                    copy/part line 200
                     "^[[0m"
                 ]
             ]
@@ -3075,7 +3221,7 @@
                     dir?/check spec [spec: dirize spec 'dir]
                     true ['file]
                 ]
-                spec: join [ref:] spec
+                spec: compose [ref: (spec)]
             ]
             url? spec [
                 spec: repend decode-url spec [to set-word! 'ref spec]
@@ -3117,40 +3263,107 @@
         if in scheme 'init [scheme/init port]
         port
     ]
-    *parse-url: make object! [
-        digit: make bitset! "0123456789"
-        digits: [1 5 digit]
-        alpha-num: make bitset! [#"a" - #"z" #"A" - #"Z" #"0" - #"9"]
-        scheme-char: insert copy alpha-num "+-."
-        path-char: complement make bitset! "#"
-        user-char: complement make bitset! ":@"
-        host-char: complement make bitset! ":/?"
-        s1: s2: none
-        out: []
-        emit: func ['w v] [reduce/into [to set-word! w if :v [to string! :v]] tail out]
-        rules: [
-            [
-                copy s1 some scheme-char ":" opt "//"
-                (reduce/into [to set-word! 'scheme to lit-word! to string! s1] tail out)
-                opt [
-                    copy s1 some user-char
-                    opt [#":" copy s2 to #"@" (emit pass s2)]
-                    #"@" (emit user s1)
+    url-parser: make object! [
+        out: make block! 14
+        value: none
+        digit: system/catalog/bitsets/numeric
+        alpha: system/catalog/bitsets/alpha
+        alpha-num: system/catalog/bitsets/alpha-numeric
+        hex-digit: system/catalog/bitsets/hex-digits
+        gen-delims: make bitset! #{000000001001002180000014}
+        sub-delims: make bitset! #{000000004BF80014}
+        reserved: make bitset! #{000000005BF9003580000014}
+        unreserved: make bitset! #{000000000006FFC07FFFFFE17FFFFFE2}
+        scheme-char: make bitset! #{000000000016FFC07FFFFFE07FFFFFE0}
+        url-rules: [
+            scheme-part
+            hier-part (
+                if all [value not empty? value] [
+                    case [
+                        out/scheme = 'mailto [
+                            emit target to string! dehex :value
+                        ]
+                        all [out/scheme = 'urn parse value [
+                            copy value to #":" (
+                                emit path to string! dehex value
+                            )
+                            1 skip
+                            copy value to end (
+                                emit target to string! dehex value
+                            )
+                        ]] true
+                        'else [
+                            value: to file! dehex :value
+                            either dir? value [
+                                emit path value
+                            ] [
+                                value: split-path value
+                                if %./ <> value/1 [emit path value/1]
+                                emit target value/2
+                            ]
+                        ]
+                    ]
                 ]
-                opt [
-                    copy s1 any host-char
-                    opt [#":" copy s2 digits (compose/into [port-id: (to integer! s2)] tail out)]
-                    (unless empty? s1 [attempt [s1: to tuple! s1] emit host s1])
-                ]
-            ]
-            opt [copy s1 some path-char (emit path s1)]
-            opt [#"#" copy s1 to end (emit tag s1)]
+            )
+            opt query
+            opt fragment
         ]
-        decode-url: func ["Decode a URL according to rules of sys/*parse-url." url] [
-            --- {This function is bound in the context of sys/*parse-url.}
-            out: make block! 8
-            parse/all url rules
-            out
+        scheme-part: [copy value [alpha any scheme-char] #":" (emit scheme to lit-word! lowercase to string! :value)]
+        hier-part: [#"/" #"/" authority path-abempty | path-absolute | path-rootless | path-empty]
+        authority: [opt user host opt [#":" port]]
+        user: [
+            copy value [any [unreserved | pct-encoded | sub-delims | #":"] #"@"]
+            (
+                take/last value
+                value: to string! dehex value
+                parse value [
+                    copy value to #":" (emit user value)
+                    1 skip
+                    copy value to end (emit pass value)
+                    |
+                    (emit user value)
+                ]
+            )
+        ]
+        host: [
+            ip-literal (emit host to string! dehex :value)
+            |
+            copy value any [unreserved | pct-encoded | sub-delims]
+            (unless empty? value [emit host to string! dehex :value])
+        ]
+        ip-literal: [copy value [[#"[" thru #"]"] | ["%5B" thru "%5D"]]]
+        port: [copy value [1 5 digit] (emit port to integer! to string! :value)]
+        pct-encoded: [#"%" 2 hex-digit]
+        pchar: [unreserved | pct-encoded | sub-delims | #":" | #"@"]
+        path-abempty: [copy value any-segments | path-empty]
+        path-absolute: [copy value [#"/" opt [segment-nz any-segments]]]
+        path-rootless: [copy value [segment-nz any-segments]]
+        path-empty: [none]
+        segment: [any pchar]
+        segment-nz: [some pchar]
+        segment-nz-nc: [some [unreserved | pct-encoded | sub-delims | #"@"]]
+        any-segments: [any [#"/" segment]]
+        query: [#"?" copy value any [pchar | slash | #"?"] (emit query to string! dehex :value)]
+        fragment: [#"#" copy value any [pchar | slash | #"?"] (emit fragment to string! dehex :value)]
+        emit: func ['w v] [reduce/into [to set-word! w :v] tail out]
+        parse-url: function [
+            {Return object with URL components, or cause an error if not a valid URL}
+            url [url! string!]
+        ] [
+            result: either parse to binary! mold as url! url url-rules [
+                copy out
+            ] [
+                none
+            ]
+            clear out
+            set 'value none
+            result
+        ]
+        set 'decode-url function [
+            {Decode a URL into an object containing its constituent parts}
+            url [url! string!]
+        ] [
+            parse-url url
         ]
     ]
     decode-url: none
@@ -3158,29 +3371,44 @@
         {INIT: Make a scheme from a specification and add it to the system.}
         def [block!] "Scheme specification"
         /with 'scheme "Scheme name to use as base"
-        /local actor
+        /local actor name func* args body pos
     ] [
         with: either with [get in system/schemes scheme] [system/standard/scheme]
         unless with [cause-error 'access 'no-scheme scheme]
         def: make with def
         unless def/name [cause-error 'access 'no-scheme-name def]
+        unless def/title [def/title: uppercase/part form def/name 1]
         set-scheme def
         if block? :def/actor [
-            actor: make object! (length? def/actor) / 4
-            foreach [name func* args body] def/actor [
-                name: to word! name
-                repend actor [name func args body]
-            ]
+            actor: make object! (length? :def/actor) / 4
+            parse :def/actor [any [
+                copy name some set-word! [
+                    set func* any-function!
+                    |
+                    'func set args block! set body block! (func*: func args body)
+                    |
+                    'function set args block! set body block! (func*: function args body)
+                ] (
+                    forall name [put actor name/1 :func*]
+                )
+                | end
+                | pos: (
+                    cause-error 'script 'invalid-arg pos
+                )
+            ]]
             def/actor: actor
         ]
         append system/schemes reduce [def/name def]
+        def
     ]
     init-schemes: func [
         "INIT: Init system native schemes and ports."
+        /local schemes
     ] [
         log/debug 'REBOL "Init schemes"
-        sys/decode-url: lib/decode-url: :sys/*parse-url/decode-url
-        system/schemes: make object! 11
+        sys/decode-url: lib/decode-url: :sys/url-parser/parse-url
+        schemes: system/schemes
+        system/schemes: make object! 20
         make-scheme [
             title: "System Port"
             name: 'system
@@ -3293,6 +3521,7 @@
                 spec: port/spec
                 method: any [
                     select spec 'method
+                    select spec 'target
                     select spec 'host
                     'md5
                 ]
@@ -3306,31 +3535,67 @@
             ]
         ]
         make-scheme [
+            title: "Crypt"
+            spec: system/standard/port-spec-crypt
+            name: 'crypt
+            init: function [
+                port [port!]
+            ] [
+                spec: port/spec
+                algorithm: any [
+                    select spec 'algorithm
+                    select spec 'target
+                    select spec 'host
+                ]
+                direction: any [
+                    select spec 'fragment
+                    select spec 'direction
+                ]
+                if any [
+                    error? try [spec/algorithm: to word! :algorithm]
+                    not find system/catalog/ciphers spec/algorithm
+                ] [
+                    cause-error 'access 'invalid-spec :algorithm
+                ]
+                if any [
+                    error? try [spec/direction: to word! :direction]
+                    not find [encrypt decrypt] spec/direction
+                ] [
+                    cause-error 'access 'invalid-spec :direction
+                ]
+                set port/spec: copy system/standard/port-spec-crypt spec
+                if block? port/spec/ref [
+                    port/spec/ref: as url! ajoin ["crypt://" :algorithm #"#" :direction]
+                ]
+            ]
+        ]
+        make-scheme [
             title: "Clipboard"
             name: 'clipboard
         ]
         make-scheme [
-            title: "MIDI"
-            name: 'midi
-            spec: system/standard/port-spec-midi
-            init: func [port /local spec inp out] [
-                spec: port/spec
-                if url? spec/ref [
-                    parse spec/ref [
+            title: "Serial Port"
+            name: 'serial
+            spec: system/standard/port-spec-serial
+            init: func [port /local path speed] [
+                if url? port/spec/ref [
+                    parse port/spec/ref [
                         thru #":" 0 2 slash
-                        opt "device:"
-                        copy inp *parse-url/digits
-                        opt [#"/" copy out *parse-url/digits]
-                        end
+                        copy path [to slash | end] skip
+                        copy speed to end
                     ]
-                    if inp [spec/device-in: to integer! inp]
-                    if out [spec/device-out: to integer! out]
+                    try/with [port/spec/path: to file! path] [
+                        cause-error 'access 'invalid-spec :path
+                    ]
+                    try/with [port/spec/speed: to integer! speed] [
+                        cause-error 'access 'invalid-spec :speed
+                    ]
                 ]
-                set port/spec: copy system/standard/port-spec-midi spec
-                true
             ]
         ]
+        forall schemes [make-scheme schemes/1]
         system/ports/system: open [scheme: 'system]
+        system/ports/event: open [scheme: 'event]
         system/ports/input:
         system/ports/output: open [scheme: 'console]
         system/ports/callback: open [scheme: 'callback]
@@ -3389,8 +3654,8 @@
             ] [
                 either function? try [:cod/encode] [
                     either as [
-                        apply :cod/encode [data 'as options]
-                    ] [cod/encode data]
+                        cod/encode/as :data :options
+                    ] [cod/encode :data]
                 ] [
                     cause-error 'internal 'not-done type
                 ]
@@ -3482,8 +3747,8 @@
             not data: script? tmp [
                 return either required ['no-header] [reduce [none tmp tail tmp]]
             ]
-            set/any [key: rest:] transcode/only data none
-            set/any [hdr: rest:] transcode/next/error rest none
+            set/any [key: rest: line:] transcode/only/line data 1 none
+            set/any [hdr: rest: line:] transcode/next/error/line rest :line none
             not block? :hdr [return 'no-header]
             not attempt [hdr: construct/with :hdr system/standard/header] [return 'bad-header]
             word? :hdr/options [hdr/options: to block! :hdr/options]
@@ -3492,10 +3757,10 @@
             not tuple? :hdr/version [hdr/version: none]
             find hdr/options 'content [repend hdr ['content data]]
             13 = rest/1 [rest: next rest]
-            10 = rest/1 [rest: next rest]
+            10 = rest/1 [rest: next rest ++ line]
             integer? tmp: select hdr 'length [end: skip rest tmp]
             not end [end: tail data]
-            only [return reduce [hdr rest end]]
+            only [return reduce [hdr rest end line]]
             sum: hdr/checksum none
             :key = 'rebol [
                 case [
@@ -3522,7 +3787,7 @@
                 ]
             ]
         ]
-        reduce [hdr rest end]
+        reduce [hdr rest end line]
     ] [
         non-ws: make bitset! [not 1 - 32]
     ]
@@ -3610,37 +3875,40 @@
         source [file! url! string! binary! block!] "Source or block of sources"
         /header {Result includes REBOL header object (preempts /all)}
         /all "Load all values (does not evaluate REBOL header)"
-        /type {Override default file-type; use NONE to always load as code}
-        ftype [word! none!] "E.g. text, markup, jpeg, unbound, etc."
+        /as {Override default file-type; use NONE to always load as code}
+        type [word! none!] "E.g. text, markup, jpeg, unbound, etc."
     ] [
         assert/type [local none!]
         case/all [
             header [all: none]
             block? source [
-                return map-each item source [apply :load [:item header all type ftype]]
+                return map-each item source [load/:header/:all/:as :item type]
             ]
             any [file? source url? source] [
-                sftype: file-type? source
-                ftype: case [
-                    lib/all ['unbound = ftype 'extension = sftype] [sftype]
-                    type [ftype]
-                    'else [sftype]
+                stype: file-type? source
+                type: case [
+                    lib/all ['unbound = type 'extension = stype] [stype]
+                    as [type]
+                    'else [stype]
                 ]
-                data: read-decode source ftype
+                data: read-decode source type
+                if not find [0 extension unbound] any [type 0] [return data]
             ]
             none? data [data: source]
-            any [block? data not find [0 extension unbound] any [ftype 0]] [
-                return data
+            any [block? data not find [0 extension unbound] any [type 0]] [
+                unless type [return data]
+                try [return decode type to binary! data]
+                cause-error 'access 'no-codec type
             ]
             not all [
-                set [hdr: data: end:] either object? data [load-ext-module data] [load-header data]
+                set [hdr: data: end: line:] either object? data [load-ext-module data] [load-header data]
                 if word? hdr [cause-error 'syntax hdr source]
                 unless tail? end [data: copy/part data end]
             ]
-            not block? data [data: make block! data]
+            not block? data [data: transcode/line data any [line 1]]
             header [insert data hdr]
             not any [
-                'unbound = ftype
+                'unbound = type
                 'module = select hdr 'type
                 find select hdr 'options 'unbound
             ] [data: intern data]
@@ -3734,7 +4002,10 @@
                 case [
                     not tmp [unless attempt [data: read source] [return none]]
                     tmp = 'extension [
-                        unless attempt [ext: load-extension source] [return none]
+                        try/with [ext: load-extension source] [
+                            log/error 'REBOL system/state/last-error
+                            return none
+                        ]
                         data: ext/lib-boot
                         case [
                             import [set [hdr: code:] load-ext-module ext]
@@ -3752,12 +4023,18 @@
             ]
             module? source [
                 mod: source
-                foreach [n m] system/modules [
-                    if source = m [
-                        if as [cause-error 'script 'bad-refine /as]
-                        set mod: m
-                        hdr: spec-of mod
-                        return reduce [hdr/name mod]
+                hdr: spec-of mod
+                if all [
+                    hdr/name
+                    module? tmp: select system/modules hdr/name
+                ] [
+                    if as [cause-error 'script 'bad-refine /as]
+                    if all [
+                        not version
+                        not check
+                        equal? mod tmp
+                    ] [
+                        return reduce [hdr/name tmp]
                     ]
                 ]
             ]
@@ -3787,14 +4064,15 @@
                 assert/type [hdr/options [block! none!]]
             ]
             block? mod [set/any [hdr: code:] mod]
+            url? mod [return none]
             not hdr [
                 set [hdr: code: end:] load-header/required data
-                unless tail? end [code: copy/part code end]
                 case [
                     word? hdr [cause-error 'syntax hdr source]
                     import none
                     not delay [delay: true? find hdr/options 'delay]
                 ]
+                unless tail? end [code: copy/part code end]
                 if hdr/checksum [modsum: copy hdr/checksum]
             ]
             no-share [hdr/options: append any [hdr/options make block! 1] 'isolate]
@@ -3814,6 +4092,7 @@
                 case/all [
                     module? :mod0 [hdr0: spec-of mod0]
                     block? :mod0 [hdr0: first mod0]
+                    url? :mod0 [hdr0: object [version: 0.0.0 url: :mod0 checksum: none]]
                 ]
                 ver0: any [hdr0/version 0.0.0]
                 sum0: hdr0/checksum
@@ -3867,9 +4146,56 @@
         ]
         reduce [name if module? mod [mod]]
     ]
+    locate-extension: function [name [word!]] [
+        path: system/options/modules
+        foreach test [
+            [path name %.rebx]
+            [path name #"-" system/build/arch %.rebx]
+            [path name #"-" system/build/os #"-" system/build/arch %.rebx]
+            [path name #"-" system/build/sys #"-" system/build/arch %.rebx]
+        ] [
+            if exists? file: as file! ajoin test [return file]
+            sys/log/debug 'REBOL ["Not found extension file:" file]
+        ]
+        none
+    ]
+    download-extension: function [
+        {Downloads extension from a given url and stores it in the modules directory!}
+        name [word!]
+        url [url!]
+    ] [
+        so: system/options
+        file: as file! ajoin either dir? url [
+            url: as url! ajoin [url name #"-" system/platform #"-" system/build/arch %.rebx]
+            if system/platform <> 'Windows [append url %.gz]
+            [so/modules name #"-" system/build/arch %.rebx]
+        ] [[so/modules lowercase second split-path url]]
+        opt: so/log
+        try/with [
+            if exists? file [
+                log/info 'REBOL ["File already exists:^[[m" file]
+                return file
+            ]
+            log/info 'REBOL ["Downloading:^[[m" url]
+            so/log: #(
+                http: 0
+                tls: 0
+            )
+            bin: read url
+            if %.gz = suffix? url [bin: decompress bin 'gzip]
+            log/info 'REBOL ["Saving file:^[[m" file]
+            write file bin
+        ] [
+            err: system/state/last-error
+            log/error 'REBOL ["Failed to download:^[[m" file ajoin ["^[[35m" err/type ": " err/id]]
+            file: none
+        ]
+        so/log: opt
+        file
+    ]
     import: function [
         {Imports a module; locate, load, make, and setup its bindings.}
-        module [word! file! url! string! binary! module! block!]
+        'module [any-word! file! url! string! binary! module! block!]
         /version ver [tuple!] "Module must be this version or greater"
         /check sum [binary!] "Match checksum (must be set in header)"
         /no-share {Force module to use its own non-shared global namespace}
@@ -3880,15 +4206,30 @@
             assert [not version not check]
             return apply :do-needs [module no-share no-lib no-user /block]
         ]
+        if any-word? module [module: to word! module]
         set [name: mod:] apply :load-module [module version ver check sum no-share no-lib /import]
         case [
             mod none
             word? module [
                 file: append to file! module system/options/default-suffix
-                foreach path system/options/module-paths [
-                    if set [name: mod:] apply :load-module [
-                        path/:file version ver check sum no-share no-lib /import /as module
-                    ] [break]
+                set [name: mod:] apply :load-module [
+                    system/options/modules/:file version ver check sum no-share no-lib /import /as module
+                ]
+                unless name [
+                    either file: any [
+                        locate-extension module
+                        all [
+                            url? mod: select system/modules module
+                            download-extension module mod
+                        ]
+                    ] [
+                        log/info 'REBOL ["Importing extension:^[[m" file]
+                        set [name: mod:] apply :load-module [
+                            file version ver check sum no-share no-lib /import /as module
+                        ]
+                    ] [
+                        mod: none
+                    ]
                 ]
             ]
             any [file? module url? module] [
@@ -3912,13 +4253,13 @@
     export [load import]
     start: func [
         {INIT: Completes the boot sequence. Loads extras, handles args, security, scripts.}
-        /local tmp script-path script-args code ver
+        /local file dir tmp script-path script-args code delimiter ver
     ] bind [
         sys/log/debug 'REBOL ["Starting... boot level:" boot-level]
         boot-level: any [boot-level 'full]
         start: 'done
         init-schemes
-        ver: load/type lib/version 'unbound
+        ver: load/as lib/version/data 'unbound
         system/product: ver/2
         system/version: ver/3
         system/platform: ver/4
@@ -3931,20 +4272,48 @@
         system/build/target: ver/11
         system/build/date: ver/12
         system/build/git: ver/13
+        system/build/libc: ver/14
+        system/build/os-version: ver/15
         if flags/verbose [system/options/log/rebol: 3]
         if all [
             not quiet
             any [flags/verbose flags/usage flags/help]
         ] [
-            prin "^/  "
-            print boot-banner: form ver
+            print boot-banner: lib/version
         ]
         if any [do-arg script] [quiet: true]
+        boot: any [to-real-file boot boot]
+        unless exists? boot [
+            file: second split-path boot
+            delimiter: pick ";:" system/platform = 'Windows
+            parse any [get-env "PATH" ""] [
+                any [copy tmp to delimiter skip (
+                    dir: to-rebol-file dirize as file! tmp
+                    if exists? tmp: dir/:file [
+                        boot: file: tmp
+                        break
+                    ]
+                )]
+            ]
+            if boot <> file [
+                sys/log/error 'REBOL "Path to executable was not resolved!"
+                boot: none
+            ]
+        ]
         home: dirize to-rebol-file any [
             get-env "REBOL_HOME"
             get-env "HOME"
             get-env "USERPROFILE"
             path
+        ]
+        data: either system/platform = 'Windows [
+            append dirize to-rebol-file any [get-env "APPDATA" home] %Rebol/
+        ] [append copy home %.rebol/]
+        make-dir/deep modules: append copy data %modules/
+        module-paths: does [
+            sys/log/error 'REBOL {`system/options/module-paths` is deprecated and will be removed!}
+            sys/log/error 'REBOL {Use `system/options/modules` as a path to the directory instead!}
+            self/module-paths: reduce [modules]
         ]
         if file? script [
             script: any [to-real-file script script]
@@ -3971,7 +4340,7 @@
             boot-prot: 'done
             if flags/help [
                 lib/usage
-                unless flags/halt [quit/now]
+                unless flags/halt [quit]
                 quiet: true
             ]
             if boot-host [
@@ -3996,38 +4365,41 @@
                         file throw
                         (path) [allow read]
                         (home) [allow read]
+                        (data) allow
                         (first script-path) allow
                     ]
                 ]
                 'else ['none]
             ])
         ]
-        tmp: first split-path boot
-        sys/log/info 'REBOL ["Checking for rebol.reb file in" tmp]
-        if all [
-            #"/" = first tmp
-            exists? tmp/rebol.reb
-        ] [
-            try/except [do tmp/rebol.reb] [sys/log/error 'REBOL system/state/last-error]
+        if boot [
+            tmp: first split-path boot
+            sys/log/info 'REBOL ["Checking for rebol.reb file in" tmp]
+            if all [
+                #"/" = first tmp
+                exists? tmp/rebol.reb
+            ] [
+                try/with [do tmp/rebol.reb] [sys/log/error 'REBOL system/state/last-error]
+            ]
         ]
         tmp: make object! 320
         append tmp reduce ['REBOL :system 'lib-local :tmp]
         system/contexts/user: tmp
         sys/log/info 'REBOL ["Checking for user.reb file in" home]
         if exists? home/user.reb [
-            try/except [do home/user.reb] [sys/log/error 'REBOL system/state/last-error]
+            try/with [do home/user.reb] [sys/log/error 'REBOL system/state/last-error]
         ]
-        if import [lib/import import]
+        if import [lib/import :import]
         if do-arg [
             do intern load/all do-arg
-            unless script [quit/now]
+            unless script [quit]
         ]
         if file? script [
             assert/type [script-path [block!] script-path/1 [file!] script-path/2 [file!]]
             change-dir first script-path
             either exists? second script-path [
                 sys/log/info 'REBOL ["Evaluating:" script]
-                code: load/header/type second script-path 'unbound
+                code: load/header/as second script-path 'unbound
                 system/script: make system/standard/script [
                     title: select first code 'title
                     header: first code
@@ -4100,7 +4472,7 @@
         ]
         if pol-obj/secure <> 0.0.0 [
             if pol-obj/secure == 'throw [cause-error 'access 'security :policy]
-            quit/now/return 101
+            quit/return 101
         ]
         if word? policy [
             n: make-policy 'all policy
@@ -4109,7 +4481,7 @@
             exit
         ]
         foreach [target pol] policy [
-            try/except [
+            try/with [
                 assert/type [target [word! file! url!] pol [block! word! integer!]]
             ] [cause-error 'access 'security-error reduce [target pol]]
             set-policy target make-policy target pol pol-obj
@@ -4201,6 +4573,7 @@
             system/standard
             system/license
             system/contexts
+            system/user
         ]
         unprotect/values [
             system/options
@@ -4240,7 +4613,7 @@
         spec [block!] {Help string (opt) followed by arg words (and opt type and string)}
         body [block!] "The body block of the function"
         /with "Define or use a persistent object (self)"
-        object [object! block! map!] "The object or spec"
+        object [any-object! block! map!] "The object or spec"
         /extern words [block!] "These words are not local"
     ] [
         unless find spec: copy/deep spec /local [append spec [
@@ -4248,7 +4621,7 @@
         ]]
         body: copy/deep body
         insert find/tail spec /local collect-words/deep/set/ignore body either with [
-            unless object? object [object: make object! object]
+            unless any-object? object [object: make object! object]
             bind body object
             append append append copy spec 'self words-of object words
         ] [
@@ -4334,6 +4707,7 @@
         {Delta-time - returns the time it takes to evaluate the block.}
         block [block!]
     ] [
+        recycle
         start: stats/timer
         do block
         stats/timer - start
@@ -4343,7 +4717,7 @@
         block [block!]
         /local start end adjust
     ] [
-        recycle recycle
+        recycle
         adjust: copy end: stats/profile
         do []
         stats/profile
@@ -4411,6 +4785,129 @@
         ]
         result
     ]
+    format-time: function [
+        "Convert a time value to a human readable string"
+        time [time!]
+    ] [
+        if time >= 0:00:01 [
+            return form round/to time 0:00:00.001
+        ]
+        units: ["ms" "μs" "ns"]
+        foreach u units [
+            time: time * 1000
+            if time >= 0:00:01 [
+                time: to integer! round time
+                return append form time u
+            ]
+        ]
+        "1ns"
+    ]
+    print-table: function [
+        "Print a block of blocks as an ASCII table"
+        headers [block!]
+        block [block!]
+    ] [
+        format: clear []
+        header: clear []
+        sep: []
+        i: 1
+        unless parse headers [
+            some [
+                (text: width: fmt-func: none)
+                set text string! any [set width integer! | set fmt-func word! | set fmt-func path!]
+                (
+                    append header sep
+                    append header as-yellow either width [pad text width] [text]
+                    either width [
+                        either fmt-func [
+                            append format compose [(sep) pad (fmt-func) pick block (i) (width)]
+                        ] [
+                            append format compose [(sep) pad pick block (i) (width)]
+                        ]
+                    ] [
+                        either fmt-func [
+                            append format compose [(sep) (fmt-func) pick block (i)]
+                        ] [
+                            append format compose [(sep) pick block (i)]
+                        ]
+                    ]
+                    sep: "|"
+                    i: i + 1
+                )
+            ]
+        ] [
+            cause-error "Invalid headers spec"
+        ]
+        print header
+        format: func [block] reduce ['print format]
+        foreach row block [format row]
+    ]
+    print-horizontal-line: does [
+        loop -1 + any [attempt [query/mode system/ports/output 'window-cols] 76] [prin #"-"] prin lf
+    ]
+    profile: function [
+        "Profile code"
+        blocks [block!] {Block of code values (block, word, or function) to profile}
+        /times {Running the test code multiple times, results are average}
+        count [integer!] "Default value is 10, minimum is 2 and maximum 1000"
+        /quiet {Returns [time evaluations series-made series-expanded memory source] results only}
+    ] [
+        count: min max any [count 10] 2 1000
+        unless quiet [
+            print ["^/Running" as-green length? blocks "code blocks" as-green count "times."]
+            print-horizontal-line
+        ]
+        res: collect [
+            foreach blk blocks [
+                case [
+                    block? :blk [code: :blk]
+                    all [word? :blk block? code: get/any :blk] []
+                    code: to block! :blk
+                ]
+                test: copy/deep :code
+                data: try [delta-profile :test]
+                if error? data [
+                    keep/only reduce [0:00 0 0 0 0 :blk]
+                    continue
+                ]
+                loop count - 1 [
+                    test: copy/deep :code
+                    temp: delta-profile :test
+                    foreach [k v] data [data/(k): v + temp/:k]
+                ]
+                keep/only reduce [
+                    data/timer / count
+                    to integer! data/evals / count
+                    to integer! round/ceiling data/series-made / count
+                    to integer! round/ceiling data/series-expanded / count
+                    to integer! data/series-bytes / count
+                    :blk
+                ]
+            ]
+        ]
+        sort res
+        either quiet [
+            new-line/all res on
+        ] [
+            unless empty? res [
+                reference: res/1/1
+            ]
+            fmt-time: function [time] [
+                if time < 0:00:00.000000001 [return "error"]
+                rel: time / (max reference 0:00:00.000000001)
+                ajoin [round/to rel 0.01 "x (" format-time time ")"]
+            ]
+            print-table [
+                "Time" 18 fmt-time
+                "Evals" 6
+                "S.made" 6
+                "S.expa" 6
+                "Memory" 11
+                "Code" mold/flat
+            ] res
+            print-horizontal-line
+        ]
+    ]
     launch: func [
         {Runs a script as a separate process; return immediately.}
         script [file! string! none!] "The name of the script"
@@ -4429,13 +4926,6 @@
         body [block!] "Block to evaluate"
     ] [
         do bind/copy/set body make object! 0
-    ]
-    with: func [
-        "Evaluates a block binded to the specified context."
-        context [object! module!]
-        body [block!]
-    ] [
-        do bind body context
     ]
     any-of: func [
         {Returns the first value(s) for which the test is not FALSE or NONE.}
@@ -4536,7 +5026,7 @@
             length: true? select header-data 'length
             header-data: body-of header-data
         ]
-        data: either all [mold/all/only :value] [mold/only :value]
+        data: mold/only/:all :value
         append data newline
         case/all [
             tmp: find header-data 'checksum [change next tmp checksum data: to-binary data 'sha1]
@@ -4550,7 +5040,8 @@
             file? where [write where data]
             url? where [write where data]
             none? where [data]
-            'else [append where data]
+            binary? where [append where data]
+            'else [append where mold data]
         ]
     ]
     empty?: make :tail? [
@@ -4578,7 +5069,7 @@
         word [any-word!]
         val
     ] [
-        if :val [append obj reduce [to-set-word word :val]]
+        if :val [put obj to-set-word word :val]
         :val
     ]
     rejoin: func [
@@ -4586,9 +5077,7 @@
         block [block!] "Values to reduce and join"
     ] [
         if empty? block: reduce block [return block]
-        append either series? first block [copy first block] [
-            form first block
-        ] next block
+        append either series? block/1 [copy block/1] [form block/1] next block
     ]
     remold: func [
         {Reduces and converts a value to a REBOL-readable string.}
@@ -4596,8 +5085,10 @@
         /only {For a block value, mold only its contents, no outer []}
         /all "Mold in serialized format"
         /flat "No indentation"
+        /part "Limit the length of the result"
+        limit [integer!]
     ] [
-        apply :mold [reduce :value only all flat]
+        mold/:only/:all/:flat/:part reduce :value limit
     ]
     charset: func [
         "Makes a bitset of chars for the parse function."
@@ -4753,7 +5244,7 @@
                     if any [set-word? :w lit-word? :w] [w: to word! :w]
                     lib/case [
                         wtype = type? :w none
-                        wtype <> binary! [w: to wtype :w]
+                        wtype <> binary! [w: mold :w]
                         any-string? :w [w: to binary! :w]
                         'else [w: to binary! to string! :w]
                     ]
@@ -4792,12 +5283,12 @@
             if wtype <> type? char [char: to wtype char]
             [a: any [to char b: char [escape | none]] to end fout]
         ]
-        either case [parse/case source rule] [parse source rule]
+        parse/:case source rule
         either into [output] [head output]
     ]
     move: func [
         "Move a value or span of values in a series."
-        source [series!] "Source series (modified)"
+        source [series! gob!] "Source series (modified)"
         offset [integer!] "Offset to move by, or index to move to"
         /part "Move part of a series"
         length [integer!] "The length of the part to move"
@@ -4860,7 +5351,7 @@
         /skip "Treat the series as records of fixed size"
         size [integer!]
     ] [
-        head insert set also apply :unique [set case skip size] clear set
+        head insert set also unique/:case/:skip :set :size clear set
     ]
     alter: func [
         {Append value if not found, else remove it; returns true if added.}
@@ -4875,9 +5366,7 @@
                 append series :value true
             ]
         ]
-        to logic! unless remove (
-            either case [find/case series :value] [find series :value]
-        ) [append series :value]
+        to logic! unless remove (find/:case series :value) [append series :value]
     ]
     supplement: func [
         {Append value if not found; returns series at same position.}
@@ -4888,9 +5377,7 @@
     ] [
         result: series
         any [
-            either case [
-                find/case series :value
-            ] [find series :value]
+            find/:case series :value
             append series :value
         ]
         result
@@ -4903,7 +5390,7 @@
     ] [
         unless output [output: make block! 16]
         do func [keep] body func [value [any-type!] /only] [
-            output: apply :insert [output :value none none only]
+            output: insert/:only output :value
             :value
         ]
         either into [output] [head output]
@@ -4939,6 +5426,7 @@
                 string! [length? rule]
                 char! [1]
                 money! [2 + length? form rule]
+                tag! [length? rule]
             ] [0]
         ]
         out: make string! val
@@ -4960,11 +5448,81 @@
                 ]
                 string! [out: change out rule]
                 char! [out: change out rule]
-                money! [out: change out replace rejoin ["^[[" next form rule #"m"] #"." #";"]
+                money! [out: change out replace ajoin ["^[[" next form rule #"m"] #"." #";"]
+                tag! [
+                    out: change out switch/default type?/word val: first+ values [
+                        date! time! [
+                            format-date-time val rule
+                        ]
+                    ] [
+                        -- values
+                        form rule
+                    ]
+                ]
             ]
         ]
         if not tail? values [append out values]
         head out
+    ]
+    format-date-time: function/with [
+        value [date! time!]
+        rule [string! tag!]
+    ] [
+        tmp: to string! rule
+        either time? value [
+            d: now
+            t: value
+        ] [
+            d: value
+            t: any [d/time 0:00]
+        ]
+        either parse/case tmp [
+            any [
+                change "dddd" (pick system/locale/days d/weekday)
+                | change "ddd" (copy/part pick system/locale/days d/weekday 3)
+                | change "dd" (pad/with d/day -2 #"0")
+                | change #"d" (d/day)
+                | change "mmmm" (pick system/locale/months d/month)
+                | change "mmm" (copy/part pick system/locale/months d/month 3)
+                | change "mm" (pad/with either as-time? [t/minute] [d/month] -2 #"0") (as-time?: true)
+                | change #"m" (either as-time? [t/minute] [d/month]) (as-time?: true)
+                | change "yyyy" (pad/with d/year -4 #"0")
+                | change "yy" (skip tail form d/year -2)
+                | change #"y" (d/year)
+                | change "hh" (pad/with t/hour -2 #"0") (as-time?: true)
+                | change #"h" (t/hour) (as-time?: true)
+                |
+                [change "ss" (pad/with to integer! t/second -2 #"0")
+                | change #"s" (to integer! t/second)] opt [
+                    #"." s: some #"s" e: (
+                        n: (index? e) - (index? s)
+                        v: any [find/tail form t/second #"." ""]
+                        either n <= length? v [
+                            clear skip v n
+                        ] [
+                            v: pad/with v n #"0"
+                        ]
+                        change/part s v e
+                    )
+                ]
+                | change "MM" (pad/with d/month -2 #"0") (as-time?: true)
+                | change #"M" (d/month) (as-time?: true)
+                | change [opt #"±" "zz:zz"] (zone/with d/zone #":")
+                | change [opt #"±" "zzzz"] (zone d/zone)
+                | change "unixepoch" (to integer! d)
+                | skip
+            ]
+        ] [tmp] [form rule]
+    ] [
+        zone: function [z [time! none!] /with sep] [
+            z: any [z 0:00]
+            ajoin [
+                pick "-+" negative? z
+                pad/with absolute z/hour -2 #"0"
+                any [sep ""]
+                pad/with z/minute 2 #"0"
+            ]
+        ]
     ]
     printf: func [
         "Formatted print."
@@ -4988,16 +5546,20 @@
             return res
         ]
         if at [
-            return reduce either integer? dlm [
-                [
-                    copy/part series dlm
-                    copy lib/at series dlm + 1
+            unless integer? :dlm [
+                return reduce either dlm: find series :dlm [
+                    dlm: index? dlm
+                    [
+                        copy/part series dlm - 1
+                        copy lib/at series dlm + 1
+                    ]
+                ] [
+                    [copy series]
                 ]
-            ] [
-                [
-                    copy/part series find series :dlm
-                    copy find/tail series :dlm
-                ]
+            ]
+            return reduce [
+                copy/part series dlm
+                copy lib/at series dlm + 1
             ]
         ]
         either all [block? dlm parse dlm [some integer!]] [
@@ -5060,6 +5622,50 @@
             res
         ]
     ]
+    combine: func [
+        {Combines a block of values with a possibility to ignore by its types. Content of parens is evaluated.}
+        data [block!] "Input values"
+        /with "Add delimiter between values"
+        delimiter
+        /into "Output results into a serie of required type"
+        out [series!]
+        /ignore "Fine tune, what value types will be ignored"
+        ignored [typeset!] {Default is: #[typeset! [none! unset! error! any-function!]]}
+        /only "Insert a block as a single value"
+        /local val rule append-del append-val block-rule
+    ] [
+        out: any [out make string! 15]
+        ignored: any [ignored make typeset! [none! unset! error! any-function!]]
+        append-del: either/only delimiter [
+            (unless empty? out [append out :delimiter])
+        ] []
+        append-val: [
+            opt [
+                if (not find ignored type? :val) [
+                    append-del (append out :val)
+                ]
+            ]
+        ]
+        block-rule: either/only only [
+            set val block! append-del (
+                if any-string? out [val: mold val]
+                append/only out :val
+            )
+        ] [ahead block! into rule]
+        parse data rule: [
+            any [
+                block-rule
+                |
+                [
+                    set val paren! (set/any 'val try :val)
+                    | set val get-word! (set/any 'val get/any :val)
+                    | set val skip
+                ]
+                append-val
+            ]
+        ]
+        out
+    ]
     find-all: func [
         {Find all occurrences of a value within a series (allows modification).}
         'series [word!] "Variable for block, string, or other series"
@@ -5103,7 +5709,7 @@
         if all [dir not dir? file] [append file #"/"]
         out: make file length? file
         cnt: 0
-        parse/all reverse file [
+        parse reverse file [
             some [
                 "../" (++ cnt)
                 | "./"
@@ -5145,10 +5751,14 @@
         ] [
             system/ports/input: port: open [scheme: 'console]
         ]
-        if hide [modify port 'echo false]
-        if line: read port [line: to string! line]
-        if hide [modify port 'echo true]
-        line
+        either hide [
+            also request-password prin LF
+        ] [
+            all [
+                line: read port
+                to string! line
+            ]
+        ]
     ]
     ask: func [
         "Ask the user for input."
@@ -5157,7 +5767,7 @@
         /char {Waits only on single key press and returns char as a result}
     ] [
         prin question
-        also apply :input [hide] prin LF
+        input/:hide
     ]
     confirm: func [
         "Confirms a user choice."
@@ -5188,7 +5798,7 @@
         /local
         value prefix changeprefix directory depth
         newprefix addprefix formed
-        filtered contents str
+        contents str
     ] [
         unless value [
             directory: dirize switch type?/word :path [
@@ -5198,7 +5808,7 @@
                 word! path! [to-file path]
             ]
             if #"/" <> first directory [insert directory what-dir]
-            value: contents: try/except [read directory] [
+            value: contents: try/with [read directory] [
                 print ["Not found:" :directory]
                 exit
             ]
@@ -5242,12 +5852,17 @@
             "^[[31;1m└───"
             "^[[31;1m    "
         ]
-        if d [
-            filtered: make block! length? value
-            forall value [
-                if dir? value/1 [append filtered value/1]
+        sort/compare value func [a b] [
+            case [
+                dir? a [either dir? b [a < b] [true]]
+                dir? b [false]
+                a < b
             ]
-            value: :filtered
+        ]
+        if d [
+            forall value [
+                unless dir? value/1 [clear value]
+            ]
         ]
         forall value [
             either 1 = length? value [
@@ -5287,6 +5902,7 @@
         max-depth [integer!]
     ] [
         if f [r: l: false]
+        if same? :path '~ [path: :~]
         recursive?: any [r max-depth]
         files-only?: f
         apply :dir-tree [
@@ -5302,15 +5918,19 @@
             /local info date time size
         ] [
             info: query/mode value [name size date]
+            unless info [
+                return ajoin [
+                    "^[[1;35m *** Invalid symbolic link:  ^[[0;35m"
+                    second split-path value
+                    "^[[m"
+                ]
+            ]
             if depth = 0 [
                 return ajoin ["^[[33;1mDIR: ^[[32;1m" to-local-file info/1 "^[[m"]
             ]
             date: info/3
             date/zone: 0
-            time: date/time
-            time: format/pad [2 #":" 2] reduce [time/hour time/minute] #"0"
-            date: format/pad [-11] date/date #"0"
-            date: ajoin [" ^[[32m" date "  " time "^[[m "]
+            date: ajoin [" ^[[32m" format-date-time date "dd-mmm-yyyy  hh:mm" "^[[m "]
             size: any [info/2 0]
             if size >= 100000000 [size: join to integer! round (size / 1000000) "M"]
             either dir? value [
@@ -5403,6 +6023,100 @@
             word! path! [to-file file]
         ]
     ]
+    user's: func [
+        "Resolves user's data value"
+        'key /local data
+    ] [
+        all [
+            data: select system/user 'data
+            select :data :key
+        ]
+    ]
+    su: set-user: func [
+        {Initialize user's persistent data under system/user}
+        'name [word! ref! string! email! unset! none!] "User's name"
+        /p "Password used to encrypt the data"
+        password [string! binary!]
+        /f "Use custom persistent data file location"
+        file [file!]
+        /n "Setup a user if does not exists"
+        /local su
+    ] [
+        su: system/user
+        if any [none? :name unset? :name] [
+            try [update su/data]
+            su/name: none
+            su/data: make map! 1
+            exit
+        ]
+        sys/log/info 'REBOL ["Initialize user:" as-green :name]
+        file: any [
+            all [file to-real-file file]
+            rejoin [system/options/home #"." :name %.safe]
+        ]
+        sys/log/more 'REBOL ["Checking if exists: " as-green file]
+        unless exists? file [
+            unless n [
+                sys/log/error 'REBOL "User's persistent storage file not found!"
+                exit
+            ]
+            sys/log/info 'REBOL ["Creating a new persistent storage file:" as-green file]
+        ]
+        password: any [
+            password
+            get-env "REBOL_SAFE_PASS"
+            ask/hide "Enter password: "
+        ]
+        if port? su/data [close su/data]
+        file: split-path :file
+        su/name: either email? :name [:name] [to ref! :name]
+        su/data: open [
+            scheme: 'safe
+            pass: password
+            path: file/1
+            target: file/2
+        ]
+    ]
+    file-checksum: function [
+        "Computes a checksum of a given file's content"
+        file [file!] "Using 256kB chunks"
+        method [word!] "One of system/catalog/checksums"
+    ] [
+        port: open join checksum:// method
+        file: open/read/seek file
+        try [
+            while [not empty? bin: read/part file 262144] [write port bin]
+        ]
+        attempt [
+            close file
+            read port
+        ]
+    ]
+    wait-for-key: func [
+        {Wait for single key press and return char (or word for control keys) as a result}
+        /only limit [bitset! string! block!] "Limit input to specified chars or control words"
+        /local port old-awake
+    ] [
+        port: system/ports/input
+        old-awake: :port/awake
+        modify port 'line false
+        port/data: none
+        port/awake: func [event] [
+            all [
+                event/key
+                any [
+                    none? limit
+                    try [find limit event/key]
+                ]
+                event/port/data: event/key
+                true
+            ]
+        ]
+        wait/only port
+        port/awake: :old-awake
+        modify port 'line true
+        also port/data port/data: none
+    ]
     sign?: func [
         {Returns sign of number as 1, 0, or -1 (to use as multiplier).}
         number [number! money! time!]
@@ -5443,7 +6157,7 @@
         ]
         spot
     ]
-    import module [
+    import (module [
         Title: "Help related functions"
         Name: help
         Version: 3.0.0
@@ -5693,7 +6407,7 @@
                         throw true
                     ]
                     not any [word? :word path? :word] [
-                        output ajoin ["^[[1;32m" uppercase mold :word "^[[m is " form-type :word]
+                        output ajoin ["^[[1;32m" :word "^[[m is " form-type :word]
                         throw true
                     ]
                     path? :word [
@@ -5714,13 +6428,15 @@
                             ]
                         ]
                     ]
+                    port? :value [
+                        output ajoin ["^[[1;32m" uppercase mold :word "^[[m is " a-an value/spec/title " ^[[1;32m" value/spec/ref "^[[m^/"]
+                    ]
                     any-function? :value [
                         spec: copy/deep spec-of :value
                         args: copy []
                         refs: none
                         rets: none
                         type: type? :value
-                        if path? word [word: first word]
                         clear find spec /local
                         parse spec [
                             any block!
@@ -5942,7 +6658,7 @@
             ]
             exit
         ]
-    ]
+    ])
     make-banner: func [
         "Build startup banner."
         fmt /local str star spc a b s sf
@@ -5979,10 +6695,10 @@
     ]
     sys/boot-banner: make-banner [
         -
-        ["REBOL " system/version " (Oldes branch)"]
+        ["REBOL/" system/product #" " system/version " (Oldes branch)"]
         -
         = Copyright: "2012 REBOL Technologies"
-        = "" "2012-2021 Rebol Open Source Contributors"
+        = "" "2012-2023 Rebol Open Source Contributors"
         = "" "Apache 2.0 License, see LICENSE."
         = Website: "https://github.com/Oldes/Rebol3"
         -
@@ -6000,7 +6716,7 @@
     system/license: make-banner [
         -
         = Copyright: "2012 REBOL Technologies"
-        = "" "2012-2021 Rebol Open Source Contributors"
+        = "" "2012-2022 Rebol Open Source Contributors"
         = "" "Licensed under the Apache License, Version 2.0."
         = "" "https://www.apache.org/licenses/LICENSE-2.0"
         -
@@ -6014,6 +6730,8 @@
   * Sandbox and security are not fully available.
   * Direct access to TCP HTTP required (no proxies).
   * Use at your own risk.
+  * ^[[1;32mTry/except^[[1;31m is deprecated and will be removed!^[[0m Use ^[[1;32mtry/with^[[0m instead.
+
 
 ^[[1;33mSpecial functions^[[0m:
 
@@ -6030,7 +6748,9 @@
     ~: system/options/home
     codecs: :system/codecs
     keys-of: :words-of
-    system/options/boot: clean-path system/options/boot
+    if system/options/boot [
+        system/options/boot: clean-path system/options/boot
+    ]
     protect-system-object
     as-gray: func [value] [append append copy "^[[1;30m" value "^[[0m"]
     as-red: func [value] [append append copy "^[[1;31m" value "^[[0m"]
@@ -6067,7 +6787,7 @@
                     |
                     some ch_pretext rl_label
                 ]
-                unless parse/all input [
+                unless parse input [
                     s: rl_label (pre-text: copy/part s e)
                     any [
                         copy tag some ch_tag #":"
@@ -6112,7 +6832,7 @@
                     |
                     some ch_pretext rl_label
                 ]
-                parse/all data [rl_label to end]
+                parse data [rl_label to end]
             ]
         ]
     ]
@@ -6120,20 +6840,23 @@
         name: 'der
         type: 'cryptography
         title: "Distinguished Encoding Rules"
-        suffixes: [%.p12 %.pfx %.cer %.der %.jks]
+        suffixes: [%.p12 %.pfx %.cer %.der %.jks %.p7s]
         decode: function [data [binary!]] [
             if verbose > 0 [
                 print ["^/^[[1;32mDecode DER data^[[m (^[[1m" length? data "^[[mbytes )"]
                 wl: length? form length? data
                 wr: negate wl
             ]
-            if data/1 <> 48 [
-                if verbose > 0 [
-                    prin {*** DER data does not start with SEQUENCE tag ***
+            case [
+                all [data/1 = 0 data/2 = 48] [data: next data]
+                data/1 <> 48 [
+                    if verbose > 0 [
+                        prin {*** DER data does not start with SEQUENCE tag ***
 *** }
-                    probe copy/part data 10
+                        probe copy/part data 10
+                    ]
+                    return none
                 ]
-                return none
             ]
             der: binary data
             result: out: make block! 32
@@ -6189,12 +6912,8 @@
                         BMP_STRING [
                             data: to string! data
                         ]
-                        BIT_STRING [
-                            if data/1 = 0 [data: next data]
-                        ]
-                        INTEGER [
-                            if data/1 = 0 [data: next data]
-                        ]
+                        BIT_STRING []
+                        INTEGER []
                     ]
                     if data [
                         repend out [tag-name data]
@@ -6265,12 +6984,37 @@
             CHARACTER_STRING
             BMP_STRING
         ]
+        form-OID: either find lib 'form-oid [
+            :lib/form-oid
+        ] [
+            function [
+                {Return the x.y.z.... style numeric string for the given OID}
+                oid [binary!]
+            ] [
+                len: length? oid
+                out: make string! 3 * len
+                append out ajoin [to integer! oid/1 / 40 #"." oid/1 % 40]
+                ++ oid
+                value: 0
+                while [not tail? oid] [
+                    value: (value << 7)
+                    value: value + (oid/1 & 127)
+                    if oid/1 & 128 = 0 [
+                        append append out #"." value
+                        value: 0
+                    ]
+                    ++ oid
+                ]
+                out
+            ]
+        ]
         decode-OID: function [
+            {Convert given OID to its name if recognized or a numeric string}
             oid [binary!]
             /full "Returns name with group name as a string"
             /local main name warn
         ] [
-            parse/all oid [
+            parse oid [
                 #{2B0E0302} (main: "Oddball OIW OID") [
                     #"^A" (name: 'rsa)
                     | #"^B" (name: 'md4WitRSA)
@@ -6300,25 +7044,33 @@
                         #"^G" (name: 'secp256r1)
                         | #"^A" (name: 'secp192r1)
                     ]
+                    | #{0403} [
+                        #"^A" (name: 'ecdsa-with-SHA224)
+                        | #"^B" (name: 'ecdsa-with-SHA256)
+                        | #"^C" (name: 'ecdsa-with-SHA384)
+                        | #"^D" (name: 'ecdsa-with-SHA512)
+                    ]
                 ]
                 |
                 #{2A864886F70D01} [
-                    #{01} (main: "PKCS #1") [
+                    #"^A" (main: "PKCS #1") [
                         #"^A" (name: 'rsaEncryption)
                         | #"^B" (name: 'md2WithRSAEncryption)
                         | #"^C" (name: 'md4withRSAEncryption)
                         | #"^D" (name: 'md5withRSAEncryption)
                         | #"^E" (name: 'sha1WithRSAEncrption)
                         | #"^K" (name: 'sha256WithRSAEncryption)
+                        | #"^L" (name: 'sha384WithRSAEncryption)
+                        | #"^M" (name: 'sha512WithRSAEncryption)
                     ] end
                     |
-                    #{07} (main: "PKCS #7") [
+                    #"^G" (main: "PKCS #7") [
                         #"^A" (name: 'data)
                         | #"^B" (name: 'signedData)
                         | #"^F" (name: 'encryptedData)
                     ] end
                     |
-                    #{09} (main: "PKCS #9") [
+                    #"^-" (main: "PKCS #9") [
                         #"^A" (name: 'emailAddress warn: "Deprecated, use an altName extension instead")
                         | #"^C" (name: 'contentType)
                         | #"^D" (name: 'messageDigest)
@@ -6329,7 +7081,7 @@
                         | #"4" (name: 'CMSAlgorithmProtect)
                     ] end
                     |
-                    #{0C} (main: "PKCS #12") [
+                    #"^L" (main: "PKCS #12") [
                         #{0106} (name: 'pbeWithSHAAnd40BitRC2-CBC)
                         | #{0103} (name: 'pbeWithSHAAnd3-KeyTripleDES-CBC)
                         | #{0A0102} (name: 'pkcs-12-pkcs-8ShroudedKeyBag)
@@ -6369,40 +7121,47 @@
                 |
                 #{2B060105050703} (main: "PKIX key purpose") [
                     #"^A" (name: 'serverAuth)
-                    #"^B" (name: 'clientAuth)
+                    | #"^B" (name: 'clientAuth)
                     | #"^C" (name: 'codeSigning)
+                    | #"^D" (name: 'emailProtection)
+                    | #"^H" (name: 'timeStamping)
                 ] end
                 |
                 #{2B0601040182370201} (main: "Microsoft") [
                     #"^U" (name: 'individualCodeSigning)
+                ] end
+                |
+                #{0992268993F22C6401} (main: "Attribute") [
+                    #"^A" (name: 'uid)
                 ] end
             ]
             either all [main name] [
                 either full [
                     rejoin [any [name "<?name>"] " (" any [main "<?main>"] ")"]
                 ] [name]
-            ] [oid]
+            ] [form-oid oid]
         ]
         verbose: 0
-    ]
-    register-codec [
-        name: 'mobileprovision
-        type: 'cryptography
-        title: "Apple's mobileprovision file"
-        suffixes: [%.mobileprovision]
-        decode: function [data [binary!]] [
-            try [
-                der: codecs/DER/decode data
-                result: to string! der/sequence/cs0/sequence/sequence/cs0/2
-            ]
-            result
-        ]
     ]
     register-codec [
         name: 'crt
         type: 'cryptography
         title: {Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile}
         suffixes: [%.crt]
+        get-fingerprint: function [data [binary!] method [word!]] [
+            bin: binary data
+            loop 2 [
+                binary/read bin [
+                    flags: UI8
+                    length: LENGTH
+                ]
+                if any [
+                    flags <> 48
+                    length > length? bin/buffer
+                ] [return none]
+            ]
+            checksum/part at data 5 :method (length + 4)
+        ]
         decode: wrap [
             *oid:
             *val:
@@ -6482,23 +7241,26 @@
             ]
             func [
                 data [binary! block!]
-                /local pkix version serialNumber issuer subject validity
+                /local pkix version serialNumber issuer subject validity der
             ] [
                 try [all [
                     pkix: codecs/pkix/decode data
                     pkix/label = "CERTIFICATE"
                     data: pkix/binary
                 ]]
-                if binary? data [data: der-codec/decode data]
+                der: either binary? data [
+                    der-codec/decode data
+                ] [data]
                 if all [
-                    2 = length? data
-                    'SEQUENCE = data/1
-                    block? data/2
-                ] [data: data/2]
-                result: object [
+                    2 = length? der
+                    'SEQUENCE = der/1
+                    block? der/2
+                ] [der: der/2]
+                result: construct [
                     version:
                     serial-number:
-                    signature:
+                    fingerprint:
+                    algorithm:
                     issuer:
                     valid-from:
                     valid-to:
@@ -6507,9 +7269,9 @@
                     issuer-id:
                     subject-id:
                     extensions:
-                    none
+                    signature:
                 ]
-                parse data [
+                parse der [
                     'SEQUENCE into [
                         'CS0 into [
                             'INTEGER set *val binary! (
@@ -6517,7 +7279,7 @@
                             )
                         ]
                         'INTEGER set *val binary! (result/serial-number: *val)
-                        AlgorithmIdentifier (result/signature: copy *blk)
+                        AlgorithmIdentifier (result/algorithm: copy *blk)
                         Name (result/issuer: copy *blk)
                         'SEQUENCE into [
                             'UTC_TIME set *val date! (result/valid-from: *val)
@@ -6549,11 +7311,42 @@
                         ]
                         to end
                     ]
-                    AlgorithmIdentifier (result/signature: copy *blk)
+                    AlgorithmIdentifier (
+                        either *blk <> result/algorithm [
+                            print {Invalid certificate! Signature alrgorithm mischmasch.}
+                            ? result/algorithm
+                            ? *blk
+                            result/algorithm: none
+                        ] [
+                            if 1 = length? result/algorithm [
+                                result/algorithm: first result/algorithm
+                            ]
+                        ]
+                    )
+                    'BIT_STRING set *val binary! (result/signature: *val)
                     to end
                 ]
+                if all [
+                    binary? data
+                    hash: select [
+                        sha256WithRSAEncryption sha256
+                        sha384WithRSAEncryption sha384
+                        sha512WithRSAEncryption sha512
+                        md5withRSAEncryption md5
+                        md4withRSAEncryption md4
+                        ecdsa-with-SHA224 sha224
+                        ecdsa-with-SHA256 sha256
+                        ecdsa-with-SHA384 sha384
+                        ecdsa-with-SHA512 sha512
+                        sha1WithRSAEncrption sha1
+                    ] result/algorithm
+                ] [
+                    try [
+                        result/fingerprint: get-fingerprint :data :hash
+                    ]
+                ]
                 if verbose > 0 [
-                    prin "^/^[[1;32mCRT "
+                    prin "^/^[[1;32mCRT"
                     either verbose > 1 [
                         ?? result
                     ] [
@@ -6563,21 +7356,6 @@
                 ]
                 result
             ]
-        ]
-        fingerprint: function [
-            {Computes Certificate Fingerprint of the cert's data sequence}
-            data [binary!] "Raw CRT data"
-            /method "If not used, default is sha256"
-            m [word!] "One of: sha256, sha1 or md5"
-        ] [
-            der: binary data
-            binary/read der [UB 2 BIT tag: UB 5 LENGTH pos: INDEX]
-            if tag <> 16 [return none]
-            binary/read der [UB 2 BIT tag: UB 5 length: LENGTH]
-            if not find [sha256 sha1 md5] m [m: 'sha256]
-            hash: open join checksum:// m
-            write/part hash (at data pos) (pos + length + 5)
-            read hash
         ]
         verbose: 0
     ]
@@ -6597,7 +7375,7 @@
             sp: charset " ^-^/^M"
             !sp: complement sp
             !crlf: complement charset "^M^/"
-            try/except [
+            try/with [
                 parse data [
                     "PuTTY-User-Key-File-" ["1:" (vers: 1) | "2:" (vers: 2)]
                     any sp copy type some !sp some sp
@@ -6629,14 +7407,16 @@
                 pub: debase pub 64
                 pri: debase pri 64
                 if encr = "aes256-cbc" [
-                    try/except [
+                    try/with [
                         pass: either password [copy pass] [
                             ask/hide ajoin ["Key password for " mold comm ": "]
                         ]
                         key: join checksum join #{00000000} pass 'sha1
                         checksum join #{00000001} pass 'sha1
-                        key: aes/decrypt/key copy/part key 32 none
-                        pri: aes/decrypt/stream key pri
+                        aes: open crypt:aes-256-cbc#decrypt
+                        modify aes 'key copy/part key 32
+                        pri: take write aes :pri
+                        close aes
                     ] [
                         forall pass [pass/1: random 255]
                         print "Failed to decrypt private key!"
@@ -6693,8 +7473,32 @@
                     return rsa-init n e
                 ]
             ]
-            print ["Not RSA key! (" v ")"]
+            sys/log/error 'REBOL ["Not RSA key! (" v ")"]
             none
+        ]
+        init-rsa-public-key: function [data [block!]] [
+            parse data [
+                'SEQUENCE into [
+                    'INTEGER set n: binary!
+                    'INTEGER set e: binary!
+                ]
+            ]
+            rsa-init n e
+        ]
+        init-rsa-private-key: function [data [block!]] [
+            parse data [
+                'SEQUENCE into [
+                    'INTEGER set v: binary!
+                    'INTEGER set n: binary!
+                    'INTEGER set e: binary!
+                    'INTEGER set d: binary!
+                    'INTEGER set p: binary!
+                    'INTEGER set q: binary!
+                    to end
+                ]
+                to end
+            ]
+            rsa-init/private n e d p q
         ]
         register-codec [
             name: 'ssh-key
@@ -6717,84 +7521,298 @@
                     ] [init-from-ssh2-key debase data 64] [init-from-ssh2-key key]
                 ]
                 if "4,ENCRYPTED" = select pkix/header "Proc-Type" [
-                    print "ENCRYPTED key!"
-                    try/except [
+                    sysl/log/info 'REBOL "ENCRYPTED key!"
+                    try/with [
                         dek-info: select pkix/header "DEK-Info"
+                        sysl/log/info 'REBOL ["Using:" dek-info]
                         parse dek-info [
                             "AES-128-CBC" #"," copy iv to end
                         ]
                         iv: debase iv 16
                         unless p [p: ask/hide "Pasword: "]
-                        p: checksum
-                        join to binary! p copy/part iv 8
-                        'md5
+                        p: checksum (join to binary! p copy/part iv 8) 'md5
                         d: aes/key/decrypt p iv
                         pkix/binary: aes/stream d pkix/binary
                     ] [return none]
                 ]
+                sys/log/info 'REBOL ["Importing:" pkix/label]
                 switch pkix/label [
                     "SSH2 PUBLIC KEY" [
                         return init-from-ssh2-key pkix/binary
                     ]
                 ]
-                try/except [
+                try/with [
                     data: codecs/der/decode pkix/binary
                 ] [
-                    print "Failed to decode DER day for RSA key!"
-                    probe system/state/last-error
+                    sys/log/error 'REBOL "Failed to decode DER day for RSA key!"
+                    sys/log/error 'REBOL system/state/last-error
                     return none
                 ]
                 switch pkix/label [
-                    "PUBLIC KEY" [
-                        all [
+                    "PUBLIC KEY"
+                    "PRIVATE KEY" [
+                        return attempt [
                             parse data [
                                 'SEQUENCE into [
-                                    'SEQUENCE set v: block!
-                                    'BIT_STRING set data: binary!
+                                    opt ['INTEGER binary!]
+                                    'SEQUENCE into [
+                                        'OBJECT_IDENTIFIER set oid: binary!
+                                        to end
+                                    ]
+                                    ['BIT_STRING | 'OCTET_STRING] set data: binary!
                                     (
                                         data: codecs/der/decode data
                                     )
                                 ]
                             ]
-                            v/OBJECT_IDENTIFIER = #{2A864886F70D010101}
-                            parse data [
-                                'SEQUENCE into [
-                                    'INTEGER set n: binary!
-                                    'INTEGER set e: binary!
+                            switch/default oid [
+                                #{2A864886F70D010101} [
+                                    return either pkix/label = "PUBLIC KEY" [
+                                        init-rsa-public-key data
+                                    ] [init-rsa-private-key data]
                                 ]
+                                #{2A8648CE3D0201} [
+                                    return either pkix/label = "PUBLIC KEY" [
+                                        init-rsa-public-key data
+                                    ] [init-rsa-private-key data]
+                                ]
+                            ] [
+                                sys/log/error 'REBOL ["Unknown key type:" codecs/der/decode-OID oid]
+                                none
                             ]
                         ]
-                        return rsa-init n e
                     ]
-                    "RSA PUBLIC KEY" [
+                    "RSA PUBLIC KEY" [return init-rsa-public-key data]
+                    "RSA PRIVATE KEY" [return init-rsa-private-key data]
+                    "DH PARAMETERS" [
                         parse data [
                             'SEQUENCE into [
-                                'INTEGER set n: binary!
-                                'INTEGER set e: binary!
-                            ]
-                        ]
-                        return rsa-init n e
-                    ]
-                    "RSA PRIVATE KEY" [
-                        parse data [
-                            'SEQUENCE into [
-                                'INTEGER set v: binary!
-                                'INTEGER set n: binary!
-                                'INTEGER set e: binary!
-                                'INTEGER set d: binary!
                                 'INTEGER set p: binary!
-                                'INTEGER set q: binary!
-                                'INTEGER set dp: binary!
-                                'INTEGER set dq: binary!
-                                'INTEGER set inv: binary!
-                                to end
-                            ]
-                            to end
+                                'INTEGER set g: binary!
+                            ] (
+                                return dh-init :g :p
+                            )
                         ]
-                        return rsa-init/private n e d p q dp dq inv
                     ]
                 ]
                 none
+            ]
+        ]
+    ]
+    register-codec [
+        name: 'safe
+        type: 'crypt
+        title: "Encrypted file storage"
+        suffixes: [%.safe]
+        encode: function [
+            data [any-type!]
+            /key
+            password [any-string! binary! none!]
+            /as
+            cipher [word!]
+        ] [
+            unless cipher [
+                cipher: any [
+                    foreach method [
+                        chacha20
+                        aes-192-gcm
+                        aes-192-ccm
+                        aes-192-cbc
+                    ] [
+                        if find system/catalog/ciphers method [
+                            break/return method
+                        ]
+                    ]
+                    first system/catalog/ciphers
+                ]
+            ]
+            either binary? data [
+                flags: 0
+            ] [
+                data: compress to binary! mold/all data 'zlib
+                flags: 3
+            ]
+            password: any [password ask-password]
+            unless binary? password [
+                password: checksum password 'sha256
+            ]
+            bytes: length? data
+            check: checksum data 'sha256
+            output: make binary! 48 + bytes
+            method: form cipher
+            binary/write output [
+                BYTES :id
+                UI16 :flags
+                UI32 :bytes
+                BYTES :check
+                UI8BYTES :method
+            ]
+            if bytes > 0 [
+                port: open [scheme: 'crypt algorithm: :cipher key: :password]
+                modify port 'init-vector copy/part output 16
+                bytes: length? data: take write port data
+                close port
+            ]
+            binary/write tail output [UI32 :bytes BYTES :data]
+            output
+        ]
+        decode: function [
+            data [binary! file! url!]
+            /key
+            password [any-string! binary! none!]
+        ] [
+            unless binary? data [data: read/binary data]
+            unless parse data [id data: to end] [return none]
+            binary/read data [
+                flags: UI16
+                bytes: UI32
+                expected-sum: BYTES 32
+                method: UI8BYTES
+                length: UI32
+                pos: INDEX
+            ]
+            cipher: to word! to string! method
+            password: any [password ask-password]
+            unless binary? password [
+                password: checksum password 'sha256
+            ]
+            either bytes > 0 [
+                port: open [
+                    scheme: 'crypt
+                    direction: 'decrypt
+                    algorithm: :cipher
+                    key: :password
+                ]
+                modify port 'init-vector copy/part head data 16
+                output: take write/part port at head data :pos :length
+                clear skip output bytes
+                close port
+            ] [output: copy #{}]
+            real-sum: checksum output 'sha256
+            unless equal? real-sum expected-sum [return none]
+            if flags == 3 [output: load decompress output 'zlib]
+            output
+        ]
+        id: "SAFE 1.0"
+        ask-password: does [
+            any [
+                get-env "REBOL_SAFE_PASS"
+                ask/hide "Enter SAFE Password: "
+            ]
+        ]
+    ]
+    sys/make-scheme [
+        title: "Persistent key/value storage"
+        name: 'safe
+        actor: [
+            open: func [port [port!] /local spec host] [
+                spec: port/spec
+                spec/ref: rejoin either/only host: select spec 'host [
+                    https:// host
+                    select spec 'path
+                    select spec 'target %""
+                ] [
+                    any [select spec 'path system/options/home]
+                    any [select spec 'target %.safe]
+                ]
+                if %.safe <> suffix? spec/ref [
+                    append spec/ref %.safe
+                ]
+                port/data: object [
+                    data: none
+                    pass: any [
+                        select spec 'pass
+                        ask/hide "Enter password: "
+                    ]
+                    file: port/spec/ref
+                    date: none
+                    get: func [key /local value] [
+                        either find copyable! type? value: select data :key [
+                            copy/deep :value
+                        ] [:value]
+                    ]
+                    set: func [key [word!] val [any-type!]] [put data :key :val]
+                    rem: func [key] [remove/key data :key unset!]
+                    load: does [
+                        date: modified? file
+                        data: system/codecs/safe/decode/key :file :pass
+                        unless data [
+                            print [as-purple "*** Failed to decrypt data from:" as-red file]
+                        ]
+                    ]
+                    save: does [
+                        if url? file [
+                            print as-purple "*** Saving to URL is not yet implemented!"
+                            exit
+                        ]
+                        write/binary file system/codecs/safe/encode/key :data :pass
+                        date: modified? file
+                    ]
+                    sync: func [/close /local modf] [
+                        if data [
+                            case [
+                                not exists? file [save]
+                                date > modf: modified? file [save]
+                                date < modf [load]
+                            ]
+                            data
+                        ]
+                        case [
+                            close [
+                                data: date: pass: none
+                            ]
+                            none? data [
+                                either exists? file [load] [
+                                    data: make map! 4
+                                    save
+                                ]
+                            ]
+                        ]
+                        file
+                    ]
+                    open?: does [map? data]
+                    change-pass: func [new [string! binary!]] [
+                        either pass = ask/hide "Old password: " [
+                            pass: new
+                            date: now/precise
+                            sync
+                            true
+                        ] [
+                            sys/log/error 'REBOL "Password validation failed!"
+                            false
+                        ]
+                    ]
+                    sync
+                    protect/words/hide [data pass load save]
+                    protect/words [get set rem sync open? change-pass]
+                ]
+                set port/spec: object [title: scheme: ref: none] spec
+                port
+            ]
+            open?: func [port] [
+                port/data/open?
+            ]
+            close: func [port] [
+                port/data/sync/close
+            ]
+            put:
+            poke: func [port key value] [
+                port/data/date: now/precise
+                port/data/set :key :value
+            ]
+            pick:
+            select: func [port key] [
+                port/data/get :key
+            ]
+            remove: func [port /part range /key key-arg] [
+                port/data/date: now/precise
+                port/data/rem :key-arg
+            ]
+            update: func [port] [
+                port/data/sync
+            ]
+            modify: func [port field value] [
+                if field = 'password [port/data/change-pass :value]
             ]
         ]
     ]
@@ -6807,7 +7825,7 @@
             utc [binary! string!]
         ] [
             ch_digits: charset [#"0" - #"9"]
-            parse/all utc [
+            parse utc [
                 insert "20"
                 2 ch_digits insert #"-"
                 2 ch_digits insert #"-"
@@ -6825,6 +7843,520 @@
             try [load utc]
         ]
     ]
+    sys/load-module/delay {Rebol [
+    Version: 0.1.0
+    Title: "Rebol MAIL related functions"
+    Name: mail
+    Date: 14-Jul-2022
+    Author: @Oldes
+    Exports: [send]
+    Needs: [mime-field mime-types]
+]form-address: func [
+    address [email! tag! block! none!]
+    /local out name mail
+] [
+    unless address [return none]
+    out: clear ""
+    either block? address [
+        parse address [some [
+            end
+            |
+            (append out ", ")
+            set mail: email! (
+                append append out #" " mold as tag! mail
+            )
+            |
+            copy name: to email! set mail: email! (
+                append out encode 'mime-field form name
+                append append out #" " mold as tag! mail
+            )
+        ]]
+        out: skip out 2
+    ] [
+        append out mold as tag! address
+    ]
+    if 76 < length? out [replace/all out #"," ",^^M^^/   "]
+    either empty? out [none] [out]
+]
+form-text: func [
+    text [any-string! none!]
+] [
+    either any [
+        none? text
+        parse text [some atext-sp end]
+    ] [text] [encode 'mime-field text]
+]
+form-message: func [
+    mail
+    /local
+    out from rcpt date value msg Message Message-ID attach boundary file filename file-id
+] [
+    out: make string! 100
+    append out "MIME-Version: 1.0^^M^^/"
+    case [
+        email? from: select mail 'From []
+        tag? from [from: as email! :from]
+        block? from [parse from [to email! set from email!]]
+    ]
+    unless :from [
+        put mail 'From from: any [
+            user's full-email
+            user's email
+            load ask "Mail from: "
+        ]
+        if block? from [parse from [to email! set from email!]]
+    ]
+    unless email? from [
+        sys/log/error 'MAIL ["Invalid FROM value: " as-red mold :from]
+        return none
+    ]
+    case [
+        email? rcpt: select mail 'To []
+        tag? rcpt [rcpt: as email! :rcpt]
+        block? rcpt []
+    ]
+    unless :rcpt [
+        put mail 'To rcpt: load ask "Mail rcpt: "
+    ]
+    unless date? date: select mail 'Date [date: now]
+    append out ajoin ["Date: " to-idate :date CRLF]
+    foreach field [From To CC Return-Path] [
+        if value: form-address select mail field [
+            append out ajoin [field-names/:field :value CRLF]
+        ]
+    ]
+    foreach field [Subject Comment Organization] [
+        if value: form-text select mail field [
+            append out ajoin [field-names/:field :value CRLF]
+        ]
+    ]
+    Message-ID: any [
+        select mail 'Message-ID
+        ajoin [get-id 36 #"." ++ counter "@rebol.mail"]
+    ]
+    append out ajoin ["Message-ID: " as tag! :Message-Id CRLF]
+    append out ajoin ["X-REBOL: Rebol/" system/version " (" system/platform "; " system/build/arch ")^^M^^/"]
+    Message: any [select mail 'Message ""]
+    msg: make string! 1000
+    either all [
+        block? Message
+        parse Message [2 string! to end]
+    ] [
+        boundary: ajoin ["^^M^^/^^M^^/--ALTER-" get-id 16]
+        append msg ajoin [
+            {Content-Type: multipart/alternative; boundary="} skip :boundary 6 #"^^""
+            :boundary CRLF
+            {Content-Type: text/plain; charset="UTF-8"} CRLF
+            "Content-Transfer-Encoding: quoted-printable" CRLF
+            CRLF encode 'quoted-printable Message/1
+            :boundary CRLF
+            {Content-Type: text/html; charset="UTF-8"} CRLF
+            "Content-Transfer-Encoding: quoted-printable" CRLF
+            CRLF encode 'quoted-printable Message/2
+            :boundary "--"
+        ]
+    ] [
+        append msg ajoin [
+            {Content-Type: text/plain; charset="UTF-8"} CRLF
+            "Content-Transfer-Encoding: quoted-printable" CRLF
+            CRLF encode 'quoted-printable Message
+        ]
+    ]
+    attach: select mail 'attach
+    if file? :attach [attach: to block! attach]
+    either all [
+        block? :attach
+        parse attach [to file! to end]
+    ] [
+        boundary: ajoin ["^^M^^/^^M^^/--MIXED-" get-id 16]
+        append out ajoin [
+            {Content-Type: multipart/mixed; boundary="} skip :boundary 6 #"^^""
+            :boundary CRLF
+            :msg
+        ]
+        msg: none
+        file-id: 0
+        parse attach [
+            some [
+                to file! set file file! (
+                    ++ file-id
+                    filename: ajoin ["=?UTF-8?Q?" encode 'quoted-printable as string! second split-path file "?="]
+                    append out ajoin [
+                        :boundary CRLF
+                        "Content-Type: " mime-type? file {; name="} filename #"^^"" CRLF
+                        {Content-Disposition: attachment; filename="} filename #"^^"" CRLF
+                        "Content-Transfer-Encoding: base64" CRLF
+                        "Content-ID: <f_" file-id ">" CRLF
+                        "X-Attachment-Id: f_" file-id CRLF
+                        CRLF
+                        enbase read/binary :file 64
+                    ]
+                )
+                | skip
+            ]
+        ]
+        append append out :boundary "--"
+    ] [
+        append out :msg
+    ]
+    compose/only [
+        from: (from)
+        to: (rcpt)
+        message: (out)
+    ]
+]
+get-id: func [base [integer!] /func n t] [
+    n: 1000000 * to integer! now
+    t: pick stats/timer 'second
+    n: n + to integer! (t - to integer! t) * 1000000
+    enbase to binary! n base
+]
+counter: 0
+field-names: #(
+    From: "From: "
+    To: "To:   "
+    Cc: "Cc:   "
+    Return-Path: "Return-Path: "
+    Subject: "Subject: "
+    Comment: "Comment: "
+    Organization: "Organization: "
+)
+atext: make bitset! #{000000005F35FFC57FFFFFE3FFFFFFFE}
+atext-sp: make bitset! #{00400000DF35FFC57FFFFFE3FFFFFFFE}
+sys/make-scheme [
+    name: 'mail
+    actor: [
+        open: func [port [port!]] [
+            either all [
+                port? system/ports/mail
+                'mail = system/ports/mail/scheme/name
+            ] [
+                system/ports/mail
+            ] [
+                port/state: object [
+                    state: 'READY
+                ]
+                system/ports/mail: port
+            ]
+        ]
+        open?: func [port [port!]] [
+            object? port/state
+        ]
+        write: func [
+            port [port!]
+            mail [block! map! object!]
+            /local
+            smtp message
+        ] [
+            unless open? port [port: open port]
+            if all [
+                smtp: user's smtp
+                message: form-message mail
+            ] [
+                write :smtp :message
+            ]
+        ]
+        close: func [port [port!]] [
+            if same? port system/ports/mail [
+                system/ports/mail: none
+            ]
+            port/state: none
+            port
+        ]
+    ]
+]
+send: func [
+    {Send a message to an address (or block of addresses)}
+    address [email! block!] "An address or block of addresses"
+    message [string! file! block! object! map!] "Simple text message, file or mail data"
+] [
+    case [
+        string? message [
+            message: compose/only [
+                to: (address)
+                subject: (copy/part message any [find message newline 50])
+                message: (message)
+            ]
+        ]
+        file? message [
+            message: compose/only [
+                to: (address)
+                subject: (join "File: " mold message)
+                attach: (message)
+            ]
+        ]
+        'else [
+            unless block? message [message: spec-of :message]
+            parse message [
+                some file! (
+                    message: compose/only [
+                        subject: "Multiple files"
+                        attach: (message)
+                    ]
+                    break
+                )
+                |
+                2 string! (
+                    message: compose/only [
+                        subject: (copy/part message/1 any [find message/1 newline 50])
+                        message: (message)
+                    ]
+                    break
+                )
+                |
+                some [[word! | set-word!] [string! | file! | block!]] end
+                |
+                (cause-error 'Script 'invalid-arg reduce [message])
+            ]
+            unless any [
+                select message 'message
+                select message 'subject
+                select message 'attach
+            ] [
+                cause-error 'Script 'invalid-arg reduce [message]
+            ]
+            put message 'to address
+        ]
+    ]
+    write mail:// message
+]}
+    sys/load-module/delay {Rebol [
+    Version: 1.0.0
+    Title: "Codec: MIME header field encoding"
+    Name: mime-field
+    Date: none
+    Author: "Oldes"
+    Exports: none
+    Needs: none
+]import 'quoted-printable
+register-codec [
+    name: 'mime-field
+    type: 'text
+    title: "MIME header's field (rfc2045)"
+    decode: function/with [
+        "Decodes MIME header's field (rfc2045)"
+        data [binary! any-string!]
+    ] [
+        output: either binary? data [copy data] [to binary! data]
+        parse output [
+            no-case
+            any [
+                to ch-crlf= [
+                    s: [#"^^M" #"^^/" | #"^^/" #"^^M" | #"^^/"] some ch-space e: [
+                        ahead "=?" (e: remove/part s e)
+                        | (e: change/part s #" " e)
+                    ] :e
+                    |
+                    s: "=?" [
+                        copy chr: to #"?" skip
+                        [#"q" (enc: #"q") | #"b" (enc: #"b")] #"?"
+                        copy txt: to "?=" 2 skip
+                        [some whitespace e: "=?" | e:]
+                        (
+                            txt: either enc = #"q" [
+                                qp-decode/space txt
+                            ] [debase txt 64]
+                            if chr <> "utf-8" [
+                                txt: iconv txt to string! chr
+                            ]
+                            e: change/part s txt e
+                        ) :e
+                    ]
+                    | skip
+                ]
+            ]
+        ]
+        to data output
+    ] [
+        ch-crlf: system/catalog/bitsets/crlf
+        ch-crlf=: make bitset! #{0024000000000004}
+        ch-space: system/catalog/bitsets/space
+        qp-decode: :codecs/quoted-printable/decode
+    ]
+    encode: function/with [data] [
+        if parse data [
+            opt [some key-chars #":" some space]
+            any safe-chars
+        ] [return data]
+        out: make binary! 1.5 * length? data
+        parse data [
+            s: opt [some key-chars #":" some space e: (
+                append out copy/part s e
+            )]
+            any [
+                s: 1 17 skip e: (
+                    append out #{3D3F5554462D383F423F}
+                    append out enbase/part s 64 e
+                    append out #{3F3D0D0A20}
+                )
+            ]
+        ]
+        take/part/last out 3
+        to data out
+    ] [
+        safe-chars: make bitset! #{004000008000FFC07FFFFFE07FFFFFE0}
+        key-chars: make bitset! #{000000000004FFC07FFFFFE17FFFFFE0}
+    ]
+]}
+    sys/load-module/delay {Rebol [
+    Version: 1.0.0
+    Title: "Codec: MIME (media) types"
+    Name: mime-types
+    Date: 13-Jul-2022
+    Author: @Oldes
+    Exports: [mime-type?]
+    Needs: none
+]mime-type?: func [/local types type files] [
+    unless find system/options 'mime-types [
+        put system/options 'mime-types none
+    ]
+    types: any [system/options/mime-types make map! 110]
+    parse [
+        "text/html" %.html %.htm %.shtml
+        "text/css" %.css
+        "text/xml" %.xml
+        "text/mathml" %.mml
+        "text/plain" %.txt
+        "text/vnd.sun.j2me.app-descriptor" %.jad
+        "text/vnd.wap.wml" %.wml
+        "text/x-component" %.htc
+        "image/gif" %.gif
+        "image/jpeg" %.jpeg %.jpg
+        "image/avif" %.avif
+        "image/png" %.png
+        "image/svg+xml" %.svg %.svgz
+        "image/tiff" %.tif %.tiff
+        "image/vnd.wap.wbmp" %.wbmp
+        "image/webp" %.webp
+        "image/x-icon" %.ico
+        "image/x-jng" %.jng
+        "image/x-ms-bmp" %.bmp
+        "font/woff" %.woff
+        "font/woff2" %.woff2
+        "application/javascript" %.js
+        "application/atom+xml" %.atom
+        "application/rss+xml" %.rss
+        "application/java-archive" %.jar %.war %.ear
+        "application/json" %.json
+        "application/mac-binhex40" %.hqx
+        "application/msword" %.doc
+        "application/pdf" %.pdf
+        "application/postscript" %.ps %.eps %.ai
+        "application/rtf" %.rtf
+        "application/vnd.apple.mpegurl" %.m3u8
+        "application/vnd.google-earth.kml+xml" %.kml
+        "application/vnd.google-earth.kmz" %.kmz
+        "application/vnd.ms-excel" %.xls
+        "application/vnd.ms-fontobject" %.eot
+        "application/vnd.ms-powerpoint" %.ppt
+        "application/vnd.oasis.opendocument.graphics" %.odg
+        "application/vnd.oasis.opendocument.presentation" %.odp
+        "application/vnd.oasis.opendocument.spreadsheet" %.ods
+        "application/vnd.oasis.opendocument.text" %.odt
+        {application/vnd.openxmlformats-officedocument.presentationml.presentation} %.pptx
+        {application/vnd.openxmlformats-officedocument.spreadsheetml.sheet} %.xlsx
+        {application/vnd.openxmlformats-officedocument.wordprocessingml.document} %.docx
+        "application/vnd.wap.wmlc" %.wmlc
+        "application/wasm" %.wasm
+        "application/x-7z-compressed" %.7z
+        "application/x-cocoa" %.cco
+        "application/x-java-archive-diff" %.jardiff
+        "application/x-java-jnlp-file" %.jnlp
+        "application/x-makeself" %.run
+        "application/x-perl" %.pl %.pm
+        "application/x-pilot" %.prc %.pdb
+        "application/x-rar-compressed" %.rar
+        "application/x-redhat-package-manager" %.rpm
+        "application/x-sea" %.sea
+        "application/x-shockwave-flash" %.swf
+        "application/x-stuffit" %.sit
+        "application/x-tcl" %.tcl %.tk
+        "application/x-x509-ca-cert" %.der %.pem %.crt
+        "application/x-xpinstall" %.xpi
+        "application/xhtml+xml" %.xhtml
+        "application/xspf+xml" %.xspf
+        "application/zip" %.zip
+        "application/octet-stream" %.bin %.exe %.dll
+        "application/octet-stream" %.deb
+        "application/octet-stream" %.dmg
+        "application/octet-stream" %.iso %.img
+        "application/octet-stream" %.msi %.msp %.msm
+        "audio/midi" %.mid %.midi %.kar
+        "audio/mpeg" %.mp3
+        "audio/ogg" %.ogg
+        "audio/x-m4a" %.m4a
+        "audio/x-realaudio" %.ra
+        "video/3gpp" %.3gpp %.3gp
+        "video/mp2t" %.ts
+        "video/mp4" %.mp4
+        "video/mpeg" %.mpeg %.mpg
+        "video/quicktime" %.mov
+        "video/webm" %.webm
+        "video/x-flv" %.flv
+        "video/x-m4v" %.m4v
+        "video/x-mng" %.mng
+        "video/x-ms-asf" %.asx %.asf
+        "video/x-ms-wmv" %.wmv
+        "video/x-msvideo" %.avi
+        "message/rfc822" %.eml
+    ] [
+        some [
+            set type string! copy files some file! (
+                foreach file files [types/:file: type]
+            )
+        ]
+    ]
+    system/options/mime-types: :types
+]
+mime-type?
+mime-type?: func [
+    "Returns file's MIME's content-type"
+    file [file!]
+] [
+    select system/options/mime-types find/last file #"."
+]}
+    sys/load-module/delay {Rebol [
+    Version: 1.0.0
+    Title: "Codec: quoted-printable encoding"
+    Name: quoted-printable
+    Date: none
+    Author: "Oldes"
+    Exports: none
+    Needs: none
+]register-codec [
+    name: 'quoted-printable
+    type: 'text
+    title: "Quoted-Printable encoding"
+    decode: function [
+        "Decodes quoted-printable data"
+        data [binary! any-string!]
+        /space
+    ] [
+        output: either binary? data [copy data] [to binary! data]
+        parse output [any [to #"=" remove [#"=" [LF | CR LF]] | skip] to end]
+        to data either space [
+            dehex/escape/uri output #"="
+        ] [dehex/escape output #"="]
+    ]
+    encode: function/with [
+        "Encodes data using quoted-printable encoding"
+        data [binary! any-string!]
+        /no-space "Q-encoding - space may not be represented directly"
+    ] [
+        assert [number? :max-line-length]
+        output: either no-space [
+            enhex/escape/except/uri to binary! data #"=" :quoted-printable
+        ] [enhex/escape/except to binary! data #"=" :quoted-printable]
+        if 0 < length: to integer! max-line-length - 1 [
+            parse output [any [
+                length skip
+                [end | 1 skip end | insert #{3D0D0A}]
+            ]]
+        ]
+        to data output
+    ] system/catalog/bitsets
+    max-line-length: 76
+]}
     register-codec [
         name: 'unixtime
         type: 'time
@@ -6897,7 +8429,7 @@
                 file: trim/tail take info
                 real: none
                 forall info [
-                    try/except [info/1: to integer! info/1] [info/1: 0]
+                    info/1: try/with [to integer! info/1] [0]
                 ]
                 info/1: either info/1 <= 0 [none] [to date! info/1]
                 size: take/last info
@@ -6940,7 +8472,10 @@
         title: {Lossless compressed data format compatible with GZIP utility.}
         suffixes: [%.gz]
         decode: function [data [binary!]] [
-            if verbose > 0 [identify data]
+            if verbose > 0 [
+                print ["^[[1;32mDecode GZIP data^[[m (^[[1m" length? data "^[[mbytes )"]
+                identify data
+            ]
             decompress data 'gzip
         ]
         encode: function [data [binary!]] [
@@ -6948,9 +8483,6 @@
         ]
         identify: function [data [binary!]] [
             if 10 > length? data [return none]
-            if verbose > 0 [
-                print ["^[[1;32mDecode GZIP data^[[m (^[[1m" length? data "^[[mbytes )"]
-            ]
             bin: binary data
             binary/read bin [
                 id: UI16
@@ -6977,7 +8509,7 @@
             if 2 = (2 and flg) [
                 crc16: binary/read bin 'UI16LE
             ]
-            if verbose > 0 [
+            if verbose > 1 [
                 print ["^[[32mModified:         ^[[0;1m" mtime "^[[m"]
                 print ["^[[32mExtra flags:      ^[[0;1m" xfl "^[[m"]
                 print ["^[[32mOperating system: ^[[0;1m" os "^[[m"]
@@ -7000,7 +8532,7 @@
         name: 'zip
         type: 'compression
         title: "ZIP File Format"
-        suffixes: [%.zip %.aar %.jar %.apk %.zipx %.appx %.epub]
+        suffixes: [%.zip %.aar %.jar %.apk %.zipx %.appx %.epub %.docx]
         decode: function [
             "Decompress all content of the ZIP file"
             zip-data [binary! file! url!]
@@ -7120,7 +8652,7 @@
             compressed-data: method: att-ext: att-int:
             compressed-size: size: crc: entries: filename-length: offset: 0
             add-file: func [file [file!] /local dir spec] [
-                try/except [
+                try/with [
                     spec: query/mode file [type: date:]
                     either spec [
                         file-name: find/tail file root
@@ -7144,7 +8676,7 @@
                 ]
             ]
             add-data: func [file spec /local no-compress? extra extra-length comm comm-length] [
-                sys/log/info 'ZIP ["Adding:" as-green file]
+                if verbose [sys/log/info 'ZIP ["Adding:" as-green file]]
                 any [file? file cause-error 'user 'message reduce [reform ["found" type? file "where file! expected"]]]
                 data: date: none
                 compressed-size: size: crc: filename-length: extra-length: comm-length: att-ext: att-int: 0
@@ -7419,2255 +8951,3777 @@
             none
         ]
         verbose: 1
-    ]
-] [[
-    version: 0.3.5
-    title: "REBOL 3 HTTP protocol scheme"
-    name: http
-    type: module
-    date: 26-Oct-2020
-    file: %prot-http.r
-    author: ["Gabriele Santilli" "Richard Smolak" "Oldes"]
-    needs: none
-    options: none
-    checksum: none
-    System: {REBOL [R3] Language Interpreter and Run-time Environment}
-    Rights: {
-^-^-Copyright 2012 REBOL Technologies
-^-^-REBOL is a trademark of REBOL Technologies
-^-}
-    License: {
-^-^-Licensed under the Apache License, Version 2.0
-^-^-See: http://www.apache.org/licenses/LICENSE-2.0
-^-}
-    Purpose: {
-^-^-This program defines the HTTP protocol scheme for REBOL 3.
-^-}
-    History: [
-        0.1.1 22-Jun-2007 "Gabriele Santilli" "Version used in R3-Alpha"
-        0.1.4 26-Nov-2012 "Richard Smolak" "Version from Atronix's fork"
-        0.1.5 10-May-2018 "Oldes" "FIX: Query on URL was returning just none"
-        0.1.6 21-May-2018 "Oldes" "FEAT: Added support for basic redirection"
-        0.1.7 3-Dec-2018 "Oldes" "FEAT: Added support for QUERY/MODE action"
-        0.1.8 21-Mar-2019 "Oldes" "FEAT: Using system trace outputs"
-        0.1.9 21-Mar-2019 "Oldes" "FEAT: Added support for transfer compression"
-        0.2.0 28-Mar-2019 "Oldes" "FIX: close connection in case of errors"
-        0.2.1 2-Apr-2019 "Oldes" "FEAT: Reusing connection in redirect when possible"
-        0.3.0 6-Jul-2019 "Oldes" {FIX: Error handling revisited and improved dealing with chunked data}
-        0.3.1 13-Feb-2020 "Oldes" {FEAT: Possible auto conversion to text if found charset specification in content-type}
-        0.3.2 25-Feb-2020 "Oldes" "FIX: Properly handling chunked data"
-        0.3.3 25-Feb-2020 "Oldes" {FEAT: support for read/binary and write/binary to force raw data result}
-        0.3.4 26-Feb-2020 "Oldes" {FIX: limit input data according Content-Length (#issues/2386)}
-        0.3.5 26-Oct-2020 "Oldes" {FEAT: support for read/part (using Range request with read/part/binary)}
-    ]
-] [
-    sync-op: func [port body /local header state] [
-        unless port/state [open port port/state/close?: yes]
-        state: port/state
-        state/awake: :read-sync-awake
-        do body
-        if state/state = 'ready [do-request port]
-        while [not find [ready close] state/state] [
-            unless port? wait [state/connection port/spec/timeout] [
-                throw-http-error port make error! [
-                    type: 'Access
-                    id: 'no-connect
-                    arg1: port/spec/ref
-                    arg2: 'timeout
-                ]
-                exit
-            ]
-            switch state/state [
-                inited [
-                    if not open? state/connection [
-                        throw-http-error port ["Internal " state/connection/spec/ref " connection closed"]
-                        exit
-                    ]
-                ]
-                reading-data [
-                    read state/connection
-                ]
-                redirect [
-                    do-redirect port port/state/info/headers/location
-                    state: port/state
-                    state/awake: :read-sync-awake
-                ]
-            ]
-        ]
-        if state/error [
-            throw-http-error port state/error
-            exit
-        ]
-        body: copy port
-        sys/log/info 'HTTP ["Done reading:^[[22m" length? body "bytes"]
-        header: copy port/state/info/headers
-        if state/close? [
-            sys/log/more 'HTTP ["Closing port for:^[[m" port/spec/ref]
-            close port
-        ]
-        reduce [header body]
-    ]
-    read-sync-awake: func [event [event!] /local error] [
-        sys/log/debug 'HTTP ["Read-sync-awake:" event/type]
-        switch/default event/type [
-            connect ready [
-                do-request event/port
-                false
-            ]
-            done [
-                true
-            ]
-            close [
-                true
-            ]
-            custom [
-                if event/code = 300 [
-                    event/port/state/state: 'redirect
-                    return true
-                ]
-                false
-            ]
-            error [
-                if all [
-                    event/port/state
-                    event/port/state/state <> 'closing
-                ] [
-                    sys/log/debug 'HTTP ["Closing (sync-awake):^[[1m" event/port/spec/ref]
-                    close event/port
-                ]
-                if error? event/port/state [do event/port/state]
-                true
-            ]
-        ] [
-            false
-        ]
-    ]
-    http-awake: func [event /local port http-port state awake res] [
-        port: event/port
-        http-port: port/locals
-        state: http-port/state
-        if any-function? :http-port/awake [state/awake: :http-port/awake]
-        awake: :state/awake
-        sys/log/debug 'HTTP ["Awake:^[[1m" event/type "^[[22mstate:^[[1m" state/state]
-        switch/default event/type [
-            read [
-                awake make event! [type: 'read port: http-port]
-                check-response http-port
-            ]
-            wrote [
-                awake make event! [type: 'wrote port: http-port]
-                state/state: 'reading-headers
-                read port
-                false
-            ]
-            lookup [
-                open port false
-            ]
-            connect [
-                state/state: 'ready
-                awake make event! [type: 'connect port: http-port]
-            ]
-            close
-            error [
-                res: switch state/state [
-                    ready [
-                        awake make event! [type: 'close port: http-port]
-                    ]
-                    inited [
-                        throw-http-error http-port any [
-                            http-port/state/error
-                            all [object? state/connection/state state/connection/state/error]
-                            make error! [
-                                type: 'Access
-                                id: 'no-connect
-                                arg1: http-port/spec/ref
-                            ]
-                        ]
-                    ]
-                    doing-request reading-headers [
-                        throw-http-error http-port any [
-                            all [object? state/connection/state state/connection/state/error]
-                            "Server closed connection"
-                        ]
-                    ]
-                    reading-data [
-                        either any [
-                            integer? state/info/headers/content-length
-                            state/info/headers/transfer-encoding = "chunked"
-                        ] [
-                            throw-http-error http-port "Server closed connection"
-                        ] [
-                            state/state: 'close
-                            any [
-                                awake make event! [type: 'done port: http-port]
-                                awake make event! [type: 'close port: http-port]
-                            ]
-                        ]
-                    ]
-                ]
-                try [
-                    state/error: state/connection/state/error
-                ]
-                sys/log/debug 'HTTP ["Closing:^[[1m" http-port/spec/ref]
-                close http-port
-                if error? state [do state]
-                res
-            ]
-        ] [true]
-    ]
-    throw-http-error: func [
-        http-port [port!]
-        error [error! string! block!]
-    ] [
-        sys/log/debug 'HTTP ["Throwing error:^[[m" error]
-        unless error? error [
-            error: make error! [
-                type: 'Access
-                id: 'Protocol
-                arg1: either block? error [ajoin error] [error]
-            ]
-        ]
-        either object? http-port/state [
-            http-port/state/error: error
-            http-port/state/awake make event! [type: 'error port: http-port]
-        ] [do error]
-    ]
-    make-http-request: func [
-        "Create an HTTP request (returns string!)"
-        method [word! string!] "E.g. GET, HEAD, POST etc."
-        target [file! string!] {In case of string!, no escaping is performed (eg. useful to override escaping etc.). Careful!}
-        headers [block! map!] "Request headers (set-word! string! pairs)"
-        content [any-string! binary! map! none!] {Request contents (Content-Length is created automatically). Empty string not exactly like none.}
-        /local result
-    ] [
-        result: rejoin [
-            uppercase form method #" "
-            either file? target [next mold target] [target]
-            " HTTP/1.1" CRLF
-        ]
-        foreach [word string] headers [
-            repend result [mold word #" " string CRLF]
-        ]
-        if content [
-            if map? content [content: to-json content]
-            content: to binary! content
-            repend result ["Content-Length: " length? content CRLF]
-        ]
-        sys/log/info 'HTTP ["Request:^[[22m" mold result]
-        append result CRLF
-        result: to binary! result
-        if content [append result content]
-        result
-    ]
-    do-request: func [
-        "Perform an HTTP request"
-        port [port!]
-        /local spec info
-    ] [
-        spec: port/spec
-        info: port/state/info
-        spec/headers: body-of make make object! [
-            Accept: "*/*"
-            Accept-charset: "utf-8"
-            Accept-Encoding: "gzip,deflate"
-            Host: either not find [80 443] spec/port-id [
-                ajoin [spec/host #":" spec/port-id]
-            ] [
-                form spec/host
-            ]
-            User-Agent: any [system/schemes/http/User-Agent "REBOL"]
-        ] to block! spec/headers
-        port/state/state: 'doing-request
-        info/headers: info/response-line: info/response-parsed: port/data:
-        info/size: info/date: info/name: none
-        write port/state/connection make-http-request spec/method any [spec/path %/] spec/headers spec/content
-    ]
-    parse-write-dialect: func [port block /local spec] [
-        spec: port/spec
-        parse block [
-            [set block word! (spec/method: block) | (spec/method: 'POST)]
-            opt [set block [file! | url!] (spec/path: block)]
-            [set block [block! | map!] (spec/headers: block) | (spec/headers: [])]
-            [set block [any-string! | binary! | map!] (spec/content: block) | (spec/content: none)]
-        ]
-    ]
-    check-response: func [port /local conn res headers d1 d2 line info state awake spec] [
-        state: port/state
-        conn: state/connection
-        info: state/info
-        headers: info/headers
-        line: info/response-line
-        awake: :state/awake
-        spec: port/spec
-        if all [
-            not headers
-            any [
-                all [
-                    d1: find conn/data crlfbin
-                    d2: find/tail d1 crlf2bin
-                ]
-                all [
-                    d1: find conn/data #{0A}
-                    d2: find/tail d1 #{0A0A}
-                    sys/log/debug 'HTML "Server using malformed line separator of #{0A0A}"
-                ]
-            ]
-        ] [
-            info/response-line: line: to string! copy/part conn/data d1
-            sys/log/more 'HTTP line
-            info/headers: headers: construct/with d1 http-response-headers
-            sys/log/info 'HTTP ["Headers:^[[22m" mold body-of headers]
-            info/name: spec/ref
-            if state/error: try [
-                if headers/content-length [info/size: headers/content-length: to integer! headers/content-length]
-                none
-            ] [
-                awake make event! [type: 'error port: port]
-            ]
-            try [if headers/last-modified [info/date: to-date/utc headers/last-modified]]
-            remove/part conn/data d2
-            state/state: 'reading-data
-        ]
-        unless headers [
-            read conn
-            return false
-        ]
-        res: false
-        unless info/response-parsed [
-            parse/all line [
-                "HTTP/1." [#"0" | #"1"] some #" " [
-                    #"1" (info/response-parsed: 'info)
-                    |
-                    #"2" [["04" | "05"] (info/response-parsed: 'no-content)
-                    | (info/response-parsed: 'ok)]
-                    |
-                    #"3" [
-                        "03" (info/response-parsed: 'see-other)
-                        |
-                        "04" (info/response-parsed: 'not-modified)
-                        |
-                        "05" (info/response-parsed: 'use-proxy)
-                        | (info/response-parsed: 'redirect)
-                    ]
-                    |
-                    #"4" [
-                        "01" (info/response-parsed: 'unauthorized)
-                        |
-                        "07" (info/response-parsed: 'proxy-auth)
-                        | (info/response-parsed: 'client-error)
-                    ]
-                    |
-                    #"5" (info/response-parsed: 'server-error)
-                ]
-                | (info/response-parsed: 'version-not-supported)
-            ]
-        ]
-        sys/log/debug 'HTTP ["Check-response:" info/response-parsed]
-        switch/all info/response-parsed [
-            ok [
-                either spec/method = 'HEAD [
-                    state/state: 'ready
-                    res: awake make event! [type: 'done port: port]
-                    unless res [res: awake make event! [type: 'ready port: port]]
-                ] [
-                    res: check-data port
-                    if all [not res state/state = 'ready] [
-                        res: awake make event! [type: 'done port: port]
-                        unless res [res: awake make event! [type: 'ready port: port]]
-                    ]
-                ]
-            ]
-            redirect see-other [
-                either spec/method = 'HEAD [
-                    state/state: 'ready
-                    res: awake make event! [type: 'custom port: port code: 0]
-                ] [
-                    res: check-data port
-                    unless open? port [
-                        state/state: 'ready
-                    ]
-                ]
-                if all [not res state/state = 'ready] [
-                    either all [
-                        any [
-                            find [get head] spec/method
-                            all [
-                                info/response-parsed = 'see-other
-                                spec/method: 'GET
-                            ]
-                        ]
-                        in headers 'Location
-                    ] [
-                        return awake make event! [type: 'custom port: port code: 300]
-                    ] [
-                        res: throw-http-error port "Redirect requires manual intervention"
-                    ]
-                ]
-            ]
-            unauthorized client-error server-error proxy-auth [
-                either spec/method = 'HEAD [
-                    state/state: 'ready
-                ] [
-                    check-data port
-                ]
-            ]
-            unauthorized [
-                res: throw-http-error port "Authentication not supported yet"
-            ]
-            client-error server-error [
-                res: throw-http-error port reduce ["Server error: " line]
-            ]
-            not-modified [state/state: 'ready
-            res: awake make event! [type: 'done port: port]
-            unless res [res: awake make event! [type: 'ready port: port]]]
-            use-proxy [
-                state/state: 'ready
-                res: throw-http-error port "Proxies not supported yet"
-            ]
-            proxy-auth [
-                res: throw-http-error port "Authentication and proxies not supported yet"
-            ]
-            no-content [
-                state/state: 'ready
-                res: awake make event! [type: 'done port: port]
-                unless res [res: awake make event! [type: 'ready port: port]]
-            ]
-            info [
-                info/headers: info/response-line: info/response-parsed: port/data: none
-                state/state: 'reading-headers
-                read conn
-            ]
-            version-not-supported [
-                res: throw-http-error port "HTTP response version not supported"
-                close port
-            ]
-        ]
-        res
-    ]
-    crlfbin: #{0D0A}
-    crlf2bin: #{0D0A0D0A}
-    crlf2: to string! crlf2bin
-    http-response-headers: construct [
-        Content-Length:
-        Content-Encoding:
-        Transfer-Encoding:
-        Last-Modified:
-    ]
-    do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state headers] [
-        spec: port/spec
-        state: port/state
-        port/data: none
-        sys/log/info 'HTTP ["Redirect to:^[[m" mold new-uri]
-        state/redirects: state/redirects + 1
-        if state/redirects > 10 [
-            res: throw-http-error port "Too many redirections"
-        ]
-        if #"/" = first new-uri [
-            if "keep-alive" = select state/info/headers 'Connection [
-                spec/path: new-uri
-                do-request port
-                return true
-            ]
-            new-uri: as url! ajoin [spec/scheme "://" spec/host #":" spec/port-id new-uri]
-        ]
-        new-uri: decode-url new-uri
-        spec/headers/host: new-uri/host
-        unless select new-uri 'port-id [
-            switch new-uri/scheme [
-                'https [append new-uri [port-id: 443]]
-                'http [append new-uri [port-id: 80]]
-            ]
-        ]
-        new-uri: construct/with new-uri port/scheme/spec
-        new-uri/method: spec/method
-        new-uri/ref: as url! ajoin either find [none 80 443] new-uri/port-id [
-            [new-uri/scheme "://" new-uri/host new-uri/path]
-        ] [[new-uri/scheme "://" new-uri/host #":" new-uri/port-id new-uri/path]]
-        unless find [http https] new-uri/scheme [
-            return throw-http-error port {Redirect to a protocol different from HTTP or HTTPS not supported}
-        ]
-        headers: spec/headers
-        close port/state/connection
-        port/spec: spec: new-uri
-        port/state: none
-        open port
-        port/spec/headers: headers
-        port
-    ]
-    check-data: func [port /local headers res data available out chunk-size pos trailer state conn] [
-        state: port/state
-        headers: state/info/headers
-        conn: state/connection
-        res: false
-        sys/log/more 'HTTP ["Check-data; bytes:^[[m" length? conn/data]
-        case [
-            headers/transfer-encoding = "chunked" [
-                data: conn/data
-                available: length? data
-                sys/log/more 'HTTP ["Chunked data: " state/chunk-size "av:" available]
-                unless port/data [port/data: make binary! 32000]
-                out: port/data
-                if state/chunk-size [
-                    either state/chunk-size <= available [
-                        append out take/part data state/chunk-size
-                        state/chunk-size: none
-                        if crlfbin <> take/part data 2 [
-                            throw-http-error port "Missing CRLF after chunk end!"
-                        ]
-                    ] [
-                        append out take/part data available
-                        state/chunk-size: state/chunk-size - available
-                    ]
-                ]
-                if not empty? data [
-                    until [
-                        either parse/all data [
-                            copy chunk-size some hex-digits
-                            crlfbin pos: to end
-                        ] [
-                            chunk-size: to integer! to issue! to string! :chunk-size
-                            remove/part data pos
-                            available: length? data
-                            sys/log/more 'HTTP ["Chunk-size:^[[m" chunk-size " ^[[36mavailable:^[[m " available]
-                            either chunk-size = 0 [
-                                if parse/all data [
-                                    crlfbin (trailer: "") to end | copy trailer to crlf2bin to end
-                                ] [
-                                    trailer: construct trailer
-                                    append headers body-of trailer
-                                    state/state: 'ready
-                                    res: state/awake make event! [type: 'custom port: port code: 0]
-                                    clear head conn/data
-                                ]
-                                true
-                            ] [
-                                available: length? data
-                                either chunk-size <= available [
-                                    append out take/part data :chunk-size
-                                    if crlfbin <> take/part data 2 [
-                                        throw-http-error port "Missing CRLF after chunk end!???"
-                                    ]
-                                    empty? data
-                                ] [
-                                    state/chunk-size: chunk-size - available
-                                    append out take/part data available
-                                    true
-                                ]
-                            ]
-                        ] [
-                            throw-http-error port "Invalid chunk data!"
-                            true
-                        ]
-                    ]
-                ]
-                unless state/state = 'ready [
-                    res: true
-                ]
-            ]
-            integer? headers/content-length [
-                either headers/content-length <= length? conn/data [
-                    state/state: 'ready
-                    port/data: copy/part conn/data headers/content-length
-                    conn/data: none
-                    res: state/awake make event! [type: 'custom port: port code: 0]
-                ] [
-                    res: true
-                ]
-            ]
-            true [
-                port/data: conn/data
-                either state/info/response-parsed = 'ok [
-                    res: true
-                ] [
-                    read conn
-                ]
-            ]
-        ]
-        res
-    ]
-    decode-result: func [
-        result [block!] "[header body]"
-        /local body content-type code-page encoding
-    ] [
-        if encoding: select result/1 'Content-Encoding [
-            either find ["gzip" "deflate"] encoding [
-                try/except [
-                    result/2: switch encoding [
-                        "gzip" [decompress result/2 'gzip]
-                        "deflate" [decompress result/2 'deflate]
-                    ]
-                ] [
-                    sys/log/info 'HTTP ["Failed to decode data using:^[[22m" encoding]
-                    return result
-                ]
-                sys/log/info 'HTTP ["Extracted using:^[[22m" encoding "^[[1mto:^[[22m" length? result/2 "bytes"]
-            ] [
-                sys/log/info 'HTTP ["Unknown Content-Encoding:^[[m" encoding]
-            ]
-        ]
-        if all [
-            content-type: select result/1 'Content-Type
-            any [
-                parse content-type [to #";" thru "charset=" copy code-page to end]
-                parse content-type [["text/" | "application/json"] to end]
-            ]
-        ] [
-            unless code-page [code-page: "utf-8"]
-            sys/log/info 'HTTP ["Trying to decode from code-page:^[[m" code-page]
-            try [result/2: deline iconv result/2 code-page]
-        ]
-        result
-    ]
-    hex-digits: system/catalog/bitsets/hex-digits
-    sys/make-scheme [
-        name: 'http
-        title: "HyperText Transport Protocol v1.1"
-        spec: make system/standard/port-spec-net [
-            path: %/
-            method: 'GET
-            headers: []
-            content: none
-            timeout: 15
-        ]
-        info: make system/standard/file-info [
-            response-line:
-            response-parsed:
-            headers: none
-        ]
-        actor: [
-            read: func [
-                port [port!]
-                /binary
-                /part length [number!]
-                /local result
-            ] [
-                sys/log/debug 'HTTP "READ"
-                unless port/state [open port port/state/close?: yes]
-                if all [part binary length > 0] [
-                    append port/spec/headers compose [Range: (join "bytes=0-" (to integer! length) - 1)]
-                ]
-                either any-function? :port/awake [
-                    unless open? port [cause-error 'Access 'not-open port/spec/ref]
-                    if port/state/state <> 'ready [throw-http-error "Port not ready"]
-                    port/state/awake: :port/awake
-                    do-request port
-                ] [
-                    result: sync-op port []
-                    unless binary [decode-result result]
-                    if all [part result/2] [clear skip result/2 length]
-                    result/2
-                ]
-            ]
-            write: func [
-                port [port!]
-                value
-                /binary
-                /local result
-            ] [
-                sys/log/debug 'HTTP "WRITE"
-                case [
-                    binary? value [
-                        value: reduce [[Content-Type: "application/octet-stream"] value]
-                    ]
-                    map? value [
-                        value: reduce [[Content-Type: "application/json; charset=utf-8"] encode 'JSON value]
-                    ]
-                    not block? value [
-                        value: reduce [[Content-Type: "application/x-www-form-urlencoded; charset=utf-8"] form value]
-                    ]
-                ]
-                either any-function? :port/awake [
-                    unless open? port [cause-error 'Access 'not-open port/spec/ref]
-                    if port/state/state <> 'ready [throw-http-error "Port not ready"]
-                    port/state/awake: :port/awake
-                    parse-write-dialect port value
-                    do-request port
-                ] [
-                    result: sync-op port [parse-write-dialect port value]
-                    unless binary [decode-result result]
-                    result/2
-                ]
-            ]
-            open: func [
-                port [port!]
-                /local conn
-            ] [
-                sys/log/debug 'HTTP ["OPEN, state:" port/state]
-                if port/state [return port]
-                if none? port/spec/host [throw-http-error port "Missing host address"]
-                port/state: object [
-                    state: 'inited
-                    connection:
-                    error: none
-                    close?: no
-                    binary?: no
-                    info: make port/scheme/info [type: 'url]
-                    awake: :port/awake
-                    redirects: 0
-                    chunk: none
-                    chunk-size: none
-                ]
-                port/state/connection: conn: make port! compose [
-                    scheme: (to lit-word! either port/spec/scheme = 'http ['tcp] ['tls])
-                    host: port/spec/host
-                    port-id: port/spec/port-id
-                    ref: as url! ajoin [scheme "://" host #":" port-id]
-                ]
-                conn/awake: :http-awake
-                conn/locals: port
-                sys/log/info 'HTTP ["Opening connection:^[[22m" conn/spec/ref]
-                open conn
-                port
-            ]
-            open?: func [
-                port [port!]
-            ] [
-                all [object? port/state open? port/state/connection true]
-            ]
-            close: func [
-                port [port!]
-            ] [
-                sys/log/debug 'HTTP "CLOSE"
-                if object? port/state [
-                    port/state/state: 'closing
-                    close port/state/connection
-                    port/state/connection/awake: none
-                    port/state: port/state/error
-                ]
-                if error? port/state [do port/state]
-                port
-            ]
-            copy: func [
-                port [port!]
-            ] [
-                either all [port/spec/method = 'HEAD port/state] [
-                    reduce bind [name size date] port/state/info
-                ] [
-                    if port/data [copy port/data]
-                ]
-            ]
-            query: func [
-                port [port!]
-                /mode
-                field [word! block! none!]
-                /local error state result
-            ] [
-                if all [mode none? field] [return words-of system/schemes/http/info]
-                if none? state: port/state [
-                    open port
-                    attempt [sync-op port [parse-write-dialect port [HEAD]]]
-                    state: port/state
-                    close port
-                ]
-                either all [
-                    state
-                    state/info/response-parsed
-                ] [
-                    either field [
-                        either word? field [
-                            select state/info field
-                        ] [
-                            result: make block! length? field
-                            foreach word field [
-                                if any-word? word [
-                                    if set-word? word [append result word]
-                                    append result state/info/(to word! word)
-                                ]
-                            ]
-                            result
-                        ]
-                    ] [state/info]
-                ] [none]
-            ]
-            length?: func [
-                port [port!]
-            ] [
-                either port/data [length? port/data] [0]
-            ]
-        ]
-        User-Agent: none
-    ]
-    sys/make-scheme/with [
-        name: 'https
-        title: "Secure HyperText Transport Protocol v1.1"
-        spec: make spec [
-            port-id: 443
-        ]
-    ] 'http
-] [
-    version: 0.7.4
-    title: "REBOL3 TLSv1.2 protocol scheme"
-    name: tls
-    type: module
-    date: none
-    file: none
-    author: ["Richard 'Cyphre' Smolak" "Oldes" "Brian Dickens (Hostilefork)"]
-    needs: none
-    options: none
-    checksum: none
-    rights: ["Richard 'Cyphre' Smolak" "Oldes" "Brian Dickens (Hostilefork)"]
-    history: [
-        0.6.1 "Cyphre" "Initial implementation used in old R3-alpha"
-        0.7.0 "Oldes" {
-^-^-^-* Rewritten almost from scratch to support TLSv1.2
-^-^-^-* Using BinCode (binary) dialect to deal with buffers input/output.
-^-^-^-* Code is now having a lots of traces for deep study of the process.
-^-^-^-Special thanks to Hostile Fork for implementing TLSv1.2 for his Ren-C before me.
+    ] import (
+        module [
+            Title: "Codec: JSON"
+            Name: json
+            Version: 0.1.2
+            Date: none
+            Author: [
+                "Gregg Irwin" {
+^-^-^-Ported from %json.r by Romano Paolo Tenca, Douglas Crockford, 
+^-^-^-and Gregg Irwin.
+^-^-^-Further research: json libs by Chris Ross-Gill, Kaj de Vos, and
+^-^-^-@WiseGenius.
 ^-^-}
-        0.7.1 "Oldes" {
-^-^-^-* Added Server Name Indication extension into TLS scheme
-^-^-^-* Fixed RSA/SHA message signatures
+                "Gabriele Santilli" "^/^-^-^-See History.^/^-^-"
+                "Oldes" {
+^-^-^-Slightly modified Red's version (0.0.4) for use in Rebol (Oldes' branch).
 ^-^-}
-        0.7.2 "Oldes" {
-^-^-^-* Basic support for EllipticCurves (x25519 still missing)
-^-^-^-* Added support for Chacha20-Poly1305 cipher suite
-^-^-}
-        0.7.3 "Oldes" "Fixed RSA memory leak"
-        0.7.4 "Oldes" {Pass data to parent handler even when ALERT message is not decoded}
-    ]
-    todo: {
-^-^-* cached sessions
-^-^-* automagic cert data lookup
-^-^-* add more cipher suites (based on DSA, 3DES, ECDSA, ...)
-^-^-* server role support
-^-^-* TLS1.3 support
-^-^-* cert validation
-^-}
-    references: [
-        https://tools.ietf.org/html/rfc5246
-        https://testssl.sh/openssl-rfc.mapping.html
-        https://fly.io/articles/how-ciphersuites-work/
-        https://tls12.ulfheim.net/
-        https://tls13.ulfheim.net/
-        https://www.ssllabs.com/ssltest/analyze.html
-    ]
-    notes: {
-^-^-Tested with:
-^-^-^-TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
-^-^-^-TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
-^-^-^-TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA
-^-^-^-TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
-^-^-^-TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
-^-^-^-TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
-^-^-^-TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
-^-^-^-TLS_RSA_WITH_AES_128_CBC_SHA256
-^-^-^-TLS_RSA_WITH_AES_256_CBC_SHA256
-^-^-^-TLS_RSA_WITH_AES_128_CBC_SHA
-^-^-^-TLS_RSA_WITH_AES_256_CBC_SHA
-^-^-^-TLS_DHE_RSA_WITH_AES_128_CBC_SHA
-^-^-^-TLS_DHE_RSA_WITH_AES_256_CBC_SHA256
-
-^-}
-] [
-    *Protocol-type: enum [
-        CHANGE_CIPHER_SPEC: 20
-        ALERT: 21
-        HANDSHAKE: 22
-        APPLICATION: 23
-    ] 'TLS-protocol-type
-    *Protocol-version: enum [
-        SSLv3: #{0300}
-        TLS1.0: #{0301}
-        TLS1.1: #{0302}
-        TLS1.2: #{0303}
-    ] 'TLS-Protocol-version
-    *Handshake: enum [
-        HELLO_REQUEST: 0
-        CLIENT_HELLO: 1
-        SERVER_HELLO: 2
-        CERTIFICATE: 11
-        SERVER_KEY_EXCHANGE: 12
-        CERTIFICATE_REQUEST: 13
-        SERVER_HELLO_DONE: 14
-        CERTIFICATE_VERIFY: 15
-        CLIENT_KEY_EXCHANGE: 16
-        FINISHED: 20
-    ] 'TLS-Handshake-type
-    *Cipher-suite: enum [
-        TLS_RSA_WITH_NULL_MD5: #{0001}
-        TLS_RSA_WITH_NULL_SHA: #{0002}
-        TLS_RSA_WITH_NULL_SHA256: #{003B}
-        TLS_RSA_WITH_RC4_128_MD5: #{0004}
-        TLS_RSA_WITH_RC4_128_SHA: #{0005}
-        TLS_RSA_WITH_3DES_EDE_CBC_SHA: #{000A}
-        TLS_RSA_WITH_AES_128_CBC_SHA: #{002F}
-        TLS_RSA_WITH_AES_256_CBC_SHA: #{0035}
-        TLS_RSA_WITH_AES_128_CBC_SHA256: #{003C}
-        TLS_RSA_WITH_AES_256_CBC_SHA256: #{003D}
-        TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA: #{000D}
-        TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA: #{0010}
-        TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA: #{0013}
-        TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA: #{0016}
-        TLS_DH_DSS_WITH_AES_128_CBC_SHA: #{0030}
-        TLS_DH_RSA_WITH_AES_128_CBC_SHA: #{0031}
-        TLS_DHE_DSS_WITH_AES_128_CBC_SHA: #{0032}
-        TLS_DHE_RSA_WITH_AES_128_CBC_SHA: #{0033}
-        TLS_DH_DSS_WITH_AES_256_CBC_SHA: #{0036}
-        TLS_DH_RSA_WITH_AES_256_CBC_SHA: #{0037}
-        TLS_DHE_DSS_WITH_AES_256_CBC_SHA: #{0038}
-        TLS_DHE_RSA_WITH_AES_256_CBC_SHA: #{0039}
-        TLS_DH_DSS_WITH_AES_128_CBC_SHA256: #{003E}
-        TLS_DH_RSA_WITH_AES_128_CBC_SHA256: #{003F}
-        TLS_DHE_DSS_WITH_AES_128_CBC_SHA256: #{0040}
-        TLS_DHE_RSA_WITH_AES_128_CBC_SHA256: #{0067}
-        TLS_DH_DSS_WITH_AES_256_CBC_SHA256: #{0068}
-        TLS_DH_RSA_WITH_AES_256_CBC_SHA256: #{0069}
-        TLS_DHE_DSS_WITH_AES_256_CBC_SHA256: #{006A}
-        TLS_DHE_RSA_WITH_AES_256_CBC_SHA256: #{006B}
-        TLS_DH_anon_WITH_RC4_128_MD5: #{0018}
-        TLS_DH_anon_WITH_3DES_EDE_CBC_SHA: #{001B}
-        TLS_DH_anon_WITH_AES_128_CBC_SHA: #{0034}
-        TLS_DH_anon_WITH_AES_256_CBC_SHA: #{003A}
-        TLS_DH_anon_WITH_AES_128_CBC_SHA256: #{006C}
-        TLS_DH_anon_WITH_AES_256_CBC_SHA256: #{006D}
-        TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256: #{CCA8}
-        TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256: #{CCA9}
-        TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384: #{C028}
-        TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256: #{C02F}
-        TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384: #{C030}
-        TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256: #{C02B}
-        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384: #{C02C}
-        TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256: #{C027}
-        TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA: #{C013}
-        TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA: #{C009}
-        TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA: #{C014}
-        TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA: #{C00A}
-    ] 'TLS-Cipher-suite
-    *EllipticCurves: enum [
-        secp192r1: #{0013}
-        secp224k1: #{0014}
-        secp224r1: #{0015}
-        secp256k1: #{0016}
-        secp256r1: #{0017}
-        secp384r1: #{0018}
-        secp521r1: #{0019}
-        x25519: #{001D}
-    ] 'EllipticCurves
-    *HashAlgorithm: enum [
-        none: 0
-        md5: 1
-        sha1: 2
-        sha224: 3
-        sha256: 4
-        sha384: 5
-        sha512: 6
-        md5_sha1: 255
-    ] 'TLSHashAlgorithm
-    *ClientCertificateType: enum [
-        rsa_sign: 1
-        dss_sign: 2
-        rsa_fixed_dh: 3
-        dss_fixed_dh: 4
-        rsa_ephemeral_dh_RESERVED: 5
-        dss_ephemeral_dh_RESERVED: 6
-        fortezza_dms_RESERVED: 20
-        ecdsa_sign: 64
-        rsa_fixed_ecdh: 65
-        ecdsa_fixed_ecdh: 66
-    ] 'TLSClientCertificateType
-    *Alert-level: enum [
-        WARNING: 1
-        FATAL: 2
-    ] 'TLS-Alert-level
-    *Alert: enum [
-        Close_notify: 0
-        Unexpected_message: 10
-        Bad_record_MAC: 20
-        Decryption_failed: 21
-        Record_overflow: 22
-        Decompression_failure: 30
-        Handshake_failure: 40
-        No_certificate: 41
-        Bad_certificate: 42
-        Unsupported_certificate: 43
-        Certificate_revoked: 44
-        Certificate_expired: 45
-        Certificate_unknown: 46
-        Illegal_parameter: 47
-        Unknown_CA: 48
-        Access_denied: 49
-        Decode_error: 50
-        Decrypt_error: 51
-        Export_restriction: 60
-        Protocol_version: 70
-        Insufficient_security: 71
-        Internal_error: 80
-        User_cancelled: 90
-        No_renegotiation: 100
-        Unsupported_extension: 110
-    ] 'TLS-Alert
-    *TLS-Extension: enum [
-        ServerName: #{0000}
-        SupportedGroups: #{000A}
-        SignatureAlgorithms: #{000D}
-        KeyShare: #{0033}
-        RenegotiationInfo: #{FF01}
-    ] 'TLS-Extension
-    _log-error: func [msg] [
-        if block? msg [msg: reform msg]
-        print rejoin [" ^[[1;33m[TLS] ^[[35m" msg "^[[0m"]
-    ]
-    _log-info: func [msg] [
-        if block? msg [msg: reform msg]
-        print rejoin [" ^[[1;33m[TLS] ^[[36m" msg "^[[0m"]
-    ]
-    _log-more: func [msg] [
-        if block? msg [msg: reform msg]
-        print rejoin [" ^[[33m[TLS] ^[[0;36m" msg "^[[0m"]
-    ]
-    _log-debug: func [msg] [
-        if block? msg [msg: reform msg]
-        print rejoin [" ^[[33m[TLS] ^[[0;32m" msg "^[[0m"]
-    ]
-    _log-----: does [print {----------------------------------------------------------------}]
-    log-error: log-info: log-more: log-debug: log-----: none
-    tls-verbosity: func [
-        "Turns ON and OFF various log traces"
-        verbose [integer!] "Verbosity level"
-    ] [
-        log-error: log-info: log-more: log-debug: log-----: none
-        case/all [
-            verbose >= 0 [log-error: :_log-error]
-            verbose >= 1 [log-info: :_log-info]
-            verbose >= 2 [log-more: :_log-more
-            log-----: :_log-----]
-            verbose >= 3 [log-debug: :_log-debug]
-        ]
-    ]
-    log-error: :_log-error
-    suported-cipher-suites: rejoin [
-        #{CCA9}
-        #{CCA8}
-        #{C027}
-        #{C014}
-        #{C013}
-        #{C00A}
-        #{C009}
-        #{006B}
-        #{0067}
-        #{003D}
-        #{003C}
-        #{0035}
-        #{002F}
-        #{0038}
-        #{0032}
-        #{0039}
-        #{0033}
-    ]
-    supported-signature-algorithms: rejoin [
-        #{0601}
-        #{0602}
-        #{0501}
-        #{0502}
-        #{0401}
-        #{0402}
-        #{0403}
-        #{0201}
-        #{0202}
-    ]
-    supported-elliptic-curves: rejoin [
-        #{0017}
-        #{0015}
-        #{0014}
-        #{0013}
-    ]
-    TLS-init-cipher-suite: func [
-        {Initialize context for current cipher-suite. Returns false if unknown suite is used.}
-        ctx [object!]
-        cipher-suite [binary!]
-        /local suite key-method cipher
-    ] [
-        unless find/skip suported-cipher-suites cipher-suite 2 [
-            log-error "Requested cipher suite is not supported!"
-            return false
-        ]
-        suite: *Cipher-suite/name to integer! cipher-suite
-        if none? suite [
-            log-error ["Unknown cipher suite:" cipher-suite]
-            return false
-        ]
-        log-info ["Init TLS Cipher-suite:^[[35m" suite "^[[22m" cipher-suite]
-        parse form suite [
-            opt "TLS_"
-            copy key-method to "_WITH_" 6 skip
-            copy cipher [
-                "CHACHA20_POLY1305" (ctx/crypt-size: 32 ctx/IV-size: 12 ctx/block-size: 16)
-                | "AES_128_CBC" (ctx/crypt-size: 16 ctx/IV-size: 16 ctx/block-size: 16)
-                | "AES_256_CBC" (ctx/crypt-size: 32 ctx/IV-size: 16 ctx/block-size: 16)
-                | "RC4_128" (ctx/crypt-size: 16 ctx/IV-size: 0 ctx/block-size: none)
-                | "NULL" (ctx/crypt-size: 0 ctx/IV-size: 0 ctx/block-size: none)
-            ] #"_" [
-                "SHA384" end (ctx/hash-method: 'SHA384 ctx/mac-size: 48)
-                | "SHA256" end (ctx/hash-method: 'SHA256 ctx/mac-size: 32)
-                | "SHA" end (ctx/hash-method: 'SHA1 ctx/mac-size: 20)
-                | "MD5" end (ctx/hash-method: 'MD5 ctx/mac-size: 16)
-                | "NULL" end (ctx/hash-method: none ctx/mac-size: 0)
             ]
-            (
-                ctx/key-method: to word! key-method
-                ctx/crypt-method: to word! cipher
-                ctx/is-aead?: to logic! find [AES_128_GCM AES_256_GCM CHACHA20_POLY1305] ctx/crypt-method
-                log-more [
-                    "Key:^[[1m" ctx/key-method
-                    "^[[22mcrypt:^[[1m" ctx/crypt-method
-                    "^[[22msize:^[[1m" ctx/crypt-size
-                    "^[[22mIV:^[[1m" ctx/IV-size
-                ]
-            )
-        ]
-    ]
-    pad-bin: function [
-        "Left binary padding"
-        bin [binary!]
-        len [integer!]
-    ] [
-        if len > n: length? bin [
-            insert/dup copy bin 0 len - n
-        ]
-        bin
-    ]
-    make-TLS-error: func [
-        "Make an error for the TLS protocol"
-        message [string! block!]
-    ] [
-        if block? message [message: ajoin message]
-        make error! [
-            type: 'Access
-            id: 'Protocol
-            arg1: message
-        ]
-    ]
-    TLS-error: function [
-        id [integer!]
-    ] [
-        message: to string! any [*Alert/name id "unknown"]
-        replace/all message #"_" #" "
-        log-error join "ERROR: " message
-        do make-TLS-error message
-    ]
-    change-state: function [
-        ctx [object!]
-        new-state [word!]
-    ] [
-        ctx/state-prev: ctx/state
-        if ctx/state <> new-state [
-            log-info ["New state:^[[33m" new-state "^[[22mfrom:" ctx/state]
-            ctx/state: new-state
-        ]
-    ]
-    assert-prev-state: function [
-        ctx [object!]
-        legal-states [block!]
-    ] [
-        if not find legal-states ctx/state-prev [
-            log-error ["State" ctx/state "is not expected after" ctx/state-prev]
-            TLS-error *Alert/Internal_error
-        ]
-    ]
-    TLS-update-messages-hash: function [
-        ctx [object!]
-        msg [binary!]
-        len [integer!]
-    ] [
-        log-more ["Update-messages-hash bytes:" len "hash:" all [ctx/sha-port ctx/sha-port/spec/method]]
-        if none? ctx/sha-port [
-            either ctx/legacy? [
-                ctx/sha-port: open checksum:sha1
-                ctx/md5-port: open checksum:md5
+            Exports: [to-json load-json]
+            Needs: none
+        ] [
+            translit: func [
+                "Transliterate sub-strings in a string"
+                string [string!] "Input (modified)"
+                rule [block! bitset!] "What to change"
+                xlat [block! function!] {Translation table or function. MUST map a string! to a string!.}
+                /local val
             ] [
-                ctx/sha-port: open either ctx/mac-size = 48 [checksum:sha384] [checksum:sha256]
-            ]
-            log-more ["Initialized SHA method:" ctx/sha-port/spec/method]
-        ]
-        write/part ctx/sha-port msg len
-        if ctx/legacy? [
-            write/part ctx/md5-port msg len
-        ]
-    ]
-    client-hello: function [
-        ctx [object!]
-    ] [
-        change-state ctx 'CLIENT_HELLO
-        with ctx [
-            extensions: make binary! 100
-            if all [
-                ctx/connection
-                host-name: ctx/connection/spec/host
-            ] [
-                host-name: to binary! host-name
-                length-name: length? host-name
-                binary/write extensions compose [
-                    UI16 0
-                    UI16 (5 + length-name)
-                    UI16 (3 + length-name)
-                    UI8 0
-                    UI16 :length-name
-                    BYTES :host-name
-                ]
-            ]
-            binary/write tail extensions compose [
-                #{000A}
-                UI16 (2 + length? supported-elliptic-curves)
-                UI16 (length? supported-elliptic-curves)
-                :supported-elliptic-curves
-            ]
-            append extensions #{000B00020100}
-            append extensions #{FF01000100}
-            append extensions #{00120000}
-            length-signatures: 2 + length? supported-signature-algorithms
-            length-extensions: 4 + length-signatures + length? extensions
-            length-message: 41 + length-extensions + length? suported-cipher-suites
-            length-record: 4 + length-message
-            binary/write out [
-                UI8 22
-                UI16 :version
-                UI16 :length-record
-                UI8 1
-                UI24 :length-message
-                UI16 :version
-                UNIXTIME-NOW RANDOM-BYTES 28
-                UI8 0
-                UI16BYTES :suported-cipher-suites
-                UI8 1
-                UI8 0
-                UI16 :length-extensions
-                UI16 13
-                UI16 :length-signatures
-                UI16BYTES :supported-signature-algorithms
-                BYTES :extensions
-            ]
-            out/buffer: head out/buffer
-            client-random: copy/part (at out/buffer 12) 32
-            TLS-update-messages-hash ctx (at out/buffer 6) (4 + length-message)
-            log-more [
-                "W[" ctx/seq-write "] Bytes:" length? out/buffer "=>"
-                "record:" length-record
-                "message:" length-message
-                "extensions:" length-extensions
-                "signatures:" length-signatures
-            ]
-            log-more ["W[" ctx/seq-write "] Client random:" mold client-random]
-        ]
-    ]
-    client-key-exchange: function [
-        ctx [object!]
-    ] [
-        log-debug ["client-key-exchange -> method:" ctx/key-method "key-data:" mold ctx/key-data]
-        change-state ctx 'CLIENT_KEY_EXCHANGE
-        assert-prev-state ctx [CLIENT_CERTIFICATE SERVER_HELLO_DONE SERVER_HELLO]
-        with ctx [
-            binary/write out [
-                UI8 22
-                UI16 :version
-                pos-record-len:
-                UI16 0
-                pos-record:
-                UI8 16
-                pos-message:
-                UI24 0
-                pos-key:
-            ]
-            switch key-method [
-                ECDHE_ECDSA
-                ECDHE_RSA [
-                    log-more ["W[" ctx/seq-write "] Using ECDH key-method"]
-                    insert key-data #{04}
-                    key-data-len-bytes: 1
-                ]
-                RSA [
-                    log-more ["W[" ctx/seq-write "] Using RSA key-method"]
-                    binary/write bin [
-                        UI16 :version RANDOM-BYTES 46
-                    ]
-                    binary/read bin [pre-master-secret: BYTES 48]
-                    binary/init bin 0
-                    log-more ["W[" ctx/seq-write "] pre-master-secret:" mold pre-master-secret]
-                    rsa-key: rsa-init pub-key pub-exp
-                    key-data: rsa/encrypt rsa-key pre-master-secret
-                    key-data-len-bytes: 2
-                    log-more ["W[" ctx/seq-write "] key-data:" mold key-data]
-                    rsa rsa-key none
-                ]
-                DHE_DSS
-                DHE_RSA [
-                    log-more ["W[" ctx/seq-write "] Using DH key-method"]
-                    key-data-len-bytes: 2
-                ]
-            ]
-            length-message: key-data-len-bytes + length? key-data
-            length-record: 4 + length-message
-            binary/write out compose [
-                AT :pos-record-len UI16 :length-record
-                AT :pos-message UI24 :length-message
-                AT :pos-key (pick [UI8BYTES UI16BYTES] key-data-len-bytes) :key-data
-            ]
-            if ctx/version >= *Protocol-version/TLS1.0 [
-                ctx/master-secret: prf "master secret" legacy? (join ctx/client-random ctx/server-random) pre-master-secret 48
-                key-expansion: prf "key expansion" legacy? (join ctx/server-random ctx/client-random) master-secret
-                (mac-size + crypt-size + iv-size) * 2
-                pre-master-secret: none
-            ]
-            unless is-aead? [
-                client-mac-key: take/part key-expansion mac-size
-                server-mac-key: take/part key-expansion mac-size
-            ]
-            client-crypt-key: take/part key-expansion crypt-size
-            server-crypt-key: take/part key-expansion crypt-size
-            log-more ["Client-mac-key:   " mold client-mac-key]
-            log-more ["Server-mac-key:   " mold server-mac-key]
-            log-more ["Client-crypt-key: " mold client-crypt-key]
-            log-more ["Server-crypt-key: " mold server-crypt-key]
-            client-iv: take/part key-expansion iv-size
-            server-iv: take/part key-expansion iv-size
-            log-more ["Client-IV: " mold client-iv]
-            log-more ["Server-IV: " mold server-iv]
-            key-expansion: none
-            switch crypt-method [
-                CHACHA20_POLY1305 [
-                    aead: chacha20poly1305/init none client-crypt-key client-iv server-crypt-key server-iv
-                ]
-                RC4_128 [
-                    decrypt-stream: rc4/key server-crypt-key
-                ]
-            ]
-            TLS-update-messages-hash ctx (at head out/buffer pos-record) length-record
-        ]
-    ]
-    change-cipher-spec: function [
-        ctx [object!]
-    ] [
-        change-state ctx 'CHANGE_CIPHER_SPEC
-        with ctx [
-            binary/write out [
-                UI8 20
-                UI16 :version
-                UI16 1
-                UI8 1
-            ]
-        ]
-        ctx/cipher-spec-set: 1
-        ctx/seq-write: 0
-    ]
-    application-data: func [
-        ctx [object!]
-        message [binary! string!]
-    ] [
-        log-more "application-data"
-        message: encrypt-data ctx to binary! message
-        with ctx [
-            binary/write out [
-                UI8 23
-                UI16 :version
-                UI16BYTES :message
-            ]
-        ]
-    ]
-    alert-close-notify: func [
-        ctx [object!]
-    ] [
-        log-more "alert-close-notify"
-        message: encrypt-data ctx #{0100}
-        with ctx [
-            binary/write out [
-                UI8 21
-                UI16 :version
-                UI16BYTES :message
-            ]
-        ]
-    ]
-    finished: function [
-        ctx [object!]
-    ] [
-        log-info ["FINISHED^[[22m write sequence:" ctx/seq-write]
-        ctx/seq-write: 0
-        seed: either ctx/legacy? [
-            rejoin [
-                read ctx/md5-port
-                read ctx/sha-port
-            ]
-        ] [read ctx/sha-port]
-        unencrypted: rejoin [
-            #{14}
-            #{00000C}
-            prf "client finished" ctx/legacy? seed ctx/master-secret 12
-        ]
-        TLS-update-messages-hash ctx unencrypted length? unencrypted
-        encrypt-handshake-msg ctx unencrypted
-    ]
-    encrypt-handshake-msg: function [
-        ctx [object!]
-        unencrypted [binary!]
-        /local
-        plain-msg
-    ] [
-        log-more ["W[" ctx/seq-write "] encrypting-handshake-msg"]
-        encrypted: encrypt-data/type ctx unencrypted 22
-        with ctx [
-            binary/write out [
-                UI8 22
-                UI16 :version
-                UI16BYTES :encrypted
-            ]
-        ]
-    ]
-    decrypt-msg: function [
-        ctx [object!]
-        data [binary!]
-    ] [
-        with ctx [
-            binary/write bin compose [
-                UI64 :seq-read
-                UI8 23
-                UI16 :version
-            ]
-            either is-aead? [
-                switch crypt-method [
-                    CHACHA20_POLY1305 [
-                        binary/write bin reduce ['UI16 (length? data) - 16]
-                        data: chacha20poly1305/decrypt aead data bin/buffer
+                parse string [
+                    some [
+                        change copy val rule (either block? :xlat [xlat/:val] [xlat val])
+                        | skip
                     ]
                 ]
-            ] [
-                if all [
-                    block-size
-                    version > *Protocol-version/TLS1.0
-                ] [
-                    server-iv: take/part data block-size
-                ]
-                change data decrypt-data ctx data
-                if block-size [
-                    clear skip tail data (-1 - (to integer! last data))
-                    mac: take/last/part data mac-size
-                    binary/write bin [
-                        UI16BYTES :data
+                string
+            ]
+            json-to-rebol-escape-table: [
+                {\"} {"}
+                "\\" "\"
+                "\/" "/"
+                "\b" "^H"
+                "\f" "^L"
+                "\n" "^/"
+                "\r" "^M"
+                "\t" "^-"
+            ]
+            rebol-to-json-escape-table: reverse copy json-to-rebol-escape-table
+            rebol-esc-ch: charset {"^-\/
+^M^H^L}
+            json-esc-ch: charset {"t\/nrbf}
+            json-escaped: [#"\" json-esc-ch]
+            decode-backslash-escapes: func [string [string!] "(modified)"] [
+                translit string json-escaped json-to-rebol-escape-table
+            ]
+            encode-backslash-escapes: func [string [string!] "(modified)"] [
+                translit string rebol-esc-ch rebol-to-json-escape-table
+            ]
+            hex-char: system/catalog/bitsets/hex-digits
+            digit: system/catalog/bitsets/numeric
+            ws: system/catalog/bitsets/whitespace
+            ws*: [any ws]
+            ws+: [some ws]
+            sep: [ws* #"," ws*]
+            non-zero-digit: make bitset! #{0000000000007FC0}
+            chars: make bitset! [not bits #{FFFFFFFF2000000000000008}]
+            not-word-char: make bitset! #{00640000BCC9003A8000001E000000140000000080}
+            word-1st: complement append union not-word-char digit #"'"
+            word-char: complement not-word-char
+            sign: [#"-"]
+            int: [[non-zero-digit any digit] | digit]
+            frac: [#"." some digit]
+            exp: [[#"e" | #"E"] opt [#"+" | #"-"] some digit]
+            number: [opt sign int opt frac opt exp]
+            numeric-literal: :number
+            string-literal: [
+                #"^"" copy _str [
+                    any [some chars | #"\" [#"u" 4 hex-char | json-esc-ch]]
+                ] #"^"" (
+                    if not empty? _str: any [_str copy ""] [
+                        decode-backslash-escapes _str
+                        replace-unicode-escapes _str
                     ]
-                    mac-check: checksum/with bin/buffer hash-method server-mac-key
-                    if mac <> mac-check [critical-error: *Alert/Bad_record_MAC]
-                    if version > *Protocol-version/TLS1.0 [
-                        unset 'server-iv
-                    ]
-                ]
-            ]
-            binary/init bin 0
-        ]
-        unless data []
-        data
-    ]
-    encrypt-data: function [
-        ctx [object!]
-        content [binary!]
-        /type
-        msg-type [integer!] "application data is default"
-    ] [
-        msg-type: any [msg-type 23]
-        with ctx [
-            binary/write bin compose [
-                UI64 :seq-write
-                UI8 :msg-type
-                UI16 :version
-                UI16 (length? content)
-            ]
-            either is-aead? [
-                switch crypt-method [
-                    CHACHA20_POLY1305 [
-                        cipher: chacha20poly1305/encrypt aead content bin/buffer
-                    ]
-                    AES_256_GCM
-                    AES_128_GCM [
-                        log-error ["Not yet implemented crypt-method:" crypt-method]
-                    ]
-                ]
-            ] [
-                if version > *Protocol-version/TLS1.0 [
-                    client-iv: make binary! block-size
-                    binary/write client-iv [RANDOM-BYTES :block-size]
-                ]
-                log-more ["Client-iv:     " client-iv]
-                log-more ["Client-mac-key:" client-mac-key]
-                log-more ["Hash-method:   " hash-method]
-                binary/write bin content
-                MAC: checksum/with bin/buffer ctx/hash-method ctx/client-mac-key
-                data: rejoin [content MAC]
-                if block-size [
-                    padding: block-size - (remainder (1 + length? data) block-size)
-                    insert/dup tail data (to char! padding) (padding + 1)
-                ]
-                switch crypt-method [
-                    AES_256_CBC
-                    AES_128_CBC [
-                        unless encrypt-stream [
-                            encrypt-stream: aes/key client-crypt-key client-iv
-                        ]
-                        cipher: aes/stream encrypt-stream data
-                        if version > *Protocol-version/TLS1.0 [
-                            encrypt-stream: none
-                        ]
-                    ]
-                    RC4_128 [
-                        unless encrypt-stream [
-                            encrypt-stream: rc4/key client-crypt-key
-                        ]
-                        cipher: rc4/stream encrypt-stream data
-                    ]
-                ]
-                if version > *Protocol-version/TLS1.0 [
-                    insert cipher client-iv
-                    unset 'client-iv
-                ]
-            ]
-            binary/init bin 0
-        ]
-        cipher
-    ]
-    decrypt-data: func [
-        ctx [object!]
-        data [binary!]
-        /local
-        crypt-data
-    ] [
-        switch ctx/crypt-method [
-            AES_128_CBC
-            AES_256_CBC [
-                unless ctx/decrypt-stream [
-                    ctx/decrypt-stream: aes/key/decrypt ctx/server-crypt-key ctx/server-iv
-                ]
-                data: aes/stream ctx/decrypt-stream data
-                if ctx/version > *Protocol-version/TLS1.0 [
-                    ctx/decrypt-stream: none
-                ]
-            ]
-            RC4_128 [
-                rc4/stream ctx/decrypt-stream data
-            ]
-        ]
-        data
-    ]
-    prf: function [
-        {(P)suedo-(R)andom (F)unction, generates arbitrarily long binaries}
-        label [string! binary!]
-        legacy [logic!] "TRUE for TLS 1.1 and older"
-        seed [binary!]
-        secret [binary!]
-        output-length [integer!]
-    ] [
-        log-more ["PRF" mold label "len:" output-length]
-        seed: join to binary! label seed
-        if legacy [
-            len: length? secret
-            mid: to integer! (len + 1) * 0.5
-            s-1: copy/part secret mid
-            s-2: copy at secret (len - mid + 1)
-            p-md5: copy #{}
-            a: seed
-            while [output-length > length? p-md5] [
-                a: checksum/with a 'md5 s-1
-                append p-md5 checksum/with rejoin [a seed] 'md5 s-1
-            ]
-            p-sha1: copy #{}
-            a: seed
-            while [output-length > length? p-sha1] [
-                a: checksum/with a 'sha1 s-2
-                append p-sha1 checksum/with rejoin [a seed] 'sha1 s-2
-            ]
-            return (
-                (copy/part p-md5 output-length)
-                xor+ (copy/part p-sha1 output-length)
-            )
-        ]
-        p-sha256: make binary! output-length
-        a: seed
-        while [output-length >= length? p-sha256] [
-            a: checksum/with a 'sha256 secret
-            append p-sha256 checksum/with rejoin [a seed] 'sha256 secret
-        ]
-        clear at p-sha256 (1 + output-length)
-        p-sha256
-    ]
-    do-commands: func [
-        ctx [object!]
-        commands [block!]
-        /no-wait
-        /local arg cmd
-    ] [
-        binary/init ctx/out none
-        parse commands [
-            some [
-                set cmd [
-                    'client-hello (client-hello ctx)
-                    | 'client-key-exchange (client-key-exchange ctx)
-                    | 'change-cipher-spec (change-cipher-spec ctx)
-                    | 'finished (finished ctx)
-                    | 'application set arg [string! | binary!]
-                    (application-data ctx arg)
-                    | 'close-notify (alert-close-notify ctx)
-                ] (
-                    ctx/seq-write: ctx/seq-write + 1
                 )
             ]
-        ]
-        log-info ["Writing bytes:" length? ctx/out/buffer]
-        ctx/out/buffer: head ctx/out/buffer
-        write ctx/connection ctx/out/buffer
-        unless no-wait [
-            log-more "Waiting for responses"
-            unless port? wait [ctx/connection 130] [
-                log-error "Timeout"
-                ? ctx/connection
-                send-event 'close ctx/connection/locals
-                do make error! "port timeout"
-            ]
-        ]
-        ctx/reading?: true
-        binary/init ctx/out none
-    ]
-    make-TLS-ctx: does [context [
-        version: *Protocol-version/TLS1.2
-        server-version: none
-        legacy?: false
-        in: binary 16104
-        out: binary 16104
-        bin: binary 64
-        port-data: make binary! 32000
-        rest: make binary! 8
-        reading?: false
-        protocol: none
-        state: 'lookup
-        state-prev: none
-        error:
-        critical-error: none
-        cipher-spec-set: 0
-        sha-port: none
-        md5-port: none
-        key-method:
-        hash-method:
-        crypt-method: none
-        is-aead?: false
-        mac-size:
-        crypt-size:
-        block-size:
-        IV-size: 0
-        client-crypt-key:
-        server-crypt-key:
-        client-mac-key:
-        server-mac-key:
-        client-iv:
-        server-iv: none
-        aead: none
-        server-extensions: copy []
-        seq-read: 0
-        seq-write: 0
-        server-certs: copy []
-        client-random:
-        server-random:
-        server-session:
-        pre-master-secret:
-        master-secret:
-        certificate:
-        pub-key: pub-exp:
-        key-data:
-        encrypt-stream:
-        decrypt-stream: none
-        connection: none
-    ]]
-    TLS-init: func [
-        "Resets existing TLS context"
-        ctx [object!]
-    ] [
-        ctx/seq-read: ctx/seq-write: 0
-        ctx/protocol: ctx/state: ctx/state-prev: none
-        ctx/cipher-spec-set: 0
-        ctx/legacy?: (255 & ctx/version) < 3
-        clear ctx/server-certs
-        switch ctx/crypt-method [
-            RC4_128 [
-                if ctx/encrypt-stream [
-                    rc4/stream ctx/encrypt-stream none
-                    rc4/stream ctx/decrypt-stream none
-                    ctx/encrypt-stream: none
-                    ctx/decrypt-stream: none
-                ]
-            ]
-        ]
-    ]
-    TLS-read-data: function [
-        ctx [object!]
-        tcp-data [binary!]
-    ] [
-        log-more ["read-data:^[[1m" length? tcp-data "^[[22mbytes previous rest:" length? ctx/rest]
-        inp: ctx/in
-        binary/write inp ctx/rest
-        binary/write inp tcp-data
-        clear tcp-data
-        clear ctx/rest
-        ctx/reading?: true
-        while [ctx/reading? and ((available: length? inp/buffer) >= 5)] [
-            log-debug ["Data starts: " mold copy/part inp/buffer 16]
-            binary/read inp [
-                start: INDEX
-                type: UI8
-                version: UI16
-                len: UI16
-            ]
-            available: available - 5
-            log-debug ["fragment type: ^[[1m" type "^[[22mver:^[[1m" version *Protocol-version/name version "^[[22mbytes:^[[1m" len "^[[22mbytes"]
-            if all [
-                ctx/server-version
-                version <> ctx/server-version
+            decode-unicode-char: func [
+                {Convert \uxxxx format (NOT simple JSON backslash escapes) to a Unicode char}
+                ch [string!] "4 hex digits"
             ] [
-                log-error ["Version mismatch:^[[22m" version "<>" ctx/server-version]
-                ctx/critical-error: *Alert/Internal_error
-                return false
+                try/with [to char! to integer! debase ch 16] [none]
             ]
-            if available < len [
-                log-info ["Incomplete fragment:^[[22m available^[[1m" available "^[[22mof^[[1m" len "^[[22mbytes"]
-                binary/read inp [AT :start]
-                log-debug ["Data starts: " mold copy/part inp/buffer 10]
-                return false
+            replace-unicode-escapes: func [
+                s [string!] "(modified)"
+                /local c
+            ] [
+                parse s [
+                    any [
+                        some chars
+                        | json-escaped
+                        | change ["\u" copy c 4 hex-char] (decode-unicode-char c) ()
+                    ]
+                ]
+                s
             ]
-            *protocol-type/assert type
-            *protocol-version/assert version
-            protocol: *protocol-type/name type
-            version: *protocol-version/name version
-            ctx/seq-read: ctx/seq-read + 1
-            end: start + len + 5
-            log-info ["^[[22mR[" ctx/seq-read "] Protocol^[[1m" protocol "^[[22m" version "bytes:^[[1m" len "^[[22mfrom^[[1m" start "^[[22mto^[[1m" end]
-            ctx/protocol: protocol
-            switch protocol [
-                HANDSHAKE [
-                    binary/read inp [data: BYTES :len]
-                    either ctx/cipher-spec-set > 1 [
-                        data: decrypt-msg ctx data
-                    ] [
-                        TLS-update-messages-hash ctx data len
-                    ]
-                    ctx/critical-error: TLS-parse-handshake-message ctx data
+            json-object: [
+                #"{" (push emit _tmp: copy [] _res: _tmp)
+                ws* opt property-list
+                #"}" (
+                    _res: back pop
+                    _res: change _res make map! first _res
+                )
+            ]
+            property-list: [property any [sep property]]
+            property: [
+                json-name (
+                    try [_str: to word! _str]
+                    emit _str
+                )
+                json-value
+            ]
+            json-name: [ws* string-literal ws* #":"]
+            array-list: [json-value any [sep json-value]]
+            json-array: [
+                #"[" (push emit _tmp: copy [] _res: _tmp)
+                ws* opt array-list
+                #"]" (_res: pop)
+            ]
+            json-value: [
+                ws*
+                [
+                    "true" (emit true)
+                    | "false" (emit false)
+                    | "null" (emit none)
+                    | json-object
+                    | json-array
+                    | string-literal (emit _str)
+                    | copy _str numeric-literal (emit load _str)
+                    mark:
                 ]
-                ALERT [
-                    log-debug ["ALERT len:" :len "ctx/cipher-spec-set:" ctx/cipher-spec-set]
-                    binary/read inp [data: BYTES :len]
-                    if ctx/cipher-spec-set > 1 [
-                        log-debug ["Decrypting ALERT message:" mold data]
-                        data: decrypt-msg ctx data
-                        unless data [
-                            log-error "Failed to decode ALERT message!"
-                            ctx/critical-error: none
-                            ctx/protocol: 'APPLICATION
-                            continue
-                        ]
-                    ]
-                    level: data/1
-                    id: data/2
-                    level: any [*Alert-level/name level join "Alert-" level]
-                    description: any [*Alert/name id "Unknown"]
-                    description: replace/all form description #"_" #" "
-                    ctx/critical-error: either level = 'WARNING [false] [id]
-                    either id = 0 [
-                        ctx/reading?: false
-                        ctx/protocol: 'APPLICATION
-                        log-info "Server done"
-                    ] [
-                        log-more ["ALERT:" level "-" description]
-                    ]
-                ]
-                CHANGE_CIPHER_SPEC [
-                    binary/read inp [value: UI8]
-                    either 1 = value [
-                        ctx/cipher-spec-set: 2
-                        ctx/seq-read: 0
-                        ctx/reading?: false
-                        ctx/protocol: 'APPLICATION
-                        change-state ctx 'APPLICATION
-                    ] [
-                        log-error ["*** CHANGE_CIPHER_SPEC value should be 1 but is:" value]
-                    ]
-                ]
-                APPLICATION [
-                    change-state ctx 'APPLICATION
-                    assert-prev-state ctx [APPLICATION ALERT FINISHED]
-                    binary/read inp [data: BYTES :len]
-                    if ctx/cipher-spec-set > 1 [
-                        if data: decrypt-msg ctx data [
-                            append ctx/port-data data
-                        ]
+                ws*
+            ]
+            stack: copy []
+            push: func [val] [append/only stack val]
+            pop: does [take/last stack]
+            _out: none
+            _res: none
+            _tmp: none
+            _str: none
+            mark: none
+            emit: func [value] [_res: insert/only _res value]
+            load-json: func [
+                "Convert a JSON string to Rebol data"
+                input [string!] "The JSON string"
+            ] [
+                _out: _res: copy []
+                mark: input
+                either parse/case input json-value [pick _out 1] [
+                    make error! form reduce [
+                        "Invalid JSON string. Near:"
+                        either tail? mark ["<end of input>"] [mold copy/part mark 40]
                     ]
                 ]
             ]
-            if ctx/critical-error [return false]
-            if end <> index? inp/buffer [
-                log-error ["Record end mismatch:^[[22m" end "<>" index? inp/buffer]
-                ctx/critical-error: *Alert/Record_overflow
-                return false
-            ]
-            if not ctx/reading? [
-                log-more ["Reading finished!"]
-                log-----
-                return true
-            ]
-        ]
-        log-debug "continue reading..."
-        unless empty? ctx/in/buffer [
-            ctx/rest: copy ctx/in/buffer
-        ]
-        return true
-    ]
-    TLS-parse-handshake-message: function [
-        ctx [object!]
-        data [binary!]
-    ] [
-        msg: binary data
-        binary/read msg [type: UI8 len: UI24 start: INDEX]
-        ends: start + len
-        log-debug ["R[" ctx/seq-read "] length:" len "start:" start "ends:" ends "type:" type]
-        change-state ctx *Handshake/name type
-        switch/default ctx/state [
-            SERVER_HELLO [
-                assert-prev-state ctx [CLIENT_HELLO]
-                if ctx/critical-error: with ctx [
-                    if any [
-                        error? try [
-                            binary/read msg [
-                                server-version: UI16
-                                server-random: BYTES 32
-                                server-session: UI8BYTES
-                                cipher-suite: BYTES 2
-                                compressions: UI8BYTES
-                            ]
-                        ]
-                        32 < length? server-session
-                    ] [
-                        log-error "Failed to read server hello."
-                        return *Alert/Handshake_failure
-                    ]
-                    log-more ["R[" seq-read "] Version:" *Protocol-version/name server-version "len:" len "cipher-suite:" cipher-suite]
-                    log-more ["R[" seq-read "] Random: ^[[1m" mold server-random]
-                    log-more ["R[" seq-read "] Session:^[[1m" mold server-session]
-                    if server-version <> version [
-                        log-error [
-                            "Version required by server:" server-version
-                            "is not same like clients:" version
-                        ]
-                        if server-version <> version [
-                            return *Alert/Protocol_version
-                        ]
-                        version: server-version
-                    ]
-                    unless empty? compressions [
-                        log-more ["R[" seq-read "] Compressions:^[[1m" mold compressions]
-                        log-error "COMPRESSION NOT SUPPORTED"
-                        return *Alert/Decompression_failure
-                    ]
-                    unless TLS-init-cipher-suite ctx cipher-suite [
-                        log-error "Unsupported cipher suite!"
-                        return *Alert/Handshake_failure
-                    ]
-                    clear server-extensions
-                    if ends > (i: binary/read msg 'index) [
-                        pos: i + 2 + binary/read msg 'ui16
-                        if ends <> pos [
-                            log-error {Warning: unexpected number of extension bytes in SERVER_HELLO fragment!}
-                            log-error ["Expected position:" ends "got:" pos]
-                        ]
-                        while [4 <= (ends - binary/read msg 'index)] [
-                            binary/read msg [
-                                ext-type: UI16
-                                ext-data: UI16BYTES
-                            ]
-                            log-more [
-                                "R[" seq-read "] Extension:" any [*TLS-Extension/name ext-type ext-type]
-                                "bytes:" length? ext-data
-                            ]
-                            repend server-extensions [
-                                ext-type ext-data
-                            ]
-                        ]
-                    ]
-                    false
+            indent: none
+            indent-level: 0
+            normal-chars: none
+            escapes: #(
+                #"^"" {\"}
+                #"\" "\\"
+                #"^H" "\b"
+                #"^L" "\f"
+                #"^/" "\n"
+                #"^M" "\r"
+                #"^-" "\t"
+            )
+            init-state: func [ind ascii?] [
+                indent: ind
+                indent-level: 0
+                normal-chars: either ascii? [
+                    make bitset! #{00000000DFFFFFFFFFFFFFF7FFFFFFFF}
                 ] [
-                    return ctx/critical-error
+                    make bitset! [not bits #{FFFFFFFF2000000000000008}]
                 ]
             ]
-            CERTIFICATE [
-                assert-prev-state ctx [SERVER_HELLO]
-                tmp: binary/read msg [UI24 INDEX]
-                if ends <> (tmp/1 + tmp/2) [
-                    log-error ["Improper certificate list end?" ends "<>" (tmp/1 + tmp/2)]
-                    return *Alert/Handshake_failure
-                ]
-                while [ends > index? msg/buffer] [
-                    binary/read msg [cert: UI24BYTES]
-                    append ctx/server-certs decode 'CRT cert
-                ]
-                log-more ["Received" length? ctx/server-certs "server certificates."]
-                try/except [
-                    key: ctx/server-certs/1/public-key
-                    switch key/1 [
-                        ecPublicKey [
-                            ctx/pub-key: key/3
-                            remove ctx/pub-key
-                            ctx/pub-exp: key/2
+            emit-indent: func [output level] [
+                indent-level: indent-level + level
+                append/dup output indent indent-level
+            ]
+            emit-key-value: function [output sep map key] [
+                value: select/case map :key
+                if any-word? :key [key: form key]
+                unless string? :key [key: mold :key]
+                rebol-to-json-value output :key
+                append output :sep
+                rebol-to-json-value output :value
+            ]
+            rebol-to-json-value: function [output value] [
+                special-char: none
+                switch/default type?/word :value [
+                    none! [append output "null"]
+                    logic! [append output pick ["true" "false"] value]
+                    integer!
+                    decimal! [append output value]
+                    percent! [append output to decimal! value]
+                    string! [
+                        append output #"^""
+                        parse value [
+                            any [
+                                mark1: some normal-chars mark2: (append/part output mark1 mark2)
+                                |
+                                set special-char skip (
+                                    either escape: select escapes special-char [
+                                        append output escape
+                                    ] [
+                                        insert insert tail output "\u" to-hex/size to integer! special-char 4
+                                    ]
+                                )
+                            ]
                         ]
-                        rsaEncryption [
-                            ctx/pub-key: key/2/1
-                            ctx/pub-exp: key/2/2
+                        append output #"^""
+                    ]
+                    block! [
+                        either empty? value [
+                            append output "[]"
+                        ] [
+                            either indent [
+                                append output "[^/"
+                                emit-indent output 1
+                                rebol-to-json-value output first value
+                                foreach v next value [
+                                    append output ",^/"
+                                    append/dup output indent indent-level
+                                    rebol-to-json-value output :v
+                                ]
+                                append output #"^/"
+                                emit-indent output -1
+                            ] [
+                                append output #"["
+                                rebol-to-json-value output first value
+                                foreach v next value [
+                                    append output #","
+                                    rebol-to-json-value output :v
+                                ]
+                            ]
+                            append output #"]"
+                        ]
+                    ]
+                    map!
+                    object! [
+                        keys: words-of value
+                        either empty? keys [
+                            append output "{}"
+                        ] [
+                            either indent [
+                                append output "{^/"
+                                emit-indent output 1
+                                emit-key-value output ": " value first keys
+                                foreach k next keys [
+                                    append output ",^/"
+                                    append/dup output indent indent-level
+                                    emit-key-value output ": " value :k
+                                ]
+                                append output #"^/"
+                                emit-indent output -1
+                            ] [
+                                append output #"{"
+                                emit-key-value output #":" value first keys
+                                foreach k next keys [
+                                    append output #","
+                                    emit-key-value output #":" value :k
+                                ]
+                            ]
+                            append output #"}"
                         ]
                     ]
                 ] [
-                    log-error "Missing public key in certifiate"
-                    return *Alert/Bad_certificate
-                ]
-            ]
-            SERVER_KEY_EXCHANGE [
-                assert-prev-state ctx [CERTIFICATE SERVER_HELLO]
-                log-more ["R[" ctx/seq-read "] Using key method:^[[1m" ctx/key-method]
-                switch ctx/key-method [
-                    ECDHE_RSA
-                    ECDHE_ECDSA [
-                        try/except [
-                            binary/read msg [
-                                s: INDEX
-                                ECCurveType: UI8
-                                ECCurve: UI16
-                                pub_key: UI8BYTES
-                                e: INDEX
-                            ]
-                        ] [
-                            log-error "Error reading elyptic curve"
-                            return *Alert/User_cancelled
-                        ]
-                        if any [
-                            3 <> ECCurveType
-                            4 <> take pub_key
-                            none? curve: *EllipticCurves/name ECCurve
-                        ] [
-                            log-error ["Unsupported ECurve type:" ECCurveType ECCurve]
-                            return *Alert/User_cancelled
-                        ]
-                        log-more ["R[" ctx/seq-read "] Elyptic curve type:" ECCurve "=>" curve]
-                        log-more ["R[" ctx/seq-read "] Elyptic curve data:" pub_key]
-                    ]
-                    DHE_DSS
-                    DHE_RSA [
-                        binary/read msg [
-                            s: INDEX
-                            dh_p: UI16BYTES
-                            dh_g: UI16BYTES
-                            pub_key: UI16BYTES
-                            e: INDEX
-                        ]
-                    ]
-                ]
-                message-len: e - s
-                binary/read msg [
-                    AT :s
-                    message: BYTES :message-len
-                ]
-                hash-algorithm: 'md5_sha1
-                sign-algorithm: 'rsa_sign
-                unless ctx/legacy? [
-                    hash-algorithm: *HashAlgorithm/name binary/read msg 'UI8
-                    sign-algorithm: *ClientCertificateType/name binary/read msg 'UI8
-                    log-more ["R[" ctx/seq-read "] Using algorithm:" hash-algorithm "with" sign-algorithm]
-                    binary/read msg [signature: UI16BYTES]
-                    insert message rejoin [
-                        ctx/client-random
-                        ctx/server-random
-                    ]
-                    if hash-algorithm = 'md5_sha1 [
-                        log-error {legacy __private_rsa_verify_hash_md5sha1 not implemented yet!}
-                        return *Alert/Decode_error
-                    ]
-                    message-hash: checksum message hash-algorithm
-                    if any [
-                        error? valid?: try [
-                            switch sign-algorithm [
-                                rsa_sign [
-                                    log-more "Checking signature using RSA"
-                                    rsa-key: apply :rsa-init ctx/server-certs/1/public-key/rsaEncryption
-                                    signature: rsa/verify rsa-key signature
-                                    rsa rsa-key none
-                                    signature: decode 'der signature
-                                    message-hash == signature/sequence/octet_string
-                                ]
-                                rsa_fixed_dh [
-                                    log-more "Checking signature using RSA_fixed_DH"
-                                    der: decode 'der signature
-                                    n: select [secp256r1 32 secp384r1 48 secp521r1 66] ctx/pub-exp
-                                    x: pad-bin der/2/2 n
-                                    y: pad-bin der/2/4 n
-                                    signature: join x y
-                                    ecdsa/verify/curve ctx/pub-key message-hash signature ctx/pub-exp
-                                ]
-                            ]
-                        ]
-                        not valid?
+                    rebol-to-json-value output either any-block? :value [
+                        to block! :value
                     ] [
-                        log-error "Failed to validate signature"
-                        if error? valid? [print valid?]
-                        return *Alert/Decode_error
-                    ]
-                    log-more "Signature valid!"
-                    if ends > pos: index? msg/buffer [
-                        len: ends - pos
-                        binary/read msg [extra: BYTES :len]
-                        log-error [
-                            "Extra" len "bytes at the end of message:"
-                            mold extra
-                        ]
-                        return *Alert/Decode_error
-                    ]
-                    if dh_p [
-                        dh-key: dh-init dh_g dh_p
-                        ctx/pre-master-secret: dh/secret dh-key pub_key
-                        log-more ["DH common secret:" mold ctx/pre-master-secret]
-                        ctx/key-data: dh/public/release dh-key
-                    ]
-                    if curve [
-                        dh-key: ecdh/init none curve
-                        ctx/pre-master-secret: ecdh/secret dh-key pub_key
-                        log-more ["ECDH common secret:" mold ctx/pre-master-secret]
-                        ctx/key-data: ecdh/public/release dh-key
+                        either any-string? :value [form value] [mold :value]
                     ]
                 ]
+                output
             ]
-            CERTIFICATE_REQUEST [
-                assert-prev-state ctx [SERVER_HELLO SERVER_KEY_EXCHANGE CERTIFICATE]
-                binary/read msg [
-                    certificate_types: UI8BYTES
-                    supported_signature_algorithms: UI16BYTES
+            to-json: function [
+                "Convert Rebol data to a JSON string"
+                data
+                /pretty indent [string!] "Pretty format the output, using given indentation"
+                /ascii "Force ASCII output (instead of UTF-8)"
+            ] [
+                result: make string! 4000
+                init-state indent ascii
+                rebol-to-json-value result data
+            ]
+            register-codec [
+                name: 'json
+                type: 'text
+                title: "JavaScript Object Notation"
+                suffixes: [%.json]
+                encode: func [data [any-type!]] [
+                    to-json data
                 ]
-                log-more ["R[" ctx/seq-read "] certificate_types:   " certificate_types]
-                log-more ["R[" ctx/seq-read "] signature_algorithms:" supported_signature_algorithms]
-                if ends > binary/read msg 'index [
-                    certificate_authorities: binary/read msg 'UI16BYTES
-                ]
-                if ends <> index? msg/buffer [
-                    log-error ["Positions:" ends index? msg/buffer]
-                    log-error "Looks we should read also something else!"
-                    return *Alert/Decode_error
+                decode: func [text [string! binary! file!]] [
+                    if file? text [text: read text]
+                    if binary? text [text: to string! text]
+                    load-json text
                 ]
             ]
-            SERVER_HELLO_DONE [
-                ctx/reading?: false
-            ]
-            FINISHED [
-                binary/read msg [verify-data: BYTES]
-                seed: either ctx/legacy? [
-                    rejoin [
-                        read ctx/md5-port
-                        read ctx/sha-port
-                    ]
-                ] [read ctx/sha-port]
-                result: prf "client finished" ctx/legacy? seed ctx/master-secret 12
-            ]
-        ] [
-            log-error ["Unknown state: " ctx/state "-" type]
-            return *Alert/Unexpected_message
         ]
-        if ends <> i: index? msg/buffer [
-            log-error ["Wrong fragment message tail!" ends "<>" i]
-            log-error ["in/buffer starts:" mold copy/part msg/buffer 20]
-            return *Alert/Record_overflow
-        ]
-        log-more ["R[" ctx/seq-read "] DONE: handshake^[[1m" ctx/state] log-----
-        false
-    ]
-    send-event: function [
-        type [word!]
-        port [port!]
+    )
+    to-itime: func [
+        {Returns a standard internet time string (two digits for each segment)}
+        time [time! number! block! none!]
     ] [
-        log-debug ["Send-event:^[[1m" type]
-        insert system/ports/system make event! compose [
-            type: (to lit-word! type)
-            port: (port)
+        time: make time! time
+        format/pad [-2 #":" -2 #":" -2] reduce [
+            time/hour time/minute to integer! time/second
+        ] #"0"
+    ]
+    to-idate: func [
+        "Returns a standard Internet date string."
+        date [date!]
+        /gmt "Converts local time to GMT (Greenwich Mean Time)"
+        /local zone
+    ] [
+        either date/zone [
+            either gmt [
+                date/time: date/time - date/zone
+                date/zone: none
+                zone: "GMT"
+            ] [
+                zone: form date/zone
+                remove find zone ":"
+                if #"-" <> first zone [insert zone #"+"]
+                if 4 >= length? zone [insert next zone #"0"]
+            ]
+        ] [zone: "GMT"]
+        reform [
+            pick ["Mon," "Tue," "Wed," "Thu," "Fri," "Sat," "Sun,"] date/weekday
+            date/day
+            pick ["Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"] date/month
+            date/year
+            to-itime any [date/time 0:00]
+            zone
         ]
     ]
-    TLS-awake: function [event [event!]] [
-        log-more ["AWAKE:^[[1m" event/type]
-        TCP-port: event/port
-        TLS-port: TCP-port/locals
-        TLS-awake: :TLS-port/awake
+    to-date: function/with [
+        "Converts to date! value."
+        value [any-type!] "May be also a standard Internet date string/binary"
+        /utc "Returns the date with UTC zone"
+    ] [
         if all [
-            TLS-port/state/protocol = 'APPLICATION
-            not TCP-port/data
-        ] [
-            log-debug ["reseting data -> " mold TLS-port/data]
-            TLS-port/data: none
-        ]
-        switch/default event/type [
-            lookup [
-                open TCP-port
-                TLS-init TLS-port/state
-                send-event 'lookup TLS-port
-                return false
+            any [string? value binary? value]
+            parse value [
+                5 skip
+                copy day: 1 2 numeric sp
+                copy month: 3 alpha sp
+                copy year: 1 4 numeric sp
+                copy time: to sp sp
+                [copy zone: [plus-minus 4 numeric] | no-case "GMT" (zone: "+0")]
+                to end
+                |
+                copy day: 1 2 numeric #"-"
+                copy month: 1 2 numeric #"-"
+                copy year: 1 4 numeric sp
+                copy time: [1 2 numeric #":" 1 2 numeric opt [#":" 1 2 numeric]]
+                to end
             ]
-            connect [
-                error: try [
-                    do-commands TLS-port/state [client-hello]
-                    if none? TLS-port/state [return true]
-                    log-info ["CONNECT^[[22m: client-hello done; protocol:^[[1m" TLS-port/state/protocol]
-                    if TLS-port/state/protocol = 'HANDSHAKE [
-                        do-commands TLS-port/state [
-                            client-key-exchange
-                            change-cipher-spec
-                            finished
+        ] [
+            value: to string! rejoin [day "-" month "-" year "/" time any [zone ""]]
+        ]
+        if all [value: to date! value utc] [value/timezone: 0]
+        value
+    ] system/catalog/bitsets import (
+        module [
+            Title: "Rebol3 TLSv1.2 protocol scheme"
+            Name: tls
+            Version: 0.9.2
+            Date: 24-May-2022
+            Author: ["Richard 'Cyphre' Smolak" "Oldes" "Brian Dickens (Hostilefork)"]
+            Exports: none
+            Needs: none
+        ] [
+            TLS-context: context [
+                tcp-port:
+                tls-port:
+                encrypt-port:
+                decrypt-port:
+                sha256-port:
+                sha384-port:
+                sha-port:
+                md5-port:
+                version: none
+                in: binary 16104
+                out: binary 16104
+                bin: binary 64
+                port-data: make binary! 32000
+                rest: make binary! 8
+                reading?: false
+                server?: false
+                protocol: none
+                state: 'lookup
+                state-prev: none
+                error:
+                critical-error:
+                cipher-suite: none
+                cipher-spec-set: 0
+                key-method:
+                hash-method:
+                crypt-method: none
+                is-aead?: false
+                aad-length:
+                tag-length:
+                IV-size:
+                IV-size-dynamic:
+                mac-size:
+                crypt-size:
+                block-size: 0
+                local-IV:
+                local-mac:
+                local-key:
+                local-random:
+                remote-IV:
+                remote-mac:
+                remote-key:
+                remote-random:
+                dh-key:
+                aead: none
+                session-id: none
+                server-certs: copy []
+                extensions: copy []
+                seq-read: 0
+                seq-write: 0
+                pre-secret:
+                master-secret:
+                certificate:
+                pub-key: pub-exp:
+                key-data:
+                none
+            ]
+            *Protocol-type: enum [
+                CHANGE_CIPHER_SPEC: 20
+                ALERT: 21
+                HANDSHAKE: 22
+                APPLICATION: 23
+            ] 'TLS-protocol-type
+            *Protocol-version: enum [
+                SSLv3: #{0300}
+                TLS1.0: #{0301}
+                TLS1.1: #{0302}
+                TLS1.2: #{0303}
+            ] 'TLS-Protocol-version
+            *Handshake: enum [
+                HELLO_REQUEST: 0
+                CLIENT_HELLO: 1
+                SERVER_HELLO: 2
+                CERTIFICATE: 11
+                SERVER_KEY_EXCHANGE: 12
+                CERTIFICATE_REQUEST: 13
+                SERVER_HELLO_DONE: 14
+                CERTIFICATE_VERIFY: 15
+                CLIENT_KEY_EXCHANGE: 16
+                FINISHED: 20
+            ] 'TLS-Handshake-type
+            *Cipher-suite: enum [
+                TLS_ECDHE_RSA_WITH_CHACHA20-POLY1305_SHA256: #{CCA8}
+                TLS_ECDHE_ECDSA_WITH_CHACHA20-POLY1305_SHA256: #{CCA9}
+                TLS_ECDHE_RSA_WITH_AES-256-CBC_SHA384: #{C028}
+                TLS_ECDHE_RSA_WITH_AES-128-GCM_SHA256: #{C02F}
+                TLS_ECDHE_RSA_WITH_AES-256-GCM_SHA384: #{C030}
+                TLS_ECDHE_ECDSA_WITH_AES-128-GCM_SHA256: #{C02B}
+                TLS_ECDHE_ECDSA_WITH_AES-256-GCM_SHA384: #{C02C}
+                TLS_ECDHE_RSA_WITH_AES-128-CBC_SHA256: #{C027}
+                TLS_ECDHE_ECDSA_WITH_AES-256-CBC_SHA384: #{C024}
+                TLS_ECDHE_ECDSA_WITH_AES-128-CBC_SHA256: #{C023}
+                TLS_ECDHE_RSA_WITH_AES-128-CBC_SHA: #{C013}
+                TLS_ECDHE_ECDSA_WITH_AES-128-CBC_SHA: #{C009}
+                TLS_ECDHE_RSA_WITH_AES-256-CBC_SHA: #{C014}
+                TLS_ECDHE_ECDSA_WITH_AES-256-CBC_SHA: #{C00A}
+                TLS_ECDH_ECDSA_WITH_AES-256-GCM_SHA384: #{C02E}
+                TLS_DHE_RSA_WITH_AES-128-CCM: #{C09E}
+                TLS_ECDHE_ECDSA_WITH_AES_256_CCM: #{C0AD}
+                TLS_RSA_WITH_AES-128-GCM_SHA256: #{009C}
+                TLS_RSA_WITH_NULL_MD5: #{0001}
+                TLS_RSA_WITH_NULL_SHA: #{0002}
+                TLS_RSA_WITH_NULL_SHA256: #{003B}
+                TLS_RSA_WITH_RC4-128_MD5: #{0004}
+                TLS_RSA_WITH_RC4-128_SHA: #{0005}
+                TLS_RSA_WITH_3DES-EDE-CBC_SHA: #{000A}
+                TLS_RSA_WITH_AES-128-CBC_SHA: #{002F}
+                TLS_RSA_WITH_AES-256-CBC_SHA: #{0035}
+                TLS_RSA_WITH_AES-128-CBC_SHA256: #{003C}
+                TLS_RSA_WITH_AES-256-CBC_SHA256: #{003D}
+                TLS_DH_DSS_WITH_3DES-EDE-CBC_SHA: #{000D}
+                TLS_DH_RSA_WITH_3DES-EDE-CBC_SHA: #{0010}
+                TLS_DHE_DSS_WITH_3DES-EDE-CBC_SHA: #{0013}
+                TLS_DHE_RSA_WITH_3DES-EDE-CBC_SHA: #{0016}
+                TLS_DH_DSS_WITH_AES-128-CBC_SHA: #{0030}
+                TLS_DH_RSA_WITH_AES-128-CBC_SHA: #{0031}
+                TLS_DHE_DSS_WITH_AES-128-CBC_SHA: #{0032}
+                TLS_DHE_RSA_WITH_AES-128-CBC_SHA: #{0033}
+                TLS_DH_DSS_WITH_AES-256-CBC_SHA: #{0036}
+                TLS_DH_RSA_WITH_AES-256-CBC_SHA: #{0037}
+                TLS_DHE_DSS_WITH_AES-256-CBC_SHA: #{0038}
+                TLS_DHE_RSA_WITH_AES-256-CBC_SHA: #{0039}
+                TLS_DH_DSS_WITH_AES-128-CBC_SHA256: #{003E}
+                TLS_DH_RSA_WITH_AES-128-CBC_SHA256: #{003F}
+                TLS_DHE_DSS_WITH_AES-128-CBC_SHA256: #{0040}
+                TLS_DHE_RSA_WITH_AES-128-CBC_SHA256: #{0067}
+                TLS_DH_DSS_WITH_AES-256-CBC_SHA256: #{0068}
+                TLS_DH_RSA_WITH_AES-256-CBC_SHA256: #{0069}
+                TLS_DHE_DSS_WITH_AES-256-CBC_SHA256: #{006A}
+                TLS_DHE_RSA_WITH_AES-256-CBC_SHA256: #{006B}
+                TLS_DH_anon_WITH_RC4-128_MD5: #{0018}
+                TLS_DH_anon_WITH_3DES-EDE-CBC_SHA: #{001B}
+                TLS_DH_anon_WITH_AES-128-CBC_SHA: #{0034}
+                TLS_DH_anon_WITH_AES-256-CBC_SHA: #{003A}
+                TLS_DH_anon_WITH_AES-128-CBC_SHA256: #{006C}
+                TLS_DH_anon_WITH_AES-256-CBC_SHA256: #{006D}
+            ] 'TLS-Cipher-suite
+            *EllipticCurves: enum [
+                secp192r1: 19
+                secp224k1: 20
+                secp224r1: 21
+                secp256k1: 22
+                secp256r1: 23
+                secp384r1: 24
+                secp521r1: 25
+                bp256r1: 26
+                bp384r1: 27
+                bp512r1: 28
+                curve25519: 29
+                curve448: 30
+            ] 'EllipticCurves
+            *HashAlgorithm: enum [
+                none: 0
+                md5: 1
+                sha1: 2
+                sha224: 3
+                sha256: 4
+                sha384: 5
+                sha512: 6
+                md5_sha1: 255
+            ] 'TLSHashAlgorithm
+            *ClientCertificateType: enum [
+                rsa_sign: 1
+                dss_sign: 2
+                rsa_fixed_dh: 3
+                dss_fixed_dh: 4
+                rsa_ephemeral_dh_RESERVED: 5
+                dss_ephemeral_dh_RESERVED: 6
+                fortezza_dms_RESERVED: 20
+                ecdsa_sign: 64
+                rsa_fixed_ecdh: 65
+                ecdsa_fixed_ecdh: 66
+            ] 'TLSClientCertificateType
+            *Alert-level: enum [
+                WARNING: 1
+                FATAL: 2
+            ] 'TLS-Alert-level
+            *Alert: enum [
+                Close_notify: 0
+                Unexpected_message: 10
+                Bad_record_MAC: 20
+                Decryption_failed: 21
+                Record_overflow: 22
+                Decompression_failure: 30
+                Handshake_failure: 40
+                No_certificate: 41
+                Bad_certificate: 42
+                Unsupported_certificate: 43
+                Certificate_revoked: 44
+                Certificate_expired: 45
+                Certificate_unknown: 46
+                Illegal_parameter: 47
+                Unknown_CA: 48
+                Access_denied: 49
+                Decode_error: 50
+                Decrypt_error: 51
+                Export_restriction: 60
+                Protocol_version: 70
+                Insufficient_security: 71
+                Internal_error: 80
+                User_cancelled: 90
+                No_renegotiation: 100
+                Unsupported_extension: 110
+            ] 'TLS-Alert
+            *TLS-Extension: enum [
+                ServerName: #{0000}
+                SupportedGroups: #{000A}
+                SupportedPointFormats: #{000B}
+                SignatureAlgorithms: #{000D}
+                SCT: #{0012}
+                EncryptThenMAC: #{0016}
+                ExtendedMasterSecret: #{0017}
+                KeyShare: #{0033}
+                RenegotiationInfo: #{FF01}
+            ] 'TLS-Extension
+            _log-error: func [msg] [
+                if block? msg [msg: reform msg]
+                print rejoin [" ^[[1;33m[TLS] ^[[35m" msg "^[[0m"]
+            ]
+            _log-info: func [msg] [
+                if block? msg [msg: reform msg]
+                print rejoin [" ^[[1;33m[TLS] ^[[36m" msg "^[[0m"]
+            ]
+            _log-more: func [msg] [
+                if block? msg [msg: reform msg]
+                print rejoin [" ^[[33m[TLS] ^[[0;36m" msg "^[[0m"]
+            ]
+            _log-debug: func [msg] [
+                if block? msg [msg: reform msg]
+                print rejoin [" ^[[33m[TLS] ^[[0;32m" msg "^[[0m"]
+            ]
+            _log-----: does [print-horizontal-line]
+            log-error: log-info: log-more: log-debug: log-----: none
+            tls-verbosity: func [
+                "Turns ON and OFF various log traces"
+                verbose [integer!] "Verbosity level"
+            ] [
+                log-error: log-info: log-more: log-debug: log-----: none
+                case/all [
+                    verbose >= 0 [log-error: :_log-error]
+                    verbose >= 1 [log-info: :_log-info]
+                    verbose >= 2 [log-more: :_log-more
+                    log-----: :_log-----]
+                    verbose >= 3 [log-debug: :_log-debug]
+                ]
+            ]
+            log-error: :_log-error
+            decode-cipher-suites: function [
+                bin [binary!]
+            ] [
+                num: (length? bin) >> 1
+                out: make block! num
+                bin: binary bin
+                loop num [
+                    append out cipher: *Cipher-suite/name binary/read bin 'UI16
+                    log-debug ["Cipher-suite:" cipher]
+                ]
+                out
+            ]
+            decode-supported-groups: function [
+                bin [binary!]
+            ] [
+                num: (length? bin) >> 1
+                blk: make block! num
+                loop num [
+                    append blk *EllipticCurves/name binary/read bin 'UI16
+                    bin: skip bin 2
+                ]
+                log-debug ["SupportedGroups:" mold blk]
+                blk
+            ]
+            decode-extensions: function [
+                bin [binary!]
+            ] [
+                bin: binary bin
+                out: make block! 4
+                while [not empty? bin/buffer] [
+                    binary/read bin [
+                        ext-type: UI16
+                        ext-data: UI16BYTES
+                    ]
+                    ext-type: any [*TLS-Extension/name ext-type ext-type]
+                    log-more ["Extension:" ext-type "bytes:" length? ext-data mold ext-data]
+                    switch ext-type [
+                        SupportedGroups [ext-data: decode-supported-groups skip ext-data 2]
+                    ]
+                    repend out [ext-type ext-data]
+                ]
+                out
+            ]
+            suported-cipher-suites-binary: make binary! 60
+            if find system/catalog/ciphers 'chacha20-poly1305 [
+                binary/write tail suported-cipher-suites-binary [
+                    UI16BE 52393
+                    UI16BE 52392
+                ]
+            ]
+            if find system/catalog/ciphers 'aes-128-gcm [
+                binary/write tail suported-cipher-suites-binary [
+                    UI16BE 49195
+                    UI16BE 49196
+                    UI16BE 49199
+                    UI16BE 49200
+                    UI16BE 156
+                ]
+            ]
+            if find system/catalog/ciphers 'aes-128-cbc [
+                binary/write tail suported-cipher-suites-binary [
+                    UI16BE 49192
+                    UI16BE 49188
+                    UI16BE 49191
+                    UI16BE 49187
+                    UI16BE 49172
+                    UI16BE 49171
+                    UI16BE 49162
+                    UI16BE 49161
+                    UI16BE 107
+                    UI16BE 103
+                    UI16BE 61
+                    UI16BE 60
+                    UI16BE 53
+                    UI16BE 47
+                    UI16BE 57
+                    UI16BE 51
+                ]
+            ]
+            suported-cipher-suites: decode-cipher-suites suported-cipher-suites-binary
+            supported-signature-algorithms: rejoin [
+                #{0601}
+                #{0603}
+                #{0501}
+                #{0401}
+                #{0402}
+                #{0403}
+                #{0201}
+                #{0202}
+            ]
+            supported-elliptic-curves: make binary! 22
+            foreach [curve id] [
+                secp521r1 25
+                secp384r1 24
+                secp256r1 23
+                secp256k1 22
+                secp224r1 21
+                secp224k1 20
+                secp192r1 19
+            ] [
+                if find system/catalog/elliptic-curves curve [
+                    binary/write tail supported-elliptic-curves [UI16BE :id]
+                ]
+            ]
+            TLS-init-cipher-suite: func [
+                {Initialize context for current cipher-suite. Returns false if unknown suite is used.}
+                ctx [object!]
+                /local suite key-method cipher
+            ] [
+                cipher: ctx/cipher-suite
+                suite: *Cipher-suite/name :cipher
+                unless suite [
+                    binary/write suite: #{} [UI16 :cipher]
+                    log-error ["Unknown cipher suite:" suite]
+                    return false
+                ]
+                unless find suported-cipher-suites suite [
+                    unless ctx/server? [log-error ["Server requests" suite "cipher suite!"]]
+                    return false
+                ]
+                log-info ["Init TLS Cipher-suite:^[[35m" suite "^[[22m" skip to binary! cipher 6]
+                parse form suite [
+                    opt "TLS_"
+                    copy key-method to "_WITH_" 6 skip
+                    copy cipher [
+                        "CHACHA20-POLY1305" (ctx/crypt-size: 32 ctx/IV-size: 12 ctx/block-size: 16)
+                        | "AES-256-GCM" (ctx/crypt-size: 32 ctx/IV-size: 4 ctx/IV-size-dynamic: 8 ctx/tag-length: ctx/block-size: 16 ctx/aad-length: 13)
+                        | "AES-128-GCM" (ctx/crypt-size: 16 ctx/IV-size: 4 ctx/IV-size-dynamic: 8 ctx/tag-length: ctx/block-size: 16 ctx/aad-length: 13)
+                        | "AES-128-CBC" (ctx/crypt-size: 16 ctx/IV-size: 16 ctx/block-size: 16)
+                        | "AES-256-CBC" (ctx/crypt-size: 32 ctx/IV-size: 16 ctx/block-size: 16)
+                        | "RC4-128" (ctx/crypt-size: 16 ctx/IV-size: 0 ctx/block-size: none)
+                        | "NULL" (ctx/crypt-size: 0 ctx/IV-size: 0 ctx/block-size: none)
+                    ] #"_" [
+                        "SHA384" end (ctx/hash-method: 'SHA384 ctx/mac-size: 48)
+                        | "SHA256" end (ctx/hash-method: 'SHA256 ctx/mac-size: 32)
+                        | "SHA" end (ctx/hash-method: 'SHA1 ctx/mac-size: 20)
+                        | "SHA512" end (ctx/hash-method: 'SHA512 ctx/mac-size: 64)
+                        | "MD5" end (ctx/hash-method: 'MD5 ctx/mac-size: 16)
+                        | "NULL" end (ctx/hash-method: none ctx/mac-size: 0)
+                    ]
+                    (
+                        ctx/key-method: to word! key-method
+                        ctx/crypt-method: to word! cipher
+                        ctx/is-aead?: to logic! find [AES-128-GCM AES-256-GCM CHACHA20-POLY1305] ctx/crypt-method
+                        either ctx/hash-method = 'SHA384 [
+                            close ctx/sha256-port
+                            ctx/sha256-port: none
+                            ctx/sha-port: ctx/sha384-port
+                        ] [
+                            close ctx/sha384-port
+                            ctx/sha384-port: none
+                        ]
+                        log-more [
+                            "Key:^[[1m" ctx/key-method
+                            "^[[22mcrypt:^[[1m" ctx/crypt-method
+                            "^[[22msize:^[[1m" ctx/crypt-size
+                            "^[[22mIV:^[[1m" ctx/IV-size
+                        ]
+                    )
+                ]
+            ]
+            cause-TLS-error: func [
+                name [word!]
+                /local message
+            ] [
+                message: replace/all form name #"_" #" "
+                log-error join "ERROR: " message
+                do make error! [
+                    type: 'Access
+                    id: 'Protocol
+                    arg1: message
+                ]
+            ]
+            change-state: function [
+                ctx [object!]
+                new-state [word!]
+            ] [
+                ctx/state-prev: ctx/state
+                if ctx/state <> new-state [
+                    log-more ["New state:^[[33m" new-state "^[[22mfrom:" ctx/state]
+                    ctx/state: new-state
+                ]
+            ]
+            assert-prev-state: function [
+                ctx [object!]
+                legal-states [block!]
+            ] [
+                if not find legal-states ctx/state-prev [
+                    log-error ["State" ctx/state "is not expected after" ctx/state-prev]
+                    cause-TLS-error 'Internal_error
+                ]
+            ]
+            TLS-update-messages-hash: function [
+                ctx [object!]
+                msg [binary!]
+                len [integer!]
+            ] [
+                log-more ["Update-messages-hash bytes:" len "hash:" all [ctx/sha-port ctx/sha-port/spec/method]]
+                if none? ctx/sha-port [
+                    ctx/sha256-port: open checksum:sha256
+                    ctx/sha384-port: open checksum:sha384
+                    ctx/sha-port: ctx/sha256-port
+                    log-more ["Initialized SHA method:" ctx/sha-port/spec/method]
+                ]
+                unless ctx/hash-method [write/part ctx/sha384-port msg len]
+                write/part ctx/sha-port msg len
+                log-debug ["messages-hash:" read ctx/sha-port]
+            ]
+            client-hello: function [
+                ctx [object!]
+            ] [
+                change-state ctx 'CLIENT_HELLO
+                with ctx [
+                    extensions: make binary! 100
+                    if all [
+                        ctx/tcp-port
+                        host-name: ctx/tcp-port/spec/host
+                    ] [
+                        host-name: to binary! host-name
+                        length-name: length? host-name
+                        binary/write extensions compose [
+                            UI16 0
+                            UI16 (5 + length-name)
+                            UI16 (3 + length-name)
+                            UI8 0
+                            UI16 :length-name
+                            BYTES :host-name
                         ]
                     ]
-                    if open? TLS-port [
-                        send-event 'connect TLS-port
+                    binary/write tail extensions compose [
+                        #{000A}
+                        UI16 (2 + length? supported-elliptic-curves)
+                        UI16 (length? supported-elliptic-curves)
+                        :supported-elliptic-curves
+                    ]
+                    append extensions #{000B00020100}
+                    append extensions #{FF01000100}
+                    append extensions #{00120000}
+                    length-signatures: 2 + length? supported-signature-algorithms
+                    length-extensions: 4 + length-signatures + length? extensions
+                    length-message: 41 + length-extensions + length? suported-cipher-suites-binary
+                    length-record: 4 + length-message
+                    binary/write out [
+                        UI8 22
+                        UI16 :version
+                        UI16 :length-record
+                        UI8 1
+                        UI24 :length-message
+                        UI16 :version
+                        RANDOM-BYTES 32
+                        UI8 0
+                        UI16BYTES :suported-cipher-suites-binary
+                        UI8 1
+                        UI8 0
+                        UI16 :length-extensions
+                        UI16 13
+                        UI16 :length-signatures
+                        UI16BYTES :supported-signature-algorithms
+                        BYTES :extensions
+                    ]
+                    out/buffer: head out/buffer
+                    local-random: copy/part (at out/buffer 12) 32
+                    TLS-update-messages-hash ctx (at out/buffer 6) (4 + length-message)
+                    log-more [
+                        "W[" ctx/seq-write "] Bytes:" length? out/buffer "=>"
+                        "record:" length-record
+                        "message:" length-message
+                        "extensions:" length-extensions
+                        "signatures:" length-signatures
+                    ]
+                    log-more ["W[" ctx/seq-write "] CRandom:^[[32m" local-random]
+                    ctx/seq-write: ctx/seq-write + 1
+                ]
+            ]
+            server-hello: function [ctx [object!]] [
+                change-state ctx 'SERVER_HELLO
+                with ctx [
+                    binary/init out none
+                    session-id: checksum to-binary 1 'sha256
+                    extensions: #{00000000FF01000100000B000403000102}
+                    binary/write out [
+                        pos-start:
+                        UI8 22
+                        UI16 :version
+                        pos-record-len:
+                        UI16 0
+                        pos-record:
+                        UI8 2
+                        pos-message-len:
+                        UI24 0
+                        UI16 :version
+                        UNIXTIME-NOW RANDOM-BYTES 28
+                        UI8BYTES :session-id
+                        UI16 :cipher-suite
+                        UI8 0
+                        UI16BYTES :extensions
+                        pos-end:
+                    ]
+                    local-random: copy/part (at out/buffer 12) 32
+                    log-more ["W[" ctx/seq-write "] SRandom:^[[32m" local-random]
+                    binary/write out compose [
+                        AT :pos-record-len UI16 (length-record: pos-end - pos-record)
+                        AT :pos-message-len UI24 (length-message: length-record - 4)
+                        AT :pos-end
+                    ]
+                    TLS-update-messages-hash ctx (at head out/buffer :pos-record) :length-record
+                    log-more [
+                        "W[" ctx/seq-write "] Bytes:" pos-end - pos-start "=>"
+                        "record:" length-record
+                        "message:" length-message
+                    ]
+                ]
+            ]
+            server-certificate: function [ctx [object!]] [
+                change-state ctx 'CERTIFICATE
+                with ctx [
+                    certificates: tcp-port/parent/state/certificates
+                    binary/write out [
+                        pos-start:
+                        UI8 22
+                        UI16 :version
+                        pos-record-len:
+                        UI16 0
+                        pos-record:
+                        UI8 11
+                        pos-message-len:
+                        UI24 0
+                        UI24BYTES :certificates
+                        pos-end:
+                    ]
+                    binary/write out compose [
+                        AT :pos-record-len UI16 (length-record: pos-end - pos-record)
+                        AT :pos-message-len UI24 (length-message: length-record - 4)
+                        AT :pos-end
+                    ]
+                    TLS-update-messages-hash ctx (at head out/buffer :pos-record) :length-record
+                    log-more [
+                        "W[" ctx/seq-write "] Bytes:" pos-end - pos-start "=>"
+                        "record:" length-record
+                        "message:" length-message
+                    ]
+                    if find [ECDHE_RSA ECDHE_ECDSA DHE_RSA] key-method [
+                        change-state ctx 'SERVER_KEY_EXCHANGE
+                        binary/write out [
+                            pos-start:
+                            UI8 22
+                            UI16 :version
+                            pos-record-len:
+                            UI16 0
+                            pos-record:
+                            UI8 12
+                            pos-message-len:
+                            UI24 0
+                        ]
+                        switch key-method [
+                            ECDHE_RSA [
+                                spec: TCP-port/parent/state
+                                curve: first spec/elliptic-curves
+                                dh-key: ecdh/init none curve
+                                pub-key: ecdh/public dh-key
+                                curve: *EllipticCurves/:curve
+                                sign-algorithm: *ClientCertificateType/rsa_sign
+                                hash-method-int: *HashAlgorithm/:hash-method
+                                binary/write message: #{} [
+                                    BYTES :remote-random
+                                    BYTES :local-random
+                                    pos-msg:
+                                    UI8 3
+                                    UI16 :curve
+                                    UI8BYTES :pub-key
+                                ]
+                                signature: rsa/sign/hash spec/private-key :message :hash-method
+                                remove/part message (pos-msg - 1)
+                                binary/write out [
+                                    BYTES :message
+                                    UI8 :hash-method-int
+                                    UI8 :sign-algorithm
+                                    UI16BYTES :signature
+                                    pos-end:
+                                ]
+                            ]
+                        ]
+                        binary/write out compose [
+                            AT :pos-record-len UI16 (length-record: pos-end - pos-record)
+                            AT :pos-message-len UI24 (length-message: length-record - 4)
+                            AT :pos-end
+                        ]
+                        TLS-update-messages-hash ctx (at head out/buffer :pos-record) :length-record
+                        log-more [
+                            "W[" ctx/seq-write "] Bytes:" pos-end - pos-start "=>"
+                            "record:" length-record
+                            "message:" length-message
+                        ]
+                    ]
+                ]
+            ]
+            server-hello-done: function [ctx [object!]] [
+                change-state ctx 'SERVER_HELLO_DONE
+                with ctx [
+                    binary/write out [
+                        pos-start:
+                        UI8 22
+                        UI16 :version
+                        pos-record-len:
+                        UI16 0
+                        pos-record:
+                        UI8 14
+                        pos-message-len:
+                        UI24 0
+                        pos-end:
+                    ]
+                    binary/write out compose [
+                        AT :pos-record-len UI16 (length-record: pos-end - pos-record)
+                        AT :pos-message-len UI24 (length-message: length-record - 4)
+                        AT :pos-end
+                    ]
+                    TLS-update-messages-hash ctx (at head out/buffer :pos-record) :length-record
+                    log-more [
+                        "W[" ctx/seq-write "] Bytes:" pos-end - pos-start "=>"
+                        "record:" length-record
+                        "message:" length-message
+                    ]
+                ]
+            ]
+            client-key-exchange: function [
+                ctx [object!]
+            ] [
+                log-debug ["client-key-exchange -> method:" ctx/key-method "key-data:" mold ctx/key-data]
+                change-state ctx 'CLIENT_KEY_EXCHANGE
+                assert-prev-state ctx [CLIENT_CERTIFICATE SERVER_HELLO_DONE SERVER_HELLO]
+                with ctx [
+                    binary/write out [
+                        UI8 22
+                        UI16 :version
+                        pos-record-len:
+                        UI16 0
+                        pos-record:
+                        UI8 16
+                        pos-message:
+                        UI24 0
+                        pos-key:
+                    ]
+                    switch key-method [
+                        ECDHE_ECDSA
+                        ECDHE_RSA [
+                            log-more ["W[" seq-write "] Using ECDH key-method"]
+                            key-data-len-bytes: 1
+                        ]
+                        RSA [
+                            log-more ["W[" seq-write "] Using RSA key-method"]
+                            binary/write bin [
+                                UI16 :version RANDOM-BYTES 46
+                            ]
+                            binary/read bin [pre-secret: BYTES 48]
+                            binary/init bin 0
+                            log-more ["W[" seq-write "] pre-secret:" mold pre-secret]
+                            rsa-key: rsa-init pub-key pub-exp
+                            key-data: rsa/encrypt rsa-key pre-secret
+                            key-data-len-bytes: 2
+                            log-more ["W[" seq-write "] key-data:" mold key-data]
+                            release :rsa-key
+                        ]
+                        DHE_DSS
+                        DHE_RSA [
+                            log-more ["W[" seq-write "] Using DH key-method"]
+                            key-data-len-bytes: 2
+                        ]
+                    ]
+                    length-message: key-data-len-bytes + length? key-data
+                    length-record: 4 + length-message
+                    binary/write out compose [
+                        AT :pos-record-len UI16 :length-record
+                        AT :pos-message UI24 :length-message
+                        AT :pos-key (pick [UI8BYTES UI16BYTES] key-data-len-bytes) :key-data
+                    ]
+                    TLS-key-expansion ctx
+                    TLS-update-messages-hash ctx (at head out/buffer pos-record) length-record
+                    ctx/seq-write: ctx/seq-write + 1
+                ]
+            ]
+            change-cipher-spec: function [
+                ctx [object!]
+            ] [
+                change-state ctx 'CHANGE_CIPHER_SPEC
+                with ctx [
+                    binary/write out [
+                        UI8 20
+                        UI16 :version
+                        UI16 1
+                        UI8 1
+                    ]
+                ]
+                ctx/cipher-spec-set: 1
+                ctx/seq-write: 0
+            ]
+            application-data: func [
+                ctx [object!]
+                message [binary! string!]
+            ] [
+                log-debug "application-data"
+                log-more ["W[" ctx/seq-write "] application data:" length? message "bytes"]
+                message: encrypt-data ctx to binary! message
+                with ctx [
+                    binary/write out [
+                        UI8 23
+                        UI16 :version
+                        UI16BYTES :message
+                    ]
+                    ++ seq-write
+                ]
+            ]
+            alert-close-notify: func [
+                ctx [object!]
+            ] [
+                log-more "alert-close-notify"
+                message: encrypt-data ctx #{0100}
+                with ctx [
+                    binary/write out [
+                        UI8 21
+                        UI16 :version
+                        UI16BYTES :message
+                    ]
+                ]
+            ]
+            finished: function [
+                ctx [object!]
+            ] [
+                change-state ctx 'FINISHED
+                ctx/seq-write: 0
+                seed: read ctx/sha-port
+                unencrypted: rejoin [
+                    #{14}
+                    #{00000C}
+                    prf :ctx/sha-port/spec/method either ctx/server? ["server finished"] ["client finished"] seed ctx/master-secret 12
+                ]
+                TLS-update-messages-hash ctx unencrypted length? unencrypted
+                encrypt-handshake-msg ctx unencrypted
+            ]
+            encrypt-handshake-msg: function [
+                ctx [object!]
+                unencrypted [binary!]
+                /local
+                plain-msg
+            ] [
+                log-more ["W[" ctx/seq-write "] encrypting-handshake-msg"]
+                encrypted: encrypt-data/type ctx unencrypted 22
+                with ctx [
+                    binary/write out [
+                        UI8 22
+                        UI16 :version
+                        UI16BYTES :encrypted
+                    ]
+                    ++ seq-write
+                ]
+            ]
+            decrypt-msg: function [
+                ctx [object!]
+                data [binary!]
+                type [integer!]
+            ] [
+                with ctx [
+                    binary/write bin compose [
+                        UI64 :seq-read
+                        UI8 :type
+                        UI16 :version
+                    ]
+                    either is-aead? [
+                        if crypt-method <> 'CHACHA20-POLY1305 [
+                            change/part skip remote-IV 4 take/part data 8 8
+                            modify decrypt-port 'iv remote-IV
+                            log-more ["Remote-IV:^[[32m" remote-IV]
+                        ]
+                        binary/write bin reduce ['UI16 (length? data) - 16]
+                        write decrypt-port bin/buffer
+                        log-more ["AAD:      ^[[32m" bin/buffer]
+                        mac: take/last/part data 16
+                        data: read write decrypt-port data
+                        if mac <> tag: take decrypt-port [
+                            log-debug "Failed to validate MAC after decryption!"
+                            log-debug ["Expected:" mac]
+                            log-debug ["Counted: " tag]
+                            critical-error: 'Bad_record_MAC
+                        ]
+                    ] [
+                        if block-size [
+                            remote-IV: take/part data block-size
+                        ]
+                        modify decrypt-port 'init-vector remote-IV
+                        data: read update write decrypt-port :data
+                        if block-size [
+                            clear skip tail data (-1 - (to integer! last data))
+                            mac: take/last/part data mac-size
+                            binary/write bin [
+                                UI16BYTES :data
+                            ]
+                            mac-check: checksum/with bin/buffer hash-method remote-mac
+                            if mac <> mac-check [critical-error: 'Bad_record_MAC]
+                            unset 'remote-IV
+                        ]
+                    ]
+                    binary/init bin 0
+                ]
+                unless data []
+                data
+            ]
+            encrypt-data: function [
+                ctx [object!]
+                content [binary!]
+                /type
+                msg-type [integer!] "application data is default"
+            ] [
+                msg-type: any [msg-type 23]
+                with ctx [
+                    binary/write bin compose [
+                        UI64 :seq-write
+                        UI8 :msg-type
+                        UI16 :version
+                        UI16 (length? content)
+                    ]
+                    either is-aead? [
+                        aad: bin/buffer
+                        either crypt-method = 'CHACHA20-POLY1305 [
+                            write encrypt-port :aad
+                            encrypted: read update write encrypt-port content
+                        ] [
+                            binary/write local-IV [ATz :IV-size UI64be :seq-write]
+                            log-more ["Local-IV:   ^[[32m" local-IV]
+                            log-more ["AAD:        ^[[32m" bin/buffer]
+                            modify encrypt-port 'iv local-IV
+                            write encrypt-port :aad
+                            encrypted: read update write encrypt-port content
+                            if IV-size-dynamic > 0 [
+                                insert encrypted copy/part skip local-IV :IV-size :IV-size-dynamic
+                            ]
+                        ]
+                    ] [
+                        binary/write clear local-IV [RANDOM-BYTES :block-size]
+                        modify encrypt-port 'init-vector local-IV
+                        log-more ["Local-IV:   ^[[32m" local-IV]
+                        log-more ["Local-mac:  ^[[32m" local-mac]
+                        log-more ["Hash-method:^[[32m" hash-method]
+                        binary/write bin content
+                        MAC: checksum/with bin/buffer ctx/hash-method ctx/local-mac
+                        len: length? append content MAC
+                        if block-size [
+                            padding: block-size - ((len + 1) % block-size)
+                            insert/dup tail content padding padding + 1
+                        ]
+                        encrypted: read update write encrypt-port content
+                        insert encrypted local-IV
+                    ]
+                    binary/init bin 0
+                ]
+                encrypted
+            ]
+            prf: function [
+                {(P)suedo-(R)andom (F)unction, generates arbitrarily long binaries}
+                hash [word!]
+                label [string! binary!]
+                seed [binary!]
+                secret [binary!]
+                output-length [integer!]
+            ] [
+                log-more ["PRF" hash mold label "len:" output-length]
+                seed: join to binary! label seed
+                p-sha256: make binary! output-length
+                a: seed
+                while [output-length >= length? p-sha256] [
+                    a: checksum/with a :hash :secret
+                    append p-sha256 checksum/with append copy :a :seed :hash :secret
+                ]
+                clear at p-sha256 (1 + output-length)
+                p-sha256
+            ]
+            TLS-key-expansion: func [
+                ctx [object!]
+                /local rnd1 rnd2 key-expansion sha
+            ] [
+                with ctx [
+                    either server? [
+                        rnd1: append copy ctx/remote-random ctx/local-random
+                        rnd2: append copy ctx/local-random ctx/remote-random
+                    ] [
+                        rnd2: append copy ctx/remote-random ctx/local-random
+                        rnd1: append copy ctx/local-random ctx/remote-random
+                    ]
+                    sha: ctx/sha-port/spec/method
+                    master-secret: prf :sha "master secret" rnd1 pre-secret 48
+                    key-expansion: prf :sha "key expansion" rnd2 master-secret (mac-size + crypt-size + iv-size) * 2
+                    either server? [
+                        unless is-aead? [
+                            remote-mac: take/part key-expansion mac-size
+                            local-mac: take/part key-expansion mac-size
+                        ]
+                        remote-key: take/part key-expansion crypt-size
+                        local-key: take/part key-expansion crypt-size
+                        remote-IV: take/part key-expansion iv-size
+                        local-IV: take/part key-expansion iv-size
+                    ] [
+                        unless is-aead? [
+                            local-mac: take/part key-expansion mac-size
+                            remote-mac: take/part key-expansion mac-size
+                        ]
+                        local-key: take/part key-expansion crypt-size
+                        remote-key: take/part key-expansion crypt-size
+                        local-IV: take/part key-expansion iv-size
+                        remote-IV: take/part key-expansion iv-size
+                    ]
+                    if IV-size-dynamic > 0 [
+                        append/dup local-IV 0 IV-size-dynamic
+                        append/dup remote-IV 0 IV-size-dynamic
+                    ]
+                    log-more ["Local-IV:   ^[[32m" local-IV]
+                    log-more ["Local-mac:  ^[[32m" local-mac]
+                    log-more ["Local-key:  ^[[32m" local-key]
+                    log-more ["Remote-IV:  ^[[32m" remote-IV]
+                    log-more ["Remote-mac: ^[[32m" remote-mac]
+                    log-more ["Remote-key: ^[[32m" remote-key]
+                    encrypt-port: open [
+                        scheme: 'crypt
+                        algorithm: :crypt-method
+                        init-vector: :local-IV
+                        key: :local-key
+                    ]
+                    decrypt-port: open [
+                        scheme: 'crypt
+                        direction: 'decrypt
+                        algorithm: :crypt-method
+                        init-vector: :remote-IV
+                        key: :remote-key
+                    ]
+                    modify encrypt-port 'aad-length :aad-length
+                    modify decrypt-port 'aad-length :aad-length
+                    if tag-length > 0 [
+                        modify decrypt-port 'tag-length :tag-length
+                        modify encrypt-port 'tag-length :tag-length
+                    ]
+                    pre-secret: local-key: remote-key: none
+                ]
+            ]
+            TLS-init-context: func [
+                "Resets existing TLS context"
+                ctx [object!]
+            ] [
+                ctx/seq-read: ctx/seq-write: 0
+                ctx/protocol: ctx/state: ctx/state-prev: none
+                ctx/cipher-spec-set: 0
+                clear ctx/server-certs
+            ]
+            TLS-init-connection: function [ctx [object!]] [
+                binary/init ctx/out none
+                client-hello ctx
+                do-TCP-write ctx
+                false
+            ]
+            TLS-read-data: function [
+                ctx [object!]
+                tcp-data [binary!]
+            ] [
+                log-debug ["read-data:^[[1m" length? tcp-data "^[[22mbytes previous rest:" length? ctx/rest]
+                inp: ctx/in
+                binary/write inp ctx/rest
+                binary/write inp tcp-data
+                clear tcp-data
+                clear ctx/rest
+                ctx/reading?: true
+                while [ctx/reading? and ((available: length? inp/buffer) >= 5)] [
+                    binary/read inp [
+                        start: INDEX
+                        type: UI8
+                        server-version: UI16
+                        len: UI16
+                    ]
+                    available: available - 5
+                    log-debug ["fragment type: ^[[1m" type "^[[22mver:^[[1m" server-version *Protocol-version/name server-version "^[[22mbytes:^[[1m" len "^[[22mbytes"]
+                    if ctx/version <> server-version [
+                        log-error ["Version mismatch:^[[22m" ctx/version "<>" server-version]
+                        ctx/critical-error: 'Internal_error
                         return false
                     ]
-                    TLS-error *Alert/Close_notify
-                ]
-                if error? TLS-port/locals/state [
-                    do TLS-port/locals/state
-                ]
-                if TLS-port/state [TLS-port/state/error: error]
-                send-event 'error TLS-port
-                return true
-            ]
-            wrote [
-                switch TLS-port/state/protocol [
-                    CLOSE-NOTIFY [
+                    if available < len [
+                        log-debug ["Incomplete fragment:^[[22m available^[[1m" available "^[[22mof^[[1m" len "^[[22mbytes"]
+                        binary/read inp [AT :start]
+                        log-debug ["Data starts: " copy/part inp/buffer 10]
+                        return false
+                    ]
+                    *protocol-type/assert type
+                    *protocol-version/assert server-version
+                    protocol: *protocol-type/name type
+                    version: *protocol-version/name server-version
+                    ctx/seq-read: ctx/seq-read + 1
+                    end: start + len + 5
+                    log-more ["^[[22mR[" ctx/seq-read "] Protocol^[[1m" protocol "^[[22mbytes:^[[1m" len "^[[22mfrom^[[1m" start "^[[22mto^[[1m" end]
+                    ctx/protocol: protocol
+                    switch protocol [
+                        APPLICATION [
+                            change-state ctx 'APPLICATION
+                            assert-prev-state ctx [APPLICATION ALERT FINISHED]
+                            binary/read inp [data: BYTES :len]
+                            if ctx/cipher-spec-set > 1 [
+                                if data: decrypt-msg ctx data :type [
+                                    append ctx/port-data data
+                                ]
+                            ]
+                        ]
+                        HANDSHAKE [
+                            binary/read inp [data: BYTES :len]
+                            either ctx/cipher-spec-set > 1 [
+                                ctx/seq-read: 0
+                                data: decrypt-msg ctx data :type
+                                ctx/reading?: ctx/server?
+                            ] [
+                                TLS-update-messages-hash ctx data len
+                            ]
+                            unless empty? data [
+                                ctx/critical-error: TLS-parse-handshake-message ctx data
+                            ]
+                        ]
+                        CHANGE_CIPHER_SPEC [
+                            binary/read inp [value: UI8]
+                            either 1 = value [
+                                ctx/cipher-spec-set: 2
+                                ctx/seq-read: 0
+                                ctx/reading?: true
+                            ] [
+                                log-error ["*** CHANGE_CIPHER_SPEC value should be 1 but is:" value]
+                            ]
+                        ]
+                        ALERT [
+                            log-debug ["ALERT len:" :len "ctx/cipher-spec-set:" ctx/cipher-spec-set]
+                            binary/read inp [data: BYTES :len]
+                            if ctx/cipher-spec-set > 1 [
+                                log-debug ["Decrypting ALERT message:" mold data]
+                                data: decrypt-msg ctx data :type
+                                unless data [
+                                    log-error "Failed to decode ALERT message!"
+                                    ctx/critical-error: none
+                                    ctx/protocol: 'APPLICATION
+                                    continue
+                                ]
+                            ]
+                            level: data/1
+                            id: data/2
+                            level: any [*Alert-level/name level join "Alert-" level]
+                            name: any [*Alert/name id 'Unknown]
+                            ctx/critical-error: either level = 'WARNING [false] [name]
+                            either id = 0 [
+                                ctx/reading?: false
+                                ctx/protocol: 'APPLICATION
+                                log-info "Server done"
+                            ] [
+                                log-more ["ALERT:" level "-" replace/all form name #"_" #" "]
+                            ]
+                        ]
+                    ]
+                    if ctx/critical-error [return false]
+                    if end <> index? inp/buffer [
+                        log-error ["Record end mismatch:^[[22m" end "<>" index? inp/buffer]
+                        ctx/critical-error: 'Record_overflow
+                        return false
+                    ]
+                    unless ctx/reading? [
+                        log-debug ["Reading finished!"]
                         return true
                     ]
-                    APPLICATION [
-                        send-event 'wrote TLS-port
-                        return false
+                ]
+                log-debug "continue reading..."
+                unless empty? ctx/in/buffer [
+                    ctx/rest: copy ctx/in/buffer
+                ]
+                return true
+            ]
+            TLS-parse-handshake-message: function [
+                ctx [object!]
+                data [binary!]
+            ] [
+                msg: binary data
+                while [4 <= length? msg/buffer] [
+                    binary/read msg [type: UI8 len: UI24 start: INDEX]
+                    ends: start + len
+                    log-debug ["R[" ctx/seq-read "] length:" len "start:" start "ends:" ends "type:" type]
+                    change-state ctx *Handshake/name type
+                    switch/default ctx/state [
+                        CLIENT_HELLO [
+                            binary/read msg [
+                                client-version: UI16
+                                remote-random: BYTES 32
+                                session-id: UI8BYTES
+                                cipher-suites: UI16BYTES
+                                compressions: UI8BYTES
+                                extensions: UI16BYTES
+                            ]
+                            log-debug ["Client requests:" *Protocol-version/name :client-version]
+                            log-debug ["Client random:^[[1m" remote-random]
+                            ctx/remote-random: remote-random
+                            unless empty? session-id [
+                                log-debug ["Client session:" session-id]
+                            ]
+                            client-cipher-suites: decode-cipher-suites :cipher-suites
+                            foreach cipher client-cipher-suites [
+                                if find suported-cipher-suites cipher [
+                                    ctx/cipher-suite: *Cipher-suite/:cipher
+                                    TLS-init-cipher-suite ctx
+                                    break
+                                ]
+                            ]
+                            unless ctx/crypt-method [
+                                log-error "No supported cipher-suite!"
+                                return 'Handshake_failure
+                            ]
+                            if #{00} <> compressions [
+                                log-error ["Client requests compression:" compressions]
+                                return 'Unexpected_message
+                            ]
+                            extensions: decode-extensions :extensions
+                            ctx/reading?: false
+                        ]
+                        SERVER_HELLO [
+                            assert-prev-state ctx [CLIENT_HELLO]
+                            with ctx [
+                                if any [
+                                    error? try [
+                                        binary/read msg [
+                                            server-version: UI16
+                                            remote-random: BYTES 32
+                                            session-id: UI8BYTES
+                                            cipher-suite: UI16 2
+                                            compressions: UI8BYTES
+                                            extensions: UI16BYTES
+                                            pos: INDEX
+                                        ]
+                                    ]
+                                    32 < length? session-id
+                                ] [
+                                    log-error "Failed to read server hello."
+                                    return 'Handshake_failure
+                                ]
+                                log-more ["R[" seq-read "] Version:" *Protocol-version/name server-version "len:" len "cipher-suite:" *Cipher-suite/name cipher-suite]
+                                log-more ["R[" seq-read "] SRandom:^[[32m" remote-random]
+                                log-more ["R[" seq-read "] Session:^[[32m" session-id]
+                                if server-version <> version [
+                                    log-error [
+                                        "Version required by server:" server-version
+                                        "is not same like clients:" version
+                                    ]
+                                    if server-version <> version [
+                                        return 'Protocol_version
+                                    ]
+                                    version: server-version
+                                ]
+                                unless empty? compressions [
+                                    log-more ["R[" seq-read "] Compressions:^[[1m" compressions]
+                                    log-error "COMPRESSION NOT SUPPORTED"
+                                    return 'Decompression_failure
+                                ]
+                                unless TLS-init-cipher-suite ctx [
+                                    log-error "Unsupported cipher suite!"
+                                    return 'Handshake_failure
+                                ]
+                                extensions: decode-extensions :extensions
+                                false
+                            ]
+                        ]
+                        CERTIFICATE [
+                            assert-prev-state ctx [SERVER_HELLO CLIENT_HELLO]
+                            tmp: binary/read msg [UI24 INDEX]
+                            if ends <> (tmp/1 + tmp/2) [
+                                log-error ["Improper certificate list end?" ends "<>" (tmp/1 + tmp/2)]
+                                return 'Handshake_failure
+                            ]
+                            while [ends > index? msg/buffer] [
+                                binary/read msg [cert: UI24BYTES]
+                                append ctx/server-certs decode 'CRT cert
+                            ]
+                            log-more ["Received" length? ctx/server-certs "server certificates."]
+                            try/with [
+                                key: ctx/server-certs/1/public-key
+                                switch key/1 [
+                                    ecPublicKey [
+                                        ctx/pub-key: key/3
+                                        ctx/pub-exp: key/2
+                                        if 0 = ctx/pub-key/1 [remove ctx/pub-key]
+                                    ]
+                                    rsaEncryption [
+                                        ctx/pub-key: key/2/1
+                                        ctx/pub-exp: key/2/2
+                                    ]
+                                ]
+                            ] [
+                                log-error "Missing public key in certifiate"
+                                return 'Bad_certificate
+                            ]
+                        ]
+                        SERVER_KEY_EXCHANGE [
+                            assert-prev-state ctx [CERTIFICATE SERVER_HELLO]
+                            log-more ["R[" ctx/seq-read "] Using key method:^[[1m" ctx/key-method]
+                            switch ctx/key-method [
+                                ECDHE_RSA
+                                ECDHE_ECDSA [
+                                    try/with [
+                                        binary/read msg [
+                                            s: INDEX
+                                            ECCurveType: UI8
+                                            ECCurve: UI16
+                                            pub_key: UI8BYTES
+                                            e: INDEX
+                                        ]
+                                    ] [
+                                        log-error "Error reading elyptic curve"
+                                        return 'User_cancelled
+                                    ]
+                                    if any [
+                                        3 <> ECCurveType
+                                        4 <> first pub_key
+                                        none? curve: *EllipticCurves/name ECCurve
+                                    ] [
+                                        log-error ["Unsupported ECurve type:" ECCurveType ECCurve]
+                                        return 'User_cancelled
+                                    ]
+                                    log-more ["R[" ctx/seq-read "] Elyptic curve type:" ECCurve "=>" curve]
+                                    log-more ["R[" ctx/seq-read "] Elyptic curve data:" mold pub_key]
+                                ]
+                                DHE_DSS
+                                DHE_RSA [
+                                    binary/read msg [
+                                        s: INDEX
+                                        dh_p: UI16BYTES
+                                        dh_g: UI16BYTES
+                                        pub_key: UI16BYTES
+                                        e: INDEX
+                                    ]
+                                ]
+                            ]
+                            message-len: e - s
+                            binary/read msg [
+                                AT :s
+                                message: BYTES :message-len
+                            ]
+                            hash-algorithm: *HashAlgorithm/name binary/read msg 'UI8
+                            sign-algorithm: *ClientCertificateType/name binary/read msg 'UI8
+                            log-more ["R[" ctx/seq-read "] Using algorithm:" hash-algorithm "with" sign-algorithm]
+                            if hash-algorithm = 'md5_sha1 [
+                                log-error {legacy __private_rsa_verify_hash_md5sha1 not implemented yet!}
+                                return 'Decode_error
+                            ]
+                            binary/read msg [signature: UI16BYTES]
+                            insert message join ctx/local-random ctx/remote-random
+                            if any [
+                                error? valid?: try [
+                                    switch sign-algorithm [
+                                        rsa_sign [
+                                            log-more "Checking signature using RSA"
+                                            rsa-key: apply :rsa-init ctx/server-certs/1/public-key/rsaEncryption
+                                            also rsa/verify/hash rsa-key message signature hash-algorithm
+                                            release :rsa-key
+                                        ]
+                                        rsa_fixed_dh [
+                                            log-more "Checking signature using RSA_fixed_DH"
+                                            message-hash: checksum message hash-algorithm
+                                            ecdsa/verify/curve ctx/pub-key message-hash signature ctx/pub-exp
+                                        ]
+                                    ]
+                                ]
+                                not valid?
+                            ] [
+                                log-error "Failed to validate signature"
+                                if error? valid? [print valid?]
+                                return 'Decode_error
+                            ]
+                            log-more "Signature valid!"
+                            if ends > pos: index? msg/buffer [
+                                len: ends - pos
+                                binary/read msg [extra: BYTES :len]
+                                log-error ["Extra" len "bytes at the end of message:" ellipsize form extra 40]
+                                return 'Decode_error
+                            ]
+                            if dh_p [
+                                dh-key: dh-init dh_g dh_p
+                                ctx/pre-secret: dh/secret dh-key pub_key
+                                log-more ["DH common secret:" mold ctx/pre-secret]
+                                ctx/key-data: dh/public :dh-key
+                                release :dh-key dh-key: none
+                            ]
+                            if curve [
+                                dh-key: ecdh/init none curve
+                                ctx/pre-secret: ecdh/secret dh-key pub_key
+                                log-more ["ECDH common secret:^[[32m" mold ctx/pre-secret]
+                                ctx/key-data: ecdh/public :dh-key
+                                release :dh-key dh-key: none
+                            ]
+                        ]
+                        CLIENT_KEY_EXCHANGE [
+                            unless ctx/server? [
+                                log-error "This message is expected on server!"
+                                return 'Decode_error
+                            ]
+                            switch ctx/key-method [
+                                ECDHE_RSA
+                                ECDHE_ECDSA [
+                                    key-data: binary/read msg 'UI8BYTES
+                                    ctx/pre-secret: ecdh/secret ctx/dh-key key-data
+                                    log-more ["ECDH common secret:^[[32m" ctx/pre-secret]
+                                ]
+                                DHE_DSS
+                                DHE_RSA [
+                                    key-data: binary/read msg 'UI8BYTES
+                                ]
+                                RSA [
+                                    key-data: binary/read msg 'UI16BYTES
+                                ]
+                            ]
+                            TLS-key-expansion ctx
+                        ]
+                        CERTIFICATE_REQUEST [
+                            assert-prev-state ctx [SERVER_HELLO SERVER_KEY_EXCHANGE CERTIFICATE]
+                            binary/read msg [
+                                certificate_types: UI8BYTES
+                                supported_signature_algorithms: UI16BYTES
+                            ]
+                            log-more ["R[" ctx/seq-read "] certificate_types:   " certificate_types]
+                            log-more ["R[" ctx/seq-read "] signature_algorithms:" supported_signature_algorithms]
+                            if ends > binary/read msg 'index [
+                                certificate_authorities: binary/read msg 'UI16BYTES
+                            ]
+                            if ends <> index? msg/buffer [
+                                log-error ["Positions:" ends index? msg/buffer]
+                                log-error "Looks we should read also something else!"
+                                return 'Decode_error
+                            ]
+                        ]
+                        SERVER_HELLO_DONE [
+                            ctx/reading?: false
+                        ]
+                        FINISHED [
+                            binary/read msg [verify-data: BYTES]
+                            seed: read ctx/sha-port
+                            result: prf :ctx/sha-port/spec/method either ctx/server? ["client finished"] ["server finished"] seed ctx/master-secret 12
+                            if result <> verify-data [
+                                return 'Handshake_failure
+                            ]
+                        ]
+                    ] [
+                        log-error ["Unknown state: " ctx/state "-" type]
+                        return 'Unexpected_message
+                    ]
+                    if ends <> i: index? msg/buffer [
+                        log-error ["Wrong fragment message tail!" ends "<>" i]
+                        log-error ["in/buffer starts:" copy/part msg/buffer 20]
+                        return 'Record_overflow
                     ]
                 ]
-                read TCP-port
-                return false
+                log-more ["R[" ctx/seq-read "] DONE: handshake^[[1m" ctx/state] log-----
+                false
             ]
-            read [
-                error: try [
-                    log-info ["READ TCP" length? TCP-port/data "bytes proto-state:" TLS-port/state/protocol]
-                    complete?: TLS-read-data TLS-port/state TCP-port/data
-                    if error-id: TLS-port/state/critical-error [
-                        TLS-error error-id
+            send-event: function [
+                event [word!]
+                target [port!]
+            ] [
+                log-debug ["Send-event:^[[1m" pad event 8 "^[[m->" target/spec/ref]
+                either all [
+                    port? target/parent
+                    function? :target/parent/awake
+                ] [
+                    target/parent/awake make event! [type: event port: target]
+                ] [
+                    insert system/ports/system make event! [type: event port: target]
+                ]
+            ]
+            TLS-server-client-awake: function [event [event!]] [
+                TCP-port: event/port
+                ctx: TCP-port/extra
+                log-debug ["Server's client awake event:" event/type "state:" ctx/state]
+                switch event/type [
+                    read [
+                        error: try [
+                            complete?: TLS-read-data ctx TCP-port/data
+                            if ctx/critical-error [cause-TLS-error ctx/critical-error]
+                            log-debug ["Read complete?" complete?]
+                            either complete? [
+                                switch ctx/state [
+                                    CLIENT_HELLO [
+                                        server-hello ctx
+                                        server-certificate ctx
+                                        server-hello-done ctx
+                                        write TCP-port head ctx/out/buffer
+                                    ]
+                                    FINISHED [
+                                        binary/init ctx/out none
+                                        change-cipher-spec ctx
+                                        finished ctx
+                                        ctx/cipher-spec-set: 2
+                                        ctx/seq-read: 0
+                                        ctx/seq-write: 1
+                                        write TCP-port head ctx/out/buffer
+                                    ]
+                                    APPLICATION [
+                                        TCP-port/parent/actor/On-Read TCP-port
+                                    ]
+                                ]
+                            ] [
+                                read TCP-port
+                            ]
+                            return false
+                        ]
+                        if ctx [log-error ctx/error: error]
+                        do-TLS-close TCP-port
+                        return true
                     ]
-                    log-debug ["Read complete?" complete?]
-                    unless complete? [
+                    wrote [
+                        either ctx/protocol = 'APPLICATION [
+                            TCP-port/parent/actor/On-Wrote TCP-port
+                        ] [
+                            read TCP-port
+                        ]
+                        return false
+                    ]
+                    close [
+                        do-TLS-close TCP-port
+                        return true
+                    ]
+                ]
+                false
+            ]
+            TLS-server-awake: func [event /local port info serv] [
+                log-more ["AWAKE Server:^[[1m" event/type]
+                switch event/type [
+                    accept [
+                        serv: event/port
+                        port: first serv
+                        info: query port
+                        port/extra: make TLS-context [
+                            tcp-port: port
+                            tls-port: serv/parent
+                            server?: true
+                            state: 'CLIENT_HELLO
+                            version: serv/extra/version
+                        ]
+                        port/spec/title: "TLS Server's client"
+                        port/spec/ref: rejoin [tcp:// info/remote-ip #":" info/remote-port]
+                        port/awake: :TLS-server-client-awake
+                        read port
+                    ]
+                ]
+                false
+            ]
+            TLS-client-awake: function [event [event!]] [
+                log-debug ["AWAKE Client:^[[1m" event/type]
+                TCP-port: event/port
+                ctx: TCP-port/extra
+                TLS-port: ctx/TLS-port
+                if all [
+                    ctx/protocol = 'APPLICATION
+                    not TCP-port/data
+                ] [
+                    log-debug ["reseting data -> " mold TLS-port/data]
+                    TLS-port/data: none
+                ]
+                switch/default event/type [
+                    lookup [
+                        open TCP-port
+                        TLS-init-context ctx
+                        return false
+                    ]
+                    connect [
+                        if none? ctx [return true]
+                        return TLS-init-connection ctx
+                    ]
+                    wrote [
+                        switch ctx/protocol [
+                            CLOSE-NOTIFY [
+                                return true
+                            ]
+                            APPLICATION [
+                                send-event 'wrote TLS-port
+                                return false
+                            ]
+                        ]
                         read TCP-port
                         return false
                     ]
-                    TLS-port/data: TLS-port/state/port-data
-                    binary/init TLS-port/state/in none
-                    either 'APPLICATION = TLS-port/state/protocol [
-                        send-event 'read TLS-port
-                    ] [read TCP-port]
-                    return true
-                ]
-                if TLS-port/state [TLS-port/state/error: error]
-                send-event 'error TLS-port
-                return true
-            ]
-            close [
-                log-info "CLOSE"
-                send-event 'close TLS-port
-                return true
-            ]
-            error [
-                if all [
-                    TLS-port/state
-                    TLS-port/state/state = 'lookup
+                    read [
+                        error: try [
+                            log-debug ["READ TCP" length? TCP-port/data "bytes proto-state:" ctx/protocol]
+                            complete?: TLS-read-data ctx TCP-port/data
+                            if ctx/critical-error [cause-TLS-error ctx/critical-error]
+                            log-debug ["Read complete?" complete?]
+                            unless complete? [
+                                read TCP-port
+                                return false
+                            ]
+                            TLS-port/data: ctx/port-data
+                            binary/init ctx/in none
+                            switch ctx/protocol [
+                                APPLICATION [
+                                    send-event 'read TLS-port
+                                    return true
+                                ]
+                                HANDSHAKE [
+                                    switch ctx/state [
+                                        SERVER_HELLO_DONE [
+                                            binary/init ctx/out none
+                                            client-key-exchange ctx
+                                            change-cipher-spec ctx
+                                            finished ctx
+                                            do-TCP-write ctx
+                                            return false
+                                        ]
+                                        FINISHED [
+                                            change-state ctx ctx/protocol: 'APPLICATION
+                                            send-event 'connect TLS-port
+                                            return true
+                                        ]
+                                    ]
+                                ]
+                            ]
+                            read TCP-port
+                            return false
+                        ]
+                        if ctx [log-error ctx/error: error]
+                        send-event 'error TLS-port
+                        return true
+                    ]
+                    close [
+                        send-event 'close TLS-port
+                        return true
+                    ]
+                    error [
+                        unless ctx/error [
+                            ctx/error: case [
+                                ctx/state = 'lookup [
+                                    make error! [
+                                        code: 500 type: 'access id: 'cannot-open
+                                        arg1: TCP-port/spec/ref
+                                    ]
+                                ]
+                                'else [
+                                    make error! [
+                                        code: 500 type: 'access id: 'protocol
+                                        arg1: TCP-port/spec/ref
+                                    ]
+                                ]
+                            ]
+                        ]
+                        send-event 'error TLS-port
+                        return true
+                    ]
                 ] [
-                    TLS-port/state/error: make error! [
-                        code: 500 type: 'access id: 'cannot-open
-                        arg1: TCP-port/spec/ref
-                    ]
+                    close TCP-port
+                    do make error! rejoin ["Unexpected TLS event: " event/type]
                 ]
-                send-event 'error TLS-port
-                return true
+                false
             ]
-        ] [
-            close TCP-port
-            do make error! rejoin ["Unexpected TLS event: " event/type]
-        ]
-        false
-    ]
-    sys/make-scheme [
-        name: 'tls
-        title: "TLS protocol v1.2"
-        spec: make system/standard/port-spec-net []
-        parent: none
-        actor: [
-            read: func [
+            do-TLS-open: func [
                 port [port!]
-                /local
-                resp data msg
+                /local spec conn config certs bin der key
             ] [
-                log-more "READ"
-                read port/state/connection
-                return port
-            ]
-            write: func [port [port!] value [any-type!]] [
-                log-more "WRITE"
-                if port/state/protocol = 'APPLICATION [
-                    do-commands/no-wait port/state compose [
-                        application (value)
+                log-debug "OPEN"
+                if port/state [return port]
+                spec: port/spec
+                either port? conn: select spec 'conn [
+                    spec/host: conn/spec/host
+                    spec/port: conn/spec/port
+                    if block? spec/ref [
+                        spec/ref: rejoin [tls:// any [spec/host ""] ":" spec/port]
                     ]
+                ] [
+                    conn: make port! [
+                        scheme: 'tcp
+                        host: spec/host
+                        port: spec/port
+                        ref: rejoin [tcp:// any [host ""] ":" port]
+                    ]
+                    if port/parent [
+                        conn/state: port/parent/state
+                    ]
+                    conn/parent: port
+                ]
+                either spec/host [
+                    port/extra: conn/extra: make TLS-context [
+                        tcp-port: conn
+                        tls-port: port
+                        version: *Protocol-version/TLS1.2
+                    ]
+                    port/data: conn/extra/port-data
+                    conn/awake: :TLS-client-awake
+                ] [
+                    spec/ref: rejoin [tls://: spec/port]
+                    port/spec/title: "TLS Server"
+                    conn/spec/title: "TLS Server (internal)"
+                    port/state: conn/extra: object [
+                        TCP-port: conn
+                        certificates: none
+                        private-key: none
+                        elliptic-curves: decode-supported-groups :supported-elliptic-curves
+                        version: *Protocol-version/TLS1.2
+                    ]
+                    if config: select spec 'config [
+                        certs: any [select config 'certificates []]
+                        unless block? certs [certs: to block! certs]
+                        bin: binary 4000
+                        foreach file certs [
+                            try/with [
+                                der: select decode 'pkix read file 'binary
+                                binary/write bin [UI24BYTES :der]
+                            ] [
+                                log-error ["Failed to import certificate:" file]
+                            ]
+                        ]
+                        port/state/certificates: bin/buffer
+                        if key: select config 'private-key [
+                            if file? key [try [key: load key]]
+                            either handle? key [
+                                port/state/private-key: key
+                            ] [log-error ["Failed to import private key:" key]]
+                        ]
+                    ]
+                    port/actor: context [
+                        On-Read: func [port [port!]] [
+                            log-debug "TLS On-Read"
+                            print to string! port/extra/port-data
+                            do-TLS-write port {HTTP/1.1 200 OK^M
+Content-type: text/plain^M
+^M
+Hello from Rebol using TLS v1.2}
+                        ]
+                        On-Wrote: func [port [port!]] [
+                            send-event 'close port
+                        ]
+                    ]
+                    conn/parent: port
+                    conn/awake: :TLS-server-awake
+                ]
+                either open? conn [
+                    TLS-init-context conn/extra
+                    TLS-init-connection conn/extra
+                ] [
+                    open conn
+                ]
+                port
+            ]
+            do-TLS-close: func [port [port!] /local ctx parent] [
+                log-debug "CLOSE"
+                unless ctx: port/extra [return port]
+                parent: port/parent
+                log-debug "Closing port/extra/tcp-port"
+                close ctx/tcp-port
+                if port? ctx/encrypt-port [close ctx/encrypt-port]
+                if port? ctx/decrypt-port [close ctx/decrypt-port]
+                ctx/encrypt-port: none
+                ctx/decrypt-port: none
+                ctx/tcp-port/awake: none
+                ctx/tcp-port: none
+                ctx/tls-port: none
+                port/extra: none
+                log-more "Port closed"
+                if parent [
+                    insert system/ports/system make event! [type: 'close port: parent]
+                ]
+                port
+            ]
+            do-TLS-read: func [port [port!]] [
+                log-debug "READ"
+                read port/extra/tcp-port
+                port
+            ]
+            do-TLS-write: func [port [port!] value [any-string! binary!] /local ctx] [
+                log-debug "WRITE"
+                ctx: port/extra
+                if ctx/protocol = 'APPLICATION [
+                    binary/init ctx/out none
+                    while [not tail? value] [
+                        application-data ctx copy/part :value 16000
+                        value: skip value 16000
+                    ]
+                    do-TCP-write ctx
                     return port
                 ]
             ]
-            open: func [port [port!] /local conn] [
-                log-more "OPEN"
-                if port/state [return port]
-                if none? port/spec/host [TLS-error "Missing host address"]
-                port/state: make-TLS-ctx
-                port/state/connection: conn: make port! [
-                    scheme: 'tcp
-                    host: port/spec/host
-                    port-id: port/spec/port-id
-                    ref: rejoin [tcp:// host ":" port-id]
+            do-TCP-write: func [ctx] [
+                log-debug ["Writing bytes:" length? ctx/out/buffer]
+                clear ctx/port-data
+                write ctx/tcp-port ctx/out/buffer
+                ctx/reading?: true
+                binary/init ctx/out none
+            ]
+            sys/make-scheme [
+                name: 'tls
+                title: "TLS protocol v1.2"
+                spec: make system/standard/port-spec-net []
+                actor: reduce/no-set [
+                    read: :do-TLS-read
+                    write: :do-TLS-write
+                    open: :do-TLS-open
+                    close: :do-TLS-close
+                    query: func [port [port!]] [all [port/extra query port/extra/tcp-port]]
+                    open?: func [port [port!]] [all [port/extra open? port/extra/tcp-port]]
+                    copy: func [port [port!]] [if port/data [copy port/data]]
+                    length?: func [port [port!]] [either port/data [length? port/data] [0]]
                 ]
-                port/data: port/state/port-data
-                conn/awake: :TLS-awake
-                conn/locals: port
-                open conn
-                port
-            ]
-            open?: func [port [port!]] [
-                all [port/state open? port/state/connection true]
-            ]
-            close: func [port [port!] /local ctx check1 check2] [
-                log-more "CLOSE"
-                unless port/state [return port]
-                log-debug "Closing port/state/connection"
-                close port/state/connection
-                switch port/state/crypt-method [
-                    RC4_128 [
-                        if port/state/encrypt-stream [
-                            rc4/stream port/state/encrypt-stream none
-                        ]
-                        if port/state/decrypt-stream [
-                            rc4/stream port/state/decrypt-stream none
-                        ]
-                    ]
-                    AES_128_CBC
-                    AES_256_CBC [
-                        if port/state/encrypt-stream [
-                            aes/stream port/state/encrypt-stream none
-                        ]
-                        if port/state/decrypt-stream [
-                            aes/stream port/state/decrypt-stream none
-                        ]
-                    ]
-                ]
-                log-more "Port closed"
-                port/state/connection/awake: none
-                port/state: none
-                port
-            ]
-            copy: func [port [port!]] [
-                if port/data [copy port/data]
-            ]
-            query: func [port [port!]] [
-                all [port/state query port/state/connection]
-            ]
-            length?: func [port [port!]] [
-                either port/data [length? port/data] [0]
+                set-verbose: :tls-verbosity
             ]
         ]
-        set-verbose: :tls-verbosity
+    ) import (
+        module [
+            Title: "SMTP protocol scheme"
+            Name: smtp
+            Version: 1.1.0
+            Date: 14-Jul-2022
+            Author: ["Graham" "Oldes"]
+            Exports: none
+            Needs: none
+        ] [
+            system/options/log/smtp: 2
+            bufsize: 16384
+            mail-obj: make object! [
+                from:
+                to:
+                message: none
+            ]
+            throw-smtp-error: func [
+                smtp-port [port!]
+                error [error! string! block!]
+            ] [
+                sys/log/error 'SMTP error
+                unless error? error [
+                    error: make error! [
+                        type: 'Access
+                        id: 'Protocol
+                        arg1: either block? error [ajoin error] [error]
+                    ]
+                ]
+                either object? smtp-port/extra [
+                    smtp-port/extra/error: error
+                    smtp-port/awake make event! [type: 'error port: smtp-port]
+                ] [do error]
+            ]
+            alpha: system/catalog/bitsets/alpha
+            digit: system/catalog/bitsets/numeric
+            net-log: func [data /C /S /E /local msg] [
+                msg: clear ""
+                case [
+                    C [append msg "Client: "]
+                    S [append msg "Server: "]
+                    E [sys/log/error 'SMTP :data return :data]
+                ]
+                append msg data
+                sys/log/more 'SMTP trim/tail msg
+                data
+            ]
+            sync-smtp-handler: function [event] [
+                sys/log/debug 'SMTP ["sync-smtp-handler event:" event/type event/port/spec/ref]
+                client: event/port
+                smtp-port: client/parent
+                spec: smtp-port/spec
+                state: smtp-port/state
+                smtp-ctx: smtp-port/extra
+                sys/log/debug 'SMTP ["State:" state]
+                switch event/type [
+                    error [
+                        sys/log/error 'SMTP "Network error"
+                        close client
+                        return true
+                    ]
+                    lookup [
+                        open client
+                        false
+                    ]
+                    connect [
+                        smtp-port/state: 'EHLO
+                        either state = 'STARTTLS [
+                            sys/log/more 'SMTP "TLS connection established..."
+                            write smtp-ctx/connection to binary! net-log/C ajoin ["EHLO " spec/ehlo CRLF]
+                            smtp-port/state: 'AUTH
+                        ] [
+                            read client
+                        ]
+                        false
+                    ]
+                    read [
+                        response: to string! client/data
+                        clear client/data
+                        if empty? response [return false]
+                        code: none
+                        parse response [copy code: 3 digit to end (code: to integer! code)]
+                        if system/options/log/smtp > 1 [
+                            foreach line split-lines trim/tail response [
+                                sys/log/more 'SMTP ["Server:^[[32m" line]
+                            ]
+                        ]
+                        switch/default state [
+                            EHLO
+                            INIT [
+                                write client to binary! net-log/C ajoin ["EHLO " spec/ehlo CRLF]
+                                smtp-port/state: 'AUTH
+                                return false
+                            ]
+                            AUTH [
+                                if code = 250 [
+                                    if parse response [
+                                        thru "STARTTLS" CRLF to end (
+                                            smtp-port/state: 'STARTTLS
+                                            write client to binary! net-log/C "STARTTLS^M^/"
+                                            return false
+                                        )
+                                        |
+                                        thru "AUTH" [SP | #"="] copy auth-methods: to CRLF to end (
+                                            auth-methods: split auth-methods SP
+                                            foreach auth auth-methods [
+                                                try [auth: to word! auth]
+                                                switch auth [
+                                                    CRAM-MD5 [
+                                                        smtp-port/state: 'CRAM-MD5
+                                                        write client to binary! net-log/C "AUTH CRAM-MD5^M^/"
+                                                        return false
+                                                    ]
+                                                    LOGIN [
+                                                        smtp-port/state: 'LOGIN
+                                                        write client to binary! net-log/C "AUTH LOGIN^M^/"
+                                                        return false
+                                                    ]
+                                                    PLAIN [
+                                                        smtp-port/state: 'PLAIN
+                                                        net-log/C "AUTH PLAIN ***"
+                                                        write client to binary! ajoin [
+                                                            "AUTH PLAIN "
+                                                            enbase/flat ajoin [spec/user #"^@" spec/user #"^@" spec/pass] 64
+                                                            CRLF
+                                                        ]
+                                                        return false
+                                                    ]
+                                                    'else [
+                                                        sys/log/debug 'SMTP ["Unknown authentication method:" auth]
+                                                    ]
+                                                ]
+                                            ]
+                                        )
+                                    ]
+                                    sys/log/debug 'SMTP ["Trying to send without authentication!"]
+                                    smtp-port/state: 'FROM
+                                    write client to binary! net-log/C ajoin ["MAIL FROM: <" smtp-ctx/mail/from ">" CRLF]
+                                    return false
+                                ]
+                            ]
+                            STARTTLS [
+                                if code = 220 [
+                                    sys/log/more 'SMTP "Upgrading client's connection to TLS port"
+                                    tls-port: open [scheme: 'tls conn: client]
+                                    tls-port/parent: smtp-port
+                                    client/parent: tls-port
+                                    smtp-ctx/connection: client/extra/tls-port
+                                    return false
+                                ]
+                            ]
+                            LOGIN [
+                                case [
+                                    find/part response "334 VXNlcm5hbWU6" 16 [
+                                        sys/log/more 'SMTP "Client: ***user-name***"
+                                        write client to binary! ajoin [enbase/flat spec/user 64 CRLF]
+                                    ]
+                                    find/part response "334 UGFzc3dvcmQ6" 16 [
+                                        sys/log/more 'SMTP "Client: ***user-pass***"
+                                        write client to binary! ajoin [enbase/flat spec/pass 64 CRLF]
+                                        smtp-port/state: 'PASSWORD
+                                    ]
+                                    true [
+                                        throw-smtp-error smtp-port join "Unknown response in AUTH LOGIN " response
+                                    ]
+                                ]
+                            ]
+                            CRAM-MD5 [
+                                either code = 334 [
+                                    auth-key: skip response 4
+                                    auth-key: debase auth-key 64
+                                    auth-key: checksum/with auth-key 'md5 spec/pass
+                                    sys/log/more 'SMTP "Client: ***auth-key***"
+                                    write client to binary! ajoin [enbase/flat ajoin [spec/user SP lowercase enbase auth-key 16] 64 CRLF]
+                                    smtp-port/state: 'PASSWORD
+                                    false
+                                ] [
+                                    throw-smtp-error smtp-port join "Unknown response in AUTH CRAM-MD5 " response
+                                ]
+                            ]
+                            PLAIN
+                            PASSWORD [
+                                either code = 235 [
+                                    write client to binary! net-log/C ajoin ["MAIL FROM: " mold as tag! smtp-ctx/mail/from CRLF]
+                                    smtp-port/state: 'FROM
+                                    smtp-ctx/recipients: 0
+                                    false
+                                ] [
+                                    throw-smtp-error smtp-port "Failed authentication"
+                                ]
+                            ]
+                            FROM
+                            RCPT [
+                                if code <> 250 [
+                                    either state == 'FROM [
+                                        throw-smtp-error smtp-port "FROM address rejected by server"
+                                        return true
+                                    ] [
+                                        sys/log/error 'SMTP ["Server rejects TO address:" as-red smtp-ctx/rcpt]
+                                        smtp-ctx/rcpt: none
+                                        smtp-ctx/recipients: smtp-ctx/recipients - 1
+                                    ]
+                                ]
+                                either empty? smtp-ctx/mail/to [
+                                    if smtp-ctx/recipients == 0 [
+                                        throw-smtp-error smtp-port "There were no accepted recipients!"
+                                        return true
+                                    ]
+                                    write client to binary! net-log/C join "DATA" CRLF
+                                    smtp-port/state: 'DATA
+                                ] [
+                                    smtp-ctx/rcpt: take smtp-ctx/mail/to
+                                    smtp-ctx/recipients: smtp-ctx/recipients + 1
+                                    write client to binary! net-log/C ajoin ["RCPT TO: " mold as tag! smtp-ctx/rcpt crlf]
+                                    smtp-port/state: 'RCPT
+                                ]
+                                false
+                            ]
+                            DATA [
+                                either code = 354 [
+                                    replace/all smtp-ctx/mail/message "^/." "^/.."
+                                    smtp-ctx/mail/message: ptr: rejoin [enline smtp-ctx/mail/message]
+                                    sys/log/more 'SMTP ["Sending" min bufsize length? ptr "bytes of" length? ptr]
+                                    write client take/part ptr bufsize
+                                    smtp-port/state: 'SENDING
+                                    false
+                                ] [
+                                    throw-smtp-error smtp-port "Not allowing us to send ... quitting"
+                                ]
+                            ]
+                            END [
+                                either code = 250 [
+                                    sys/log/info 'SMTP "Message successfully sent."
+                                    smtp-port/state: 'QUIT
+                                    write client to binary! net-log/C join "QUIT" crlf
+                                    true
+                                ] [
+                                    throw-smtp-error smtp-port "Some error occurred on sending."
+                                ]
+                            ]
+                            QUIT [
+                                throw-smtp-error smtp-port "Should never get here"
+                            ]
+                        ] [
+                            throw-smtp-error smtp-port ["Unknown state " state]
+                        ]
+                    ]
+                    wrote [
+                        switch/default state [
+                            SENDING [
+                                either not empty? ptr: smtp-ctx/mail/message [
+                                    sys/log/more 'SMTP ["Sending" min bufsize length? ptr "bytes of" length? ptr]
+                                    write client to binary! take/part ptr bufsize
+                                ] [
+                                    sys/log/debug 'SMTP "Sending ends."
+                                    write client to binary! rejoin [crlf "." crlf]
+                                    smtp-port/state: 'END
+                                ]
+                            ]
+                            QUIT [
+                                close client
+                                true
+                            ]
+                        ] [
+                            read client
+                            false
+                        ]
+                    ]
+                    close [
+                        net-log/E "Port closed on me"
+                        true
+                    ]
+                ]
+            ]
+            sync-write: func [
+                port [port!]
+                body [block!]
+                /local ctx result rcpt error
+            ] [
+                sys/log/debug 'SMTP ["sync-write state:" port/state]
+                rcpt: select body 'to
+                case/all [
+                    block? :rcpt [
+                        rcpt: copy rcpt
+                        remove-each m rcpt [not email? m]
+                    ]
+                    email? :rcpt [
+                        rcpt: to block! rcpt
+                    ]
+                    any [not block? :rcpt empty? :rcpt] [
+                        throw-smtp-error port "There must be at least one recipient!"
+                        return true
+                    ]
+                ]
+                unless ctx: port/extra [
+                    open port
+                    ctx: port/extra
+                    port/state: 'READY
+                ]
+                ctx/mail: construct/with body mail-obj
+                ctx/mail/to: :rcpt
+                ctx/connection/awake: :sync-smtp-handler
+                if port/state = 'READY [
+                    read port
+                ]
+                until [
+                    result: wait [port ctx/connection port/spec/timeout]
+                    unless port? result [
+                        throw-smtp-error port "SMTP timeout"
+                    ]
+                    any [none? result none? port/state port/state = 'CLOSE]
+                ]
+                if port/state = 'CLOSE [
+                    close port
+                ]
+                if all [port port/extra error? port/extra/error] [
+                    do port/extra/error
+                ]
+                true
+            ]
+            sys/make-scheme [
+                name: 'smtp
+                title: "Simple Mail Transfer Protocol"
+                spec: make system/standard/port-spec-net [
+                    port: 25
+                    timeout: 60
+                    ehlo:
+                    user:
+                    pass: none
+                ]
+                actor: [
+                    open: func [
+                        port [port!]
+                        /local conn spec
+                    ] [
+                        if port/extra [return port]
+                        if none? port/spec/host [
+                            throw-smtp-error port "Missing host address when opening smtp server"
+                        ]
+                        port/extra: construct [
+                            connection:
+                            mail:
+                            error:
+                            rcpt:
+                            recipients:
+                        ]
+                        spec: port/spec
+                        unless spec/ehlo [
+                            unless spec/ehlo: select system/options 'domain-name [
+                                try [
+                                    spec/ehlo: read http://ifconfig.me/ip
+                                    put system/options 'domain-name :spec/ehlo
+                                ]
+                            ]
+                        ]
+                        conn: context [
+                            scheme: none
+                            host: spec/host
+                            port: spec/port
+                            ref: none
+                        ]
+                        conn/scheme: either 465 = spec/port ['tls] ['tcp]
+                        conn/ref: as url! ajoin [conn/scheme "://" spec/host #":" spec/port]
+                        port/state: 'INIT
+                        port/extra/connection: conn: make port! conn
+                        conn/parent: port
+                        open conn
+                        port
+                    ]
+                    open?: func [
+                        port [port!]
+                    ] [
+                        not none? port/state
+                    ]
+                    close: func [
+                        port [port!]
+                    ] [
+                        sys/log/debug 'SMTP "Close"
+                        if open? port [
+                            close port/extra/connection
+                            port/extra/connection/awake: none
+                            port/state: none
+                        ]
+                        port
+                    ]
+                    read: func [
+                        port [port!]
+                    ] [
+                        sys/log/debug 'SMTP "Read"
+                    ]
+                    write: func [
+                        port [port!]
+                        body [block!]
+                    ] [
+                        sync-write port body
+                    ]
+                ]
+                awake: func [event /local port type] [
+                    port: event/port
+                    type: event/type
+                    sys/log/debug 'SMTP ["SMTP-Awake event:" type]
+                    switch/default type [
+                        error [
+                            port/state: 'ERROR
+                            try [close port/extra/connection]
+                            true
+                        ]
+                        close [
+                            port/state: 'CLOSE
+                            true
+                        ]
+                    ] [
+                        sync-smtp-handler :event
+                    ]
+                ]
+            ]
+            sys/make-scheme/with [
+                name: 'smtps
+                title: "Simple Mail Transfer Protocol Secure"
+                spec: make spec [
+                    port: 465
+                ]
+            ] 'smtp
+        ]
+    )
+    sys/load-module/delay {Rebol [
+    Version: 0.1.1
+    Title: "POP3 protocol scheme"
+    Name: pop3
+    Date: 20-Jul-2022
+    Author: @Oldes
+    Exports: none
+    Needs: none
+]system/options/log/pop3: 1
+net-log: func [data /C /S /E /local msg] [
+    msg: clear ""
+    case [
+        C [append msg "Client: "]
+        S [append msg "Server: "]
+        E [sys/log/error 'POP3 :data return :data]
     ]
-]]]
+    append msg data
+    sys/log/more 'POP3 trim/tail msg
+    data
+]
+do-cmd: func [ctx cmd /with arg /local pop3] [
+    ctx/command: cmd
+    ctx/argument: arg
+    pop3: ctx/connection/parent
+    clear pop3/data
+    try/with [
+        write ctx/connection to binary! net-log/C ajoin either/only arg [cmd SP arg CRLF] [cmd CRLF]
+        if pop3/state <> 'INIT [pop3/state: 'WRITING]
+    ] [
+        ctx/error: system/state/last-error
+    ]
+]
+do-cmd-hide: func [ctx cmd arg msg /local pop3] [
+    ctx/command: cmd
+    ctx/argument: arg
+    pop3: ctx/connection/parent
+    clear pop3/data
+    try/with [
+        net-log/C ajoin [cmd SP msg]
+        write ctx/connection to binary! ajoin either/only arg [cmd SP arg CRLF] [cmd CRLF]
+        if pop3/state <> 'INIT [pop3/state: 'WRITING]
+    ] [
+        ctx/error: system/state/last-error
+    ]
+]
+pop3-conn-awake: function [event] [
+    conn: event/port
+    pop3: conn/parent
+    ctx: pop3/extra
+    sys/log/debug 'POP3 ["Command:" ctx/command "state:" pop3/state "event:" event/type "ref:" event/port/spec/ref]
+    info?: system/options/log/pop3 > 0
+    wake?: switch event/type [
+        error [
+            sys/log/error 'POP3 "Network error"
+            close conn
+            return true
+        ]
+        lookup [
+            open conn
+            false
+        ]
+        connect [
+            either ctx/command = 'STLS [
+                sys/log/more 'POP3 "TLS connection established..."
+                do-cmd/with ctx 'AUTH 'PLAIN
+                return false
+            ] [
+                sys/log/more 'POP3 "Reading server's invitation..."
+                ctx/command: 'CONNECT
+                read conn
+            ]
+            false
+        ]
+        read [
+            response: to string! conn/data
+            clear conn/data
+            if empty? response [return false]
+            if system/options/log/pop3 > 1 [
+                foreach line split-lines response [
+                    sys/log/more 'POP3 ["Server:^^[[32m" line]
+                ]
+            ]
+            ok-msg: err: none
+            if empty? pop3/data [
+                parse response [
+                    #"+" opt "OK" any SP
+                    opt [copy ok-msg: to CRLF CRLF]
+                    response: to end
+                    |
+                    "-ERR " opt [set err: to CRLF CRLF] to end
+                ]
+            ]
+            if err [
+                pop3/state: 'ERROR
+                ctx/error: err
+                insert system/ports/system make event! [type: 'error port: pop3]
+                return false
+            ]
+            switch/default pop3/state [
+                READ
+                READING [
+                    append pop3/data response
+                    if info? [
+                        switch ctx/command [
+                            RETR [
+                                if pop3/state <> 'READING [
+                                    stat: load ok-msg
+                                    sys/log/info 'POP3 ["Receiving message" ctx/argument "having" stat/1 "bytes."]
+                                ]
+                            ]
+                            TOP [
+                                if pop3/state <> 'READING [
+                                    sys/log/info 'POP3 ["Receiving headers of message" first ctx/argument]
+                                ]
+                            ]
+                            STAT [
+                                stat: load ok-msg
+                                sys/log/info 'POP3 ["Mailbox has" stat/1 "messages having" stat/2 "bytes."]
+                            ]
+                            DELE [
+                                sys/log/info 'POP3 ["Message" ctx/argument response]
+                            ]
+                            RSET [
+                                sys/log/info 'POP3 ["Session reset." response]
+                            ]
+                            QUIT [
+                                sys/log/info 'POP3 ["Server quits:^^[[32m" response]
+                            ]
+                        ]
+                    ]
+                    either all [
+                        find [RETR LIST UIDL CAPA TOP] ctx/command
+                        none? end: find/match skip tail pop3/data -5 "^^M^^/.^^M^^/"
+                    ] [
+                        pop3/state: 'READING
+                        sys/log/more 'POP3 "Data are not complete yet..."
+                        read conn
+                        false
+                    ] [
+                        if end [clear end]
+                        pop3/state: 'READY
+                        true
+                    ]
+                ]
+                INIT [
+                    switch/default ctx/command [
+                        CONNECT [
+                            sys/log/info 'POP3 ["Connected to server:^^[[32m" response]
+                            sys/log/more 'POP3 "Requesting server's capabilities..."
+                            do-cmd ctx 'CAPA
+                            false
+                        ]
+                        CAPA [
+                            ctx/capabilities: split-lines copy response
+                            take/last ctx/capabilities
+                            sys/log/info 'POP3 ["Server accepts: ^^[[32m" mold/flat ctx/capabilities]
+                            case [
+                                all [ctx/start-tls? find response "STLS"] [
+                                    do-cmd ctx 'STLS
+                                ]
+                                find response "PLAIN" [
+                                    do-cmd/with ctx 'AUTH 'PLAIN
+                                ]
+                                find response "USER" [
+                                    do-cmd-hide ctx 'USER pop3/spec/user "***name***"
+                                ]
+                                'else [
+                                    ctx/error: "No known authentication method!"
+                                ]
+                            ]
+                            false
+                        ]
+                        STLS [
+                            sys/log/more 'POP3 "Upgrading client's connection to TLS port"
+                            tls-port: open compose [scheme: 'tls conn: (conn)]
+                            tls-port/parent: pop3
+                            conn/parent: tls-port
+                            ctx/connection: conn/extra/tls-port
+                            false
+                        ]
+                        AUTH [
+                            net-log/C "***credentials***"
+                            write ctx/connection to binary! ajoin [
+                                enbase ajoin ["^^@" pop3/spec/user "^^@" pop3/spec/pass] 64
+                                CRLF
+                            ]
+                            pop3/state: 'WRITING
+                            false
+                        ]
+                        USER [
+                            do-cmd-hide ctx 'PASS pop3/spec/pass "***pass***"
+                            pop3/state: 'WRITING
+                            false
+                        ]
+                    ] [
+                        ctx/error: ajoin ["Unknown init command: " ctx/command]
+                    ]
+                ]
+            ] [
+                ctx/error: ajoin ["Unknown state: " pop3/state]
+            ]
+        ]
+        wrote [
+            if pop3/state == 'WRITING [pop3/state: 'READ]
+            read conn
+            false
+        ]
+        close [
+            ctx/error: "Port closed on me"
+        ]
+    ]
+    if ctx/error [
+        wake?: true
+        pop3/state: 'ERROR
+    ]
+    if wake? [
+        insert system/ports/system make event! [type: pop3/state port: pop3]
+    ]
+    wake?
+]
+assert-ready: func [port] [
+    unless open? port [cause-error 'Access 'not-open port/spec/ref]
+    if port/state <> 'READY [cause-error 'Access 'not-ready port/spec/ref]
+    true
+]
+sys/make-scheme [
+    name: 'pop3
+    title: "Post Office Protocol (v3)"
+    spec: make system/standard/port-spec-net [
+        port: 110
+        timeout: 10
+    ]
+    awake: func [event /local port type] [
+        port: event/port
+        type: event/type
+        sys/log/debug 'POP3 ["POP3-Awake event:" type]
+        switch/default type [
+            error [
+                port/state: 'ERROR
+                all [
+                    port/extra
+                    port/extra/error
+                    do make error! port/extra/error
+                ]
+                true
+            ]
+            close [
+                port/extra:
+                port/state: none
+                true
+            ]
+            ready [
+                true
+            ]
+        ] [
+            pop3-conn-awake :event
+        ]
+    ]
+    actor: [
+        open: func [
+            port [port!]
+            /local spec conn
+        ] [
+            if port/extra [return port]
+            port/extra: construct [
+                connection:
+                commands:
+                command:
+                argument:
+                error:
+                capabilities: none
+                start-tls?: false
+            ]
+            port/data: copy ""
+            spec: port/spec
+            conn: context [
+                scheme: none
+                host: spec/host
+                port: spec/port
+                ref: none
+            ]
+            conn/scheme: either 995 == spec/port ['tls] ['tcp]
+            conn/ref: as url! ajoin [conn/scheme "://" spec/host #":" spec/port]
+            spec/ref: as url! ajoin ["pop3://" spec/user #"@" spec/host #":" spec/port]
+            port/state: 'INIT
+            port/extra/connection: conn: make port! conn
+            conn/parent: port
+            conn/awake: :pop3-conn-awake
+            open conn
+            port
+        ]
+        open?: func [
+            port [port!] /local conn
+        ] [
+            to logic! all [
+                port/state
+                port/extra
+                port? conn: port/extra/connection
+                open? conn
+            ]
+        ]
+        close: func [
+            port [port!]
+        ] [
+            if open? port [
+                do-cmd port/extra 'QUIT
+                wait [port port/spec/timeout]
+                try [close port/extra/connection]
+                port/extra: none
+                port/state: none
+            ]
+            port
+        ]
+        read: func [
+            port [port!]
+        ] [
+            if all [
+                port/state <> 'INIT
+                not open? port
+            ] [cause-error 'Access 'not-open port/spec/ref]
+            either all [
+                find [WRITING INIT] port/state
+                port? wait [port port/spec/timeout]
+                port/data
+            ] [
+                copy port/data
+            ] [none]
+        ]
+        write: func [port [port!] data /local cmd arg] [
+            assert-ready port
+            case [
+                word? :data [do-cmd port/extra data]
+                all [
+                    block? :data
+                    parse data [
+                        ['GET | 'RETR | 'RETRIEVE] set arg integer! (cmd: 'RETR)
+                        | ['DEL | 'DELE | 'DELETE] set arg integer! (cmd: 'DELE)
+                        | 'TOP copy arg 1 2 integer! (
+                            cmd: 'TOP
+                            all [1 = length? arg append arg 0]
+                        )
+                        | 'RESET (cmd: 'RST)
+                    ]
+                ] [
+                    do-cmd/with port/extra :cmd :arg
+                ]
+                'else [
+                    cause-error 'Access 'invalid-port-arg :data
+                ]
+            ]
+            port
+        ]
+        pick: func [port [port!] index [integer!]] [
+            assert-ready port
+            do-cmd/with port/extra 'RETR index
+            while [integer? wait [port port/spec/timeout]] [
+                if port/state <> 'READING [break]
+            ]
+            copy port/data
+        ]
+        remove: func [port [port!] /key index [integer!]] [
+            unless index [
+                while [not integer? try [index: to integer! ask "Enter mail index: "]] [
+                    sys/log/error 'POP3 "Index must be an integer!"
+                ]
+            ]
+            assert-ready port
+            do-cmd/with port/extra 'DELE index
+            all [
+                wait [port port/spec/timeout]
+                port/data
+                copy port/data
+            ]
+        ]
+        length?: func [port [port!]] [
+            assert-ready port
+            do-cmd port/extra 'STAT
+            all [
+                wait [port port/spec/timeout]
+                port/data
+                load port/data
+            ]
+        ]
+    ]
+]
+sys/make-scheme/with [
+    name: 'pop3s
+    title: "Post Office Protocol (v3) Secure"
+    spec: make spec [
+        port: 995
+    ]
+] 'pop3} import (
+        module [
+            Title: "Rebol3 HTTP protocol scheme"
+            Name: http
+            Version: 0.5.2
+            Date: 22-Jul-2023
+            Author: ["Gabriele Santilli" "Richard Smolak" "Oldes"]
+            Exports: none
+            Needs: none
+        ] [
+            sync-op: func [port body /local header state] [
+                unless port/state [open port port/state/close?: yes]
+                state: port/state
+                state/awake: :read-sync-awake
+                do body
+                if state/state = 'ready [do-request port]
+                while [not find [ready close] state/state] [
+                    if all [state/state = 'closing not open? state/connection] [
+                        state/state: 'ready
+                        break
+                    ]
+                    unless port? wait [state/connection port/spec/timeout] [
+                        throw-http-error port make error! [
+                            type: 'Access
+                            id: 'no-connect
+                            arg1: port/spec/ref
+                            arg2: 'timeout
+                        ]
+                        exit
+                    ]
+                    if all [
+                        state/info/status-code >= 300
+                        state/info/status-code < 400
+                        find port/state/info/headers 'location
+                    ] [
+                        state/state: 'redirect
+                    ]
+                    switch state/state [
+                        inited [
+                            if not open? state/connection [
+                                throw-http-error port ["Internal " state/connection/spec/ref " connection closed"]
+                                exit
+                            ]
+                        ]
+                        reading-data [
+                            read state/connection
+                        ]
+                        redirect [
+                            do-redirect port port/state/info/headers/location
+                            state: port/state
+                            state/awake: :read-sync-awake
+                        ]
+                    ]
+                ]
+                if state/error [
+                    throw-http-error port state/error
+                    exit
+                ]
+                body: copy port
+                sys/log/info 'HTTP ["Done reading:^[[22m" length? body "bytes"]
+                header: copy port/state/info/headers
+                if all [state/close? open? port] [
+                    sys/log/more 'HTTP ["Closing port for:^[[m" port/spec/ref]
+                    close port
+                ]
+                reduce [port/state/info/status-code header body]
+            ]
+            read-sync-awake: func [event [event!] /local error state] [
+                sys/log/debug 'HTTP ["Read-sync-awake:" event/type]
+                state: event/port/state
+                switch/default event/type [
+                    connect ready [
+                        do-request event/port
+                        false
+                    ]
+                    done [
+                        true
+                    ]
+                    close [
+                        true
+                    ]
+                    custom [
+                        if event/code = 300 [
+                            state/state: 'redirect
+                            return true
+                        ]
+                        false
+                    ]
+                    error [
+                        if all [
+                            state
+                            state/state <> 'closing
+                        ] [
+                            sys/log/debug 'HTTP ["Closing (sync-awake):^[[1m" event/port/spec/ref]
+                            close event/port
+                        ]
+                        if error? event/port/state [do event/port/state]
+                        true
+                    ]
+                ] [
+                    false
+                ]
+            ]
+            http-awake: func [event /local port http-port state awake res] [
+                port: event/port
+                http-port: port/parent
+                state: http-port/state
+                if any-function? :http-port/awake [state/awake: :http-port/awake]
+                awake: :state/awake
+                sys/log/debug 'HTTP ["Awake:^[[1m" event/type "^[[22mstate:^[[1m" state/state]
+                res: switch/default event/type [
+                    read [
+                        awake make event! [type: 'read port: http-port]
+                        check-response http-port
+                    ]
+                    wrote [
+                        awake make event! [type: 'wrote port: http-port]
+                        state/state: 'reading-headers
+                        read port
+                        false
+                    ]
+                    lookup [
+                        open port false
+                    ]
+                    connect [
+                        state/state: 'ready
+                        awake make event! [type: 'connect port: http-port]
+                    ]
+                    close
+                    error [
+                        res: switch state/state [
+                            ready [
+                                awake make event! [type: 'close port: http-port]
+                            ]
+                            inited [
+                                throw-http-error http-port any [
+                                    http-port/state/error
+                                    all [object? state/connection/state state/connection/state/error]
+                                    make error! [
+                                        type: 'Access
+                                        id: 'no-connect
+                                        arg1: http-port/spec/ref
+                                    ]
+                                ]
+                            ]
+                            doing-request reading-headers [
+                                throw-http-error http-port any [
+                                    all [object? state/connection/state state/connection/state/error]
+                                    "Server closed connection"
+                                ]
+                            ]
+                            reading-data [
+                                either any [
+                                    integer? state/info/headers/content-length
+                                    state/info/headers/transfer-encoding = "chunked"
+                                ] [
+                                    throw-http-error http-port "Server closed connection"
+                                ] [
+                                    state/state: 'ready
+                                    any [
+                                        awake make event! [type: 'done port: http-port]
+                                        awake make event! [type: 'close port: http-port]
+                                    ]
+                                ]
+                            ]
+                        ]
+                        try [
+                            state/error: state/connection/state/error
+                        ]
+                        sys/log/debug 'HTTP ["Closing:^[[1m" http-port/spec/ref]
+                        close http-port
+                        if error? state [do state]
+                        res
+                    ]
+                ] [true]
+                res
+            ]
+            throw-http-error: func [
+                http-port [port!]
+                error [error! string! block!]
+            ] [
+                sys/log/debug 'HTTP ["Throwing error:^[[m" error]
+                unless error? error [
+                    error: make error! [
+                        type: 'Access
+                        id: 'Protocol
+                        arg1: either block? error [ajoin error] [error]
+                    ]
+                ]
+                either object? http-port/state [
+                    http-port/state/error: error
+                    http-port/state/awake make event! [type: 'error port: http-port]
+                ] [do error]
+            ]
+            make-http-request: func [
+                "Create an HTTP request (returns binary!)"
+                spec [block! object!] "Request specification from an opened port"
+                /local method path target query headers content request
+            ] [
+                method: any [select spec 'method 'GET]
+                path: any [select spec 'path %/]
+                target: select spec 'target
+                query: select spec 'query
+                headers: any [select spec 'headers []]
+                content: select spec 'content
+                request: ajoin [
+                    uppercase form :method SP
+                    mold as url! :path
+                ]
+                if :target [append request mold as url! :target]
+                if :query [append append request #"?" :query]
+                append request " HTTP/1.1^M^/"
+                foreach [word string] :headers [
+                    append request ajoin [form :word #":" SP :string CRLF]
+                ]
+                if :content [
+                    if map? :content [
+                        content: to-json content
+                        unless find headers 'Content-Type [
+                            append request "Content-Type: application/json^M^/"
+                        ]
+                    ]
+                    content: to binary! :content
+                    append request ajoin [
+                        "Content-Length: " length? content CRLF
+                    ]
+                ]
+                sys/log/info 'HTTP ["Request:^[[22m" anonymize mold request]
+                append request CRLF
+                request: to binary! request
+                if content [append request content]
+                request
+            ]
+            do-request: func [
+                "Perform an HTTP request"
+                port [port!]
+                /local spec info
+            ] [
+                spec: port/spec
+                info: port/state/info
+                spec/headers: make system/schemes/http/headers to block! spec/headers
+                unless spec/headers/host [
+                    spec/headers/host: either find [80 443] spec/port [
+                        form spec/host
+                    ] [
+                        ajoin [spec/host #":" spec/port]
+                    ]
+                ]
+                port/state/state: 'doing-request
+                info/headers: info/response-line: info/status-code: port/data:
+                info/size: info/date: info/name: none
+                write port/state/connection make-http-request :spec
+            ]
+            parse-write-dialect: func [port block /local spec] [
+                spec: port/spec
+                parse block [
+                    [set block word! (spec/method: block) | (spec/method: 'POST)]
+                    opt [set block [file! | url!] (spec/path: block)]
+                    [set block [block! | map!] (spec/headers: block) | (spec/headers: [])]
+                    [set block [any-string! | binary! | map!] (spec/content: block) | (spec/content: none)]
+                ]
+            ]
+            put system/catalog 'http-status-codes http-status-codes: #(
+                200 "OK"
+                201 "Created"
+                202 "Accepted"
+                203 "Non-Authoritative Information"
+                204 "No Connect"
+                205 "Reset"
+                206 "Partial"
+                300 "Multiple Choices"
+                301 "Moved Permanently"
+                302 "Found"
+                303 "See Other"
+                304 "Not Modified"
+                305 "Use Proxy"
+                308 "Moved Permanently"
+                400 "Bad Request"
+                401 "Unauthorized"
+                402 "Payment Required"
+                403 "Forbidden"
+                404 "Not Found"
+                405 "Not Allowed"
+                406 "Not Acceptable"
+                407 "Proxy Authentication Required"
+                408 "Request Timeout"
+                409 "Conflict"
+                410 "Gone"
+                411 "Length Required"
+                412 "Precondition Failed"
+                413 "Payload Too Large"
+                414 "URI Too Long"
+                415 "Unsupported Media Type"
+                416 "Range Not Satisfiable"
+                417 "Expectation Failed"
+                418 "I am a teapot"
+                426 "Upgrade Required"
+                428 "Precondition Required"
+                429 "Too Many Requests"
+                431 "Request Header Fields Too Large"
+                451 "Unavailable For Legal Reasons"
+                500 "Internal Server Error"
+                501 "Not Implemented"
+                502 "Bad Gateway"
+                503 "Service Unavailable"
+                504 "Gateway Timeout"
+                505 "HTTP Version Not Supported"
+                506 "Variant Also Negotiates"
+                507 "Insufficient Storage"
+                508 "Loop Detected "
+                510 "Not Extended"
+                511 "Network Authentication Required"
+            )
+            check-response: func [port /local conn res headers d1 d2 line info state awake spec date code] [
+                state: port/state
+                spec: port/spec
+                conn: state/connection
+                info: state/info
+                headers: info/headers
+                line: info/response-line
+                awake: :state/awake
+                if all [
+                    not headers
+                    any [
+                        all [
+                            d1: find conn/data crlfbin
+                            d2: find/tail d1 crlf2bin
+                        ]
+                        all [
+                            d1: find conn/data #{0A}
+                            d2: find/tail d1 #{0A0A}
+                            sys/log/debug 'HTML "Server using malformed line separator of #{0A0A}"
+                        ]
+                    ]
+                ] [
+                    info/response-line: line: to string! copy/part conn/data d1
+                    sys/log/info 'HTTP line
+                    info/headers: headers: construct/with d1 http-response-headers
+                    sys/log/info 'HTTP ["Headers:^[[22m" mold body-of headers]
+                    info/name: spec/ref
+                    if state/error: try [
+                        if headers/content-length [info/size: headers/content-length: to integer! headers/content-length]
+                        none
+                    ] [
+                        awake make event! [type: 'error port: port]
+                    ]
+                    if date: any [
+                        select headers 'last-modified
+                        select headers 'date
+                    ] [
+                        try [info/date: to-date/utc date]
+                    ]
+                    remove/part conn/data d2
+                    state/state: 'reading-data
+                ]
+                unless headers [
+                    read conn
+                    return false
+                ]
+                res: false
+                unless info/status-code [
+                    if parse line [
+                        "HTTP/1." [#"0" | #"1"] some #" " copy code: 3 digits to end
+                    ] [
+                        info/status-code: to integer! code
+                    ]
+                ]
+                code: info/status-code
+                sys/log/debug 'HTTP ["Check-response code:" code "means:" select http-status-codes code]
+                case [
+                    code < 200 [
+                        info/headers: info/response-line: info/status-code: port/data: none
+                        state/state: 'reading-headers
+                        read conn
+                    ]
+                    find [204 304] code [
+                        state/state: 'ready
+                        res: awake make event! [type: 'done port: port]
+                        unless res [res: awake make event! [type: 'ready port: port]]
+                    ]
+                    'else [
+                        if code = 404 [info/type: none]
+                        either spec/method = 'HEAD [
+                            state/state: 'ready
+                            res: awake make event! [type: 'done port: port]
+                            unless res [res: awake make event! [type: 'ready port: port]]
+                        ] [
+                            res: check-data port
+                            if all [not res state/state = 'ready] [
+                                res: awake make event! [type: 'done port: port]
+                                unless res [res: awake make event! [type: 'ready port: port]]
+                            ]
+                        ]
+                    ]
+                ]
+                res
+            ]
+            check-result: func [result [block!] all [logic! none!]] [
+                either all [
+                    result
+                ] [
+                    if any [result/1 >= 400 result/1 == 300] [
+                        do make error! [
+                            type: 'Access
+                            id: 'Protocol
+                            arg1: any [select http-status-codes result/1 "Unknown error response"]
+                        ]
+                    ]
+                    result/3
+                ]
+            ]
+            crlfbin: #{0D0A}
+            crlf2bin: #{0D0A0D0A}
+            crlf2: to string! crlf2bin
+            http-response-headers: construct [
+                Content-Length:
+                Content-Encoding:
+                Transfer-Encoding:
+                Last-Modified:
+            ]
+            do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state headers] [
+                spec: port/spec
+                state: port/state
+                port/data: none
+                sys/log/info 'HTTP ["Redirect to:^[[m" mold new-uri]
+                state/redirects: state/redirects + 1
+                if state/redirects > 10 [
+                    res: throw-http-error port "Too many redirections"
+                ]
+                spec/query: spec/target: none
+                if #"/" = first new-uri [
+                    if "keep-alive" = select state/info/headers 'Connection [
+                        spec/path: new-uri
+                        do-request port
+                        return true
+                    ]
+                    new-uri: as url! ajoin [spec/scheme "://" spec/host #":" spec/port new-uri]
+                ]
+                new-uri: decode-url new-uri
+                spec/headers/host: new-uri/host
+                unless select new-uri 'port [
+                    switch new-uri/scheme [
+                        'https [append new-uri [port: 443]]
+                        'http [append new-uri [port: 80]]
+                    ]
+                ]
+                new-uri: construct/with new-uri port/scheme/spec
+                new-uri/method: spec/method
+                new-uri/ref: as url! ajoin either find [none 80 443] new-uri/port [
+                    [new-uri/scheme "://" new-uri/host new-uri/path]
+                ] [[new-uri/scheme "://" new-uri/host #":" new-uri/port new-uri/path]]
+                unless find [http https] new-uri/scheme [
+                    return throw-http-error port {Redirect to a protocol different from HTTP or HTTPS not supported}
+                ]
+                headers: spec/headers
+                close port/state/connection
+                port/spec: new-uri
+                port/state: none
+                open port
+                port/spec/headers: headers
+                port
+            ]
+            check-data: func [port /local headers res data available out chunk-size pos trailer state conn] [
+                state: port/state
+                headers: state/info/headers
+                conn: state/connection
+                res: false
+                sys/log/more 'HTTP ["Check-data; bytes:^[[m" length? conn/data]
+                case [
+                    headers/transfer-encoding = "chunked" [
+                        data: conn/data
+                        available: length? data
+                        sys/log/more 'HTTP ["Chunked data: " state/chunk-size "av:" available]
+                        unless port/data [port/data: make binary! 32000]
+                        out: port/data
+                        if state/chunk-size [
+                            either state/chunk-size <= available [
+                                append out take/part data state/chunk-size
+                                state/chunk-size: none
+                                if crlfbin <> take/part data 2 [
+                                    throw-http-error port "Missing CRLF after chunk end!"
+                                ]
+                            ] [
+                                append out take/part data available
+                                state/chunk-size: state/chunk-size - available
+                            ]
+                        ]
+                        if not empty? data [
+                            until [
+                                either parse data [
+                                    copy chunk-size some hex-digits
+                                    crlfbin pos: to end
+                                ] [
+                                    chunk-size: to integer! to issue! to string! :chunk-size
+                                    remove/part data pos
+                                    available: length? data
+                                    sys/log/more 'HTTP ["Chunk-size:^[[m" chunk-size " ^[[36mavailable:^[[m " available]
+                                    either chunk-size = 0 [
+                                        if parse data [
+                                            crlfbin (trailer: "") to end | copy trailer to crlf2bin to end
+                                        ] [
+                                            trailer: construct trailer
+                                            append headers body-of trailer
+                                            state/state: 'ready
+                                            res: state/awake make event! [type: 'custom port: port code: 0]
+                                            clear head conn/data
+                                        ]
+                                        true
+                                    ] [
+                                        available: length? data
+                                        either chunk-size <= available [
+                                            append out take/part data :chunk-size
+                                            if crlfbin <> take/part data 2 [
+                                                throw-http-error port "Missing CRLF after chunk end!???"
+                                            ]
+                                            empty? data
+                                        ] [
+                                            state/chunk-size: chunk-size - available
+                                            append out take/part data available
+                                            true
+                                        ]
+                                    ]
+                                ] [
+                                    throw-http-error port "Invalid chunk data!"
+                                    true
+                                ]
+                            ]
+                        ]
+                        unless state/state = 'ready [
+                            res: true
+                        ]
+                    ]
+                    integer? headers/content-length [
+                        if headers/content-length <= length? conn/data [
+                            state/state: 'ready
+                            port/data: copy/part conn/data headers/content-length
+                            if state/info/status-code >= 300 [return false]
+                        ]
+                        res: true
+                    ]
+                    true [
+                        port/data: conn/data
+                        either state/info/status-code < 300 [
+                            res: true
+                        ] [
+                            read conn
+                        ]
+                    ]
+                ]
+                res
+            ]
+            decode-result: func [
+                result [block!] "[header body]"
+                /local body content-type code-page encoding
+            ] [
+                if encoding: select result/2 'Content-Encoding [
+                    either find ["gzip" "deflate" "br"] encoding [
+                        if encoding == "br" [encoding: 'brotli]
+                        try/with [
+                            result/3: decompress result/3 to word! encoding
+                        ] [
+                            sys/log/info 'HTTP ["Failed to decode data using:^[[22m" encoding]
+                            return result
+                        ]
+                        sys/log/info 'HTTP ["Extracted using:^[[22m" encoding "^[[1mto:^[[22m" length? result/3 "bytes"]
+                    ] [
+                        sys/log/info 'HTTP ["Unknown Content-Encoding:^[[m" encoding]
+                    ]
+                ]
+                if all [
+                    content-type: select result/2 'Content-Type
+                    any [
+                        parse content-type [
+                            to #";" thru "charset=" [
+                                #"^"" copy code-page to #"^"" to end
+                                | copy code-page to end
+                            ]
+                        ]
+                        parse content-type [["text/" | "application/json"] to end]
+                    ]
+                ] [
+                    code-page: any [code-page "utf-8"]
+                    sys/log/info 'HTTP ["Trying to decode from code-page:^[[m" code-page]
+                    try [result/3: deline iconv result/3 code-page]
+                ]
+                result
+            ]
+            anonymize: func [
+                data [string!]
+            ] bind [
+                parse data [
+                    any [
+                        thru LF [
+                            "Authorization:" some SP some uri
+                            | ["X-Token:" | "X-Auth-Token:" | "X-goog-api-key:"]
+                        ] some SP 0 4 uri change to LF "****"
+                        | skip
+                    ]
+                ]
+                data
+            ] system/catalog/bitsets
+            hex-digits: system/catalog/bitsets/hex-digits
+            digits: system/catalog/bitsets/numeric
+            sys/make-scheme [
+                name: 'http
+                title: "HyperText Transport Protocol v1.1"
+                spec: make system/standard/port-spec-net [
+                    path: %/
+                    method: 'GET
+                    headers: []
+                    content: none
+                    timeout: 15
+                ]
+                info: make system/standard/file-info [
+                    response-line:
+                    status-code:
+                    headers: none
+                ]
+                actor: [
+                    read: func [
+                        port [port!]
+                        /part {Partial read a given number of units (source relative)}
+                        length [integer!]
+                        /seek "Read from a specific position (source relative)"
+                        index [integer!] "zero-based!"
+                        /string {Convert UTF and line terminators to standard text string}
+                        /binary "Preserves contents exactly"
+                        /lines "Convert to block of strings (implies /string)"
+                        /all "Read may include additional information"
+                        /local result
+                    ] [
+                        sys/log/debug 'HTTP "READ"
+                        if lines [
+                            if binary [cause-error 'Script 'bad-refine /binary]
+                            seek: part: none
+                        ]
+                        if lib/all [string binary] [cause-error 'Script 'bad-refines none]
+                        unless port/state [open port port/state/close?: yes]
+                        if lib/all [any [part seek] not string] [
+                            either seek [binary: true assert [index >= 0]] [index: 0]
+                            length: either part [assert [length > 0] length + index] [none]
+                            put port/spec/headers quote Range: ajoin ["bytes=" index #"-" any [lib/all [length length - 1] ""]]
+                        ]
+                        either any-function? :port/awake [
+                            unless open? port [cause-error 'Access 'not-open port/spec/ref]
+                            if port/state/state <> 'ready [throw-http-error "Port not ready"]
+                            port/state/awake: :port/awake
+                            do-request port
+                        ] [
+                            result: sync-op port []
+                            either binary [
+                                if result/1 <> 206 [
+                                    case/all [
+                                        seek [result/3: at result/3 index if part [length: length - index]]
+                                        part [clear skip result/3 length]
+                                    ]
+                                ]
+                            ] [
+                                decode-result result
+                                case/all [
+                                    lines [result/3: split-lines result/3]
+                                    index [result/3: skip result/3 index]
+                                    length [clear skip result/3 length]
+                                ]
+                            ]
+                            check-result result :all
+                        ]
+                    ]
+                    write: func [
+                        port [port!]
+                        value "Data to write (non-binary converts to UTF-8)"
+                        /binary "Preserves contents exactly"
+                        /all {Response may include additional information (source relative)}
+                        /local result
+                    ] [
+                        sys/log/debug 'HTTP "WRITE"
+                        case [
+                            binary? value [
+                                value: reduce [[Content-Type: "application/octet-stream"] value]
+                            ]
+                            map? value [
+                                value: reduce [[Content-Type: "application/json; charset=utf-8"] encode 'JSON value]
+                            ]
+                            not block? value [
+                                value: reduce [[Content-Type: "application/x-www-form-urlencoded; charset=utf-8"] form value]
+                            ]
+                        ]
+                        either any-function? :port/awake [
+                            unless open? port [cause-error 'Access 'not-open port/spec/ref]
+                            if port/state/state <> 'ready [throw-http-error "Port not ready"]
+                            port/state/awake: :port/awake
+                            parse-write-dialect port value
+                            do-request port
+                        ] [
+                            result: sync-op port [parse-write-dialect port value]
+                            unless binary [decode-result result]
+                            check-result result :all
+                        ]
+                    ]
+                    update: func [
+                        port [port!]
+                    ] [
+                        ? port
+                        ? port/state
+                        read port/state/connection
+                    ]
+                    open: func [
+                        port [port!]
+                        /local conn spec
+                    ] [
+                        sys/log/debug 'HTTP ["OPEN, state:" port/state]
+                        if port/state [return port]
+                        if none? port/spec/host [throw-http-error port "Missing host address"]
+                        port/state: object [
+                            state: 'inited
+                            connection:
+                            error: none
+                            close?: no
+                            binary?: no
+                            info: make port/scheme/info [type: 'url]
+                            awake: :port/awake
+                            redirects: 0
+                            chunk: none
+                            chunk-size: none
+                        ]
+                        spec: port/spec
+                        port/state/connection: conn: make port! compose [
+                            scheme: (to lit-word! either spec/scheme = 'http ['tcp] ['tls])
+                            host: spec/host
+                            port: spec/port
+                            ref: as url! ajoin [scheme "://" host #":" port]
+                        ]
+                        conn/awake: :http-awake
+                        conn/parent: port
+                        sys/log/info 'HTTP ["Opening connection:^[[22m" conn/spec/ref]
+                        open conn
+                        port
+                    ]
+                    open?: func [
+                        port [port!]
+                    ] [
+                        all [object? port/state open? port/state/connection true]
+                    ]
+                    close: func [
+                        port [port!]
+                    ] [
+                        sys/log/debug 'HTTP "CLOSE"
+                        if object? port/state [
+                            port/state/state: 'closing
+                            close port/state/connection
+                            port/state/connection/awake: none
+                            if error? port/state/error [
+                                port/state: port/state/error
+                            ]
+                        ]
+                        if error? port/state [do port/state]
+                        port
+                    ]
+                    copy: func [
+                        port [port!]
+                    ] [
+                        either all [port/spec/method = 'HEAD port/state] [
+                            reduce bind [name size date] port/state/info
+                        ] [
+                            if port/data [copy port/data]
+                        ]
+                    ]
+                    query: func [
+                        port [port!]
+                        /mode
+                        field [word! block! none!]
+                        /local error state result
+                    ] [
+                        if all [mode none? field] [return words-of system/schemes/http/info]
+                        if none? state: port/state [
+                            open port
+                            attempt [sync-op port [parse-write-dialect port [HEAD]]]
+                            state: port/state
+                            close port
+                        ]
+                        either all [
+                            state
+                            state/info/status-code
+                        ] [
+                            either field [
+                                either word? field [
+                                    select state/info field
+                                ] [
+                                    result: make block! length? field
+                                    foreach word field [
+                                        if any-word? word [
+                                            if set-word? word [append result word]
+                                            append result state/info/(to word! word)
+                                        ]
+                                    ]
+                                    result
+                                ]
+                            ] [state/info]
+                        ] [none]
+                    ]
+                    length?: func [
+                        port [port!]
+                    ] [
+                        either port/data [length? port/data] [0]
+                    ]
+                ]
+                headers: context [
+                    Host: none
+                    Accept: "*/*"
+                    Accept-charset: "utf-8"
+                    Accept-Encoding: "gzip,deflate"
+                    User-Agent: ajoin ["rebol/" system/version " (" system/platform "; " system/build/arch #")"]
+                ]
+                if find system/catalog/compressions 'brotli [
+                    append headers/Accept-Encoding ",br"
+                ]
+            ]
+            sys/make-scheme/with [
+                name: 'https
+                title: "Secure HyperText Transport Protocol v1.1"
+                spec: make spec [
+                    port: 443
+                ]
+            ] 'http
+        ]
+    )
+] []]

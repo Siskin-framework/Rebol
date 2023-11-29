@@ -119,7 +119,8 @@
 
 	oser = *ser;
 	*ser = *nser;
-	ser->info = oser.info;
+	ser->sizes = oser.sizes;
+	ser->flags = oser.flags;
 	*nser = oser;
 
 	Clear_Series(ser);
@@ -219,6 +220,7 @@
 		Extend_Series(PG_Word_Table.series, 256);
 	}
 	if (SERIES_FULL(Bind_Table)) {
+		// Bind_Table size must be same like PG_Word_Table.series, so we must extend it as well.
 		Extend_Series(Bind_Table, 256);
 		CLEAR_SERIES(Bind_Table);
 	}
@@ -322,7 +324,7 @@ make_sym:
 **
 ***********************************************************************/
 {
-	VAL_SET(value, REB_WORD);
+	VAL_SET(value, REB_SET_WORD); //@@ https://github.com/Oldes/Rebol-issues/issues/2507
 	VAL_SET_OPT(value, OPTS_UNWORD);
 	VAL_BIND_SYM(value) = sym;
 	VAL_BIND_TYPESET(value) = ALL_64;

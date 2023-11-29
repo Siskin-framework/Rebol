@@ -67,14 +67,17 @@ Rebol [
 		]
 	--test-- "construct image invalid"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1034
-		--assert error? try [load {#[image!]}]
 		--assert error? try [load {#[image! x]}]
 		--assert error? try [load {#[image! 1x-1]}]
 		--assert error? try [load {#[image! 1x1 x]}]
 		--assert error? try [load {#[image! 1x1 #{FF} x]}]
 		--assert error? try [load {#[image! 1x1 20.20.20.60 x]}]
 		--assert error? try [load {#[image! 1x1 #{FFFFFF} #{30} x]}]
-
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1037
+		--assert all [error? e: try [make image! [3x2 #{000000000000000000000000000000000000} 1x0]] e/id = 'malconstruct]
+		--assert all [error? e: try [load {#[image! 3x2 #{000000000000000000000000000000000000} 1x0]}] e/id = 'malconstruct]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2508
+		--assert datatype? try [load {#[image!]}]
 
 ===end-group===
 
@@ -127,6 +130,10 @@ Rebol [
 		--assert 0x2 = indexz?/xy atz img 2x2
 		--assert 0x2 = indexz?/xy atz img 20x2
 		--assert 0x1 = indexz?/xy skip atz img 1x1 -1x0
+	--test-- "mold/all image with modified index"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1037
+		--assert 2x1 = index?/xy load mold/all next make image! 3x2
+
 ===end-group===
 
 ===start-group=== "FOREACH"
@@ -356,6 +363,44 @@ FFFFFFDC1616212121212121
 
 ===end-group===
 
+===start-group=== "RGB color distance"
+--test-- "color-distance"
+	--assert 764.83 = round/to color-distance 0.0.0 255.255.255 0.01
+	--assert 569.97 = round/to color-distance 0.0.255 255.0.0 0.01
+	--assert 42.04  = round/to color-distance 200.105.200 225.105.200 0.01
+	--assert 41.3   = round/to color-distance 175.200.100 200.200.100 0.01
+	--assert 0.0    = round/to color-distance 200.200.100 200.200.100 0.01
+===end-group===
+
+===start-group=== "Image difference"
+--test-- "image-diff (same sizes)"
+	i1: load %units/files/flower.png
+	i2: load %units/files/flower.bmp
+	;i3: load %units/files/flower.jpg ;; it looks that on macOS the raw image is different then on Windows
+	i3: tint copy i2 128.128.128 50%  ;; so better use another difference
+	--assert 0.00% =          image-diff i1 i2
+	--assert 11.6% = round/to image-diff i1 i3 0.01%
+--test-- "image-diff (different sizes)"
+	i4: copy/part i3 10x10
+	--assert 11.13% = round/to image-diff i1 i4 0.01%
+	--assert 11.13% = round/to image-diff i4 i1 0.01%
+--test-- "image-diff (min/max difference)"
+	i1: make image! [2x2 0.0.0]
+	i2: make image! [2x2 255.255.255]
+	--assert   0% = image-diff i1 i1
+	--assert 100% = image-diff i1 i2
+--test-- "image-diff/part"
+	i1/1: 255.255.255
+	i1/2: 255.255.255
+	--assert   0% = round/to image-diff/part i1 i2 0x0 1x1 1%
+	--assert   0% = round/to image-diff/part i1 i2 0x0 1x3 1%
+	--assert  50% = round/to image-diff/part i1 i2 0x0 1x2 1%
+	--assert  50% = round/to image-diff/part i1 i2 1x0 1x2 1%
+	--assert  50% = round/to image-diff/part i1 i2 2x2 -1x-2 1%
+	--assert error? try [image-diff/part i1 i2 0x0 0x2] ;; size cannot have zero width or height
+	--assert error? try [image-diff/part i1 i2 3x0 1x2] ;; offset out of range
+	--assert error? try [image-diff/part i1 i2 0x2 1x2] 
+===end-group===
 
 ===start-group=== "Tint color"
 
@@ -422,19 +467,26 @@ if value? 'blur [
 
 
 ===start-group=== "Save/load image"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2534
 	if find codecs 'png [
 		--test-- "save/load PNG"
 			img1: make image! [2x2 255.0.0.10]
 			save %units/files/test.png img1
 			img2: load %units/files/test.png
-			--assert #{FF00000AFF00000AFF00000AFF00000A} = to binary! img2
+			--assert not none? find [
+				#{FF00000AFF00000AFF00000AFF00000A}
+				#{0A00000A0A00000A0A00000A0A00000A} ;; premultiplied on macOS :/
+			] to binary! img2
 	]
 	if find codecs 'bmp [
 		--test-- "save/load BMP"
 			img1: make image! [2x2 255.0.0.10]
 			save %units/files/test.bmp img1
 			img2: load %units/files/test.bmp
-			--assert #{FF00000AFF00000AFF00000AFF00000A} = to binary! img2
+			--assert not none? find [
+				#{FF00000AFF00000AFF00000AFF00000A}
+				#{0A00000A0A00000A0A00000A0A00000A} ;; premultiplied on macOS :/
+			] to binary! img2
 	]
 ===end-group===
 

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -204,17 +205,18 @@ static REBVAL *Func_Word(REBINT dsf)
 	return R_UNSET;
 }
 
-static REBINT Init_Depth(void)
+static REBINT Init_Depth(REBINT plus)
 {
 	// Check the trace depth is ok:
-	int depth = Eval_Depth() - Trace_Depth;
+	int depth = Eval_Depth() - Trace_Depth + plus;
 	if (depth < 0 || depth >= Trace_Level) return -1;
 	if (depth > 10) depth = 10;
-	Debug_Space(4 * depth);
+	Debug_Space(3 * depth);
 	return depth;
 }
 
-#define CHECK_DEPTH(d) if ((d = Init_Depth()) < 0) return;\
+#define CHECK_DEPTH(d) if ((d = Init_Depth(0)) < 0) return;
+#define CHECK_DEPTH_RET(d) if ((d = Init_Depth(1)) < 0) return;
 
 void Trace_Line(REBSER *block, REBINT index, REBVAL *value)
 {
@@ -258,7 +260,7 @@ void Trace_Func(REBVAL *word, REBVAL *value)
 void Trace_Return(REBVAL *word, REBVAL *value)
 {
 	int depth;
-	CHECK_DEPTH(depth);
+	CHECK_DEPTH_RET(depth);
 	Debug_Fmt_(BOOT_STR(RS_TRACE,6), Get_Word_Name(word));
 	Debug_Values(value, 1, 50);
 }
@@ -431,6 +433,10 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 		pvs->value = pvs->store;
 		break;
 	case PE_BAD_SELECT:
+		if (THROWN(pvs->select)) {
+			pvs->value = pvs->select;
+			return;
+		}
 		Trap2(RE_INVALID_PATH, pvs->orig, pvs->path);
 	case PE_BAD_SET:
 		Trap2(RE_BAD_PATH_SET, pvs->orig, pvs->path);
@@ -489,15 +495,19 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 		Next_Path(&pvs);
 		// Check for errors:
 		if (NOT_END(pvs.path+1) && !ANY_FUNC(pvs.value)) {
+			if (THROWN(pvs.value)) goto thrown;
 			// Only function refinements should get by this line:
 			Trap2(RE_INVALID_PATH, pvs.orig, pvs.path);
 		}
 	}
-	else if (NOT_END(pvs.path+1) && !ANY_FUNC(pvs.value))
+	else if (NOT_END(pvs.path+1) && !ANY_FUNC(pvs.value)) {
+		if (THROWN(pvs.value)) goto thrown;
 		Trap2(RE_BAD_PATH_TYPE, pvs.orig, Of_Type(pvs.value));
+	}
 
 	// If SET then we can drop result storage created above.
 	if (val) {
+		if (THROWN(pvs.value)) goto thrown;
 		DS_DROP; // on SET, we do not care about returned value
 		return 0;
 	} else {
@@ -509,6 +519,10 @@ void Trace_Arg(REBINT num, REBVAL *arg, REBVAL *path)
 		*path_val = pvs.path; // return new path (for func refinements)
 		return pvs.value; // only used for functions
 	}
+thrown:
+	if (val) DS_DROP;
+	*DS_TOP = *pvs.value;
+	return 0;
 }
 
 
@@ -654,6 +668,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 	REBINT dsf = dsp - DSF_BIAS;
 	REBVAL *tos;
 	REBVAL *func;
+	REBOOL useArgs = TRUE;  // can be used by get-word function refinements to ignore values
 
 	if ((dsp + 100) > (REBINT)SERIES_REST(DS_Series)) {
 		Expand_Stack(STACK_MIN);
@@ -702,7 +717,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 			index = Do_Next(block, index, IS_OP(func));
 			// THROWN is handled after the switch.
 			if (index == END_FLAG) Trap2(RE_NO_ARG, Func_Word(dsf), args);
-			DS_Base[ds] = *DS_POP;
+			if (useArgs) DS_Base[ds] = *DS_POP; else DS_DROP;
 			break;
 
 		case REB_LIT_WORD:	// 'WORD - Just get next value
@@ -711,11 +726,11 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 				if (IS_PAREN(value) || IS_GET_WORD(value) || IS_GET_PATH(value)) {
 					index = Do_Next(block, index, IS_OP(func));
 					// THROWN is handled after the switch.
-					DS_Base[ds] = *DS_POP;
+					if (useArgs) DS_Base[ds] = *DS_POP; else DS_DROP;
 				}
 				else {
 					index++;
-					DS_Base[ds] = *value;
+					if (useArgs) DS_Base[ds] = *value;
 				}
 			} else
 				SET_UNSET(&DS_Base[ds]); // allowed to be none
@@ -723,22 +738,18 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 
 		case REB_GET_WORD:	// :WORD - Get value
 			if (index < BLK_LEN(block)) {
-				DS_Base[ds] = *BLK_SKIP(block, index);
+				if (useArgs) DS_Base[ds] = *BLK_SKIP(block, index);
 				index++;
 			} else
 				SET_UNSET(&DS_Base[ds]); // allowed to be none
 			break;
-/*
-				value = BLK_SKIP(block, index);
-				index++;
-				if (IS_WORD(value) && VAL_WORD_FRAME(value)) value = Get_Var(value);
-				DS_Base[ds] = *value;
-*/
+
 		case REB_REFINEMENT: // /WORD - Function refinement
 			if (!path || IS_END(path)) return index;
 			if (IS_WORD(path)) {
 				// Optimize, if the refinement is the next arg:
 				if (SAME_SYM(path, args)) {
+					useArgs = TRUE;
 					SET_TRUE(DS_VALUE(ds)); // set refinement stack value true
 					path++;				// remove processed refinement
 					continue;
@@ -749,7 +760,36 @@ more_path:
 				args = BLK_SKIP(words, 1);
 				for (; NOT_END(args); args++, ds++) {
 					if (IS_REFINEMENT(args) && VAL_WORD_CANON(args) == VAL_WORD_CANON(path)) {
+						useArgs = TRUE;
 						SET_TRUE(DS_VALUE(ds)); // set refinement stack value true
+						path++;				// remove processed refinement
+						break;
+					}
+				}
+				// Was refinement found? If not, error:
+				if (IS_END(args)) Trap2(RE_NO_REFINE, Func_Word(dsf), path);
+				continue;
+			}
+			else if (IS_GET_WORD(path)) {
+				// This branch is almost same like the above one, but better to have it
+				// separated not to slow down regular refinements.
+				// Optimize, if the refinement is the next arg:
+				if (SAME_SYM(path, args)) {
+					value = Get_Var(path);
+					useArgs = IS_TRUE(value);
+					if (useArgs) SET_TRUE(DS_VALUE(ds));
+					path++;				// remove processed refinement
+					continue;
+				}
+				// Refinement out of sequence, resequence arg order:
+more_get_path:
+				ds = dsp;
+				args = BLK_SKIP(words, 1);
+				for (; NOT_END(args); args++, ds++) {
+					if (IS_REFINEMENT(args) && VAL_WORD_CANON(args) == VAL_WORD_CANON(path)) {
+						value = Get_Var(path);
+						useArgs = IS_TRUE(value);
+						if (useArgs) SET_TRUE(DS_VALUE(ds));
 						path++;				// remove processed refinement
 						break;
 					}
@@ -775,14 +815,15 @@ more_path:
 		}
 
 		// If word is typed, verify correct argument datatype:
-		if (!TYPE_CHECK(args, VAL_TYPE(DS_VALUE(ds))))
+		if (!TYPE_CHECK(args, VAL_TYPE(DS_VALUE(ds))) && useArgs)
 			Trap3(RE_EXPECT_ARG, Func_Word(dsf), args, Of_Type(DS_VALUE(ds)));
 	}
 
 	// Hack to process remaining path:
 	if (path && NOT_END(path)) {
-		if (!IS_WORD(path)) Trap1(RE_BAD_REFINE, path);
-		goto more_path;
+		if (IS_WORD(path)) goto more_path; 
+		if (IS_GET_WORD(path)) goto more_get_path;
+		Trap1(RE_BAD_REFINE, path);
 	}
 
 	return index;
@@ -820,7 +861,7 @@ more_path:
 	// Check for recycle signal:
 	if (GET_FLAG(sigs, SIG_RECYCLE)) {
 		CLR_SIGNAL(SIG_RECYCLE);
-		Recycle();
+		Recycle(FALSE);
 	}
 
 #ifdef NOT_USED_INVESTIGATE
@@ -878,9 +919,13 @@ reval:
 	case ET_WORD:
 		value = Get_Var(word = value);
 		if (IS_UNSET(value)) Trap1(RE_NO_VALUE, word);
-		if (VAL_TYPE(value) >= REB_NATIVE && VAL_TYPE(value) <= REB_FUNCTION) goto reval; // || IS_LIT_PATH(value)
+		if (ANY_FUNC(value)) goto reval;
 		DS_PUSH(value);
-		if (IS_LIT_WORD(value)) VAL_SET(DS_TOP, REB_WORD);
+		
+		// Following line was added by Atronix, but I don't know why.
+		//if (IS_LIT_WORD(value)) VAL_SET(DS_TOP, REB_WORD);
+		// `b: quote 'a  b` would return just `a` in console, while in R2 and Red it is `'a`
+
 		if (IS_FRAME(value)) Init_Obj_Value(DS_TOP, VAL_WORD_FRAME(word));
 		index++;
 		break;
@@ -1042,14 +1087,14 @@ eval_func2:
 ***********************************************************************/
 {
 	REBVAL *tos = 0;
-#if (ALEVEL>1)
 	REBINT start = DSP;
+#if (ALEVEL>1)
 //	REBCNT gcd = GC_Disabled;
 #endif
 
 	CHECK_MEMORY(4); // Be sure we don't go far with a problem.
 
-	ASSERT1(block->info, RP_GC_OF_BLOCK);
+	ASSERT1(SERIES_SIZES(block), RP_GC_OF_BLOCK);
 
 	while (index < BLK_LEN(block)) {
 		index = Do_Next(block, index, 0);
@@ -1086,7 +1131,7 @@ eval_func2:
 	REBSER *series = VAL_SERIES(block);
 	REBCNT index = VAL_INDEX(block);
 	REBVAL *tos = 0;
-	REBINT start = DSP;
+	REBINT start = ++DSP;
 
 	while (index < BLK_LEN(series)) {
 		index = Do_Next(series, index, 0);
@@ -1102,7 +1147,7 @@ eval_func2:
 	}
 
 	if (start != DSP || tos != &DS_Base[start+1]) Trap0(RE_MISSING_ARG);
-
+	DS_DROP;
 	return tos;
 }
 
@@ -1198,6 +1243,7 @@ eval_func2:
 				continue;
 			}
 			v = Get_Var(val);
+			if (IS_UNSET(v)) Trap1(RE_NO_VALUE, val);
 			DS_PUSH(v);
 		}
 		else if (IS_PATH(val)) {
@@ -1382,8 +1428,8 @@ eval_func2:
 	REBCNT dsf;
 
 	REBSER *words;
-	REBINT len;
-	REBINT n;
+	REBLEN len;
+	REBLEN n;
 	REBINT start;
 	REBVAL *val;
 
@@ -1436,7 +1482,7 @@ reapply:  // Go back here to start over with a new func
 		}
 		// Copy block contents to stack:
 		if (len < n) n = len;
-		if (start + n + 100 > SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN);
+		if (n + start + 100 > SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN);
 		memcpy(&DS_Base[start], BLK_SKIP(block, index), n * sizeof(REBVAL));
 		DSP = start + n - 1;
 	}
@@ -2326,6 +2372,6 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 
 	// Cleanup stack and memory:
 	DS_RESET;
-	Recycle();
+	Recycle(FALSE);
 	return 0; //result;
 }

@@ -8,6 +8,44 @@ Rebol [
 
 ~~~start-file~~~ "Function"
 
+===start-group=== "Function refinements"
+	fce: func[a [string!] /ref1 b [integer!] /ref2 :c 'd][
+		reduce [a ref1 b ref2 c d]
+	]
+	--test-- "no refinements"
+	--assert all [error? e: try [fce  ] e/id = 'no-arg]
+	--assert all [error? e: try [fce 1] e/id = 'expect-arg]
+	--assert (fce "a") == ["a" #[none] #[none] #[none] #[none] #[none]]
+
+	--test-- "simple refinements"
+	--assert all [error? e: try [fce/ref1 "a"   ] e/id = 'no-arg]
+	--assert all [error? e: try [fce/ref1 "a" ""] e/id = 'expect-arg]
+	--assert (fce/ref1 "a" 1)     == ["a" #[true] 1 #[none] #[none] #[none]]
+	--assert (fce/ref1 "a" 1 + 1) == ["a" #[true] 2 #[none] #[none] #[none]]
+	--assert (fce/ref1/ref2 "a" 1 x y)     == ["a" #[true] 1 #[true] x y]
+	--assert (fce/ref2/ref1 "a" x y 1 + 1) == ["a" #[true] 2 #[true] x y]
+
+	--test-- "dynamic refinements"
+	ref1: yes --assert all [error? e: try [fce/:ref1 "a"   ] e/id = 'no-arg]
+	ref1: off --assert all [error? e: try [fce/:ref1 "a"   ] e/id = 'no-arg]
+	ref1: yes --assert all [error? e: try [fce/:ref1 "a" ""] e/id = 'expect-arg]
+	ref1: off --assert (fce/:ref1 "a" "")    == ["a" #[none] #[none] #[none] #[none] #[none]]
+	ref1: yes --assert (fce/:ref1 "a" 1)     == ["a" #[true]  1      #[none] #[none] #[none]]
+	ref1: off --assert (fce/:ref1 "a" 1)     == ["a" #[none] #[none] #[none] #[none] #[none]]
+	ref1: yes --assert all [(fce/:ref1 "a" x: 1 + 1) == ["a" #[true]  2      #[none] #[none] #[none]] x == 2]
+	ref1: off --assert all [(fce/:ref1 "a" x: 1 + 1) == ["a" #[none] #[none] #[none] #[none] #[none]] x == 2]
+	ref1: yes ref2: yes --assert (fce/:ref1/:ref2 "a" 1 + 1 x y) == ["a" #[true] 2 #[true] x y]
+	ref1: yes ref2: yes --assert (fce/:ref2/:ref1 "a" x y 1 + 1) == ["a" #[true] 2 #[true] x y]
+	ref1: yes ref2: off --assert (fce/:ref1/:ref2 "a" 1 + 1 x y) == ["a" #[true] 2 #[none] #[none] #[none]]
+	ref1: yes ref2: off --assert (fce/:ref2/:ref1 "a" x y 1 + 1) == ["a" #[true] 2 #[none] #[none] #[none]]
+	ref1: off ref2: yes --assert (fce/:ref1/:ref2 "a" 1 + 1 x y) == ["a" #[none] #[none] #[true] x y]
+	ref1: off ref2: yes --assert (fce/:ref2/:ref1 "a" x y 1 + 1) == ["a" #[none] #[none] #[true] x y]
+	ref1: off ref2: off --assert (fce/:ref1/:ref2 "a" 1 + 1 x y) == ["a" #[none] #[none] #[none] #[none] #[none]]
+	ref1: off ref2: off --assert (fce/:ref2/:ref1 "a" x y 1 + 1) == ["a" #[none] #[none] #[none] #[none] #[none]]
+
+===end-group===
+
+
 ===start-group=== "Apply"
 
 --test-- "apply :do [:func]"
@@ -215,6 +253,45 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "FUNCTION (funct)"
+	--test-- "function/with"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/766
+		fun: funct/with [i [integer!]][
+			blk: [1 2 3]
+			return pick data i
+		][
+			data: ["ab" "cd"]
+		]
+		--assert "ab" = fun 1
+		;@@ https://github.com/Oldes/Rebol-issues/issues/900
+		b: body-of :fun
+		clear second b
+		--assert [1 2 3] = second body-of :fun
+
+	--test-- "function/with object and module"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2575
+		o: object [a: 1 test: does [a * 10]]
+		--assert all [
+			function? try [fun: function/with [][test] o]
+			10 = fun
+		]
+		--assert all [
+			closure? try [fun: closure/with [][test] o]
+			10 = fun
+		]
+		m: module [][a: 1 test: does [a * 20]]
+		--assert all [
+			function? try [fun: function/with [][test] m]
+			20 = fun
+		]
+		--assert all [
+			closure? try [fun: closure/with [][test] m]
+			20 = fun
+		]
+
+===end-group===
+
+
 ===start-group=== "Other issues"
 
 --test-- "issue-2025"
@@ -295,7 +372,7 @@ Rebol [
 	f: func [v [any-type!]] [type? get/any 'v]
 	--assert unset! = f make unset! none
 	f: func [v [unset!]] [type? get/any 'v]
-	--assert unset! = f #[unset!]
+	--assert unset! = f #[unset]
 
 --test-- "issue-196"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/196
@@ -385,6 +462,17 @@ Rebol [
 		e/id = 'dup-vars
 		e/arg1 = 'b
 	]
+--test-- "PICK and the ordinals for reflection"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/660
+	--assert all [error? e: try [first :append] e/id = 'cannot-use]
+
+--test-- "issue-313"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/313
+	obj: make object! [a: none f: func [v] [a: v]]
+	abc: make obj []
+	abc/f 3
+	--assert abc/a = 3
+	--assert obj/a = none
 
 ===end-group===
 

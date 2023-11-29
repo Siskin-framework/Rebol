@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: REBOL Host and Extension API
-**  Build: 3.7.2
-**  Date:  5-Jan-2022
+**  Build: 3.15.0
+**  Date:  29-Nov-2023
 **  File:  reb-lib.reb
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-reb-lib.reb)
@@ -22,8 +22,8 @@
 // These constants are created by the release system and can be used to check
 // for compatiblity with the reb-lib DLL (using RL_Version.)
 #define RL_VER 3
-#define RL_REV 7
-#define RL_UPD 2
+#define RL_REV 15
+#define RL_UPD 0
 
 // Compatiblity with the lib requires that structs are aligned using the same
 // method. This is concrete, not abstract. The macro below uses struct
@@ -79,6 +79,10 @@ typedef struct rebol_ext_api {
 	REBCNT (*register_handle)(REBYTE *name, REBCNT size, void* free_func);
 	REBHOB* (*make_handle_context)(REBCNT sym);
 	void (*free_handle_context)(REBHOB *hob);
+	REBCNT (*decode_utf8_char)(const REBYTE *str, REBCNT *len);
+	REBCNT (*register_handle_spec)(REBYTE *name, REBHSP *spec);
+	REBSER* (*to_local_path)(RXIARG *file, REBFLG full, REBFLG utf8);
+	REBSER* (*to_rebol_path)(void *src, REBCNT len, REBINT uni);
 } RL_LIB;
 
 // Extension entry point functions:
@@ -846,6 +850,70 @@ extern RL_LIB *RL;  // is passed to the RX_Init() function
 **
 */
 
+#define RL_DECODE_UTF8_CHAR(a,b)    RL->decode_utf8_char(a,b)
+/*
+**	REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
+**
+**	Converts a single UTF8 code-point (to 32 bit).
+**
+**	Returns:
+**		32 bit character code
+**	Arguments:
+**		src  - UTF8 encoded data
+**		len  - number of source bytes consumed.
+*/
+
+#define RL_REGISTER_HANDLE_SPEC(a,b) RL->register_handle_spec(a,b)
+/*
+**	REBCNT RL_Register_Handle_Spec(REBYTE *name, REBHSP *spec)
+**
+**	Stores handle's specification (required data size and optional callbacks).
+**  It's an extended version of old RL_Register_Handle function.
+**
+**	Returns:
+**		symbol id of the word (whether found or new)
+**		or NOT_FOUND if handle with give ID is already registered.
+**	Arguments:
+**		name      - handle's name as a c-string (length is being detected)
+**		spec      - Handle's specification:
+**                  * size of needed memory to handle,
+**                  * reserved flags
+**                  * release function
+**                  * get path accessor
+**                  * set path accessor
+**
+*/
+
+#define RL_TO_LOCAL_PATH(a,b,c)     RL->to_local_path(a,b,c)
+/*
+**	REBSER* RL_To_Local_Path(RXIARG *file, REBFLG full, REBFLG utf8)
+**
+**	Convert REBOL filename to a local filename.
+**
+**	Returns:
+**		A new series with the converted path or 0 on error.
+**	Arguments:
+**		file - Rebol file as an extension argument (series + index)
+**		full - prepend current directory
+**		utf8 - convert to UTF-8 if needed
+**
+*/
+
+#define RL_TO_REBOL_PATH(a,b,c)     RL->to_rebol_path(a,b,c)
+/*
+**	REBSER* RL_To_Rebol_Path(void *src, REBCNT len, REBINT uni)
+**
+**	Convert local filename to a REBOL filename.
+**
+**	Returns:
+**		A new series with the converted path or 0 on error.
+**	Arguments:
+**		ser - series as a REBYTE or REBUNI.
+**		len - number of source bytes consumed.
+**		uni - if series is REBYTE (0) or REBUNI (1)
+**
+*/
+
 
 
 #define RL_MAKE_BINARY(s) RL_MAKE_STRING(s, FALSE)
@@ -895,5 +963,9 @@ RL_API REBSER* RL_Decode_UTF_String(REBYTE *src, REBCNT len, REBINT utf, REBFLG 
 RL_API REBCNT RL_Register_Handle(REBYTE *name, REBCNT size, void* free_func);
 RL_API REBHOB* RL_Make_Handle_Context(REBCNT sym);
 RL_API void RL_Free_Handle_Context(REBHOB *hob);
+RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len);
+RL_API REBCNT RL_Register_Handle_Spec(REBYTE *name, REBHSP *spec);
+RL_API REBSER* RL_To_Local_Path(RXIARG *file, REBFLG full, REBFLG utf8);
+RL_API REBSER* RL_To_Rebol_Path(void *src, REBCNT len, REBINT uni);
 
 #endif

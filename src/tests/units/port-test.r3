@@ -8,36 +8,9 @@ Rebol [
 
 ~~~start-file~~~ "port"
 
-===start-group=== "decode-url"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/2380
-	--test-- "decode-url-unicode"
-		url: decode-url http://example.com/get?q=ščř#kovtička
-		--assert url/scheme = 'http
-		--assert url/host   = "example.com"
-		--assert url/path   = "/get?q=ščř"
-		--assert url/tag    = "kovtička"
-	--test-- "decode-url-unicode"
-		url: decode-url http://švéd:břéťa@example.com:8080/get?q=ščř#kovtička
-		--assert url/scheme = 'http
-		--assert url/user   = "švéd"
-		--assert url/pass   = "břéťa"
-		--assert url/host   = "example.com"
-		--assert url/port-id = 8080
-		--assert url/path   = "/get?q=ščř"
-		--assert url/tag    = "kovtička"
-	--test-- "decode-url http://host?query"
-		url: decode-url http://host?query
-		--assert url/host = "host"
-		--assert url/path = "?query"
-	--test-- "decode-url tcp://:9000"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/1275
-		url: decode-url tcp://:9000
-		--assert url/scheme = 'tcp
-		--assert url/port-id = 9000
-
-===end-group===
 
 ===start-group=== "directory port"
+
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2320
 	--test-- "port-issue-2320"
 		--assert  %port-issue-2320/ = make-dir %port-issue-2320/
@@ -48,6 +21,7 @@ Rebol [
 		--assert  not empty? open %./
 		--assert  not error? [delete %port-issue-2320/]
 	--test-- "query directory info"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1712
 		--assert [name size date type] = query/mode %. none
 		--assert 'dir     = query/mode %. 'type
 		--assert date?      query/mode %. 'date
@@ -65,6 +39,21 @@ Rebol [
 			d/size = none
 		]
 		delete %dir-606/
+
+	--test-- "create dir"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2525
+		--assert all [
+			not error? try [create %issue-2525/]
+			exists? %issue-2525/
+			delete  %issue-2525/
+			true
+		]
+		--assert all [
+			not error? try [create %issue-2525-ěšč/]
+			exists? %issue-2525-ěšč/
+			delete  %issue-2525-ěšč/
+			true
+		]
 
 	--test-- "make-dir/delete/exists? with path without a slash"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/499
@@ -223,11 +212,24 @@ if system/platform = 'Windows [
 			--assert date? info/date
 		]
 		
+	--test-- "unicode directory"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2555
+		dir: what-dir
+		subdir: %obrázky/
+		full: dir/:subdir
+		--assert try [
+			full == make-dir subdir
+			full == change-dir subdir
+			full == what-dir
+		]
+		--assert dir = change-dir dir
+		--assert not error? try [delete %obrázky/]
 
 ===end-group===
 
 ===start-group=== "file port"
 	--test-- "query file info"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1712
 		file: %units/files/alice29.txt.gz
 		--assert [name size date type] = query/mode file none
 		--assert 'file = query/mode file 'type
@@ -357,7 +359,62 @@ if system/platform = 'Windows [
 			port? close p
 			not error? try [delete %file-552]
 		]
-		
+
+	--test-- "read/part"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2505
+		--assert all [
+			file? write %12345 "12345"
+			port? p: open/read/seek %12345
+			#{31}   == read/part p 1 ; advances!
+			#{3233} == read/part p 2
+			#{3132} == read/part head p 2
+			#{}     == read/part tail p 2
+			#{35}   == read/part tail p -1 ;- no crash!
+			#{3435} == read/part tail p -2
+			all [error? e: try [read/part p -20]  e/id = 'out-of-range]
+			port? close p
+			not error? try [delete %12345]
+		]
+	--test-- "skip/at on file port"
+		write %12345 "12345"
+		p: open/read/seek %12345
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2506
+		--assert all [
+			1 = index? head p
+			3 = index? skip p 2
+			5 = index? skip p 2
+			6 = index? tail p
+			6 = index? skip p 20
+			1 = index? skip head p -10
+			1 = index? back head p  
+			1 = index? back back head p
+		]
+		--assert all [
+			6 = index? tail p
+			6 = index? at p 20
+			2 = index? at p 2
+			2 = index? at p 2
+			1 = index? at p 0
+			1 = index? at p -10
+		]
+		--assert all [
+			6 = index? tail p
+			6 = index? atz p 20
+			3 = index? atz p 2
+			3 = index? atz p 2
+			1 = index? atz p 0
+			1 = index? atz p -10
+		]
+		--assert all [
+			5 = indexz? tail p
+			5 = indexz? atz p 20
+			2 = indexz? atz p 2
+			2 = indexz? atz p 2
+			0 = indexz? atz p 0
+			0 = indexz? atz p -10
+		]
+		close p
+		delete %12345
 
 	--test-- "CLEAR file port"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/812
@@ -435,6 +492,38 @@ if system/platform = 'Windows [
 		; validate...
 		--assert not exists? %issue-2447
 
+	--test-- "WRITE/APPEND file-port"
+		--assert all [
+			not error? try [
+				p: open/new %issue-1894
+				write/append p "Hello"
+				write/append p newline
+				close p
+				p: open %issue-1894
+				write/append p #{5265626F6C}
+				close p
+			]
+			"Hello^/Rebol" = read/string %issue-1894
+		]
+
+	--test-- "APPEND file-port"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1894
+		--assert all [
+			not error? try [
+				p: open/new %issue-1894
+				append p "Hello"
+				append p newline
+				close p
+				p: open %issue-1894
+				append p #{5265626F6C}
+				close p
+			]
+			"Hello^/Rebol" = read/string %issue-1894
+		]
+		--assert all [error? e: try [append/dup p LF 10]  e/id = 'bad-refines]
+		--assert all [error? e: try [append/only p "aa"]  e/id = 'bad-refines]
+		try [delete %issue-1894]
+
 ===end-group===
 
 if system/platform = 'Windows [
@@ -456,37 +545,17 @@ if system/platform = 'Windows [
 				not error? try [write clipboard:// c]
 				strict-equal? c try [read clipboard://]
 			]
+		--test-- "issue-2486"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2486
+			foreach ch [#"a" #"^(7F)" #"^(80)" #"^(A0)"][
+				write clipboard:// append copy "" ch
+				--assert (to binary! ch) = to binary! read clipboard://
+			]
+			
 	===end-group===
 ]
 
-===start-group=== "HTTP scheme"
-	--test-- "read HTTP"
-		--assert  string? try [read http://google.com]
-	--test-- "read HTTPS"
-		--assert  string? try [read https://www.google.com]
-	--test-- "exists? url"
-		;@@ https://github.com/Oldes/Rebol3/issues/14
-		;@@ https://github.com/Oldes/Rebol-issues/issues/1613
-		--assert 'url = exists? http://httpbin.org/  ;@@ https://github.com/Oldes/Rebol-issues/issues/612
-		--assert not exists? http://httpbin.org/not-exists
-	--test-- "read/part"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/2434
-		--assert "<!DOCTYPE" = read/part http://httpbin.org/ 9
-		--assert #{89504E47} = read/binary/part http://avatars-04.gitter.im/gh/uv/4/oldes 4
-	--test-- "read not existing url"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/470
-		--assert all [
-			error? e: try [read http://www.r]
-			e/id = 'no-connect
-		]
-		;@@ https://github.com/Oldes/Rebol-issues/issues/2441
-		--assert string? try [read http://www.rebol.com]
-	--test-- "query url"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/467
-		--assert error? try [query https://www]
-		--assert object? query https://www.google.com
-
-===end-group===
+;- "HTTP scheme" moved to %port-http-test.r3
 
 
 ===start-group=== "WHOIS scheme"
@@ -496,6 +565,20 @@ if system/platform = 'Windows [
 		--assert string? try [write whois://whois.nic.cz "seznam.cz"]
 ===end-group===
 
+
+;- not using this test, because the serives limits number of requests from the IP
+;- and on CI it may return "Access denied -- too many requests"
+;import 'daytime
+;if find system/schemes 'daytime [
+;===start-group=== "DAYTIME scheme"
+;	--test-- "read DAYTIME"
+;		--assert  all [
+;			block? res: try [read daytime://]
+;			res/2/date = now/date
+;		]
+;
+;===end-group===
+;]
 
 if all [
 	"true" <> get-env "CONTINUOUS_INTEGRATION"
@@ -535,6 +618,36 @@ if all [
 		--assert "dns.google" = try [probe read dns://8.8.8.8]
 	--test-- "read dns://google.com"
 		--assert tuple? try [read dns://google.com]
+
+	--test-- "query dns://"
+	;@@ https://github.com/Oldes/rebol-issues/issues/1826
+		--assert all [error? e: try [query dns://]  e/id = 'no-port-action]
+===end-group===
+
+
+===start-group=== "TCP"
+	--test-- "query net info"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1712
+		port: open tcp://8.8.8.8:80
+		--assert [local-ip local-port remote-ip remote-port] = query/mode port none
+		--assert 0.0.0.0 = query/mode port 'local-ip
+		--assert       0 = query/mode port 'local-port
+		--assert not none? find [0.0.0.0 8.8.8.8] query/mode port 'remote-ip ;; on posix there is sync lookup and so it reports 8.8.8.8 even without wait
+		--assert      80 = query/mode port 'remote-port
+		--assert all [
+			port? wait [port 1] ;= wait for lookup, so remote-ip is resolved
+			8.8.8.8 = query/mode port 'remote-ip
+			[80 8.8.8.8] = query/mode port [remote-port remote-ip]
+			[local-ip: 0.0.0.0 local-port: 0] = query/mode port [local-ip: local-port:]
+		]
+		try [close port]
+===end-group===
+
+
+===start-group=== "SYSTEM"
+	--test-- "query system://"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1373
+		--assert all [error? e: try [query system://]  e/id = 'no-port-action]
 ===end-group===
 
 ~~~end-file~~~

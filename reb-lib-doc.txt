@@ -2,7 +2,7 @@ Host/Extension API
 
 =r3
 
-=*Updated for 3.7.2 on 5-Jan-2022
+=*Updated for 3.15.0 on 29-Nov-2023
 
 =*Describes the functions of reb-lib, the REBOL API (both the DLL and extension library.)
 
@@ -753,6 +753,67 @@ or NOT_FOUND if handle with give ID is already registered.
 :Returns: - nothing
 
 :Arguments: - <tt class=word>hob</tt> - handle's context
+
+
+
+===RL_Decode_UTF8_Char
+
+:Function: - <tt class=word>REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)</tt>
+
+:Summary: - Converts a single UTF8 code-point (to 32 bit).
+
+:Returns: - 32 bit character code
+
+:Arguments: - <tt class=word>src </tt> - UTF8 encoded data
+<br><tt class=word>len </tt> - number of source bytes consumed.
+
+
+
+===RL_Register_Handle_Spec
+
+:Function: - <tt class=word>REBCNT RL_Register_Handle_Spec(REBYTE *name, REBHSP *spec)</tt>
+
+:Summary: - Stores handle's specification (required data size and optional callbacks).
+It's an extended version of old RL_Register_Handle function.
+
+:Returns: - symbol id of the word (whether found or new)
+or NOT_FOUND if handle with give ID is already registered.
+
+:Arguments: - <tt class=word>name     </tt> - handle's name as a c-string (length is being detected)
+<br><tt class=word>spec     </tt> - Handle's specification:
+* size of needed memory to handle,
+* reserved flags
+* release function
+* get path accessor
+* set path accessor
+
+
+
+===RL_To_Local_Path
+
+:Function: - <tt class=word>REBSER* RL_To_Local_Path(RXIARG *file, REBFLG full, REBFLG utf8)</tt>
+
+:Summary: - Convert REBOL filename to a local filename.
+
+:Returns: - A new series with the converted path or 0 on error.
+
+:Arguments: - <tt class=word>file</tt> - Rebol file as an extension argument (series + index)
+<br><tt class=word>full</tt> - prepend current directory
+<br><tt class=word>utf8</tt> - convert to UTF-8 if needed
+
+
+
+===RL_To_Rebol_Path
+
+:Function: - <tt class=word>REBSER* RL_To_Rebol_Path(void *src, REBCNT len, REBINT uni)</tt>
+
+:Summary: - Convert local filename to a REBOL filename.
+
+:Returns: - A new series with the converted path or 0 on error.
+
+:Arguments: - <tt class=word>ser</tt> - series as a REBYTE or REBUNI.
+<br><tt class=word>len</tt> - number of source bytes consumed.
+<br><tt class=word>uni</tt> - if series is REBYTE (0) or REBUNI (1)
 
 
 

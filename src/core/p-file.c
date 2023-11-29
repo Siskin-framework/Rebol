@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -266,7 +267,7 @@ REBINT Mode_Syms[] = {
 
 /***********************************************************************
 **
-*/	static void Read_File_Port(REBSER *port, REBREQ *file, REBVAL *path, REBCNT args, REBCNT len)
+*/	static void Read_File_Port(REBREQ *file, REBVAL *path, REBCNT args, REBCNT len)
 /*
 **		Read from a file port.
 **
@@ -282,7 +283,11 @@ REBINT Mode_Syms[] = {
 	// Do the read, check for errors:
 	file->data = BIN_HEAD(ser);
 	file->length = len;
-	if (OS_DO_DEVICE(file, RDC_READ) < 0) Trap_Port(RE_READ_ERROR, port, file->error);
+	if (OS_DO_DEVICE(file, RDC_READ) < 0) return; // Trap_Port(RE_READ_ERROR, port, file->error);
+	// Not throwing the error from here!
+	// We may want to close the port before error reporting.
+	// It is passed above in the file->error
+
 	SERIES_TAIL(ser) = file->actual;
 	STR_TERM(ser);
 
@@ -329,18 +334,30 @@ REBINT Mode_Syms[] = {
 #endif
 		len += n;
 	}
-
-	// Auto convert string to UTF-8
-	if (IS_STRING(data)) {
+	
+	if (IS_BINARY(data)) {
+		file->data = VAL_BIN_DATA(data);
+	}
+	else if (IS_STRING(data)) {
+		// Auto convert string to UTF-8
 		ser = Encode_UTF8_Value(data, len, ENCF_OS_CRLF);
 		file->data = ser? BIN_HEAD(ser) : VAL_BIN_DATA(data); // No encoding may be needed
 		len = SERIES_TAIL(ser);
 	}
+	else if (IS_CHAR(data)) {
+		// Auto convert char to UTF-8
+		REBYTE buf[8];
+		len = Encode_UTF8_Char(buf, VAL_CHAR(data));
+		file->data = (REBYTE*)&buf;
+	}
 	else {
-		file->data = VAL_BIN_DATA(data);
+		// it should be already handled
+		//Trap1(PE_BAD_ARGUMENT, data);
 	}
 	file->length = len;
-	OS_DO_DEVICE(file, RDC_WRITE);
+	OS_DO_DEVICE(file, RDC_WRITE); // don't report error here!
+	// We may want to close the port before error reporting.
+	// It is passed above in the file->error
 	
 	if(n > 0) {
 		// remove the temporary added newline from the series
@@ -353,7 +370,7 @@ REBINT Mode_Syms[] = {
 
 /***********************************************************************
 **
-*/	static REBCNT Set_Length(const REBVAL *ds, const REBREQ *file, const REBCNT arg)
+*/	static REBCNT Set_Length(const REBVAL *ds, REBREQ *file, const REBCNT arg)
 /*
 **		Computes the length of data based on the argument number
 **		provided for the ARG_*_PART stack value (which, when there,
@@ -378,6 +395,16 @@ REBINT Mode_Syms[] = {
 
 	// Limit size of requested read:
 	cnt = VAL_INT64(D_ARG(arg+1));
+	if (cnt < 0) {
+		cnt = -cnt;
+		if (cnt > file->file.index) {
+			Trap1(RE_OUT_OF_RANGE, (REBVAL*)D_ARG(arg + 1));
+			//cnt = file->file.index;
+		}
+		file->file.index -= cnt;
+		len += cnt;
+		SET_FLAG(file->modes, RFM_RESEEK);
+	}
 	if (cnt > len) return (REBCNT)len;
 	return (REBCNT)cnt;
 }
@@ -405,23 +432,24 @@ REBINT Mode_Syms[] = {
 
 /***********************************************************************
 **
-*/	static int File_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int File_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 **		Internal port handler for files.
 **
 ***********************************************************************/
 {
+	REBSER *port;
 	REBVAL *spec;
 	REBVAL *path;
 	REBREQ *file = 0;
 	REBCNT args = 0;
 	REBCNT len;
-	REBINT result;
+	REBINT result, error;
 	REBOOL opened = FALSE;	// had to be opened (shortcut case)
 
 	//Print("FILE ACTION: %r", Get_Action_Word(action));
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 
 	*D_RET = *D_ARG(1);
 
@@ -453,25 +481,28 @@ REBINT Mode_Syms[] = {
 
 		if (args & AM_READ_SEEK) Set_Seek(file, D_ARG(ARG_READ_INDEX));
 		len = Set_Length(ds, file, ARG_READ_PART);
-		Read_File_Port(port, file, path, args, len);
+		Read_File_Port(file, path, args, len);
 
+		error = (REBINT)file->error; // store error value, before closing the file!
 		if (opened) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
 			Cleanup_File(file);
 		}
 
-		if (file->error) Trap_Port(RE_READ_ERROR, port, file->error);
+		if (error) Trap_Port(RE_READ_ERROR, port, error);
 		break;
 
 	case A_APPEND:
+		args = Find_Refines(ds, AM_APPEND_DUP | AM_APPEND_ONLY );
+		if (args > 0) Trap0(RE_BAD_REFINES); // should be used some new port related error!
 		file->file.index = file->file.size;
 		SET_FLAG(file->modes, RFM_RESEEK);
 
 	case A_WRITE:
 		args = Find_Refines(ds, ALL_WRITE_REFS);
-		spec = D_ARG(2); // data (binary, string, or block)
+		spec = D_ARG(2); // data (binary, string, char or block)
 
-		if (!(IS_BINARY(spec) || IS_STRING(spec) || (IS_BLOCK(spec) && (args & AM_WRITE_LINES)))) {
+		if (!(IS_BINARY(spec) || IS_STRING(spec) || IS_CHAR(spec) || (IS_BLOCK(spec) && (args & AM_WRITE_LINES)))) {
 			//Trap1(RE_INVALID_ARG, spec);
 			REB_MOLD mo = {0};
 			Reset_Mold(&mo);
@@ -493,14 +524,14 @@ REBINT Mode_Syms[] = {
 		}
 
 		// Setup for /append or /seek:
-		if (args & AM_WRITE_APPEND) {
+		if (args & AM_WRITE_APPEND || action == A_APPEND) {
 			file->file.index = -1; // append
 			SET_FLAG(file->modes, RFM_RESEEK);
 		}
 		if (args & AM_WRITE_SEEK) Set_Seek(file, D_ARG(ARG_WRITE_INDEX));
 
+		len = IS_CHAR(spec) ? 0 : VAL_LEN(spec);
 		// Determine length. Clip /PART to size of string if needed.
-		len = VAL_LEN(spec);
 		if (args & AM_WRITE_PART) {
 			REBCNT n = Int32s(D_ARG(ARG_WRITE_LENGTH), 0);
 			if (n <= len) len = n;
@@ -509,12 +540,14 @@ REBINT Mode_Syms[] = {
 		Write_File_Port(file, spec, len, args);
 
 		file->file.index += file->actual;
+
+		error = (REBINT)file->error; // store error value, before closing the file!
 		if (opened) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
 			Cleanup_File(file);
 		}
 
-		if (file->error) Trap1(RE_WRITE_ERROR, path);
+		if (error) Trap_Port(RE_WRITE_ERROR, port, error);
 		*D_RET = *path;
 		break;
 
@@ -529,7 +562,7 @@ REBINT Mode_Syms[] = {
 	case A_COPY:
 		if (!IS_OPEN(file)) Trap1(RE_NOT_OPEN, path); //!!!! wrong msg
 		len = Set_Length(ds, file, 2);
-		Read_File_Port(port, file, path, args, len);
+		Read_File_Port(file, path, args, len);
 		break;
 
 	case A_OPENQ:
@@ -604,6 +637,9 @@ REBINT Mode_Syms[] = {
 	case A_INDEXQ:
 		SET_INTEGER(D_RET, file->file.index + 1);
 		break;
+	case A_INDEXZQ:
+		SET_INTEGER(D_RET, file->file.index);
+		break;
 
 	case A_LENGTHQ:
 		SET_INTEGER(D_RET, file->file.size - file->file.index); // !clip at zero
@@ -622,11 +658,18 @@ REBINT Mode_Syms[] = {
 		goto seeked;
 
 	case A_BACK:
-		if (file->file.index > 0) file->file.index--;
+		file->file.index--;
 		goto seeked;
 
 	case A_SKIP:
 		file->file.index += Get_Num_Arg(D_ARG(2));
+		goto seeked;
+
+	case A_AT:
+		file->file.index = Get_Num_Arg(D_ARG(2)) - 1;
+		goto seeked;
+	case A_ATZ:
+		file->file.index = Get_Num_Arg(D_ARG(2));
 		goto seeked;
 
     case A_HEADQ:
@@ -648,7 +691,6 @@ REBINT Mode_Syms[] = {
 		break;
 
 	/* Not yet implemented:
-		A_AT,					// 38
 		A_PICK,					// 41
 		A_PATH,					// 42
 		A_PATH_SET,				// 43
@@ -663,12 +705,18 @@ REBINT Mode_Syms[] = {
 	*/
 
 	default:
-		Trap_Action(REB_PORT, action);
+		Trap1(RE_NO_PORT_ACTION, Get_Action_Word(action));
 	}
 
 	return R_RET;
 
 seeked:
+	// fit index in available range...
+	if (file->file.index < 0)
+		file->file.index = 0;
+	else if (file->file.index > file->file.size)
+		file->file.index = file->file.size;
+
 	SET_FLAG(file->modes, RFM_RESEEK);
 	return R_ARG1;
 

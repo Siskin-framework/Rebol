@@ -67,6 +67,7 @@
 	for (i = 0; i < len;) {
 		c = uni ? ((REBUNI*)bp)[i] : ((REBYTE*)bp)[i];
 		i++;
+#ifdef TO_WINDOWS
 		if (c == ':') {
 			// Handle the vol:dir/file format:
 			if (colon || slash) return 0; // no prior : or / allowed
@@ -77,7 +78,9 @@
 			}
 			c = '/'; // replace : with a /
 		}
-		else if (c == '\\' || c== '/') {
+		else
+#endif
+		if (c == '\\' || c== '/') {
 			if (slash > 0) continue;
 			c = '/';
 			slash = 1;
@@ -273,7 +276,7 @@ term_out:
 	// Posix needs UTF8 conversion:
 	n = Length_As_UTF8(UNI_HEAD(ser), SERIES_TAIL(ser), TRUE, OS_CRLF);
 	bin = Make_Binary(n + FN_PAD);
-	Encode_UTF8(BIN_HEAD(bin), n+FN_PAD, UNI_HEAD(ser), &n, TRUE, OS_CRLF);
+	Encode_UTF8(BIN_HEAD(bin), n, UNI_HEAD(ser), &n, TRUE, OS_CRLF);
 	SERIES_TAIL(bin) = n;
 	TERM_SERIES(bin);
 	ser = bin;

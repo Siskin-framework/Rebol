@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Boot Definitions
-**  Build: 3.7.2
-**  Date:  27-Feb-2023
+**  Build: 3.15.0
+**  Date:  29-Nov-2023
 **  File:  bootdefs.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -20,12 +20,16 @@
 
 
 #define REBOL_VER 3
-#define REBOL_REV 7
-#define REBOL_UPD 2
+#define REBOL_REV 15
+#define REBOL_UPD 0
 #define REBOL_SYS 0
 #define REBOL_VAR 0
-#define REBOL_VERSION "Rebol Core 3.7.2 Linux linux x64 pc linux elf gcc x64-pc-linux-elf 27-Feb-2023/12:05 #{B9ACBD59E641232E73E92A6AE92AE7DCF399711F}"
-
+// Version visible when used -v argument on start-up (before initialization)
+#define REBOL_VERSION \
+	"Rebol/Core 3.15.0 (29-Nov-2023/11:11 UTC)\n"\
+	"Copyright (c) 2012 REBOL Technologies\n"\
+	"Copyright (c) 2012-2023 Rebol Open Source Contributors\n"\
+	"Source:       https://github.com/Oldes/Rebol3\n"
 /***********************************************************************
 **
 **	REBOL Boot Strings
@@ -36,17 +40,17 @@
 **
 ***********************************************************************/
 #define RS_SCAN                0
-#define RS_INFO                31
-#define RS_TRACE               32
-#define RS_STACK               43
-#define RS_DUMP                45
-#define RS_ERROR               59
-#define RS_ERRS                72
-#define RS_WATCH               76
-#define RS_EXTENSION           79
-#define RS_VERSION             82
-#define RS_MAX	83
-#define RS_SIZE	1645
+#define RS_INFO                32
+#define RS_TRACE               33
+#define RS_STACK               44
+#define RS_DUMP                46
+#define RS_ERROR               60
+#define RS_ERRS                73
+#define RS_WATCH               77
+#define RS_EXTENSION           80
+#define RS_VERSION             83
+#define RS_MAX	84
+#define RS_SIZE	1798
 
 /***********************************************************************
 **
@@ -219,246 +223,326 @@
 	SYM_FAIL,                     // 160 - fail
 	SYM_REJECT,                   // 161 - reject
 	SYM_WHILE,                    // 162 - while
-	SYM_RETURN,                   // 163 - return
-	SYM_LIMIT,                    // 164 - limit
-	SYM_QQ,                       // 165 - ??
-	SYM_ACCEPT,                   // 166 - accept
-	SYM_BREAK,                    // 167 - break
-	SYM_SKIP,                     // 168 - skip
-	SYM_TO,                       // 169 - to
-	SYM_THRU,                     // 170 - thru
-	SYM_QUOTE,                    // 171 - quote
-	SYM_DO,                       // 172 - do
-	SYM_INTO,                     // 173 - into
-	SYM_ONLY,                     // 174 - only
-	SYM_END,                      // 175 - end
-	SYM_TYPE,                     // 176 - type
-	SYM_KEY,                      // 177 - key
-	SYM_PORT,                     // 178 - port
-	SYM_MODE,                     // 179 - mode
-	SYM_WINDOW,                   // 180 - window
-	SYM_DOUBLE,                   // 181 - double
-	SYM_CONTROL,                  // 182 - control
-	SYM_SHIFT,                    // 183 - shift
-	SYM_POINT,                    // 184 - point
-	SYM_BOX,                      // 185 - box
-	SYM_TRIANGLE,                 // 186 - triangle
-	SYM_HERMITE,                  // 187 - hermite
-	SYM_HANNING,                  // 188 - hanning
-	SYM_HAMMING,                  // 189 - hamming
-	SYM_BLACKMAN,                 // 190 - blackman
-	SYM_GAUSSIAN,                 // 191 - gaussian
-	SYM_QUADRATIC,                // 192 - quadratic
-	SYM_CUBIC,                    // 193 - cubic
-	SYM_CATROM,                   // 194 - catrom
-	SYM_MITCHELL,                 // 195 - mitchell
-	SYM_LANCZOS,                  // 196 - lanczos
-	SYM_BESSEL,                   // 197 - bessel
-	SYM_SINC,                     // 198 - sinc
-	SYM_HASH,                     // 199 - hash
-	SYM_ADLER32,                  // 200 - adler32
-	SYM_CRC24,                    // 201 - crc24
-	SYM_CRC32,                    // 202 - crc32
-	SYM_MD4,                      // 203 - md4
-	SYM_MD5,                      // 204 - md5
-	SYM_RIPEMD160,                // 205 - ripemd160
-	SYM_SHA1,                     // 206 - sha1
-	SYM_SHA224,                   // 207 - sha224
-	SYM_SHA256,                   // 208 - sha256
-	SYM_SHA384,                   // 209 - sha384
-	SYM_SHA512,                   // 210 - sha512
-	SYM_IDENTIFY,                 // 211 - identify
-	SYM_DECODE,                   // 212 - decode
-	SYM_ENCODE,                   // 213 - encode
-	SYM_CONSOLE,                  // 214 - console
-	SYM_FILE,                     // 215 - file
-	SYM_DIR,                      // 216 - dir
-	SYM_EVENT,                    // 217 - event
-	SYM_CALLBACK,                 // 218 - callback
-	SYM_DNS,                      // 219 - dns
-	SYM_TCP,                      // 220 - tcp
-	SYM_UDP,                      // 221 - udp
-	SYM_CLIPBOARD,                // 222 - clipboard
-	SYM_GOB,                      // 223 - gob
-	SYM_OFFSET,                   // 224 - offset
-	SYM_SIZE,                     // 225 - size
-	SYM_PANE,                     // 226 - pane
-	SYM_PARENT,                   // 227 - parent
-	SYM_IMAGE,                    // 228 - image
-	SYM_DRAW,                     // 229 - draw
-	SYM_TEXT,                     // 230 - text
-	SYM_EFFECT,                   // 231 - effect
-	SYM_COLOR,                    // 232 - color
-	SYM_FLAGS,                    // 233 - flags
-	SYM_RGB,                      // 234 - rgb
-	SYM_ALPHA,                    // 235 - alpha
-	SYM_DATA,                     // 236 - data
-	SYM_RESIZE,                   // 237 - resize
-	SYM_NO_TITLE,                 // 238 - no-title
-	SYM_NO_BORDER,                // 239 - no-border
-	SYM_DROPABLE,                 // 240 - dropable
-	SYM_TRANSPARENT,              // 241 - transparent
-	SYM_POPUP,                    // 242 - popup
-	SYM_MODAL,                    // 243 - modal
-	SYM_ON_TOP,                   // 244 - on-top
-	SYM_HIDDEN,                   // 245 - hidden
-	SYM_OWNER,                    // 246 - owner
-	SYM_OWNER_READ,               // 247 - owner-read
-	SYM_OWNER_WRITE,              // 248 - owner-write
-	SYM_OWNER_EXECUTE,            // 249 - owner-execute
-	SYM_GROUP_READ,               // 250 - group-read
-	SYM_GROUP_WRITE,              // 251 - group-write
-	SYM_GROUP_EXECUTE,            // 252 - group-execute
-	SYM_WORLD_READ,               // 253 - world-read
-	SYM_WORLD_WRITE,              // 254 - world-write
-	SYM_WORLD_EXECUTE,            // 255 - world-execute
-	SYM_ECHO,                     // 256 - echo
-	SYM_LINE,                     // 257 - line
-	SYM_ERROR,                    // 258 - error
-	SYM_BITS,                     // 259 - bits
-	SYM_CRASH,                    // 260 - crash
-	SYM_CRASH_DUMP,               // 261 - crash-dump
-	SYM_WATCH_RECYCLE,            // 262 - watch-recycle
-	SYM_WATCH_OBJ_COPY,           // 263 - watch-obj-copy
-	SYM_STACK_SIZE,               // 264 - stack-size
-	SYM_ID,                       // 265 - id
-	SYM_EXIT_CODE,                // 266 - exit-code
-	SYM_PUB_EXP,                  // 267 - pub-exp
-	SYM_PRIV_EXP,                 // 268 - priv-exp
-	SYM_R_BUFFER,                 // 269 - r-buffer
-	SYM_W_BUFFER,                 // 270 - w-buffer
-	SYM_R_MASK,                   // 271 - r-mask
-	SYM_W_MASK,                   // 272 - w-mask
-	SYM_NOT_BIT,                  // 273 - not-bit
-	SYM_UNIXTIME_NOW,             // 274 - unixtime-now
-	SYM_UNIXTIME_NOW_LE,          // 275 - unixtime-now-le
-	SYM_RANDOM_BYTES,             // 276 - random-bytes
-	SYM_LENGTHQ,                  // 277 - length?
-	SYM_BUFFER_COLS,              // 278 - buffer-cols
-	SYM_BUFFER_ROWS,              // 279 - buffer-rows
-	SYM_WINDOW_COLS,              // 280 - window-cols
-	SYM_WINDOW_ROWS,              // 281 - window-rows
-	SYM_DEVICES_IN,               // 282 - devices-in
-	SYM_DEVICES_OUT,              // 283 - devices-out
-	SYM_MSDOS_DATETIME,           // 284 - msdos-datetime
-	SYM_MSDOS_DATE,               // 285 - msdos-date
-	SYM_MSDOS_TIME,               // 286 - msdos-time
-	SYM_OCTAL_BYTES,              // 287 - octal-bytes
-	SYM_STRING_BYTES,             // 288 - string-bytes
+	SYM_COLLECT,                  // 163 - collect
+	SYM_KEEP,                     // 164 - keep
+	SYM_RETURN,                   // 165 - return
+	SYM_LIMIT,                    // 166 - limit
+	SYM_QQ,                       // 167 - ??
+	SYM_CASE,                     // 168 - case
+	SYM_NO_CASE,                  // 169 - no-case
+	SYM_ACCEPT,                   // 170 - accept
+	SYM_BREAK,                    // 171 - break
+	SYM_SKIP,                     // 172 - skip
+	SYM_TO,                       // 173 - to
+	SYM_THRU,                     // 174 - thru
+	SYM_QUOTE,                    // 175 - quote
+	SYM_DO,                       // 176 - do
+	SYM_INTO,                     // 177 - into
+	SYM_ONLY,                     // 178 - only
+	SYM_END,                      // 179 - end
+	SYM_TYPE,                     // 180 - type
+	SYM_KEY,                      // 181 - key
+	SYM_PORT,                     // 182 - port
+	SYM_MODE,                     // 183 - mode
+	SYM_WINDOW,                   // 184 - window
+	SYM_DOUBLE,                   // 185 - double
+	SYM_CONTROL,                  // 186 - control
+	SYM_SHIFT,                    // 187 - shift
+	SYM_POINT,                    // 188 - point
+	SYM_BOX,                      // 189 - box
+	SYM_TRIANGLE,                 // 190 - triangle
+	SYM_HERMITE,                  // 191 - hermite
+	SYM_HANNING,                  // 192 - hanning
+	SYM_HAMMING,                  // 193 - hamming
+	SYM_BLACKMAN,                 // 194 - blackman
+	SYM_GAUSSIAN,                 // 195 - gaussian
+	SYM_QUADRATIC,                // 196 - quadratic
+	SYM_CUBIC,                    // 197 - cubic
+	SYM_CATROM,                   // 198 - catrom
+	SYM_MITCHELL,                 // 199 - mitchell
+	SYM_LANCZOS,                  // 200 - lanczos
+	SYM_BESSEL,                   // 201 - bessel
+	SYM_SINC,                     // 202 - sinc
+	SYM_HASH,                     // 203 - hash
+	SYM_ADLER32,                  // 204 - adler32
+	SYM_CRC24,                    // 205 - crc24
+	SYM_CRC32,                    // 206 - crc32
+	SYM_MD4,                      // 207 - md4
+	SYM_MD5,                      // 208 - md5
+	SYM_SHA1,                     // 209 - sha1
+	SYM_SHA224,                   // 210 - sha224
+	SYM_SHA256,                   // 211 - sha256
+	SYM_SHA384,                   // 212 - sha384
+	SYM_SHA512,                   // 213 - sha512
+	SYM_RIPEMD160,                // 214 - ripemd160
+	SYM_SHA3_224,                 // 215 - sha3-224
+	SYM_SHA3_256,                 // 216 - sha3-256
+	SYM_SHA3_384,                 // 217 - sha3-384
+	SYM_SHA3_512,                 // 218 - sha3-512
+	SYM_IDENTIFY,                 // 219 - identify
+	SYM_DECODE,                   // 220 - decode
+	SYM_ENCODE,                   // 221 - encode
+	SYM_CONSOLE,                  // 222 - console
+	SYM_FILE,                     // 223 - file
+	SYM_DIR,                      // 224 - dir
+	SYM_EVENT,                    // 225 - event
+	SYM_CALLBACK,                 // 226 - callback
+	SYM_DNS,                      // 227 - dns
+	SYM_TCP,                      // 228 - tcp
+	SYM_UDP,                      // 229 - udp
+	SYM_CLIPBOARD,                // 230 - clipboard
+	SYM_GOB,                      // 231 - gob
+	SYM_OFFSET,                   // 232 - offset
+	SYM_SIZE,                     // 233 - size
+	SYM_PANE,                     // 234 - pane
+	SYM_PARENT,                   // 235 - parent
+	SYM_IMAGE,                    // 236 - image
+	SYM_DRAW,                     // 237 - draw
+	SYM_TEXT,                     // 238 - text
+	SYM_EFFECT,                   // 239 - effect
+	SYM_COLOR,                    // 240 - color
+	SYM_FLAGS,                    // 241 - flags
+	SYM_RGB,                      // 242 - rgb
+	SYM_ALPHA,                    // 243 - alpha
+	SYM_DATA,                     // 244 - data
+	SYM_RESIZE,                   // 245 - resize
+	SYM_NO_TITLE,                 // 246 - no-title
+	SYM_NO_BORDER,                // 247 - no-border
+	SYM_DROPABLE,                 // 248 - dropable
+	SYM_TRANSPARENT,              // 249 - transparent
+	SYM_POPUP,                    // 250 - popup
+	SYM_MODAL,                    // 251 - modal
+	SYM_ON_TOP,                   // 252 - on-top
+	SYM_HIDDEN,                   // 253 - hidden
+	SYM_OWNER,                    // 254 - owner
+	SYM_OWNER_READ,               // 255 - owner-read
+	SYM_OWNER_WRITE,              // 256 - owner-write
+	SYM_OWNER_EXECUTE,            // 257 - owner-execute
+	SYM_GROUP_READ,               // 258 - group-read
+	SYM_GROUP_WRITE,              // 259 - group-write
+	SYM_GROUP_EXECUTE,            // 260 - group-execute
+	SYM_WORLD_READ,               // 261 - world-read
+	SYM_WORLD_WRITE,              // 262 - world-write
+	SYM_WORLD_EXECUTE,            // 263 - world-execute
+	SYM_ECHO,                     // 264 - echo
+	SYM_LINE,                     // 265 - line
+	SYM_ERROR,                    // 266 - error
+	SYM_BRK,                      // 267 - brk
+	SYM_DTR,                      // 268 - dtr
+	SYM_RTS,                      // 269 - rts
+	SYM_PLAY,                     // 270 - play
+	SYM_LOCAL_IP,                 // 271 - local-ip
+	SYM_LOCAL_PORT,               // 272 - local-port
+	SYM_REMOTE_IP,                // 273 - remote-ip
+	SYM_REMOTE_PORT,              // 274 - remote-port
+	SYM_BITS,                     // 275 - bits
+	SYM_CRASH,                    // 276 - crash
+	SYM_CRASH_DUMP,               // 277 - crash-dump
+	SYM_WATCH_RECYCLE,            // 278 - watch-recycle
+	SYM_WATCH_OBJ_COPY,           // 279 - watch-obj-copy
+	SYM_STACK_SIZE,               // 280 - stack-size
+	SYM_ID,                       // 281 - id
+	SYM_EXIT_CODE,                // 282 - exit-code
+	SYM_PUB_EXP,                  // 283 - pub-exp
+	SYM_PRIV_EXP,                 // 284 - priv-exp
+	SYM_R_BUFFER,                 // 285 - r-buffer
+	SYM_W_BUFFER,                 // 286 - w-buffer
+	SYM_R_MASK,                   // 287 - r-mask
+	SYM_W_MASK,                   // 288 - w-mask
+	SYM_NOT_BIT,                  // 289 - not-bit
+	SYM_UNIXTIME_NOW,             // 290 - unixtime-now
+	SYM_UNIXTIME_NOW_LE,          // 291 - unixtime-now-le
+	SYM_RANDOM_BYTES,             // 292 - random-bytes
+	SYM_LENGTHQ,                  // 293 - length?
+	SYM_BUFFER_COLS,              // 294 - buffer-cols
+	SYM_BUFFER_ROWS,              // 295 - buffer-rows
+	SYM_WINDOW_COLS,              // 296 - window-cols
+	SYM_WINDOW_ROWS,              // 297 - window-rows
+	SYM_DEVICES_IN,               // 298 - devices-in
+	SYM_DEVICES_OUT,              // 299 - devices-out
+	SYM_MSDOS_DATETIME,           // 300 - msdos-datetime
+	SYM_MSDOS_DATE,               // 301 - msdos-date
+	SYM_MSDOS_TIME,               // 302 - msdos-time
+	SYM_OCTAL_BYTES,              // 303 - octal-bytes
+	SYM_STRING_BYTES,             // 304 - string-bytes
+	SYM_SECP192R1,                // 305 - secp192r1
+	SYM_SECP224R1,                // 306 - secp224r1
+	SYM_SECP256R1,                // 307 - secp256r1
+	SYM_SECP384R1,                // 308 - secp384r1
+	SYM_SECP521R1,                // 309 - secp521r1
+	SYM_BP256R1,                  // 310 - bp256r1
+	SYM_BP384R1,                  // 311 - bp384r1
+	SYM_BP512R1,                  // 312 - bp512r1
+	SYM_CURVE25519,               // 313 - curve25519
+	SYM_SECP192K1,                // 314 - secp192k1
+	SYM_SECP224K1,                // 315 - secp224k1
+	SYM_SECP256K1,                // 316 - secp256k1
+	SYM_CURVE448,                 // 317 - curve448
+	SYM_INIT_VECTOR,              // 318 - init-vector
+	SYM_AES_128_ECB,              // 319 - aes-128-ecb
+	SYM_AES_192_ECB,              // 320 - aes-192-ecb
+	SYM_AES_256_ECB,              // 321 - aes-256-ecb
+	SYM_AES_128_CBC,              // 322 - aes-128-cbc
+	SYM_AES_192_CBC,              // 323 - aes-192-cbc
+	SYM_AES_256_CBC,              // 324 - aes-256-cbc
+	SYM_AES_128_CCM,              // 325 - aes-128-ccm
+	SYM_AES_192_CCM,              // 326 - aes-192-ccm
+	SYM_AES_256_CCM,              // 327 - aes-256-ccm
+	SYM_AES_128_GCM,              // 328 - aes-128-gcm
+	SYM_AES_192_GCM,              // 329 - aes-192-gcm
+	SYM_AES_256_GCM,              // 330 - aes-256-gcm
+	SYM_CAMELLIA_128_ECB,         // 331 - camellia-128-ecb
+	SYM_CAMELLIA_192_ECB,         // 332 - camellia-192-ecb
+	SYM_CAMELLIA_256_ECB,         // 333 - camellia-256-ecb
+	SYM_CAMELLIA_128_CBC,         // 334 - camellia-128-cbc
+	SYM_CAMELLIA_192_CBC,         // 335 - camellia-192-cbc
+	SYM_CAMELLIA_256_CBC,         // 336 - camellia-256-cbc
+	SYM_CAMELLIA_128_CCM,         // 337 - camellia-128-ccm
+	SYM_CAMELLIA_192_CCM,         // 338 - camellia-192-ccm
+	SYM_CAMELLIA_256_CCM,         // 339 - camellia-256-ccm
+	SYM_CAMELLIA_128_GCM,         // 340 - camellia-128-gcm
+	SYM_CAMELLIA_192_GCM,         // 341 - camellia-192-gcm
+	SYM_CAMELLIA_256_GCM,         // 342 - camellia-256-gcm
+	SYM_ARIA_128_ECB,             // 343 - aria-128-ecb
+	SYM_ARIA_192_ECB,             // 344 - aria-192-ecb
+	SYM_ARIA_256_ECB,             // 345 - aria-256-ecb
+	SYM_ARIA_128_CBC,             // 346 - aria-128-cbc
+	SYM_ARIA_192_CBC,             // 347 - aria-192-cbc
+	SYM_ARIA_256_CBC,             // 348 - aria-256-cbc
+	SYM_ARIA_128_CCM,             // 349 - aria-128-ccm
+	SYM_ARIA_192_CCM,             // 350 - aria-192-ccm
+	SYM_ARIA_256_CCM,             // 351 - aria-256-ccm
+	SYM_ARIA_128_GCM,             // 352 - aria-128-gcm
+	SYM_ARIA_192_GCM,             // 353 - aria-192-gcm
+	SYM_ARIA_256_GCM,             // 354 - aria-256-gcm
+	SYM_CHACHA20,                 // 355 - chacha20
+	SYM_CHACHA20_POLY1305,        // 356 - chacha20-poly1305
+	SYM_TAG_LENGTH,               // 357 - tag-length
+	SYM_AAD_LENGTH,               // 358 - aad-length
+	SYM_FILE_CHECKSUM,            // 359 - file-checksum
+	SYM_XAUDIO_VOICE,             // 360 - xaudio-voice
 
     // follows symbols used in C sources, but not defined in %words.reb list...
-	SYM_ABGR,                     // 289
-	SYM_ADDR,                     // 290
-	SYM_AES,                      // 291
-	SYM_ALIGN,                    // 292
-	SYM_ARGB,                     // 293
-	SYM_AT,                       // 294
-	SYM_ATZ,                      // 295
-	SYM_BGR,                      // 296
-	SYM_BGRA,                     // 297
-	SYM_BGRO,                     // 298
-	SYM_BINCODE,                  // 299
-	SYM_BIT,                      // 300
-	SYM_BITSET16,                 // 301
-	SYM_BITSET32,                 // 302
-	SYM_BITSET8,                  // 303
-	SYM_BYTES,                    // 304
-	SYM_CHACHA20,                 // 305
-	SYM_CHACHA20POLY1305,         // 306
-	SYM_CHECKSUM,                 // 307
-	SYM_CODEC,                    // 308
-	SYM_CRUSH,                    // 309
-	SYM_DEFLATE,                  // 310
-	SYM_DH,                       // 311
-	SYM_ECDH,                     // 312
-	SYM_EGID,                     // 313
-	SYM_ENCODEDU32,               // 314
-	SYM_EUID,                     // 315
-	SYM_EXTERN,                   // 316
-	SYM_F16,                      // 317
-	SYM_F16BE,                    // 318
-	SYM_F16LE,                    // 319
-	SYM_F32,                      // 320
-	SYM_F32BE,                    // 321
-	SYM_F32LE,                    // 322
-	SYM_F64,                      // 323
-	SYM_F64BE,                    // 324
-	SYM_F64LE,                    // 325
-	SYM_FB,                       // 326
-	SYM_FIXED16,                  // 327
-	SYM_FIXED8,                   // 328
-	SYM_FLOAT,                    // 329
-	SYM_FLOAT16,                  // 330
-	SYM_GID,                      // 331
-	SYM_GZIP,                     // 332
-	SYM_INDEX,                    // 333
-	SYM_INDEXZ,                   // 334
-	SYM_LENGTH,                   // 335
-	SYM_LOCAL,                    // 336
-	SYM_LZMA,                     // 337
-	SYM_NAME,                     // 338
-	SYM_OBGR,                     // 339
-	SYM_OPACITY,                  // 340
-	SYM_ORGB,                     // 341
-	SYM_PAD,                      // 342
-	SYM_PID,                      // 343
-	SYM_POINTER,                  // 344
-	SYM_POLY1305,                 // 345
-	SYM_RAW_MEMORY,               // 346
-	SYM_RAW_SIZE,                 // 347
-	SYM_RC4,                      // 348
-	SYM_REBVAL,                   // 349
-	SYM_RGBA,                     // 350
-	SYM_RGBO,                     // 351
-	SYM_RSA,                      // 352
-	SYM_SB,                       // 353
-	SYM_SECP160R1,                // 354
-	SYM_SECP192R1,                // 355
-	SYM_SECP224R1,                // 356
-	SYM_SECP256K1,                // 357
-	SYM_SECP256R1,                // 358
-	SYM_SI16,                     // 359
-	SYM_SI16BE,                   // 360
-	SYM_SI16LE,                   // 361
-	SYM_SI24,                     // 362
-	SYM_SI24BE,                   // 363
-	SYM_SI32,                     // 364
-	SYM_SI32BE,                   // 365
-	SYM_SI32LE,                   // 366
-	SYM_SI64,                     // 367
-	SYM_SI8,                      // 368
-	SYM_SIGNED,                   // 369
-	SYM_SKIPBITS,                 // 370
-	SYM_STRING,                   // 371
-	SYM_TUPLE3,                   // 372
-	SYM_TUPLE4,                   // 373
-	SYM_UB,                       // 374
-	SYM_UI16,                     // 375
-	SYM_UI16BE,                   // 376
-	SYM_UI16BEBYTES,              // 377
-	SYM_UI16BYTES,                // 378
-	SYM_UI16LE,                   // 379
-	SYM_UI16LEBYTES,              // 380
-	SYM_UI24,                     // 381
-	SYM_UI24BE,                   // 382
-	SYM_UI24BEBYTES,              // 383
-	SYM_UI24BYTES,                // 384
-	SYM_UI24LE,                   // 385
-	SYM_UI24LEBYTES,              // 386
-	SYM_UI32,                     // 387
-	SYM_UI32BE,                   // 388
-	SYM_UI32BEBYTES,              // 389
-	SYM_UI32BYTES,                // 390
-	SYM_UI32LE,                   // 391
-	SYM_UI32LEBYTES,              // 392
-	SYM_UI64,                     // 393
-	SYM_UI64BE,                   // 394
-	SYM_UI64LE,                   // 395
-	SYM_UI8,                      // 396
-	SYM_UI8BYTES,                 // 397
-	SYM_UID,                      // 398
-	SYM_WIDGET,                   // 399
-	SYM_ZLIB                      // 400
+	SYM_ABGR,                     // 361
+	SYM_ADDR,                     // 362
+	SYM_AES,                      // 363
+	SYM_AFTER,                    // 364
+	SYM_ALGORITHM,                // 365
+	SYM_ALIGN,                    // 366
+	SYM_AREA,                     // 367
+	SYM_ARGB,                     // 368
+	SYM_AT,                       // 369
+	SYM_ATZ,                      // 370
+	SYM_BGR,                      // 371
+	SYM_BGRA,                     // 372
+	SYM_BGRO,                     // 373
+	SYM_BINCODE,                  // 374
+	SYM_BIT,                      // 375
+	SYM_BITSET16,                 // 376
+	SYM_BITSET32,                 // 377
+	SYM_BITSET8,                  // 378
+	SYM_BROTLI,                   // 379
+	SYM_BYTES,                    // 380
+	SYM_CHACHA20POLY1305,         // 381
+	SYM_CHECKSUM,                 // 382
+	SYM_CODEC,                    // 383
+	SYM_CROP,                     // 384
+	SYM_CRUSH,                    // 385
+	SYM_CRYPT,                    // 386
+	SYM_DECRYPT,                  // 387
+	SYM_DEFLATE,                  // 388
+	SYM_DHM,                      // 389
+	SYM_DIRECTION,                // 390
+	SYM_ECDH,                     // 391
+	SYM_EGID,                     // 392
+	SYM_ENCODEDU32,               // 393
+	SYM_ENCRYPT,                  // 394
+	SYM_EUID,                     // 395
+	SYM_EXTERN,                   // 396
+	SYM_F16,                      // 397
+	SYM_F16BE,                    // 398
+	SYM_F16LE,                    // 399
+	SYM_F32,                      // 400
+	SYM_F32BE,                    // 401
+	SYM_F32LE,                    // 402
+	SYM_F64,                      // 403
+	SYM_F64BE,                    // 404
+	SYM_F64LE,                    // 405
+	SYM_FB,                       // 406
+	SYM_FIXED16,                  // 407
+	SYM_FIXED8,                   // 408
+	SYM_FLOAT,                    // 409
+	SYM_FLOAT16,                  // 410
+	SYM_GID,                      // 411
+	SYM_GZIP,                     // 412
+	SYM_INDEX,                    // 413
+	SYM_INDEXZ,                   // 414
+	SYM_INTERNAL,                 // 415
+	SYM_IV,                       // 416
+	SYM_LENGTH,                   // 417
+	SYM_LOCAL,                    // 418
+	SYM_LZMA,                     // 419
+	SYM_LZW,                      // 420
+	SYM_NAME,                     // 421
+	SYM_OBGR,                     // 422
+	SYM_OPACITY,                  // 423
+	SYM_ORGB,                     // 424
+	SYM_PAD,                      // 425
+	SYM_PICK,                     // 426
+	SYM_PID,                      // 427
+	SYM_POINTER,                  // 428
+	SYM_POLY1305,                 // 429
+	SYM_RAW_MEMORY,               // 430
+	SYM_RAW_SIZE,                 // 431
+	SYM_RC4,                      // 432
+	SYM_REBVAL,                   // 433
+	SYM_RGBA,                     // 434
+	SYM_RGBO,                     // 435
+	SYM_RSA,                      // 436
+	SYM_SB,                       // 437
+	SYM_SI16,                     // 438
+	SYM_SI16BE,                   // 439
+	SYM_SI16LE,                   // 440
+	SYM_SI24,                     // 441
+	SYM_SI24BE,                   // 442
+	SYM_SI32,                     // 443
+	SYM_SI32BE,                   // 444
+	SYM_SI32LE,                   // 445
+	SYM_SI64,                     // 446
+	SYM_SI8,                      // 447
+	SYM_SIGNED,                   // 448
+	SYM_SKIPBITS,                 // 449
+	SYM_STRING,                   // 450
+	SYM_TUPLE3,                   // 451
+	SYM_TUPLE4,                   // 452
+	SYM_UB,                       // 453
+	SYM_UI16,                     // 454
+	SYM_UI16BE,                   // 455
+	SYM_UI16BEBYTES,              // 456
+	SYM_UI16BYTES,                // 457
+	SYM_UI16LE,                   // 458
+	SYM_UI16LEBYTES,              // 459
+	SYM_UI24,                     // 460
+	SYM_UI24BE,                   // 461
+	SYM_UI24BEBYTES,              // 462
+	SYM_UI24BYTES,                // 463
+	SYM_UI24LE,                   // 464
+	SYM_UI24LEBYTES,              // 465
+	SYM_UI32,                     // 466
+	SYM_UI32BE,                   // 467
+	SYM_UI32BEBYTES,              // 468
+	SYM_UI32BYTES,                // 469
+	SYM_UI32LE,                   // 470
+	SYM_UI32LEBYTES,              // 471
+	SYM_UI64,                     // 472
+	SYM_UI64BE,                   // 473
+	SYM_UI64LE,                   // 474
+	SYM_UI8,                      // 475
+	SYM_UI8BYTES,                 // 476
+	SYM_UID,                      // 477
+	SYM_UNSET,                    // 478
+	SYM_WIDGET,                   // 479
+	SYM_ZLIB                      // 480
 };
 
 /***********************************************************************
@@ -529,6 +613,7 @@
 	A_MODIFY,                     // 57
 	A_UPDATE,                     // 58
 	A_RENAME,                     // 59
+	A_FLUSH,                      // 60
 	A_MAX_ACTION
 };
 

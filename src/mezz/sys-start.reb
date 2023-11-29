@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Boot Sys: Startup"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -19,7 +20,7 @@ REBOL [
 
 start: func [
 	"INIT: Completes the boot sequence. Loads extras, handles args, security, scripts."
-	/local tmp script-path script-args code ver
+	/local file dir tmp script-path script-args code delimiter ver
 ] bind [ ; context is: system/options (must use full path sys/log/.. as there is options/log too!)
 
 	;** Note ** We need to make this work for lower boot levels too!
@@ -33,7 +34,7 @@ start: func [
 	start: 'done ; only once
 	init-schemes ; only once
 
-	ver: load/type lib/version 'unbound
+	ver: load/as lib/version/data 'unbound
 	system/product:        ver/2
 	system/version:        ver/3
 	system/platform:       ver/4
@@ -46,6 +47,8 @@ start: func [
 	system/build/target:   ver/11
 	system/build/date:     ver/12
 	system/build/git:      ver/13
+	system/build/libc:     ver/14
+	system/build/os-version: ver/15
 
 	if flags/verbose [system/options/log/rebol: 3] ;maximum log output for system messages
 
@@ -55,8 +58,7 @@ start: func [
 		any [flags/verbose flags/usage flags/help]
 	][
 		; basic boot banner only
-		prin "^/  "
-		print boot-banner: form ver
+		print boot-banner: lib/version
 	]
 	if any [do-arg script] [quiet: true]
 
@@ -66,12 +68,49 @@ start: func [
 	;sys/log/more 'REBOL ["Initial home:" home] ; always NONE at this state! 
 	;-  1. /path - that is current directory (resolved from C as a part of args processing)
 	;-  2. /boot - path to executable (resolved from C as well)                            
+	; Although the C is trying to resolve the exe path, on some platforms (BSD) it may fail.
+	; In such a case, try to find the exe in one of PATH directories...
+	; NOTE: this may be considered as not secure!
+	boot: any [to-real-file boot boot]
+	unless exists? boot [
+		file: second split-path boot
+		;; Using parse rules instead of splitting all PATH values into a block as it was before.
+		delimiter: pick ";:" system/platform = 'Windows
+		parse any [get-env "PATH" ""][
+			any [copy tmp to delimiter skip (
+				dir: to-rebol-file dirize as file! tmp
+				if exists? tmp: dir/:file [
+					boot: file: tmp
+					break
+				]
+			)]
+		]
+		if boot <> file [
+			sys/log/error 'REBOL "Path to executable was not resolved!"
+			boot: none
+		]
+	]
 	;-  3. /home - preferably one of environment variables or current starting dir         
 	home: dirize to-rebol-file any [
 		get-env "REBOL_HOME"  ; User can set this environment variable with own location
 		get-env "HOME"        ; Default user's home directory on Linux
 		get-env "USERPROFILE" ; Default user's home directory on Windows
 		path                  ; Directory where we started (O: not sure with this one)
+	]
+
+	;- 4. /data - directory of any application data (modules, cache...)
+	data: either system/platform = 'Windows [
+		append dirize to-rebol-file any [get-env "APPDATA" home] %Rebol/
+	][	append copy home %.rebol/]
+
+	;- 5. /modules - directory of extension module files
+	make-dir/deep modules: append copy data %modules/
+
+	;; for now keep the old `module-paths`, but let user know, that it's deprecated now!
+	module-paths: does [
+		sys/log/error 'REBOL "`system/options/module-paths` is deprecated and will be removed!"
+		sys/log/error 'REBOL "Use `system/options/modules` as a path to the directory instead!"
+		self/module-paths: reduce [modules]
 	]
 
 	if file? script [ ; Get the path (needed for SECURE setup)
@@ -115,7 +154,7 @@ start: func [
 		;-- User is requesting usage info:
 		if flags/help [
 			lib/usage
-			unless flags/halt [quit/now]
+			unless flags/halt [quit]
 			quiet: true
 		]
 
@@ -145,6 +184,7 @@ start: func [
 					file throw
 					(path) [allow read]
 					(home) [allow read]
+					(data) allow
 					(first script-path) allow
 				]
 			]
@@ -154,14 +194,17 @@ start: func [
 
 	;-- Evaluate rebol.reb script:
 	;@@ https://github.com/Oldes/Rebol-issues/issues/706
-	tmp: first split-path boot
-	sys/log/info 'REBOL ["Checking for rebol.reb file in" tmp]
-	
-	if all [
-		#"/" = first tmp ; only if we know absolute path
-		exists? tmp/rebol.reb
-	][
-		try/except [do tmp/rebol.reb][sys/log/error 'REBOL system/state/last-error]
+	;; boot (path to the exe) may be none if not resolved!
+	if boot [
+		tmp: first split-path boot
+		sys/log/info 'REBOL ["Checking for rebol.reb file in" tmp]
+		
+		if all [
+			#"/" = first tmp ; only if we know absolute path
+			exists? tmp/rebol.reb
+		][
+			try/with [do tmp/rebol.reb][sys/log/error 'REBOL system/state/last-error]
+		]
 	]
 
 	;-- Make the user's global context:
@@ -171,19 +214,19 @@ start: func [
 
 	sys/log/info 'REBOL ["Checking for user.reb file in" home]
 	if exists? home/user.reb [
-		try/except [do home/user.reb][sys/log/error 'REBOL system/state/last-error]
+		try/with [do home/user.reb][sys/log/error 'REBOL system/state/last-error]
 	]
 
 
 	;if :lib/secure [protect-system-object]
 
 	; Import module?
-	if import [lib/import import]
+	if import [lib/import :import]
 
 	;-- Evaluate: --do "some code" if found
 	if do-arg [
 		do intern load/all do-arg
-		unless script [quit/now]
+		unless script [quit]
 	]
 
 	;-- Evaluate script argument?
@@ -197,7 +240,7 @@ start: func [
 		change-dir first script-path
 		either exists? second script-path [
 			sys/log/info 'REBOL ["Evaluating:" script]
-			code: load/header/type second script-path 'unbound
+			code: load/header/as second script-path 'unbound
 			; update system/script (Make into a function?)
 			system/script: make system/standard/script [
 				title: select first code 'title

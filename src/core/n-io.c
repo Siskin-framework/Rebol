@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -82,6 +83,7 @@ static REBSER *Read_All_File(char *fname)
 {
 	REBVAL *val = D_ARG(1);
 	REBSER *ser = 0;
+	REBINT err;
 
 	Echo_File(0);
 
@@ -91,7 +93,11 @@ static REBSER *Read_All_File(char *fname)
 		ser = To_Local_Path("output.txt", 10, FALSE, TRUE);
 
 	if (ser) {
-		if (!Echo_File((REBCHR*)(ser->data))) Trap1(RE_CANNOT_OPEN, val);
+		err = Echo_File((REBCHR *)(ser->data));
+		if (err != DR_DONE) {
+			SET_INTEGER(D_RET, -err);
+			Trap2(RE_CANNOT_OPEN, val, D_RET);
+		}
 	}
 
 	return R_RET;
@@ -131,21 +137,24 @@ static REBSER *Read_All_File(char *fname)
 {
 	REBVAL *val = D_ARG(1);
 	REB_MOLD mo = {0};
-	REBINT  len = NO_LIMIT;
+	REBCNT  len;
 
 	if (D_REF(3)) SET_FLAG(mo.opts, MOPT_MOLD_ALL);
 	if (D_REF(4)) SET_FLAG(mo.opts, MOPT_INDENT);
 	if (D_REF(5)) {
-		if (VAL_INT64(D_ARG(6)) > (i64)MAX_I32)
-			len = MAX_I32;
+		if (VAL_INT64(D_ARG(6)) > (i64)MAX_U32)
+			len = MAX_U32;
 		else if (VAL_INT64(D_ARG(6)) <= 0)
 			len = 0;
 		else
-			len = VAL_INT32(D_ARG(6));
+			len = VAL_UNT32(D_ARG(6));
+	}
+	else {
+		len = NO_LIMIT;
 	}
 
 	Reset_Mold(&mo);
-	mo.limit = (REBINT)len;
+	mo.limit = len;
 
 	if (D_REF(2) && IS_BLOCK(val)) SET_FLAG(mo.opts, MOPT_ONLY);
 
@@ -422,7 +431,7 @@ chk_neg:
 	val = OFV(port, STD_PORT_ACTOR);
 	if (IS_NATIVE(val)) {
 		//  Makes the port object fully consistent with internal native structures (e.g. the actual length of data read).
-		Do_Port_Action(port, A_UPDATE); // uses current stack frame
+		Do_Port_Action(D_ARG(1), A_UPDATE); // uses current stack frame
 	}
 
 	val = OFV(port, STD_PORT_AWAKE);
@@ -492,7 +501,7 @@ chk_neg:
 	}
 	// Try to call realpath on posix or _fullpath on Windows
 	// Returned string must be released once done!
-	tmp = OS_REAL_PATH(SERIES_DATA(ser));
+	tmp = OS_REAL_PATH((REBCHR*)SERIES_DATA(ser));
 	if (!tmp) return R_NONE;
 
 	// Convert OS native wide string back to Rebol file type
@@ -569,7 +578,12 @@ chk_neg:
 	REBINT len;
 
 	len = OS_GET_CURRENT_DIR(&lpath);
+#ifdef TO_WINDOWS
 	ser = To_REBOL_Path(lpath, len, OS_WIDE, TRUE); // allocates extra for end /
+#else
+	ser = Decode_UTF_String(lpath, len, 8, 0, TRUE);
+	ser = To_REBOL_Path(BIN_HEAD(ser), SERIES_TAIL(ser), TRUE, TRUE);
+#endif
 	ASSERT1(ser, RP_MISC); // should never happen
 	OS_FREE(lpath);
 	Set_Series(REB_FILE, D_RET, ser);
@@ -587,7 +601,7 @@ chk_neg:
 	REBVAL *arg = D_ARG(1);
 	REBSER *ser;
 	REBINT n;
-	REBVAL val, reason;
+	REBVAL val;
 
 	ser = Value_To_OS_Path(arg, TRUE);
 	// it should be safe not to check result from Value_To_OS_Path (it always succeeds)
@@ -600,12 +614,19 @@ chk_neg:
 
 	// convert the full OS path back to Rebol format
 	// used in error or as a result
+#ifdef TO_WINDOWS
 	ser = Value_To_REBOL_Path(&val, TRUE);
+#else
+	ser = Decode_UTF_String(VAL_BIN(&val), VAL_LEN(&val), 8, 0, TRUE);
+	ser = To_REBOL_Path(BIN_HEAD(ser), SERIES_TAIL(ser), TRUE, TRUE);
+#endif
+
+	
 	SET_FILE(arg, ser);
 
 	if (NZ(n)) {
-		SET_INTEGER(&reason, n);
-		Trap2(RE_CANNOT_OPEN, arg, &reason);
+		SET_INTEGER(D_RET, -n);
+		Trap2(RE_CANNOT_OPEN, arg, D_RET);
 	}
 	return R_ARG1;
 }
@@ -1137,6 +1158,27 @@ chk_neg:
 
 /***********************************************************************
 **
+*/	REBNATIVE(request_password)
+/*
+***********************************************************************/
+{
+	REBREQ  req = {0};
+	REBSER *str;
+
+	OS_REQUEST_PASSWORD(&req);
+
+	if (req.data == NULL) return R_NONE;
+
+	str = Copy_OS_Str(req.data, req.actual);
+
+	FREE_MEM(req.data);
+	SET_STRING(D_RET, str);
+	return R_RET;
+}
+
+
+/***********************************************************************
+**
 */	REBNATIVE(get_env)
 /*
 ***********************************************************************/
@@ -1225,13 +1267,13 @@ chk_neg:
 **
 */	REBNATIVE(access_os)
 /*
-**	access-os: native [
-**		{Access to various operating system functions (getuid, setuid, getpid, kill, etc.)}
-**		field [word!] "Valid words: uid, euid, gid, egid, pid"
-**		/set          "To set or kill pid (sig 15)"
-**		value [integer! block!] "Argument, such as uid, gid, or pid (in which case, it could be a block with the signal no)"
-**	]
-**	
+//	access-os: native [
+//		{Access to various operating system functions (getuid, setuid, getpid, kill, etc.)}
+//		field [word!] "Valid words: uid, euid, gid, egid, pid"
+//		/set          "To set or kill pid (sig 15)"
+//		value [integer! block!] "Argument, such as uid, gid, or pid (in which case, it could be a block with the signal no)"
+//	]
+//	
 ***********************************************************************/
 {
 	REBVAL *field = D_ARG(1);

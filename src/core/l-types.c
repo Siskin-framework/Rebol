@@ -303,10 +303,9 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	if (!dig) return 0;
 	if (*cp == 'E' || *cp == 'e') {
 			*ep++ = *cp++;
-			dig = 0;
+			dig = 1;
 			if (*cp == '-' || *cp == '+') *ep++ = *cp++;
-			while (IS_LEX_NUMBER(*cp)) *ep++ = *cp++, dig=1;
-			if (!dig) return 0;
+			while (IS_LEX_NUMBER(*cp)) *ep++ = *cp++;
 	}
 	if (*cp == '%') {
 		if (dec_only) return 0;
@@ -335,7 +334,7 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	REBINT num = (REBINT)len;
 	REBYTE buf[MAX_NUM_LEN+4];
 	REBYTE *bp;
-	REBI64 n;
+	REBI64 n = 0;
 	REBOOL neg = FALSE;
 
 	// Super-fast conversion of zero and one (most common cases):
@@ -366,14 +365,17 @@ bad_hex:	Trap0(RE_INVALID_CHARS);
 	}
 	*bp = 0;
 
-	// Too many digits?
+	// Count number of digits
 	len = (REBCNT)(bp - &buf[0]);
 	if (neg) len--;
-	if (len > 19) return 0;
-
-	// Convert, check, and return:
-	n = CHR_TO_INT(buf);
-	if ((n > 0 && neg) || (n < 0 && !neg)) return 0;
+	if (len > 0) {
+		if (len > 19) return 0; // Too many digits
+		// Convert, check, and return:
+		errno = 0;
+		n = CHR_TO_INT(buf);
+		if (errno != 0) return 0; //overflow
+		if ((n > 0 && neg) || (n < 0 && !neg)) return 0;
+	}
 	SET_INTEGER(value, n);
 	return cp;
 }
@@ -646,7 +648,7 @@ end_date:
 ***********************************************************************/
 {
 	REBUNI term = 0;
-	const REBYTE *invalid = cb_cast(":;()[]\"");
+	const REBYTE *invalid = cb_cast(":;()[]\"^");
 
 	if (*cp == '%') cp++, len--;
 	if (*cp == '"') {
@@ -908,6 +910,67 @@ end_date:
 	return ep;
 }
 
+/***********************************************************************
+**
+*/	const REBYTE *Scan_Spec_Integer(const REBYTE *cp, REBINT len, REBVAL *value)
+/*
+**		Scan and convert bit, octal, decimal or hexadecimal integer.
+**
+**		The input is expected to be pre-validated from l-scan!
+**
+***********************************************************************/
+{
+	REBU64 accum = 0;
+
+	if (*cp == '0') {
+		// base16: 0#beaf
+		cp  += 2;
+		len -= 2;
+base16:
+		while (len-- > 0) {
+			accum = (accum << 4) + (Lex_Map[*cp] & LEX_VALUE); // char num encoded into lex
+			cp++;
+		}
+	}
+	else if (*cp == '2') {
+		// base2: 2#0101
+		cp += 2;
+		len -= 2;
+		while (len-- > 0) {
+			accum *= 2;
+			if (*cp == '1') accum += 1;
+			cp++;
+		}
+	}
+	else if (*cp == '8') {
+		// base8: 8#140
+		cp += 2;
+		len -= 2;
+		while (len-- > 0) {
+			accum = (accum * 8) + (*cp - '0');
+			cp++;
+		}
+	}
+	else if (cp[1] == '6') {
+		// base16: 16#beaf
+		cp  += 3;
+		len -= 3;
+		goto base16;
+	}
+	else if (cp[1] == '0') {
+		// base10: 10#123
+		cp += 3;
+		len -= 3;
+		while (len-- > 0) {
+			accum = (accum * 10) + (*cp - '0');
+			cp++;
+		}
+	}
+	VAL_UNT64(value) = accum;
+	VAL_SET(value, REB_INTEGER);
+	return cp;
+}
+
 
 /***********************************************************************
 **
@@ -1094,6 +1157,10 @@ end_date:
 			SET_TRUE(value);
 			return TRUE;
 
+		case SYM_UNSET:
+			SET_UNSET(value);
+			return TRUE;
+				
 		default:
 			if (type >= SYM_I8X && type < SYM_DATATYPES) {
 				if (MT_Vector(value, val, REB_VECTOR)) return TRUE;
@@ -1103,18 +1170,13 @@ end_date:
 	}
 	type--;	// The global word for datatype x is at word x+1.
 
-	// Check for trivial types:
-	if (type == REB_UNSET) {
-		SET_UNSET(value);
-		return TRUE;
-	}
-	if (type == REB_NONE) {
-		SET_NONE(value);
-		return TRUE;
-	}
-
 	val++;
-	if (IS_END(val)) return FALSE;
+	if (IS_END(val)) {
+		VAL_SET(value, REB_DATATYPE);
+		VAL_DATATYPE(value) = type;
+		VAL_TYPE_SPEC(value) = 0;
+		return TRUE;
+	}
 
 	// Dispatch maker:
 	if (NZ(func = Make_Dispatch[type])) {
@@ -1195,6 +1257,7 @@ end_date:
 			if (*cp == LF) cp++;
 			if (IS_LEX_SPACE(*cp)) {
 				while (IS_LEX_SPACE(*cp)) cp++;
+				len++;
 				while (NOT_NEWLINE(*cp)) len++, cp++;
 			}
 			else break;
@@ -1212,6 +1275,7 @@ end_date:
 			if (*cp == LF) cp++;
 			if (IS_LEX_SPACE(*cp)) {
 				while (IS_LEX_SPACE(*cp)) cp++;
+				*str++ = ' ';
 				while (NOT_NEWLINE(*cp)) *str++ = *cp++;
 			}
 			else break;

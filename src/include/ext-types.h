@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Extension Types (Isolators)
-**  Build: 3.7.2
-**  Date:  5-Jan-2022
+**  Build: 3.15.0
+**  Date:  29-Nov-2023
 **  File:  ext-types.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -59,5 +59,6 @@ enum REBOL_Ext_Types
 	RXT_GOB = 47,                 // 35
 	RXT_OBJECT = 48,              // 36
 	RXT_MODULE,                   // 37
+	RXT_STRUCT = 54,              // 38
     RXT_MAX
 };

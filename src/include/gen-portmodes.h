@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Port Modes
-**  Build: 3.7.2
-**  Date:  5-Jan-2022
+**  Build: 3.15.0
+**  Date:  29-Nov-2023
 **  File:  port-modes.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -35,4 +35,8 @@ enum reb_console_modes {
 	MODE_CONSOLE_ECHO,
 	MODE_CONSOLE_LINE,
 	MODE_CONSOLE_ERROR 
+};
+
+enum reb_audio_modes {
+	MODE_AUDIO_PLAY 
 };

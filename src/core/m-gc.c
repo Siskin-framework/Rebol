@@ -81,6 +81,7 @@
 
 #include "sys-core.h"
 #include "reb-evtypes.h"
+//#include "stdio.h"
 
 #ifdef REB_API
 extern REBOL_HOST_LIB *Host_Lib;
@@ -284,6 +285,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	REBCNT len;
 	REBSER *ser;
 	REBVAL *val;
+	REBHOB *hob;
 
 	ASSERT(series != 0, RP_NULL_MARK_SERIES);
 
@@ -292,7 +294,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	MARK_SERIES(series);
 
 	// If not a block, go no further
-	if (SERIES_WIDE(series) != sizeof(REBVAL)) return;
+	if (SERIES_WIDE(series) != sizeof(REBVAL) || IS_BARE_SERIES(series)) return;
 
 	ASSERT2(RP_SERIES_OVERFLOW, SERIES_TAIL(series) < SERIES_REST(series));
 
@@ -318,12 +320,16 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 			break;
 		case REB_HANDLE:
 			if (IS_CONTEXT_HANDLE(val)) {
-				//printf("marked hob: %p %p\n", VAL_HANDLE_CTX(val), val);
+				hob = VAL_HANDLE_CTX(val);
+				//printf("marked hob: %p %p\n", hob, val);
 				MARK_HANDLE_CONTEXT(val);
+				if (hob->series) {
+					Mark_Series(hob->series, depth);
+				}
 			}	
 			else if (IS_SERIES_HANDLE(val) && !HANDLE_GET_FLAG(val, HANDLE_RELEASABLE)) {
 				//printf("markserhandle %0xh val: %0xh %s \n", (void*)val, VAL_HANDLE(val), VAL_HANDLE_NAME(val));
-				MARK_SERIES(VAL_HANDLE_DATA(val));
+				Mark_Series(VAL_HANDLE_DATA(val), depth);
 			}
 			break;
 
@@ -536,7 +542,7 @@ mark_obj:
 			MUNG_CHECK(SERIES_POOL, series, sizeof(*series));
 			if (!SERIES_FREED(series)) {
 				if (IS_FREEABLE(series)) {
-					//printf("free: %0xh\n", (int)series);
+					//printf("free: %0xh %s\n", (int)series, series->label);
 					Free_Series(series);
 					count++;
 				} else
@@ -615,8 +621,7 @@ mark_obj:
 				if (IS_MARK_HOB(hob))
 					UNMARK_HOB(hob);
 				else {
-					Free_Hob(hob);
-					count++;
+					count += Free_Hob(hob);
 				}
 			}
 			hob++;
@@ -630,9 +635,11 @@ mark_obj:
 
 /***********************************************************************
 **
-*/	REBCNT Recycle(void)
+*/	REBCNT Recycle(REBOOL all)
 /*
 **		Recycle memory no longer needed.
+**
+**      When all is TRUE, then infant series are not protected!
 **
 ***********************************************************************/
 {
@@ -682,12 +689,15 @@ mark_obj:
 	// Mark the last MAX_SAFE "infant" series that were created.
 	// We must assume that infant blocks are valid - that they contain
 	// no partially valid datatypes (that are under construction).
-	for (n = 0; n < MAX_SAFE_SERIES; n++) {
-		REBSER *ser;
-		if (NZ(ser = GC_Infants[n])) {
-			//Dump_Series(ser, "Safe Series");
-			Mark_Series(ser, 0);
-		} else break;
+	if (!all) {
+		for (n = 0; n < MAX_SAFE_SERIES; n++) {
+			REBSER *ser;
+			if (NZ(ser = GC_Infants[n])) {
+				//Dump_Series(ser, "Safe Series");
+				Mark_Series(ser, 0);
+			}
+			else break;
+		}
 	}
 
 	// Mark all root series:
@@ -803,6 +813,8 @@ mark_obj:
 {
 	REBCNT n;
 	GC_Disabled = 0;
+	// Dispose context handles first, because they may depend on other series!
+	Dispose_Hobs();
 	/* remove everything from GC_Infants (GC protection) */
 	for (n = 0; n < MAX_SAFE_SERIES; n++) {
 		GC_Infants[n] = NULL;

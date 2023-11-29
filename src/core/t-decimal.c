@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2021 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +23,7 @@
 **  Module:  t-decimal.c
 **  Summary: decimal datatype
 **  Section: datatypes
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Ladislav Mecir, Oldes
 **  Notes:
 **
 ***********************************************************************/
@@ -45,22 +46,22 @@ static char *gcvt(double value, int digits, char *buffer)
 
 /*
 	Purpose: {defines the almost_equal comparison function}
-	Properties: {    
+	Properties: {
 		since floating point numbers are ordered and there is only
 		a finite quantity of floating point numbers, it is possible
 		to assign an ordinal (integer) number to any floating point number so,
 		that the ordinal numbers of neighbors differ by one
-		
+
 		the function compares floating point numbers based on
 		the difference of their ordinal numbers in the ordering
 		of floating point numbers
-		
+
 		difference of 0 means exact equality, difference of 1 means, that
 		the numbers are neighbors.
 	}
 	Advantages: {
 		the function detects approximate equality.
-		
+
 		the function is more strict in the zero neighborhood than
 		absolute-error-based approaches
 
@@ -69,7 +70,7 @@ static char *gcvt(double value, int digits, char *buffer)
 		meaning that neighbors are deemed equal, max_diff = 10 meaning, that
 		the numbers are deemed equal if at most 9
 		distinct floating point numbers can be found between them
-		
+
 		the max_diff value may be one of the system options specified in
 		the system/options object allowing users to exactly define the
 		strictness of equality checks
@@ -77,7 +78,7 @@ static char *gcvt(double value, int digits, char *buffer)
 	Differences: {
 		The approximate comparison currently used in R3 corresponds to the
 		almost_equal function using max_diff = 10 (according to my tests).
-		
+
 		The main differences between the currently used comparison and the
 		one based on the ordinal number comparison are:
 		-   the max_diff parameter can be adjusted, allowing
@@ -96,7 +97,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 	REBI64 int_diff;
 
 #ifndef USE_NO_INFINITY
-	if(isnan(a) || isnan(b)) return FALSE;
+	if (isnan(a) && isnan(b)) return max_diff > 0;
 #endif // !USE_NO_INFINITY
 
 	ua.d = a;
@@ -110,7 +111,7 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 
 	int_diff = ua.i - ub.i;
 	if (int_diff < 0) int_diff = -int_diff;
-	
+
 	return ((REBU64) int_diff <= max_diff);
 }
 
@@ -177,8 +178,11 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 ***********************************************************************/
 {
 	if (mode >= 0) {
-		if (mode <= 1) return almost_equal(VAL_DECIMAL(a), VAL_DECIMAL(b), 21); //O: there was 10, but 21 is the minimum to have: (100% // 3% = 1%) == true
-		if (mode == 2) return almost_equal(VAL_DECIMAL(a), VAL_DECIMAL(b), 0);
+		if (mode == 0) return almost_equal(VAL_DECIMAL(a), VAL_DECIMAL(b), 21); //O: there was 10, but 21 is the minimum to have: (100% // 3% = 1%) == true
+		if (mode == 1) return almost_equal(VAL_DECIMAL(a), VAL_DECIMAL(b), 0);
+#ifndef USE_NO_INFINITY
+		if (isnan(VAL_DECIMAL(a)) && isnan(VAL_DECIMAL(b))) return mode != 2;
+#endif
 		return VAL_INT64(a) == VAL_INT64(b); // bits are identical
 	}
 	if (mode == -1) return VAL_DECIMAL(a) >= VAL_DECIMAL(b);
@@ -339,13 +343,15 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 		case A_NEGATE:
 			d1 = -d1;
 			goto setDec;
+
 		case A_ABSOLUTE:
 			if (d1 < 0) d1 = -d1;
 			goto setDec;
+
 		case A_EVENQ:
 		case A_ODDQ:
 			d1 = fabs(fmod(d1, 2.0));
-			DECIDE((action != A_EVENQ) != ((d1 < 0.5) || (d1 >= 1.5)));
+			DECIDE((action == A_EVENQ) == (d1 < 0.5 || d1 >= 1.5));
 
 		case A_MAKE:
 		case A_TO:
@@ -364,24 +370,24 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 			case REB_PERCENT:
 				d1 = VAL_DECIMAL(val);
 				goto setDec;
-			
+
 			case REB_INTEGER:
 				d1 = (REBDEC)VAL_INT64(val);
 				goto setDec;
-			
+
 			case REB_MONEY:
 				d1 = deci_to_decimal(VAL_DECI(val));
 				goto setDec;
-			
+
 			case REB_LOGIC:
 				if (action != A_MAKE) Trap_Make(type, val);
 				d1 = VAL_LOGIC(val) ? 1.0 : 0.0;
 				goto setDec;
-			
+
 			case REB_CHAR:
 				d1 = (REBDEC)VAL_CHAR(val);
 				goto setDec;
-			
+
 			case REB_TIME:
 				d1 = VAL_TIME(val) * NANO;
 				break;
@@ -398,12 +404,22 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 				}
 				Trap_Make(type, val);;
 			}
-			
+
 			case REB_BINARY:
 				Binary_To_Decimal(val, D_RET);
 				d1 = VAL_DECIMAL(D_RET);
 				break;
-			
+
+			case REB_DATE:
+			{
+				REB_TIMEF time = {12,0,0,0};
+				if (VAL_TIME(val) != NO_TIME) {
+					Split_Time(VAL_TIME(val), &time);
+				}
+				d1 = Gregorian_To_Julian_Date(VAL_DATE(val), time) - 2400000.5;
+				break;
+			}
+
 #ifdef removed
 //			case REB_ISSUE:
 			{

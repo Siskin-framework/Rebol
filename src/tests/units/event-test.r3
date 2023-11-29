@@ -14,6 +14,8 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/132
 	--assert  event? e: make event! [type: 'connect]
 	--assert  'connect = e/type
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2484
+	--assert all [event? e2: make e [offset: 0x0] e2/offset = 0x0]
 
 --test-- "event! offset out of range"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1635
@@ -61,13 +63,13 @@ Rebol [
 		e/type = 'custom
 		e/code = 1
 	]
-	if system/view/event-port [
+	if system/ports/event [
 		; using port in the custom event
 		--assert all [
-			event? e: try [make event! [type: 'custom code: 2 port: system/view/event-port]]
+			event? e: try [make event! [type: 'custom code: 2 port: system/ports/event]]
 			e/type = 'custom
 			e/code = 2
-			e/port = system/view/event-port
+			e/port = system/ports/event
 		]
 	]
 

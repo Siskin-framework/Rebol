@@ -128,6 +128,7 @@ context [
 		newline
 		[
 			"/*" ; must be in func header section, not file banner
+			any ["^/**" to newline] ; allow comments in this section
 			[
 				thru newline s:
 				opt  ["**" | " *" | "//"]
@@ -174,7 +175,7 @@ context [
 			exit
 		]
 
-		parse/all data [
+		parse data [
 			any [
 				thru "/******" to newline
 				[
@@ -183,7 +184,7 @@ context [
 			]
 		]
 		;collect all SYM_* uses
-		parse/all/case data [
+		parse/case data [
 			any [
 				to sym-check p: [
 					  "/*" thru "*/"
@@ -203,7 +204,7 @@ context [
 			any [
 				;Search only in /*...*/ comments
 				thru "/*" copy comm to "*/" (
-					parse/all comm [any [
+					parse comm [any [
 						thru {^/**} [
 							any [#" " | #"^-"]
 							"Base-code:"
@@ -296,6 +297,7 @@ context [
 	acts: load root-dir/src/boot/actions.reb
 
 	foreach word [
+		append
 		copy
 		find
 		put
@@ -317,6 +319,8 @@ context [
 		checksum
 		request-file
 		request-dir
+		catch
+		try
 	] [make-arg-enums word]
 
 ;?? output
@@ -331,7 +335,7 @@ context [
 
 	data: read/string root-dir/src/core/a-constants.c
 
-	parse/all data [
+	parse data [
 		some [
 			to "^/const"
 			copy d to "="

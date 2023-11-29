@@ -26,4 +26,3 @@ The value is protected, so one would do for example:
 ```
 unprotect 'system/platform
 system/platform: 'OpenBSD
-```

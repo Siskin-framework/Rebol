@@ -54,7 +54,11 @@
 
 #define POOL_MAP
 
+#ifdef __LLP64__
+#define	BAD_MEM_PTR ((REBYTE *)0xBAD1BAD1BAD1BAD1)
+#else
 #define	BAD_MEM_PTR ((REBYTE *)0xBAD1BAD1)
+#endif
 
 //#define GC_TRIGGER (GC_Active && (GC_Ballast <= 0 || (GC_Pending && !GC_Disabled)))
 
@@ -75,9 +79,9 @@
 ***********************************************************************/
 const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 {
-	{8, 256},			// 0-8 Small string pool
+	{8, 512},			// 0-8 Small string pool
 
-	MOD_POOL( 1, 256),	// 9-16 (when REBVAL is 16)
+	MOD_POOL( 1, 1024),	// 9-16 (when REBVAL is 16)
 	MOD_POOL( 2, 512),	// 17-32 - Small series (x 16)
 	MOD_POOL( 3, 1024),	// 33-64
 	MOD_POOL( 4, 512),
@@ -96,12 +100,12 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	MOD_POOL(20,  32),	// 321 - Mid-size series (x 64)
 	MOD_POOL(24,  16),	// 385
 	MOD_POOL(28,  16),	// 449
-	MOD_POOL(32,   8),	// 513
+	MOD_POOL(LAST_SMALL_SIZE,  16),	// 513
 
-	DEF_POOL(MEM_BIG_SIZE,  16),	// 1K - Large series (x 1024)
-	DEF_POOL(MEM_BIG_SIZE*2, 8),	// 2K
-	DEF_POOL(MEM_BIG_SIZE*3, 4),	// 3K
-	DEF_POOL(MEM_BIG_SIZE*4, 4),	// 4K
+	DEF_POOL(MEM_BIG_SIZE,   16),	// 1K - Large series (x 1024)
+	DEF_POOL(MEM_BIG_SIZE*2, 16),	// 2K
+	DEF_POOL(MEM_BIG_SIZE*3,  4),	// 3K
+	DEF_POOL(MEM_BIG_SIZE*4,  8),	// 4K
 
 	DEF_POOL(sizeof(REBSER), 4096),	// Series headers
 	DEF_POOL(sizeof(REBGOB), 128),	// Gobs
@@ -168,7 +172,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	PG_Pool_Map = Make_Mem((4 * MEM_BIG_SIZE) + 4); // extra
 	n = 9;  // sizes 0 - 8 are pool 0
 	for (; n <= 16 * MEM_MIN_SIZE; n++) PG_Pool_Map[n] = MEM_TINY_POOL     + ((n-1) / MEM_MIN_SIZE);
-	for (; n <= 32 * MEM_MIN_SIZE; n++) PG_Pool_Map[n] = MEM_SMALL_POOLS-4 + ((n-1) / (MEM_MIN_SIZE * 4));
+	for (; n <= LAST_SMALL_SIZE * MEM_MIN_SIZE; n++) PG_Pool_Map[n] = MEM_SMALL_POOLS-4 + ((n-1) / (MEM_MIN_SIZE * 4));
 	for (; n <=  4 * MEM_BIG_SIZE; n++) PG_Pool_Map[n] = MEM_MID_POOLS     + ((n-1) / MEM_BIG_SIZE);
 }
 
@@ -322,7 +326,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	REBPOL *pool;
 	REBCNT pool_num;
 
-//	if (GC_TRIGGER) Recycle();
+//	if (GC_TRIGGER) Recycle(FALSE);
 
 	length *= SERIES_WIDE(series);
 	pool_num = FIND_POOL(length);
@@ -391,7 +395,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 	ASSERT(wide != 0, RP_BAD_SERIES);
 
-//	if (GC_TRIGGER) Recycle();
+//	if (GC_TRIGGER) Recycle(FALSE);
 
 	series = (REBSER *)Make_Node(SERIES_POOL);
 	length *= wide;
@@ -443,7 +447,8 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	series->tail = series->size = 0;
 	SERIES_REST(series) = length / wide; //FIXME: This is based on the assumption that length is multiple of wide
 	series->data = (REBYTE *)node;
-	series->info = wide; // also clears flags
+	series->sizes = wide; // also clears bias
+	SERIES_FLAGS(series) = 0;
 	LABEL_SERIES(series, "make");
 
 	if ((GC_Ballast -= length) <= 0) SET_SIGNAL(SIG_RECYCLE);
@@ -529,7 +534,8 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 clear_header:
 	if (protect) {
 		series->data = BAD_MEM_PTR; // force bad references to trap
-		series->info = 0;  // indicates series deallocated (wide = 0)
+		series->sizes = 0;  // indicates series deallocated (wide = 0)
+		series->flags = 0;
 	}
 }
 
@@ -559,7 +565,8 @@ clear_header:
 	if (!IS_EXT_SERIES(series)) {
 		Free_Series_Data(series, TRUE);
 	}
-	series->info = 0; // includes width
+	series->sizes = 0; // includes bias and width
+	series->flags = 0;
 	//series->data = BAD_MEM_PTR;
 	//series->tail = 0xBAD2BAD2;
 	//series->size = 0xBAD3BAD3;
@@ -597,7 +604,7 @@ clear_header:
 
 /***********************************************************************
 **
-*/	void Free_Hob(REBHOB *hob)
+*/	int Free_Hob(REBHOB *hob)
 /*
 **		Free a hob, returning its memory for reuse.
 **
@@ -606,18 +613,28 @@ clear_header:
 	REBHSP spec;
 	REBCNT idx = hob->index;
 
-	if( !IS_USED_HOB(hob) || hob->data == NULL ) return;
+	if( !IS_USED_HOB(hob) || hob->data == NULL ) return 0;
 
 	spec = PG_Handles[idx];
-	//printf("HOB free mem: %p\n", hob->data);
+	//printf("HOB %p free mem: %p %i\n", hob, hob->data, spec.flags);
 
-	if (spec.free)
-		spec.free(hob->data);
+	if (spec.free) {
+		if (spec.flags & HANDLE_REQUIRES_HOB_ON_FREE) {
+			spec.free((void*)hob);
+			// Although there are no references, the extension may still need the handle.
+			// If extension marks the hob, do not free it now.
+			if (IS_MARK_HOB(hob)) return 0;
+		}
+		else {
+			spec.free(hob->data);
+		}
+	}
 	
 	CLEAR(hob->data, spec.size); 
 	FREE_MEM(hob->data);
 	UNUSE_HOB(hob);
 	Free_Node(HOB_POOL, (REBNOD *)hob);
+	return 1;
 }
 
 
@@ -629,7 +646,8 @@ clear_header:
 **
 ***********************************************************************/
 {
-	newser->info = oldser->info;
+	newser->sizes = oldser->sizes;
+	newser->flags = oldser->flags;
 	newser->all = oldser->all;
 #ifdef SERIES_LABELS
 	newser->label = oldser->label;
@@ -1000,19 +1018,17 @@ crash:
 
 /***********************************************************************
 **
-*/	void Dispose_Pools(void)
+*/	void Dispose_Hobs(void)
 /*
-**		Free memory pool array when application quits.
+**		Free all HOB pool segments
 **
 ***********************************************************************/
 {
-	REBSEG	*seg, *next;
+	REBSEG	*seg;
 	REBHOB *hob;
 	REBCNT  n;
 
-	//Dump_Pools();
-	//Dump_Series_In_Pool(-1);
-	
+	//puts("===== Dispose_Hobs ======");
 	// HOB at this moment does not use system series, so handle it separately
 	for (seg = Mem_Pools[HOB_POOL].segs; seg; seg = seg->next) {
 		hob = (REBHOB *) (seg + 1);
@@ -1023,8 +1039,24 @@ crash:
 			SKIP_WALL_TYPE(hob, REBHOB);
 		}
 	}
+}
 
-	// than release all series from all system pools
+/***********************************************************************
+**
+*/	void Dispose_Pools(void)
+/*
+**		Free memory pool array when application quits.
+**
+***********************************************************************/
+{
+	REBSEG	*seg, *next;
+	REBCNT  n;
+
+	//Dump_Pools();
+	//Dump_Series_In_Pool(-1);
+	//puts("===== Dispose_Pools ======");
+
+	// Release all series from all system pools
 	FOREACH(n, SYSTEM_POOL) {
 		//printf(cs_cast("*** Dispose_Pools[%u] Has: %u free: %u\n"), n, Mem_Pools[n].has, Mem_Pools[n].free);
 		if (Mem_Pools[n].has == Mem_Pools[n].free) {

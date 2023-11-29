@@ -238,6 +238,28 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "pair - even?/odd?"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1884
+	--test-- "odd?"
+		--assert not odd? 0x0
+		--assert not odd? 0x1
+		--assert not odd? 1x0
+		--assert     odd? 1x1
+		--assert not odd? 2x2
+		--assert     odd? 1.1x2.9
+		--assert not odd? 1.1x2.2
+		
+	--test-- "even?"
+		--assert     even? 0x0
+		--assert not even? 0x1
+		--assert not even? 1x0
+		--assert not even? 1x1
+		--assert     even? 2x2
+		--assert     even? 1.9x2.1
+		--assert not even? 1.1x2.2
+
+===end-group===
+
 ===start-group=== "pair - issues"
 
 	--test-- "invalid construction"
@@ -254,6 +276,15 @@ Rebol [
 		--assert p/1 <  1.#INF
 		--assert p/2 > -1.#INF
 
+===end-group===
+
+===start-group=== "pair area accessor"
+	--test-- "pair/area"
+		p:  10x20  --assert 200.0 = try [p/area]
+		p: -10x20  --assert 200.0 = try [p/area]
+		--assert all [error? e: try [p/area: 100] e/id = 'bad-path-set]
+		p: 1.5x3   --assert   4.5 = try [p/area]
+		p: 1.5x-3  --assert   4.5 = try [p/area]
 ===end-group===
 
 ~~~end-file~~~

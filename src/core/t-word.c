@@ -98,14 +98,14 @@
 			return R_ARG2;
 		}
 		else {
-			if (IS_STRING(arg) || IS_REF(arg) || IS_TAG(arg)) {
+			if (ANY_STR(arg)) {
 				REBYTE *bp;
 				REBCNT len;
 				// Set sym. Rest is set below.
 				bp = Qualify_String(arg, 255, &len, TRUE);
 				if (type == REB_ISSUE) sym = Scan_Issue(bp, len);
 				else sym = Scan_Word(bp, len);
-				if (!sym) Trap1(RE_BAD_CHAR, arg);
+				if (!sym) Trap0(RE_INVALID_CHARS);
 			}
 			else if (IS_CHAR(arg)) {
 				REBYTE buf[8] = {0};

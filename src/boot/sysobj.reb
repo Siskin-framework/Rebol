@@ -3,7 +3,7 @@ REBOL [
 	Title: "System object"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2021 Rebol Open Source Contributors
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -22,12 +22,58 @@ product:  'core
 ; Next four fields are updated during build:
 platform: none
 version:  0.0.0
-build:    object [os: arch: vendor: sys: abi: compiler: target: date: git: none]
-license: none
+build:    object [os: os-version: abi: sys: arch: libc: vendor: target: compiler: date: git: none]
+
+user: construct [
+	name: none
+	data: #()
+]
+
+options: object [  ; Options supplied to REBOL during startup
+	boot:           ; The path to the executable
+	path:           ; Where script was started or the startup dir
+	home:           ; Path of home directory
+	data:           ; Path of application data directory
+	modules:        ; Path of extension modules
+		none
+
+	flags:          ; Boot flag bits (see system/catalog/boot-flags)
+	script:         ; Filename of script to evaluate
+	args:           ; Command line arguments passed to script
+	do-arg:         ; Set to a block if --do was specified
+	import:         ; imported modules
+	debug:          ; debug flags
+	secure:         ; security policy
+	version:        ; script version needed
+	boot-level:     ; how far to boot up
+		none
+
+	quiet: false    ; do not show startup info (compatibility)
+
+	binary-base: 16    ; Default base for FORMed binary values (64, 16, 2)
+	decimal-digits: 15 ; Max number of decimal digits to print.
+	probe-limit: 16000 ; Max probed output size
+	module-paths: none ;@@ DEPRECATED!
+	default-suffix: %.reb ; Used by IMPORT if no suffix is provided
+	file-types: []
+	mime-types: none
+	result-types: none
+
+	; verbosity of logs per service (codecs, schemes)
+	; 0 = nothing; 1 = info; 2 = more; 3 = debug
+	log: #[map! [
+		rebol: 1
+		http: 1
+		tls:  1
+		zip:  1
+		tar:  1
+	]]
+	domain-name: none ; Specifies system's domain name (used in SMTP scheme so far)
+]
 
 catalog: object [
 	; Static (non-changing) values, blocks, objects
-	datatypes: []
+	datatypes: none
 	actions: none
 	natives: none
 	handles: none
@@ -35,8 +81,8 @@ catalog: object [
 	; Reflectors are used on boot to create *-of functions
 	reflectors: [
 		spec   [any-function! any-object! vector! datatype! struct!]
-		body   [any-function! any-object! map!]
-		words  [any-function! any-object! map! date! handle!]
+		body   [any-function! any-object! map! struct!]
+		words  [any-function! any-object! map! date! handle! struct!]
 		values [any-object! map! struct!]
 		types  [any-function!]
 		title  [any-function! datatype! module!]
@@ -50,17 +96,120 @@ catalog: object [
 	]
 	bitsets: object [
 		crlf:          #[bitset! #{0024}]                             ;charset "^/^M"
+		space:         #[bitset! #{0040000080}]                       ;charset " ^-"
 		whitespace:    #[bitset! #{0064000080}]                       ;charset "^/^M^- "
 		numeric:       #[bitset! #{000000000000FFC0}]                 ;0-9
 		alpha:         #[bitset! #{00000000000000007FFFFFE07FFFFFE0}] ;A-Z a-z
 		alpha-numeric: #[bitset! #{000000000000FFC07FFFFFE07FFFFFE0}] ;A-Z a-z 0-9
 		hex-digits:    #[bitset! #{000000000000FFC07E0000007E}]       ;A-F a-f 0-9
+		plus-minus:    #[bitset! #{000000000014}]                     ;charset "+-"
 		; chars which does not have to be url-encoded:
 		uri:           #[bitset! #{000000005BFFFFF5FFFFFFE17FFFFFE2}] ;A-Z a-z 0-9 !#$&'()*+,-./:;=?@_~
 		uri-component: #[bitset! #{0000000041E6FFC07FFFFFE17FFFFFE2}] ;A-Z a-z 0-9 !'()*-._~
+		quoted-printable: #[bitset! #{FFFFFFFFFFFFFFFBFFFFFFFFFFFFFFFF}]
 	]
-	checksums: [adler32 crc24 crc32 tcp md4 md5 sha1 sha224 sha256 sha384 sha512 ripemd160]
-	compressions: [gzip deflate zlib lzma crush]
+	checksums: [
+		; will be filled on boot from `Init_Crypt` in `n-crypt.c
+	]
+	compressions: [deflate zlib gzip] ;; these are always available
+	elliptic-curves: [
+		; will be filled on boot from `Init_Crypt` in `n-crypt.c`
+	]
+	ciphers: [
+		; will be filled on boot from `Init_Crypt` in `n-crypt.c`
+	]
+	event-types: [
+		; Event types. Order dependent for C and REBOL.
+		; Due to fixed C constants, this list cannot be reordered after release!
+		ignore			; ignore event (0)
+		interrupt		; user interrupt
+		device			; misc device request
+		callback		; callback event
+		custom			; custom events
+		error
+		init
+
+		open
+		close
+		connect
+		accept
+		read
+		write
+		wrote
+		lookup
+
+		ready
+		done
+		time
+
+		show
+		hide
+		offset
+		resize
+		active
+		inactive 
+		minimize
+		maximize
+		restore
+
+		move
+		down
+		up
+		alt-down 
+		alt-up 
+		aux-down 
+		aux-up 
+		key
+		key-up ; Move above when version changes!!!
+
+		scroll-line
+		scroll-page
+
+		drop-file
+
+		click
+		change
+		focus
+		unfocus
+		scroll
+
+		control    ;; used to pass control key events to a console port
+		control-up ;; only on Windows?
+	]
+	event-keys: [
+		; Event types. Order dependent for C and REBOL.
+		; Due to fixed C constants, this list cannot be reordered after release!
+		page-up
+		page-down
+		end
+		home
+		left
+		up
+		right
+		down
+		insert
+		delete
+		f1
+		f2
+		f3
+		f4
+		f5
+		f6
+		f7
+		f8
+		f9
+		f10
+		f11
+		f12
+		paste-start  ;; Bracketed paste turned on - https://cirw.in/blog/bracketed-paste
+		paste-end    ;; Bracketed paste turned off
+		escape       ;; Escape key
+		shift
+		control
+		alt
+		pause
+		capital	
+	]
 ]
 
 contexts: construct [
@@ -89,9 +238,42 @@ state: object [
 	]
 	last-error:  none ; used by WHY?
 	last-result: none ; used to store last console result
+	wait-list: []     ; List of ports to add to 'wait
 ]
 
-modules: object []
+modules: object [
+	help:    none
+	;; external native extensions
+	blend2d:       https://github.com/Siskin-framework/Rebol-Blend2D/releases/download/0.0.18.1/
+	blurhash:      https://github.com/Siskin-framework/Rebol-BlurHash/releases/download/1.0.0/
+	easing:        https://github.com/Siskin-framework/Rebol-Easing/releases/download/1.0.0/
+	mathpresso:    https://github.com/Siskin-framework/Rebol-MathPresso/releases/download/0.1.0/
+	miniaudio:     https://github.com/Oldes/Rebol-MiniAudio/releases/download/0.11.18.0/
+	sqlite:        https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.42.0.0/
+	triangulate:   https://github.com/Siskin-framework/Rebol-Triangulate/releases/download/1.6.0.0/
+	;; optional modules, protocol and codecs
+	httpd:            https://src.rebol.tech/modules/httpd.reb
+	prebol:           https://src.rebol.tech/modules/prebol.reb
+	spotify:          https://src.rebol.tech/modules/spotify.reb
+	unicode-utils:    https://src.rebol.tech/modules/unicode-utils.reb
+	daytime:          https://src.rebol.tech/mezz/prot-daytime.reb
+	mail:             https://src.rebol.tech/mezz/prot-mail.reb
+	mysql:            https://src.rebol.tech/mezz/prot-mysql.reb
+	csv:              https://src.rebol.tech/mezz/codec-csv.reb
+	ico:              https://src.rebol.tech/mezz/codec-ico.reb
+	pdf:              https://src.rebol.tech/mezz/codec-pdf.reb
+	swf:              https://src.rebol.tech/mezz/codec-swf.reb
+	xml:              https://src.rebol.tech/mezz/codec-xml.reb
+	json:             https://src.rebol.tech/mezz/codec-json.reb
+	plist:            https://src.rebol.tech/mezz/codec-plist.reb
+	bbcode:           https://src.rebol.tech/mezz/codec-bbcode.reb
+	html-entities:    https://src.rebol.tech/mezz/codec-html-entities.reb
+	mime-field:       https://src.rebol.tech/mezz/codec-mime-field.reb
+	mime-types:       https://src.rebol.tech/mezz/codec-mime-types.reb
+	quoted-printable: https://src.rebol.tech/mezz/codec-quoted-printable.reb
+	;; and..
+	window: none ;- internal extension for gui (on Windows so far!)
+]
 
 codecs: object []
 
@@ -103,14 +285,15 @@ dialects: construct [
 	rebcode:
 ]
 
-schemes: object []
+schemes: make block! 20 ; Block only before init-scheme! Than it is an object.
 
 ports: object [
-	wait-list: []	; List of ports to add to 'wait
+	system:         ; Port for system events
+	event:          ; Port for GUI
 	input:          ; Port for user input.
 	output:         ; Port for user output
 	echo:           ; Port for echoing output
-	system:         ; Port for system events
+	mail:           ; Port for sending and receiving emails
 	callback: none	; Port for callback events
 ;	serial: none	; serial device name block
 ]
@@ -127,44 +310,6 @@ locale: object [
 	days: [
 		"Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday"
 	]
-]
-
-options: object [  ; Options supplied to REBOL during startup
-	boot:           ; The path to the executable
-	path:           ; Where script was started or the startup dir
-	home:           ; Path of home directory
-		none
-
-	flags:          ; Boot flag bits (see system/catalog/boot-flags)
-	script:         ; Filename of script to evaluate
-	args:           ; Command line arguments passed to script
-	do-arg:         ; Set to a block if --do was specified
-	import:         ; imported modules
-	debug:          ; debug flags
-	secure:         ; security policy
-	version:        ; script version needed
-	boot-level:     ; how far to boot up
-		none
-
-	quiet: false    ; do not show startup info (compatibility)
-
-	binary-base: 16    ; Default base for FORMed binary values (64, 16, 2)
-	decimal-digits: 15 ; Max number of decimal digits to print.
-	probe-limit: 16000 ; Max probed output size
-	module-paths: [%./]
-	default-suffix: %.reb ; Used by IMPORT if no suffix is provided
-	file-types: []
-	result-types: none
-
-	; verbosity of logs per service (codecs, schemes)
-	; 0 = nothing; 1 = info; 2 = more; 3 = debug
-	log: #[map! [
-		rebol: 1
-		http: 1
-		tls:  1
-		zip:  1
-		tar:  1
-	]]
 ]
 
 script: construct [
@@ -238,11 +383,12 @@ standard: object [
 	port: construct [ ; Port specification object
 		spec:		; published specification of the port
 		scheme:		; scheme object used for this port
+		parent:     ; port's parent (for example HTTPS port in TLS)
 		actor:		; port action handler (script driven)
 		awake:		; port awake function (event driven)
 		state:		; internal state values (private)
+		extra:		; user-defined storage of local data
 		data:		; data buffer (usually binary or block)
-		locals:		; user-defined storage of local data
 ;		stats:		; stats on operation (optional)
 	]
 
@@ -257,9 +403,13 @@ standard: object [
 		path:  none
 	]
 
-	port-spec-net: make port-spec-file [
-		host: none
-		port-id: 80
+	port-spec-net: make port-spec-head [
+		host:   none
+		port:   80
+		path:   
+		target: 
+		query:  
+		fragment: none
 	]
 
 	port-spec-checksum: make port-spec-head [
@@ -267,10 +417,37 @@ standard: object [
 		method: none
 	]
 
+	port-spec-crypt: make port-spec-head [
+		scheme:    'crypt
+		direction: 'encrypt
+		algorithm: 
+		init-vector:
+		key: none
+	]
+
 	port-spec-midi: make port-spec-head [
 		scheme:    'midi
 		device-in:  
 		device-out: none
+	]
+
+	port-spec-serial: make port-spec-head [
+		path: none
+		speed: 115200
+		data-size: 8
+		parity: none
+		stop-bits: 1
+		flow-control: none ;not supported on all systems
+	]
+	
+	port-spec-audio: make port-spec-head [
+		scheme: 'audio
+		source: none
+		channels: 2
+		rate: 44100
+		bits: 16
+		sample-type: 1
+		loop-count: 0
 	]
 
 	file-info: construct [
@@ -366,7 +543,6 @@ standard: object [
 view: object [
 	screen-gob: none
 	handler: none
-	event-port: none
 	metrics: construct [
 		screen-size:
 		border-size:
@@ -375,88 +551,9 @@ view: object [
 		work-origin:
 		work-size: 0x0
 	]
-	event-types: [
-		; Event types. Order dependent for C and REBOL.
-		; Due to fixed C constants, this list cannot be reordered after release!
-		ignore			; ignore event (0)
-		interrupt		; user interrupt
-		device			; misc device request
-		callback		; callback event
-		custom			; custom events
-		error
-		init
-
-		open
-		close
-		connect
-		accept
-		read
-		write
-		wrote
-		lookup
-
-		ready
-		done
-		time
-
-		show
-		hide
-		offset
-		resize
-		active
-		inactive 
-		minimize
-		maximize
-		restore
-
-		move
-		down
-		up
-		alt-down 
-		alt-up 
-		aux-down 
-		aux-up 
-		key
-		key-up ; Move above when version changes!!!
-
-		scroll-line
-		scroll-page
-
-		drop-file
-
-		click
-		change
-		focus
-		unfocus
-		scroll
-	]
-	event-keys: [
-		; Event types. Order dependent for C and REBOL.
-		; Due to fixed C constants, this list cannot be reordered after release!
-		page-up
-		page-down
-		end
-		home
-		left
-		up
-		right
-		down
-		insert
-		delete
-		f1
-		f2
-		f3
-		f4
-		f5
-		f6
-		f7
-		f8
-		f9
-		f10
-		f11
-		f12
-	]
 ]
+
+license: none
 
 ;;stats: none
 
@@ -477,7 +574,7 @@ view: object [
 ;		user:		; User data
 
 ;		host:
-;		port-id:
+;		port:
 ;		user:
 ;		pass:
 ;		target:

@@ -3,6 +3,11 @@ on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
     branches: [ master ]
+    paths:
+      - make/**
+      - src/**
+      - .github/workflows/main.yml
+
   pull_request:
     branches: [ master ]
 
@@ -16,10 +21,10 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Install Siskin Builder
-      uses: oldes/install-siskin@v0.7.1
+      uses: oldes/install-siskin@v0.13.0
 
     - name: Build 64bit Rebol/Bulk using MSVC
       run: ./siskin.exe make/rebol3.nest --msvc %rebol3-bulk-windows-x64
@@ -39,10 +44,15 @@ jobs:
     - name: Test Rebol/SQLite extension
       run: ./rebol3-bulk-windows-x64.exe -s ./src/tests/test-extension-sqlite.r3
 
+    - name: Test Rebol/Blend2D extension
+      run: ./rebol3-bulk-windows-x64.exe -s ./src/tests/test-extension-blend2d.r3
+    
+    - name: Test Rebol/Triangulate extension
+      run: ./rebol3-bulk-windows-x64.exe -s ./src/tests/test-extension-triangulate.r3
 
     ###############################################################################
     # Collecting build artifacts...
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: Rebol-CI-${{github.run_id}}
         path: ./rebol3-*.exe
@@ -51,16 +61,16 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-18.04]
+        os: [ubuntu-20.04]
         #os: [ubuntu-20.04, ubuntu-18.04]
 
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Siskin Builder
-        uses: oldes/install-siskin@v0.7.1
+        uses: oldes/install-siskin@v0.13.0
 
       - name: Build 64bit Rebol/Bulk using gcc
         run: ./siskin make/rebol3.nest %rebol3-bulk-linux-x64
@@ -77,6 +87,12 @@ jobs:
       - name: Test Rebol/SQLite extension
         run: ./build/rebol3-bulk-linux-x64 -s ./src/tests/test-extension-sqlite.r3
 
+      - name: Test Rebol/Blend2D extension
+        run: ./build/rebol3-bulk-linux-x64 -s ./src/tests/test-extension-blend2d.r3
+
+      - name: Test Rebol/Triangulate extension
+        run: ./build/rebol3-bulk-linux-x64 -s ./src/tests/test-extension-triangulate.r3
+
       - name: Prepare 64bit Rebol/Bulk for upload
         run: |
           mv ./build/rebol3-bulk-linux-x64 ./rebol3-bulk-linux-x64
@@ -88,19 +104,19 @@ jobs:
       #    mv ./build/rebol3-bulk-x64-libc-clang ./rebol3-bulk-x64-libc-clang
       #    gzip -9 ./rebol3-bulk-x64-libc-clang
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: Rebol-CI-${{github.run_id}}
           path: ./rebol3-*.gz
 
   macos:
-    runs-on: macos-10.15
+    runs-on: macos-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Siskin Builder
-        uses: oldes/install-siskin@v0.7.1
+        uses: oldes/install-siskin@v0.13.0
 
       - name: Build 64bit Rebol/Bulk using clang
         run: ./siskin make/rebol3.nest %rebol3-bulk-macos-x64
@@ -116,12 +132,18 @@ jobs:
       - name: Test Rebol/SQLite extension
         run: ./build/rebol3-bulk-macos-x64 -s ./src/tests/test-extension-sqlite.r3
 
+      - name: Test Rebol/Blend2D extension
+        run: ./build/rebol3-bulk-macos-x64 -s ./src/tests/test-extension-blend2d.r3
+
+      - name: Test Rebol/Triangulate extension
+        run: ./build/rebol3-bulk-macos-x64 -s ./src/tests/test-extension-triangulate.r3
+
       - name: Prepare 64bit Rebol/Bulk for upload
         run: |
           mv ./build/rebol3-bulk-macos-x64 ./rebol3-bulk-macos-x64
           gzip -9 ./rebol3-bulk-macos-x64
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: Rebol-CI-${{github.run_id}}
           path: ./rebol3-*.gz

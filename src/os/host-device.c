@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Developers
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -85,6 +85,28 @@ extern REBDEV Dev_MIDI;
 #define DEVICE_PTR_MIDI 0
 #endif
 
+#ifdef INCLUDE_CRYPTOGRAPHY
+extern REBDEV Dev_Crypt;
+#define DEVICE_PTR_CRYPT &Dev_Crypt
+#else
+#define DEVICE_PTR_CRYPT 0
+#endif
+
+#ifdef INCLUDE_SERIAL_DEVICE
+extern REBDEV Dev_Serial;
+#define DEVICE_PTR_SERIAL &Dev_Serial
+#else
+#define DEVICE_PTR_SERIAL 0
+#endif
+
+#ifdef INCLUDE_AUDIO_DEVICE
+extern REBDEV Dev_Audio;
+#define DEVICE_PTR_AUDIO &Dev_Audio
+#else
+#define DEVICE_PTR_AUDIO 0
+#endif
+
+
 REBDEV *Devices[RDI_LIMIT] =
 {
 	0,
@@ -96,7 +118,10 @@ REBDEV *Devices[RDI_LIMIT] =
 	&Dev_DNS,
 	0,//&Dev_Checksum,
 	DEVICE_PTR_CLIPBOARD,
-	DEVICE_PTR_MIDI
+	DEVICE_PTR_MIDI,
+	0, //DEVICE_PTR_CRYPT
+	DEVICE_PTR_SERIAL,
+	DEVICE_PTR_AUDIO,
 };
 
 
@@ -232,7 +257,7 @@ static int Poll_Default(REBDEV *dev)
 
 /***********************************************************************
 **
-*/	void Signal_Device(REBREQ *req, REBINT type)
+*/	void OS_Signal_Device(REBREQ *req, REBINT type)
 /*
 **		Generate a device event to awake a port on REBOL.
 **
@@ -335,13 +360,15 @@ static int Poll_Default(REBDEV *dev)
 	else if (dev->pending) {
 		Detach_Request(&dev->pending, req); // often a no-op
 		if (result == DR_ERROR && GET_FLAG(req->flags, RRF_ALLOC)) { // not on stack
-			Signal_Device(req, EVT_ERROR);
+			OS_Signal_Device(req, EVT_ERROR);
 		}
 	}
 	else if (result < 0) {
 		result = req->error;
 		// make sure that we are consistent and error is always negative...
-		if (result > 0) result = -result;
+		if (result > 0) {
+			req->error = result = -result;
+		}
 	}
 
 	return result;

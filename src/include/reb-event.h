@@ -32,9 +32,13 @@
 // Note: size must be 12 bytes on 32-bit or 16 on 64-bit!
 
 // Forward references:
+#ifndef VALUE_H
+typedef struct Reb_Series   REBSER;
+#endif
+#ifndef DEVICE_H
 typedef struct rebol_device REBDEV;
 typedef struct rebol_devreq REBREQ;
-typedef struct Reb_Series   REBSER;
+#endif
 
 #pragma pack(4)
 typedef struct rebol_event {
@@ -70,7 +74,7 @@ enum {
 	EVM_DEVICE,		// I/O request holds the port pointer
 	EVM_PORT,		// event holds port pointer
 	EVM_OBJECT,		// event holds object frame pointer
-	EVM_GUI,		// GUI event uses system/view/event/port
+	EVM_GUI,		// GUI event uses system/ports/event
 	EVM_CALLBACK,	// Callback event uses system/ports/callback port
 	EVM_MIDI,		// event holds midi port pointer
 	EVM_CONSOLE,    // native console events

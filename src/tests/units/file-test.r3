@@ -61,6 +61,19 @@ secure [%/ allow]
 	--assert %/rodan/shareddocs    = to-rebol-file "\\rodan\shareddocs"
 	--assert %/rodan/shareddocs/   = to-rebol-file "\\rodan\shareddocs\"
 
+if find [Linux macOS] system/platform [
+--test-- "issue-2538"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2538
+	cd (mkdir %issue-2538)
+	call/shell/wait "touch a:0:0"
+	--assert %a%3A0%3A0 == to-rebol-file "a:0:0" 
+	--assert %a%3A0%3A0 == f: first read %.
+	--assert %a%3A0%3A0 == second split-path query/mode f 'name
+	delete f
+	cd ..
+	delete %issue-2538
+]
+
 ===end-group===
 
 ===start-group=== "suffix?"
@@ -129,5 +142,17 @@ secure [%/ allow]
 		]
 
 ===end-group===
+
+
+===start-group=== "ECHO"
+	--test-- "echo test"
+		echo %echo-result print 1 echo none
+		--assert "1^/" = read/string %echo-result
+
+	--test-- "echo failed"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/834
+		--assert all [error? e: try [echo %not-existing-dir/foo] e/id = 'cannot-open]
+===end-group===
+
 
 ~~~end-file~~~

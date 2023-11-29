@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Developers
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -352,6 +352,9 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 		// case like: ` f: func[a][context? 'a]  f 1 `
 		*D_RET = frame[3]; 
 	} else {
+		if (IS_INT_SERIES(VAL_WORD_FRAME(word)))
+			// in case like: ` foreach x [1] [context? 'x] ` 
+			return R_NONE;
 		SET_OBJECT(D_RET, VAL_WORD_FRAME(word));
 	}
 	return R_RET;
@@ -517,6 +520,28 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 
 /***********************************************************************
 **
+*/	REBNATIVE(with)
+/*
+//  with: native [
+//		"Evaluates a block binded to the specified context"
+//		context [object! module! port!] "A reference to the target context"
+//		body    [block!]      "A code to be evaluated"
+//  ]
+***********************************************************************/
+{
+	REBSER *frame = VAL_OBJ_FRAME(D_ARG(1));
+	REBSER *body  = VAL_SERIES   (D_ARG(2));
+
+	Bind_Block(frame, BLK_HEAD(body), BIND_DEEP);
+
+	// Evaluate the body:
+	DO_BLK(D_ARG(2));
+	return R_TOS1;
+}
+
+
+/***********************************************************************
+**
 */	REBNATIVE(not)
 /*
 ***********************************************************************/
@@ -581,7 +606,7 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	}
 
 	// Is value a block?
-	if (IS_BLOCK(val)) {
+	if (ANY_BLOCK(val)) {
 		if (not_only) val = VAL_BLK_DATA(val);
 		if (IS_END(val)) val = NONE_VALUE;
 		else is_blk = TRUE;
@@ -869,6 +894,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	action = Value_Dispatch[VAL_TYPE(val)];
 	if (ANY_SERIES(val)) {
 		t = VAL_TAIL(val);
+		if (VAL_INDEX(val) >= t) return R_NONE;
 		VAL_INDEX(val) = 0;
 	}
 	else if (IS_TUPLE(val)) t = VAL_TUPLE_LEN(val);
@@ -997,6 +1023,40 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	else
 		Dump_Values(arg, 1);
 #endif
+	return R_ARG1;
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(truncate)
+/*
+//	truncate: native [
+//		"Removes all bytes/values from series' head to its current index position"
+//		series [series!] "Series to be truncated"
+//      /part   "Also shorten resulted series to a length or end position"
+//       range  [number! series!]
+//	]
+***********************************************************************/
+{
+	REBVAL *arg = D_ARG(1);
+	REBINT index = VAL_INDEX(arg);
+	REBINT len = -1;
+	
+	if (D_REF(2)) {
+		len = Partial(arg, 0, D_ARG(3), 0);
+	}
+	if (index > 0) {
+		Remove_Series(VAL_SERIES(arg), 0, index);
+		VAL_INDEX(arg) = 0;
+	}
+	if (len >= 0) {
+		VAL_TAIL(arg) = len;
+		if (ANY_BINSTR(arg))
+			TERM_SERIES(VAL_SERIES(arg));
+		else
+			SET_END(BLK_SKIP(VAL_SERIES(arg), len));
+	}
 	return R_ARG1;
 }
 

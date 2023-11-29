@@ -3,6 +3,7 @@ REBOL [
 	Title: "Make primary boot files"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -548,8 +549,9 @@ emit [{
 #define REBOL_UPD } any [version/3 0] {
 #define REBOL_SYS } any [version/4 0] {
 #define REBOL_VAR } any [version/5 0] {
-#define REBOL_VERSION "} str-version {"
-}]
+// Version visible when used -v argument on start-up (before initialization)
+#define REBOL_VERSION \} string-to-c short-str-version
+]
 
 ;-- Generate Lower-Level String Table ----------------------------------------
 
@@ -791,7 +793,7 @@ emit-head "Event Types" %reb-evtypes.h
 emit newline
 
 emit ["enum event_types {" newline]
-foreach field ob/view/event-types [
+foreach field ob/catalog/event-types [
 	emit-line "EVT_" field none
 ]
 emit [tab "EVT_MAX^/"]
@@ -799,7 +801,7 @@ emit "};^/^/"
 
 emit ["enum event_keys {" newline]
 emit-line "EVK_" "NONE" none
-foreach field ob/view/event-keys [
+foreach field ob/catalog/event-keys [
 	emit-line "EVK_" field none
 ]
 emit [tab "EVK_MAX^/"]
@@ -891,6 +893,10 @@ emit {^/enum reb_console_modes ^{^/}
 foreach word select data '*console-modes* [	emit-enum join "MODE_CONSOLE_" up-word word ]
 emit-end
 
+emit {^/enum reb_audio_modes ^{^/}
+foreach word select data '*audio-modes* [	emit-enum join "MODE_AUDIO_" up-word word ]
+emit-end
+
 write-generated inc/gen-portmodes.h out
 
 ;----------------------------------------------------------------------------
@@ -929,20 +935,22 @@ foreach section [boot-base boot-sys boot-mezz] [
 								Needs:   (select hdr 'needs)
 							]
 						]
-						mold/only/flat code
+						mold/only code
 					)
 				]
 			][
-				compose/deep/only [
-					import module [
-						Title:   (select hdr 'title)
-						Name:    (select hdr 'name)
-						Version: (select hdr 'version)
-						Date:    (select hdr 'date)
-						Author:  (select hdr 'author)
-						Exports: (select hdr 'exports)
-						Needs:   (select hdr 'needs)
-					] ( code )
+				reduce [
+					'import to paren! compose/deep/only [
+						module [
+							Title:   (select hdr 'title)
+							Name:    (select hdr 'name)
+							Version: (select hdr 'version)
+							Date:    (select hdr 'date)
+							Author:  (select hdr 'author)
+							Exports: (select hdr 'exports)
+							Needs:   (select hdr 'needs)
+						] ( code )
+					]
 				]
 			]
 		][	code ]
@@ -958,7 +966,7 @@ foreach file first mezz-files [
 	either all [
 		;- if protocol exports some function, import must be used so
 		;- the functions are available in user's context
-		select hdr 'exports
+		;select hdr 'exports
 		select hdr 'name
 		'module  = select hdr 'type
 	][
@@ -979,20 +987,22 @@ foreach file first mezz-files [
 							Needs:   (select hdr 'needs)
 						]
 					]
-					mold/only/flat code
+					mold/only code
 				)
 			]
 		][ 
-			compose/deep/only [
-				import module [
-					Title:   (select hdr 'title)
-					Name:    (select hdr 'name)
-					Version: (select hdr 'version)
-					Date:    (select hdr 'date)
-					Author:  (select hdr 'author)
-					Exports: (select hdr 'exports)
-					Needs:   (select hdr 'needs)
-				] ( code )
+			reduce [
+				'import to paren! compose/deep/only [
+					module [
+						Title:   (select hdr 'title)
+						Name:    (select hdr 'name)
+						Version: (select hdr 'version)
+						Date:    (select hdr 'date)
+						Author:  (select hdr 'author)
+						Exports: (select hdr 'exports)
+						Needs:   (select hdr 'needs)
+					] ( code )
+				]
 			]
 		]
 	][

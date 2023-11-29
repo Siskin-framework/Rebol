@@ -18,6 +18,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1036
 	--assert 2 = index? load mold/all next make vector! [integer! 32 4 [1 2 3 4]]
 
+--test-- "issue/1026"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1026
+	--assert all [error? e: try [to vector! []] e/id = 'bad-make-arg]
+	
 --test-- "VECTOR can be initialized using a block with CHARs"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2348
 	--assert vector? v: make vector! [integer! 8 [#"^(00)" #"^(01)" #"^(02)" #"a" #"b"]]
@@ -29,6 +33,7 @@ Rebol [
 	--assert 98 = v/5
 
 --test-- "Random shuffle of vector vs. block"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/910
 	;@@ https://github.com/Oldes/Rebol-issues/issues/947
 	v1: make vector! [integer! 32 5 [1 2 3 4 5]]
 	v2: random v1
@@ -63,12 +68,24 @@ Rebol [
 
 --test-- "to-binary vector!"
 	--assert #{01000200} = to binary! #[u16! [1 2]]
+	--assert #{0100000002000000} = to binary! #[i32! [1 2]]
+	--assert #{0000803F00000040} = to binary! #[f32! [1 2]]
+	--assert #{01000000000000000200000000000000} = to binary! #[i64! [1 2]]
+	--assert #{000000000000F03F0000000000000040} = to binary! #[f64! [1 2]]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2518
+	--assert #{0200} = to binary! next #[u16! [1 2]]
+	--assert #{02000000} = to binary! next #[i32! [1 2]]
+	--assert #{00000040} = to binary! next #[f32! [1 2]]
+	--assert #{0200000000000000} = to binary! next #[i64! [1 2]]
+	--assert #{0000000000000040} = to binary! next #[f64! [1 2]]
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2458
 	--assert #{01000200} = to binary! protect #[u16! [1 2]]
 
 --test-- "LOAD/MOLD on vector"
 	--assert v = load mold/all v
 	--assert v = do load mold v
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1036
+	--assert 2 = index? load mold/all next make vector! [integer! 32 4 [1 2 3 4]]
 
 --test-- "Conversion from VECTOR to BINARY"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2347
@@ -107,6 +124,7 @@ Rebol [
 	--assert none? v/5
 
 --test-- "Vector created with specified index"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1038
 	--assert 2 = index? v: make vector! [integer! 16 [1 2] 2]
 	--assert 2 = index? v: make vector! [integer! 16 #{01000200} 2]
 	--assert 2 = index? v: #[i16! [1 2] 2]
@@ -167,6 +185,41 @@ Rebol [
 	--assert  2 = v/length
 	--assert 'integer! = v/type
 	--assert false     = v/signed
+
+--test-- "REVERSE on vector"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2515
+	--assert #[u8!  [3 2 1]] = reverse #[u8!  [1 2 3]]
+	--assert #[u16! [3 2 1]] = reverse #[u16! [1 2 3]]
+	--assert #[u32! [3 2 1]] = reverse #[u32! [1 2 3]]
+	--assert #[u64! [3 2 1]] = reverse #[u64! [1 2 3]]
+	--assert #[i8!  [3 2 1]] = reverse #[i8!  [1 2 3]]
+	--assert #[i16! [3 2 1]] = reverse #[i16! [1 2 3]]
+	--assert #[i32! [3 2 1]] = reverse #[i32! [1 2 3]]
+	--assert #[i64! [3 2 1]] = reverse #[i64! [1 2 3]]
+	--assert #[f32! [3.0 2.0 1.0]] = reverse #[f32! [1 2 3]]
+	--assert #[f64! [3.0 2.0 1.0]] = reverse #[f64! [1 2 3]]
+
+	--assert #[u8!  [2 1 3]] = reverse/part #[u8!  [1 2 3]] 2
+	--assert #[u16! [2 1 3]] = reverse/part #[u16! [1 2 3]] 2
+	--assert #[u32! [2 1 3]] = reverse/part #[u32! [1 2 3]] 2
+	--assert #[u64! [2 1 3]] = reverse/part #[u64! [1 2 3]] 2
+	--assert #[i8!  [2 1 3]] = reverse/part #[i8!  [1 2 3]] 2
+	--assert #[i16! [2 1 3]] = reverse/part #[i16! [1 2 3]] 2
+	--assert #[i32! [2 1 3]] = reverse/part #[i32! [1 2 3]] 2
+	--assert #[i64! [2 1 3]] = reverse/part #[i64! [1 2 3]] 2
+	--assert #[f32! [2.0 1.0 3.0]] = reverse/part #[f32! [1 2 3]] 2
+	--assert #[f64! [2.0 1.0 3.0]] = reverse/part #[f64! [1 2 3]] 2
+
+	--assert #[u8!  [1 3 2]] = head reverse next #[u8!  [1 2 3]]
+	--assert #[u16! [1 3 2]] = head reverse next #[u16! [1 2 3]]
+	--assert #[u32! [1 3 2]] = head reverse next #[u32! [1 2 3]]
+	--assert #[u64! [1 3 2]] = head reverse next #[u64! [1 2 3]]
+	--assert #[i8!  [1 3 2]] = head reverse next #[i8!  [1 2 3]]
+	--assert #[i16! [1 3 2]] = head reverse next #[i16! [1 2 3]]
+	--assert #[i32! [1 3 2]] = head reverse next #[i32! [1 2 3]]
+	--assert #[i64! [1 3 2]] = head reverse next #[i64! [1 2 3]]
+	--assert #[f32! [1.0 3.0 2.0]] = head reverse next #[f32! [1 2 3]]
+	--assert #[f64! [1.0 3.0 2.0]] = head reverse next #[f64! [1 2 3]]
 ===end-group===
 
 ===start-group=== "VECTOR compact construction"

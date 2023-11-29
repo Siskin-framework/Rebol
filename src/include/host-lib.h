@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Host Access Library
-**  Build: 3.7.2
-**  Date:  5-Jan-2022
+**  Build: 3.15.0
+**  Date:  29-Nov-2023
 **  File:  host-lib.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-os-ext.reb)
@@ -20,8 +20,8 @@
 
 
 #define HOST_LIB_VER 3
-#define HOST_LIB_SUM 30622
-#define HOST_LIB_SIZE 45
+#define HOST_LIB_SUM 52466
+#define HOST_LIB_SIZE 47
 
 extern REBDEV *Devices[];
 
@@ -30,6 +30,7 @@ typedef struct REBOL_Host_Lib {
 	unsigned int ver_sum;
 	REBDEV **devices;
 	REBREQ *std_io;
+	void (*os_signal_device)(REBREQ *req, REBINT type);
 	int (*os_call_device)(REBINT device, REBCNT command);
 	int (*os_do_device)(REBREQ *req, REBCNT command);
 	REBREQ *(*os_make_devreq)(int device);
@@ -75,12 +76,14 @@ typedef struct REBOL_Host_Lib {
 	int (*os_reap_process)(int pid, int *status, int flags);
 	int (*os_browse)(REBCHR *url, int reserved);
 	REBOOL (*os_request_file)(REBRFR *fr);
+	void (*os_request_password)(REBREQ *req);
 } REBOL_HOST_LIB;
 
 //** Included by HOST *********************************************
 
 #ifndef REB_DEF
 
+extern void OS_Signal_Device(REBREQ *req, REBINT type);    // src/os/host-device.c
 extern int OS_Call_Device(REBINT device, REBCNT command);    // src/os/host-device.c
 extern int OS_Do_Device(REBREQ *req, REBCNT command);    // src/os/host-device.c
 extern REBREQ *OS_Make_Devreq(int device);    // src/os/host-device.c
@@ -102,8 +105,8 @@ extern REBINT OS_Kill(REBINT pid);    // src/os/posix/host-lib.c
 extern REBINT OS_Config(int id, REBYTE *result);    // src/os/posix/host-lib.c
 extern void *OS_Make(size_t size);    // src/os/posix/host-lib.c
 extern void OS_Free(void *mem);    // src/os/posix/host-lib.c
-extern void OS_Exit(int code);    // src/os/posix/host-lib.c
-extern void OS_Crash(const REBYTE *title, const REBYTE *content);    // src/os/posix/host-lib.c
+extern REB_NORETURN void OS_Exit(int code);    // src/os/posix/host-lib.c
+extern REB_NORETURN void OS_Crash(const REBYTE *title, const REBYTE *content);    // src/os/posix/host-lib.c
 extern REBCHR *OS_Form_Error(int errnum, REBCHR *str, int len);    // src/os/posix/host-lib.c
 extern REBOOL OS_Get_Boot_Path(REBCHR **path);    // src/os/posix/host-lib.c
 extern REBCHR *OS_Get_Locale(int what);    // src/os/posix/host-lib.c
@@ -126,6 +129,7 @@ extern int OS_Create_Process(REBCHR *call, int argc, REBCHR* argv[], u32 flags, 
 extern int OS_Reap_Process(int pid, int *status, int flags);    // src/os/posix/host-lib.c
 extern int OS_Browse(REBCHR *url, int reserved);    // src/os/posix/host-lib.c
 extern REBOOL OS_Request_File(REBRFR *fr);    // src/os/posix/host-lib.c
+extern void OS_Request_Password(REBREQ *req);    // src/os/posix/host-lib.c
 
 #ifdef OS_LIB_TABLE
 
@@ -136,6 +140,7 @@ REBOL_HOST_LIB Host_Lib_Init = {  // Host library function vector table.
 	(HOST_LIB_VER << 16) + HOST_LIB_SUM,
 	(REBDEV**)&Devices,
 	NULL, // Std_IO_Req is set on start-up
+	OS_Signal_Device,
 	OS_Call_Device,
 	OS_Do_Device,
 	OS_Make_Devreq,
@@ -181,6 +186,7 @@ REBOL_HOST_LIB Host_Lib_Init = {  // Host library function vector table.
 	OS_Reap_Process,
 	OS_Browse,
 	OS_Request_File,
+	OS_Request_Password,
 };
 
 #endif //OS_LIB_TABLE 
@@ -191,21 +197,22 @@ REBOL_HOST_LIB Host_Lib_Init = {  // Host library function vector table.
 
 extern	REBOL_HOST_LIB *Host_Lib;
 
+#define OS_SIGNAL_DEVICE(a,b)       Host_Lib->os_signal_device(a,b)
 #define OS_CALL_DEVICE(a,b)         Host_Lib->os_call_device(a,b)
 #define OS_DO_DEVICE(a,b)           Host_Lib->os_do_device(a,b)
 #define OS_MAKE_DEVREQ(a)           Host_Lib->os_make_devreq(a)
 #define OS_ABORT_DEVICE(a)          Host_Lib->os_abort_device(a)
-#define OS_POLL_DEVICES(void)       Host_Lib->os_poll_devices(void)
+#define OS_POLL_DEVICES()           Host_Lib->os_poll_devices()
 #define OS_QUIT_DEVICES(a)          Host_Lib->os_quit_devices(a)
 #define OS_WAIT(a,b)                Host_Lib->os_wait(a,b)
-#define OS_GET_PID(void)            Host_Lib->os_get_pid(void)
-#define OS_GET_UID(void)            Host_Lib->os_get_uid(void)
+#define OS_GET_PID()                Host_Lib->os_get_pid()
+#define OS_GET_UID()                Host_Lib->os_get_uid()
 #define OS_SET_UID(a)               Host_Lib->os_set_uid(a)
-#define OS_GET_GID(void)            Host_Lib->os_get_gid(void)
+#define OS_GET_GID()                Host_Lib->os_get_gid()
 #define OS_SET_GID(a)               Host_Lib->os_set_gid(a)
-#define OS_GET_EUID(void)           Host_Lib->os_get_euid(void)
+#define OS_GET_EUID()               Host_Lib->os_get_euid()
 #define OS_SET_EUID(a)              Host_Lib->os_set_euid(a)
-#define OS_GET_EGID(void)           Host_Lib->os_get_egid(void)
+#define OS_GET_EGID()               Host_Lib->os_get_egid()
 #define OS_SET_EGID(a)              Host_Lib->os_set_egid(a)
 #define OS_SEND_SIGNAL(a,b)         Host_Lib->os_send_signal(a,b)
 #define OS_KILL(a)                  Host_Lib->os_kill(a)
@@ -219,7 +226,7 @@ extern	REBOL_HOST_LIB *Host_Lib;
 #define OS_GET_LOCALE(a)            Host_Lib->os_get_locale(a)
 #define OS_GET_ENV(a,b,c)           Host_Lib->os_get_env(a,b,c)
 #define OS_SET_ENV(a,b)             Host_Lib->os_set_env(a,b)
-#define OS_LIST_ENV(void)           Host_Lib->os_list_env(void)
+#define OS_LIST_ENV()               Host_Lib->os_list_env()
 #define OS_GET_TIME(a)              Host_Lib->os_get_time(a)
 #define OS_DELTA_TIME(a,b)          Host_Lib->os_delta_time(a,b)
 #define OS_GET_CURRENT_DIR(a)       Host_Lib->os_get_current_dir(a)
@@ -230,11 +237,12 @@ extern	REBOL_HOST_LIB *Host_Lib;
 #define OS_CLOSE_LIBRARY(a)         Host_Lib->os_close_library(a)
 #define OS_FIND_FUNCTION(a,b)       Host_Lib->os_find_function(a,b)
 #define OS_CREATE_THREAD(a,b,c)     Host_Lib->os_create_thread(a,b,c)
-#define OS_DELETE_THREAD(void)      Host_Lib->os_delete_thread(void)
+#define OS_DELETE_THREAD()          Host_Lib->os_delete_thread()
 #define OS_TASK_READY(a)            Host_Lib->os_task_ready(a)
 #define OS_CREATE_PROCESS(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o) Host_Lib->os_create_process(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o)
 #define OS_REAP_PROCESS(a,b,c)      Host_Lib->os_reap_process(a,b,c)
 #define OS_BROWSE(a,b)              Host_Lib->os_browse(a,b)
 #define OS_REQUEST_FILE(a)          Host_Lib->os_request_file(a)
+#define OS_REQUEST_PASSWORD(a)      Host_Lib->os_request_password(a)
 
 #endif //REB_DEF

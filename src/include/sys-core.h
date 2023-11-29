@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -210,8 +211,6 @@ enum REB_Mold_Opts {
 #define DEC_MOLD_PERCENT 1  // follow num with %
 #define DEC_MOLD_MINIMAL 2  // allow decimal to be integer
 
-// Temporary:
-#define MOPT_ANSI_ONLY	MOPT_MOLD_ALL	// Non ANSI chars are ^() escaped
 
 // Reflector words (words-of, body-of, etc.)
 enum Reb_Reflectors {
@@ -235,8 +234,8 @@ enum {
 };
 
 // General constants:
-#define NOT_FOUND ((REBCNT)-1)
-#define UNKNOWN   ((REBCNT)-1)
+#define NOT_FOUND ((REBLEN)-1)
+#define UNKNOWN   ((REBLEN)-1)
 #define LF 10
 #define CR 13
 #define TAB '\t'
@@ -287,15 +286,23 @@ enum {
 #define FREE(m, s)  free(m)
 #define ALIGN(s, a) (((s) + (a)-1) & ~((a)-1))
 
-#define ALEVEL 2
+#ifndef ALEVEL
+#define ALEVEL 1
+#endif
 
 #define ASSERT(c,m) if (!(c)) Crash(m);		// (breakpoint in Crash() to see why)
 #if (ALEVEL>0)
-#define ASSERT1(c,m) if (!(c)) Crash(m);	// Not in beta releases
-#if (ALEVEL>1)
-#define ASSERT2(c,m) if (!(c)) Crash(m);	// Not in any releases
+#	define ASSERT1(c,m) if (!(c)) Crash(m);	// Not in beta releases
+#	if (ALEVEL>1)
+#		define ASSERT2(c,m) if (!(c)) Crash(m);	// Not in any releases
+#	else
+#		define ASSERT2(c,m)
+#	endif
+#else
+#	define ASSERT1(c,m)
+#	define ASSERT2(c,m)
 #endif
-#endif
+
 #define MEM_CARE 5				// Lower number for more frequent checks
 
 
@@ -304,8 +311,14 @@ enum {
 #define	FOR_BLK(b, v, t) for (v = VAL_BLK_DATA(b), t = VAL_BLK_TAIL(b); v != t; v++)
 #define	FOR_SER(b, v, i, s) for (; v = BLK_SKIP(b, i), i < SERIES_TAIL(b); i += skip)
 
+//#ifdef _DEBUG
+//#define UP_CASE(c) _To_Upper_Case(c)
+//#define LO_CASE(c) _To_Lower_Case(c)
+//#else
 #define UP_CASE(c) Upper_Cases[c]
 #define LO_CASE(c) Lower_Cases[c]
+//#endif
+
 #define IS_WHITE(c) ((c) <= 32 && (White_Chars[c]&1) != 0)
 #define IS_SPACE(c) ((c) <= 32 && (White_Chars[c]&2) != 0)
 

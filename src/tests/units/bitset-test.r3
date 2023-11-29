@@ -36,6 +36,7 @@
 
 ===start-group=== "make bitset!"
 	--test-- "basic make"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2097
 		--assert "make bitset! #{}"   = mold make bitset! 0
 		--assert "make bitset! #{}"   = mold charset ""
 		--assert "make bitset! #{}"   = mold charset []
@@ -62,6 +63,16 @@
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1092
 		--assert #[bitset! #{80}] = charset #"^@"
 		--assert #[bitset! #{8000}] = charset/length #"^@" 16
+
+	--test-- "make bitset! from block"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1335
+		--assert #[bitset! #{6000}] = make bitset! [#{0102}]
+		--assert #[bitset! #{60}] = make bitset! [1 2]
+		--assert #[bitset! #{700000}] = make bitset! [#{010203}]
+		--assert #[bitset! #{00008000800080}] = make bitset! [#{102030}]
+		--assert #[bitset! #{7C00800080008000}] = make bitset! [#{0102030405102030}]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1226
+		--assert #[bitset! #{FFFE}] = make bitset! [#"^(00)" - #"^(0E)"]
 
 ===end-group===
 
@@ -147,9 +158,33 @@
 		--assert pick ABC "BCB"
 		--assert not pick ABC "BCBX"
 
+	--test-- "pick logic" ; not allowed
+		;@@ https://github.com/Oldes/Rebol-issues/issues/823
+		b: make bitset! #{C0}
+		--assert pick b 0
+		--assert all [error? e: try [pick b true]  e/id = 'invalid-type]
+		--assert all [error? e: try [poke b true none]  e/id = 'invalid-type]
+
+	--test-- "path expression"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/759
+		b: make bitset! "abc"
+		--assert b/#"a"
+		--assert b/(to-integer #"a")
+		--assert b/97  ; 97 is to-integer #"a"
+		b/97: false  ; Just like POKE
+		--assert not b/97
+
+
 ===end-group===
 
 ===start-group=== "modify"
+	--test-- "alter"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/422
+		bs: #[bitset! #{00}]
+		--assert true  = alter bs 1
+		--assert #{40} = to binary! bs
+		--assert false = alter bs 1
+		--assert #{00} = to binary! bs
 	
 	--test-- "poke-1"
 		bs: make bitset! [0 1 2 3]
@@ -203,7 +238,7 @@
 		clear bs
 		--assert "make bitset! #{}" = mold bs
 
-	--test-- "remove-1"
+	--test-- "remove/key"
 		;@@ https://github.com/Oldes/Rebol-wishes/issues/20
 		bs: charset "012345789"
 		--assert 64 = length? bs
@@ -211,11 +246,25 @@
 		--assert "make bitset! #{0000000000007DC0}" = mold remove/key bs #"0"
 		--assert "make bitset! #{0000000000003DC0}" = mold remove/key bs 49
 		--assert "make bitset! #{0000000000000000}" = mold remove/key bs [#"2" - #"7" "8" #"9"]
-	--test-- "remove/part invalid"
-		--assert all [
-			error? e: try [remove/part bs "01"]
-			e/id = 'bad-refines
-		]
+	--test-- "remove/part"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/933
+		bs: charset "012345789"
+		--assert "make bitset! #{0000000000007DC0}" = mold remove/part bs  #"0"
+		--assert "make bitset! #{0000000000003DC0}" = mold remove/part bs   "1"
+		--assert "make bitset! #{0000000000000000}" = mold remove/part bs [#"2" - #"7" "8" #"9"]
+		--assert all [ error? e: try [remove/part bs 1] e/id = 'invalid-arg]
+		--assert all [ error? e: try [remove/part/key bs "01" ""] e/id = 'bad-refines]
+
+	--test-- "issue-1355"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1355
+		--assert pick charset [not "a"] #"b"
+		--assert not pick charset [not "a"] #"a"
+		--assert "make bitset! #{00000000000000000000000060}" = mold poke charset "a" #"b" true
+		--assert {make bitset! [not bits #{00000000000000000000000040}]} = mold poke charset [not "a"] #"b" true
+
+	--test-- "issue-933"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/933
+		--assert all [error? e: try [remove make bitset! #{FF}]  e/id = 'missing-arg]
 
 ===end-group===
 
@@ -326,6 +375,13 @@
 		--assert b = make bitset! [not bits #{00000000800080}]
 		b/48: true
 		--assert b = make bitset! [not bits #{00000000800000}]
+	--test-- "issue-1357"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1357
+		b: make bitset! #{00}
+		--assert not equiv? b complement b
+		--assert not equal? b complement b
+		--assert not strict-equal? b complement b
+		--assert not same? b complement b
 
 ===end-group===
 

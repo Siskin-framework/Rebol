@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Event Types
-**  Build: 3.7.2
-**  Date:  5-Jan-2022
+**  Build: 3.15.0
+**  Date:  29-Nov-2023
 **  File:  reb-evtypes.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -64,6 +64,8 @@ enum event_types {
 	EVT_FOCUS,
 	EVT_UNFOCUS,
 	EVT_SCROLL,
+	EVT_CONTROL,
+	EVT_CONTROL_UP,
 	EVT_MAX
 };
 
@@ -91,6 +93,14 @@ enum event_keys {
 	EVK_F10,
 	EVK_F11,
 	EVK_F12,
+	EVK_PASTE_START,
+	EVK_PASTE_END,
+	EVK_ESCAPE,
+	EVK_SHIFT,
+	EVK_CONTROL,
+	EVK_ALT,
+	EVK_PAUSE,
+	EVK_CAPITAL,
 	EVK_MAX
 };
 

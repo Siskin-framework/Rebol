@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -416,7 +417,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 {
 	va_list args;
 	va_start(args, fmt);
-	Debug_Buf(fmt, args); // Limits line size
+	Debug_Buf(NO_LIMIT, fmt, args); // Limits line size
 	va_end(args);
 }
 
@@ -484,7 +485,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 				Out_Value(top, 640, FALSE, 0, TRUE); // error FORMed
 				Out_Str(cb_cast("\x1B[0m"), 0, TRUE);
 #else
-				Out_Value(top, 640, FALSE, 0, TRUE); // error FORMed
+				Out_Value(top, 640, FALSE, 0); // error FORMed
 #endif
 //				if (VAL_ERR_NUM(top) > RE_THROW_MAX) {
 //					Out_Str("** Note: use WHY? for more about this error", 1, TRUE);
@@ -1149,7 +1150,7 @@ RL_API REBSER* RL_Decode_UTF_String(REBYTE *src, REBCNT len, REBINT utf, REBFLG 
 	REBCNT idx;
 
 	// Convert C-string to Rebol word
-	len = strlen(cs_cast(name));
+	len = LEN_BYTES(name);
 	sym = Scan_Word(name, len);
 	if (!sym) return NOT_FOUND; //TODO: use different value if word is invalid?
 	idx = Register_Handle(sym, size, (REB_HANDLE_FREE_FUNC)free_func);
@@ -1185,6 +1186,99 @@ RL_API void RL_Free_Handle_Context(REBHOB *hob)
 }
 
 
+RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
+/*
+**	Converts a single UTF8 code-point (to 32 bit).
+**
+**	Returns:
+**		32 bit character code
+**	Arguments:
+**		src  - UTF8 encoded data
+**		len  - number of source bytes consumed.
+*/
+{
+	return  Decode_UTF8_Char(&str, len);
+}
+
+/***********************************************************************
+**
+*/	RL_API REBCNT RL_Register_Handle_Spec(REBYTE *name, REBHSP *spec)
+/*
+**	Stores handle's specification (required data size and optional callbacks).
+**  It's an extended version of old RL_Register_Handle function.
+**
+**	Returns:
+**		symbol id of the word (whether found or new)
+**		or NOT_FOUND if handle with give ID is already registered.
+**	Arguments:
+**		name      - handle's name as a c-string (length is being detected)
+**		spec      - Handle's specification:
+**                  * size of needed memory to handle,
+**                  * reserved flags
+**                  * release function
+**                  * get path accessor
+**                  * set path accessor
+**
+***********************************************************************/
+{
+	REBCNT sym;
+	REBCNT len;
+	REBCNT idx;
+
+	// Convert C-string to Rebol word
+	len = LEN_BYTES(name);
+	sym = Scan_Word(name, len);
+	if (!sym) return NOT_FOUND; //TODO: use different value if word is invalid?
+	idx = Register_Handle_Spec(sym, spec);
+	return (idx == NOT_FOUND) ? NOT_FOUND : sym;
+}
+
+
+/***********************************************************************
+**
+*/	RL_API REBSER* RL_To_Local_Path(RXIARG *file, REBFLG full, REBFLG utf8)
+/*
+**	Convert REBOL filename to a local filename.
+**
+**	Returns:
+**		A new series with the converted path or 0 on error.
+**	Arguments:
+**		file - Rebol file as an extension argument (series + index)
+**		full - prepend current directory
+**		utf8 - convert to UTF-8 if needed
+**
+***********************************************************************/
+{
+	REBSER *ser   = file->series;
+	REBLEN  index = file->index;
+
+	if (!ser || index > SERIES_TAIL(ser)) return 0;
+
+	ser = To_Local_Path(SERIES_SKIP(ser, index), SERIES_TAIL(ser)-index, !BYTE_SIZE(ser), full);
+	// To_Local_Path always returns REBUNI series
+	if (ser && utf8) {
+		ser = Encode_UTF8_String(SERIES_DATA(ser), SERIES_TAIL(ser), 1, 0);
+	}
+	return ser;
+}
+
+/***********************************************************************
+**
+*/	RL_API REBSER* RL_To_Rebol_Path(void *src, REBCNT len, REBINT uni)
+/*
+**	Convert local filename to a REBOL filename.
+**
+**	Returns:
+**		A new series with the converted path or 0 on error.
+**	Arguments:
+**		ser - series as a REBYTE or REBUNI.
+**		len - number of source bytes consumed.
+**		uni - if series is REBYTE (0) or REBUNI (1)
+**
+***********************************************************************/
+{
+	return To_REBOL_Path(src, len, uni, 0);
+}
 
 
 #include "reb-lib-lib.h"

@@ -46,7 +46,7 @@ write-c-file: func [
 	;print "writing C code..."
 	emit-head "Host custom init code" c-file
 
-	data: mold/flat/only/all code
+	data: mold/only/all code
 
 	append data newline ; BUG? why does MOLD not provide it?
 
@@ -95,14 +95,15 @@ load-files: func [
 		header: file/1
 		remove file
 		if header/type = 'module [
-			file: compose/deep [
-				import module
-				[
-					title:   (header/title)
-					version: (header/version)
-					name:    (header/name)
-				][
-					(file)
+			file: reduce [
+				'import to paren! compose/deep[
+					module [
+						title:   (header/title)
+						version: (header/version)
+						name:    (header/name)
+					][
+						(file)
+					]
 				]
 			]
 			;probe file/2

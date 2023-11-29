@@ -48,9 +48,16 @@ Rebol [
 	--test-- "random string" --assert is-protected-error? [random str]
 	--test-- "random binary" --assert is-protected-error? [random bin]
 
-	--test-- "swap block"  --assert is-protected-error? [swap blk [0]]
-	--test-- "swap string" --assert is-protected-error? [swap str "0bad"]
-	--test-- "swap binary" --assert is-protected-error? [swap bin #{0bad}]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/695
+	--test-- "swap block" 
+		--assert is-protected-error? [swap blk [0]]
+		--assert is-protected-error? [swap [0] blk]
+	--test-- "swap string"
+		--assert is-protected-error? [swap str "0bad"]
+		--assert is-protected-error? [swap "0bad" str]
+	--test-- "swap binary"
+		--assert is-protected-error? [swap bin #{0bad}]
+		--assert is-protected-error? [swap #{0bad} bin]
 
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2325
 	str: protect "a^M^/b"
@@ -90,6 +97,15 @@ Rebol [
 		protect/deep/words 'a
 		--assert is-protected-error? [insert a/b "x"]
 		unprotect 'a
+
+	--test-- "protect object inside an object"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1324
+		o: make object! [b: context [c: "d"]]
+		--assert not error? try [protect/deep 'o/b]
+		--assert not error? try [protect/deep/words [o/b]]
+		--assert is-locked-error? [o/b/c: 4]
+		--assert is-protected-error? [clear o/b/c]
+
 	--test-- "protect/hide inside an object"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1139
 		o: make object! [f: 1 g: self h: does [f] protect/hide 'f]
@@ -106,6 +122,29 @@ Rebol [
 		--assert is-invalid-path-error? [a/pass]
 		--assert object? resolve a make object! [pass: 999]
 		--assert "1234" = a/getp
+	--test-- "SET object!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1090
+		obj: make object! [a: 1 b: 2]
+		protect/deep obj
+		--assert all [error? e: try [obj/a: 99] e/id = 'locked-word]
+		--assert all [error? e: try [set in obj 'a 99] e/id = 'locked-word]
+		--assert all [error? e: try [set obj [99]] e/id = 'locked-word]
+
+	--test-- "EXTEND object!"
+		obj: object [a: 1] protect/deep 'obj
+		--assert all [error? e: try [obj/a: 2]  e/id = 'locked-word] 
+		--assert all [error? e: try [put obj 'a 2]  e/id = 'protected] ; cannot modify the value
+		--assert all [error? e: try [append obj [b: 2]]  e/id = 'protected]
+		--assert all [error? e: try [put obj 'b 2]  e/id = 'protected]
+		unprotect obj
+		--assert object? append obj [b: 2]
+		--assert all [22 = put obj 'a 22  22 == obj/a]
+		unprotect 'obj
+
+	--test-- "protect recursion"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1764
+		--assert is-locked-error? [new-block: reduce [1 2 protect/deep 'new-block 3 4]]
+
 
 ===end-group===
 
@@ -122,6 +161,19 @@ Rebol [
 		--assert object? resolve/all con2 con1
 		--assert all [con2/a = 1 con2/b = 2]
 		--assert none? con2/c ;- not holding "hidden"!
+	--test-- "protect/hide on series" ;not allowed
+	;@@ https://github.com/Oldes/Rebol-issues/issues/697
+		a: "123"
+		--assert all [error? e: try [protect/hide :a] e/id = 'bad-refines]
+
+	--test-- "compare objects with hidden values"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1778
+		--assert equal? context [a: 1 protect/hide 'a] context [a: 2 protect/hide 'a]
+		--assert equal? context [a: 1 protect/hide 'a] context [a: 1 protect/hide 'a]
+		--assert equal? context [a: 1 protect/hide 'a] context [b: 1 protect/hide 'b]
+		--assert not equal? context [a: 1 protect/hide 'a] context [a: 1]
+		--assert not equal? context [a: 1] context [a: 1 protect/hide 'a]
+		--assert not equal? context [a: 1 protect/hide 'a] context []
 
 ===end-group===
 

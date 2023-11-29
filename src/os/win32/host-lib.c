@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,6 +61,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <conio.h>   // used for OS_Request_Password
 #include <windows.h>
 #include <process.h>
 #include <ShlObj.h>  // used for OS_Request_Dir
@@ -67,8 +69,14 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
+RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host-window, host-ext-test..)
+
 // Semaphore lock to sync sub-task launch:
 static void *Task_Ready;
+
+#ifdef REB_VIEW
+void Dispose_Windows(void);
+#endif
 
 
 /***********************************************************************
@@ -112,6 +120,7 @@ static void *Task_Ready;
 	if (spot) {
 		// Save rest of cmd line (such as end quote, -flags, etc.)
 		COPY_STR(hold, spot+2, HOLD_SIZE);
+		hold[HOLD_SIZE] = 0;
 
 		// Terminate at the arg location:
 		spot[0] = 0;
@@ -368,7 +377,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void OS_Exit(int code)
+*/	REB_NORETURN void OS_Exit(int code)
 /*
 **		Called in all cases when REBOL quits
 **
@@ -394,7 +403,7 @@ static void *Task_Ready;
 
 /***********************************************************************
 **
-*/	void OS_Crash(const REBYTE *title, const REBYTE *content)
+*/	REB_NORETURN void OS_Crash(const REBYTE *title, const REBYTE *content)
 /*
 **		Tell user that REBOL has crashed. This function must use
 **		the most obvious and reliable method of displaying the
@@ -417,7 +426,7 @@ static void *Task_Ready;
 	//	OS_Put_Str(title);
 	//	OS_Put_Str(":\n");
 		// Use ASCII only (in case we are on non-unicode win32):
-		MessageBoxA(NULL, content, title, MB_ICONHAND);
+		MessageBoxA(NULL, (LPCSTR)content, (LPCSTR)title, MB_ICONHAND);
 	}
 	//	OS_Put_Str(content);
 	exit(100);
@@ -454,6 +463,7 @@ static void *Task_Ready;
 	if (!ok) COPY_STR(str, TEXT("unknown error"), len);
 	else {
 		COPY_STR(str, lpMsgBuf, len);
+		str[len] = 0;
 		len = (int)LEN_STR(str);
 		if (str[len-2] == '\r' && str[len-1] == '\n') str[len-2] = 0; // trim CRLF
 		LocalFree(lpMsgBuf);
@@ -556,7 +566,7 @@ static void *Task_Ready;
 	REBCHR *str;
 
 	str = env;
-	while (n = (REBCNT)LEN_STR(str)) {
+	while ((n = (REBCNT)LEN_STR(str))) {
 		len += n + 1;
 		str = env + len; // next
 	}
@@ -609,7 +619,7 @@ static void *Task_Ready;
 	LARGE_INTEGER time;
 
 	if (!QueryPerformanceCounter(&time))
-		OS_Crash(cb_cast("Missing resource"), "High performance timer");
+		OS_Crash(cb_cast("Missing resource"), cb_cast("High performance timer"));
 
 	if (base == 0) return time.QuadPart; // counter (may not be time)
 
@@ -836,6 +846,7 @@ static void *Task_Ready;
 	HANDLE hErrorWrite = 0, hErrorRead = 0;
 	REBCHR *cmd = NULL;
 	char *oem_input = NULL;
+	void *tmp;
 
 	SECURITY_ATTRIBUTES sa;
 
@@ -1119,8 +1130,9 @@ static void *Task_Ready;
 						*output_len += n;
 						if (*output_len >= output_size) {
 							output_size += BUF_SIZE_CHUNK;
-							*output = realloc(*output, output_size);
-							if (*output == NULL) goto kill;
+							tmp = realloc(*output, output_size);
+							if (tmp == NULL) goto kill;
+							*output = tmp;
 						}
 					}
 				} else if (handles[i] == hErrorRead) {
@@ -1133,8 +1145,9 @@ static void *Task_Ready;
 						*err_len += n;
 						if (*err_len >= err_size) {
 							err_size += BUF_SIZE_CHUNK;
-							*err = realloc(*err, err_size);
-							if (*err == NULL) goto kill;
+							tmp = realloc(*err, err_size);
+							if (tmp == NULL) goto kill;
+							*err = tmp;
 						}
 					}
 				} else {
@@ -1288,8 +1301,8 @@ input_error:
 {
 	#define MAX_BRW_PATH 2044
 	long flag;
-	long len;
-	long type;
+	DWORD len;
+	DWORD type;
 	HKEY key;
 	REBCHR *path;
 	HWND hWnd = GetFocus();
@@ -1385,7 +1398,7 @@ static INT CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 		break;
 	}
 	if (lpData && set) {
-		SendMessage(hwnd, BFFM_SETSELECTION, lpLastBrowseFolder != lpData, lpData);
+		SendMessage(hwnd, BFFM_SETSELECTION, lpLastBrowseFolder != (LPITEMIDLIST)lpData, lpData);
 	}
 	return 0;
 }
@@ -1405,11 +1418,15 @@ static INT CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 	bInfo.lpszTitle = fr->title;      // Title of the dialog
 	bInfo.ulFlags = BIF_USENEWUI | BIF_RETURNONLYFSDIRS;
 	bInfo.lpfn = BrowseCallbackProc;
-	// start in dir location is used /dir
-	// else use last keeped result if used /keep
-	// else NULL if no /keep and /dir is there
-	bInfo.lParam = (dir) ? dir : (keep) ? lpLastBrowseFolder : NULL;
 	bInfo.iImage = -1;
+	// start in dir location is used /dir
+	if (dir) {
+		bInfo.lParam = (LPARAM)dir;
+	}
+	// else use last keeped result if used /keep
+	else if (keep) {
+		bInfo.lParam = (LPARAM)lpLastBrowseFolder;
+	}
 
 	LPITEMIDLIST lpItem = SHBrowseForFolder( &bInfo);
 	if(lpItem == NULL) {
@@ -1419,10 +1436,45 @@ static INT CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 	if (keep) {
 		// release last result if there was any
 		if(lpLastBrowseFolder)
-			CoTaskMemFree(lpLastBrowseFolder);
+			CoTaskMemFree((LPVOID)lpLastBrowseFolder);
 		// and store result for next request
 		lpLastBrowseFolder = lpItem;
 	}
 	SHGetPathFromIDList(lpItem, fr->files);
 	return TRUE;
 }
+
+
+/***********************************************************************
+**
+*/	void OS_Request_Password(REBREQ *req)
+/*
+***********************************************************************/
+{
+	REBCNT size = 64;
+	REBCNT  pos = 0;
+	REBCHR *str = (REBUNI*)malloc(size * sizeof(REBCHR));
+	REBCHR  c;
+
+	req->data = NULL;
+
+	while ((c = _getwch()) != '\r') {
+		if (c ==  27) { // ESC
+			free(str);
+			return; 
+		}
+		if (c == '\b') { // backspace
+			if (pos > 0) pos--;
+			continue;
+		}
+		str[pos++] = c;
+		if (pos+1 == size) {
+			size += 64;
+			str = (REBCHR *)realloc(str, size * sizeof(REBCHR));
+		}
+	}
+	req->data = (REBYTE*)str;
+	req->actual = pos;
+	str[pos++] = 0;
+}
+

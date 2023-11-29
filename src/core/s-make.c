@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -246,7 +247,7 @@ cp_same:
 	bp = BIN_SKIP(dst, idx);
 	up = UNI_SKIP(src, pos);
 	for (n = 0; n < len; n++) {
-		if (up[n] > 0xFF) {
+		if (up[n] >= 0x80) {
 			//Debug_Num("##Widen-series because char value is:", up[n]);
 			// Expand dst and restart:
 			idx += n;
@@ -310,7 +311,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 
 /***********************************************************************
 **
-*/	REBSER *Copy_String(REBSER *src, REBCNT index, REBINT length)
+*/	REBSER *Copy_String(REBSER *src, REBCNT index, REBLEN length)
 /*
 **		Copies a portion of any string (byte or unicode).
 **		Will slim the string, if needed.
@@ -320,11 +321,11 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 ***********************************************************************/
 {
 	REBUNI *up;
-	REBINT wide = 1;
+	REBCNT wide = 1;
 	REBSER *dst;
-	REBINT n;
+	REBCNT n;
 
-	if (length < 0) length = src->tail;
+	if (length == NO_LIMIT) length = src->tail;
 
 	// Can it be slimmed down?
 	if (!BYTE_SIZE(src)) {

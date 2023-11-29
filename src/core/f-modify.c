@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -154,10 +155,18 @@
 			}
 			src_ser = Encode_UTF8_Value(src_val, src_len, FALSE); // NOTE: uses shared FORM buffer!
 		}
+		else if (IS_TUPLE(src_val)) {
+			src_ser = BUF_FORM;
+			src_len = VAL_TUPLE_LEN(src_val);
+			for (uint i = 0; i < src_len; i++) {
+				SERIES_DATA(src_ser)[i] = VAL_TUPLE(src_val)[i];
+			}
+			SERIES_TAIL(src_ser) = src_len;
+		}
 		else Trap_Arg(src_val);
 	}
 	else if (IS_CHAR(src_val)) {
-		if (VAL_CHAR(src_val) < 256) {
+		if (VAL_CHAR(src_val) < 128) {
 			src_ser = BUF_FORM;
 			*SERIES_DATA(src_ser) = (REBYTE)VAL_CHAR(src_val);
 		}

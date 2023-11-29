@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -83,6 +84,8 @@ static void *Task_Ready;
 #ifndef USE_OLD_PIPE
 int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" warning
 #endif
+
+RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host-window, host-ext-test..)
 
 /***********************************************************************
 **
@@ -367,7 +370,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 /***********************************************************************
 **
-*/	void OS_Exit(int code)
+*/	REB_NORETURN void OS_Exit(int code)
 /*
 **		Called in all cases when REBOL quits
 **
@@ -385,7 +388,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 
 /***********************************************************************
 **
-*/	void OS_Crash(const REBYTE *title, const REBYTE *content)
+*/	REB_NORETURN void OS_Crash(const REBYTE *title, const REBYTE *content)
 /*
 **		Tell user that REBOL has crashed. This function must use
 **		the most obvious and reliable method of displaying the
@@ -439,7 +442,7 @@ int pipe2(int pipefd[2], int flags); //to avoid "implicit-function-declaration" 
 **
 ***********************************************************************/
 {
-#ifdef TO_OSX
+#ifdef TO_MACOS
 	REBCNT size = 0;
 	REBINT rv;
 	REBCHR *buf;
@@ -1347,7 +1350,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 ***********************************************************************/
 {
 	if (
-#if defined(TO_OSX) || defined(TO_OSXI) || defined(TO_OSX_X64)
+#ifdef TO_MACOS
 		Try_Browser("/usr/bin/open", url)
 #else
 		Try_Browser("xdg-open", url)
@@ -1367,5 +1370,38 @@ static int Try_Browser(char *browser, REBCHR *url)
 	return FALSE;
 }
 
+/***********************************************************************
+**
+*/	void OS_Request_Password(REBREQ *req)
+/*
+***********************************************************************/
+{
+	REBCNT size = 64;
+	REBCNT  pos = 0;
+	REBYTE *str = malloc(size);
+	REBYTE  c;
+
+	req->data = NULL;
+
+	while (read(STDIN_FILENO, &c, 1) && c != '\r') {
+		if (c ==  27) { // ESC
+			free(str);
+			return; 
+		}
+		if (c == 127) { // backspace
+			// UTF-8 aware skip back one char
+			while (pos != 0 && (str[--pos] & 0xC0) == 0x80) {}
+			continue;
+		}
+		str[pos++] = c;
+		if (pos+1 == size) {
+			size += 64;
+			str = realloc(str, size);
+		}
+	}
+	req->data = str;
+	req->actual = pos;
+	str[pos++] = 0; // null terminate the tail.. just in case
+}
 
 

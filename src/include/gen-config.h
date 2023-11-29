@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Build configuration
-**  Build: 3.7.2
-**  Date:  5-Jan-2022
+**  Build: 3.15.0
+**  Date:  29-Nov-2023
 **  File:  config.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -25,8 +25,15 @@
 #define INCLUDE_MBEDTLS
 #define COLOR_CONSOLE
 #define INCLUDE_CRYPTOGRAPHY
-//#define INCLUDE_SHA224
-//#define INCLUDE_SHA384
+#define MBEDTLS_ECP_DP_SECP192R1_ENABLED
+#define MBEDTLS_ECP_DP_SECP224R1_ENABLED
+#define MBEDTLS_ECP_DP_SECP256R1_ENABLED
+#define MBEDTLS_ECP_DP_SECP384R1_ENABLED
+#define MBEDTLS_ECP_DP_SECP521R1_ENABLED
+#define INCLUDE_RSA
+#define MBEDTLS_GCM_C
+#define INCLUDE_SHA224
+#define INCLUDE_SHA384
 
 //**************************************************************//
 #include "opt-dependencies.h" // checks for above options

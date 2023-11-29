@@ -84,8 +84,17 @@ Rebol [
 	--assert 2 = length? append/dup  m [c 3] 0
 	--assert 3 = length? append/dup  m [c 3] 1
 	--assert 4 = length? append/dup  m [d 4] 2
-	--assert 5 = length? append/part m [e 5 f 6] 1
+	--assert 4 = length? append/part m [e 5 f 6] 1 ;no-op!
+	--assert 5 = length? append/part m [e 5 f 6] 2
 	--assert [1 2 3 4 5] = values-of m
+
+	--test-- "append/part map! with odd part"
+	--assert []     == body-of append/part make map! [] [a 1 b 2 c 3] 1
+	--assert [a: 1] == body-of append/part make map! [] [a 1 b 2 c 3] 2
+	--assert [a: 1] == body-of append/part make map! [] [a 1 b 2 c 3] 3
+	--assert []     == body-of append/part make map! [] tail [a 1 b 2 c 3] -1
+	--assert [c: 3] == body-of append/part make map! [] tail [a 1 b 2 c 3] -2
+	--assert [2 c]  == body-of append/part make map! [] tail [a 1 b 2 c 3] -3 ;NOTE that it is not [c: 3] and its ok!
 
 ===end-group===
 
@@ -213,6 +222,20 @@ Rebol [
 		m: make map! ["foo" 1 "FOO" 2 %foo 1 %FOO 2]
 		--assert ["foo" "FOO" %foo %FOO] = keys-of m
 
+	;@@ https://github.com/Oldes/Rebol-issues/issues/968
+	;@@ https://github.com/Oldes/Rebol-issues/issues/969
+	;@@ https://github.com/Oldes/Rebol-issues/issues/970
+	--test-- "strict-equal? and strict-not-equal? on map"
+		m: make map! []
+		--assert same? m m
+		--assert strict-equal? m m
+		--assert not strict-equal? "" m
+		--assert not strict-not-equal? m m
+		--assert strict-not-equal? "" m
+		;@@ https://github.com/Oldes/Rebol-issues/issues/905
+		--assert m == m
+		--assert not (m !== m)
+		--assert "" !== m
 
 ===end-group===
 
@@ -328,6 +351,62 @@ Rebol [
 		m: #(a 1 "b" 2 c #[none] d: 3)
 		--assert 2 = remove-each/count [k v] m [any [string? k none? v]]
 		--assert [a d] = words-of m
+
+===end-group===
+
+
+===start-group=== "set operations with map!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1984
+	m1: #(a: 1 A: 2 "b" 3 "B" 4)
+	m2: #(a: 2 c: 5 "b" 6 "D" 7)
+	--test-- "difference with map"
+		--assert (mold/flat difference m1 m1) = {#()}
+		--assert (mold/flat difference m1 m2) = {#(c: 5 "D" 7)}
+		--assert (mold/flat difference m2 m1) = {#(c: 5 "D" 7)}
+		--assert (mold/flat difference m2 m2) = {#()}
+
+		--assert (mold/flat difference/case m1 m1) = {#()}
+		--assert (mold/flat difference/case m1 m2) = {#(A: 2 "B" 4 c: 5 "D" 7)}
+		--assert (mold/flat difference/case m2 m1) = {#(c: 5 "D" 7 A: 2 "B" 4)}
+		--assert (mold/flat difference/case m2 m2) = {#()}
+
+	--test-- "exclude with map"
+		--assert (mold/flat exclude m1 m1) = {#()}
+		--assert (mold/flat exclude m1 m2) = {#()}
+		--assert (mold/flat exclude m2 m1) = {#(c: 5 "D" 7)}
+		--assert (mold/flat exclude m2 m2) = {#()}
+
+		--assert (mold/flat exclude/case m1 m1) = {#()}
+		--assert (mold/flat exclude/case m1 m2) = {#(A: 2 "B" 4)}
+		--assert (mold/flat exclude/case m2 m1) = {#(c: 5 "D" 7)}
+		--assert (mold/flat exclude/case m2 m2) = {#()}
+
+	--test-- "intersect with map"
+		--assert (mold/flat intersect m1 m1) = {#(a: 1 "b" 3)}
+		--assert (mold/flat intersect m1 m2) = {#(a: 1 "b" 3)}
+		--assert (mold/flat intersect m2 m1) = {#(a: 2 "b" 6)}
+		--assert (mold/flat intersect m2 m2) = {#(a: 2 c: 5 "b" 6 "D" 7)}
+
+		--assert (mold/flat intersect/case m1 m1) = {#(a: 1 A: 2 "b" 3 "B" 4)}
+		--assert (mold/flat intersect/case m1 m2) = {#(a: 1 "b" 3)}
+		--assert (mold/flat intersect/case m2 m1) = {#(a: 2 "b" 6)}
+		--assert (mold/flat intersect/case m2 m2) = {#(a: 2 c: 5 "b" 6 "D" 7)}
+
+	--test-- "union with map"
+		--assert (mold/flat union m1 m1) = {#(a: 1 "b" 3)}
+		--assert (mold/flat union m1 m2) = {#(a: 1 "b" 3 c: 5 "D" 7)}
+		--assert (mold/flat union m2 m1) = {#(a: 2 c: 5 "b" 6 "D" 7)}
+		--assert (mold/flat union m2 m2) = {#(a: 2 c: 5 "b" 6 "D" 7)}
+
+		--assert (mold/flat union/case m1 m1) = {#(a: 1 A: 2 "b" 3 "B" 4)}
+		--assert (mold/flat union/case m1 m2) = {#(a: 1 A: 2 "b" 3 "B" 4 c: 5 "D" 7)}
+		--assert (mold/flat union/case m2 m1) = {#(a: 2 c: 5 "b" 6 "D" 7 A: 2 "B" 4)}
+		--assert (mold/flat union/case m2 m2) = {#(a: 2 c: 5 "b" 6 "D" 7)}
+
+	--test-- "unique with map"
+		--assert (mold/flat unique m1) = {#(a: 1 "b" 3)}
+		--assert (mold/flat unique/case m1) = {#(a: 1 A: 2 "b" 3 "B" 4)}
+
 
 ===end-group===
 

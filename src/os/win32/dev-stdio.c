@@ -143,6 +143,39 @@ WORD wOriginalAttributes = 0;
 int Update_Graphic_Mode(int attribute, int value, boolean set);
 const REBYTE* Parse_ANSI_sequence(const REBYTE *cp, const REBYTE *ep);
 
+// Virtual key conversion table. Sorted by first column!
+const WORD Key_To_Event[] = {
+	VK_SHIFT,   EVK_SHIFT,
+	VK_CONTROL, EVK_CONTROL,
+	VK_MENU,    EVK_ALT,
+	VK_PAUSE,   EVK_PAUSE,
+	VK_CAPITAL, EVK_CAPITAL,
+	VK_ESCAPE,  EVK_ESCAPE,
+	VK_PRIOR,   EVK_PAGE_UP,
+	VK_NEXT,    EVK_PAGE_DOWN,
+	VK_END,     EVK_END,
+	VK_HOME,    EVK_HOME,
+	VK_LEFT,    EVK_LEFT,
+	VK_UP,      EVK_UP,
+	VK_RIGHT,   EVK_RIGHT,
+	VK_DOWN,    EVK_DOWN,
+	VK_INSERT,  EVK_INSERT,
+	VK_DELETE,  EVK_DELETE,
+	VK_F1,      EVK_F1,
+	VK_F2,      EVK_F2,
+	VK_F3,      EVK_F3,
+	VK_F4,      EVK_F4,
+	VK_F5,      EVK_F5,
+	VK_F6,      EVK_F6,
+	VK_F7,      EVK_F7,
+	VK_F8,      EVK_F8,
+	VK_F9,      EVK_F9,
+	VK_F10,     EVK_F10,
+	VK_F11,     EVK_F11,
+	VK_F12,     EVK_F12,
+	0, 0
+};
+
 //**********************************************************************
 
 BOOL WINAPI Handle_Break(DWORD dwCtrlType)
@@ -287,7 +320,6 @@ static void Close_StdIO_Local(void)
 		if (GET_FLAG(dev->flags, SF_DEV_NULL))
 			SET_FLAG(req->modes, RDM_NULL);
 		SET_FLAG(req->flags, RRF_OPEN);
-		SET_FLAG(req->modes, RDM_READ_LINE);
 		return DR_DONE; // Do not do it again
 	}
 
@@ -387,7 +419,6 @@ static void Close_StdIO_Local(void)
 
 	SET_FLAG(req->flags, RRF_OPEN);
 	SET_FLAG(dev->flags, RDF_OPEN);
-	SET_FLAG(req->modes, RDM_READ_LINE);
 
 	return DR_DONE;
 }
@@ -598,7 +629,6 @@ static void Close_StdIO_Local(void)
 	return DR_DONE;
 }
 
-
 /***********************************************************************
 **
 */	DEVICE_CMD Poll_IO(REBREQ *req)
@@ -608,14 +638,14 @@ static void Close_StdIO_Local(void)
 ***********************************************************************/
 {
 	REBEVT evt;
-	DWORD  cNumRead, i, repeat; 
+	DWORD  cNumRead, i, k, repeat; 
 	INPUT_RECORD irInBuf[8]; 
 	if (ReadConsoleInput(Std_Inp, irInBuf, 8, &cNumRead)) {
 		//printf("cNumRead: %u\n", cNumRead);
 		for (i = 0; i < cNumRead; i++) 
 		{
 			//printf("peek: %u\n", irInBuf[i].EventType);
-			evt.flags = 0;
+			evt.flags = 1 << EVF_HAS_CODE; // allows accessing key code using: event/code
 			evt.model = EVM_CONSOLE;
 			switch (irInBuf[i].EventType) 
 			{ 
@@ -624,14 +654,23 @@ static void Close_StdIO_Local(void)
 					KEY_EVENT_RECORD ker = irInBuf[i].Event.KeyEvent;
 					//printf("key: %u %u %u %u %u\n", ker.uChar.UnicodeChar, ker.bKeyDown, ker.wRepeatCount, ker.wVirtualKeyCode, sizeof(REBEVT));
 					evt.data  = (u32)ker.uChar.UnicodeChar;
-					if (ker.bKeyDown) {
-						if (evt.data == VK_CANCEL) {
-							RL_Escape(0);
-							return DR_DONE; // so stop sending other events
+					if (GetKeyState(VK_SHIFT) < 0) evt.flags |= (1 << EVF_SHIFT);
+					if (GetKeyState(VK_CONTROL) < 0) evt.flags |= (1 << EVF_CONTROL);
+
+					if (evt.data == 0) {
+						evt.type = ker.bKeyDown ? EVT_CONTROL : EVT_CONTROL_UP;
+						// Map the virtual key code to a supported Rebol control key event code
+						for (k = 0; Key_To_Event[k] && ker.wVirtualKeyCode > Key_To_Event[k]; k += 2);
+						if (Key_To_Event[k] == ker.wVirtualKeyCode) {
+							evt.data = Key_To_Event[k + 1];
 						}
-						evt.type = EVT_KEY;
+						else continue; // ignore not supported keys
+					}
+					else if (evt.data == 3 || evt.data == 27) {
+						evt.type = EVT_CONTROL;
+						evt.data = EVK_ESCAPE;
 					} else {
-						evt.type = EVT_KEY_UP;
+						evt.type = ker.bKeyDown ? EVT_KEY : EVT_KEY_UP;
 					}
 					
 					repeat = ker.wRepeatCount;
@@ -783,6 +822,21 @@ static void Close_StdIO_Local(void)
 	return DR_DONE;
 }
 
+/***********************************************************************
+**
+*/	DEVICE_CMD Flush_IO(REBREQ *req)
+/*
+**		Flushes output buffers.
+**
+***********************************************************************/
+{
+	fflush(NULL); // NULL means all output buffers
+	if (Std_Echo) {
+		FlushFileBuffers(Std_Echo);
+	}
+	return DR_DONE;
+}
+
 
 /***********************************************************************
 **
@@ -803,6 +857,10 @@ static DEVICE_CMD_FUNC Dev_Cmds[RDC_MAX] =
 	Query_IO,
 	Modify_IO,	// modify
 	Open_Echo,	// CREATE used for opening echo file
+	0, // delete
+	0, // rename
+	0, // lookup
+	Flush_IO
 };
 
 DEFINE_DEV(Dev_StdIO, "Standard IO", 1, Dev_Cmds, RDC_MAX, 0);

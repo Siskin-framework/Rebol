@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Sys Context
-**  Build: 3.7.2
-**  Date:  5-Jan-2022
+**  Build: 3.15.0
+**  Date:  29-Nov-2023
 **  File:  sysctx.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -34,7 +34,7 @@ enum SYS_CTX_object {
 	SYS_CTX_ASSERT_UTF8,
 	SYS_CTX_LOG,
 	SYS_CTX_MAKE_PORT_P,
-	SYS_CTX__PPARSE_URL,
+	SYS_CTX_URL_PARSER,
 	SYS_CTX_DECODE_URL,
 	SYS_CTX_MAKE_SCHEME,
 	SYS_CTX_INIT_SCHEMES,
@@ -53,6 +53,8 @@ enum SYS_CTX_object {
 	SYS_CTX_LOAD,
 	SYS_CTX_DO_NEEDS,
 	SYS_CTX_LOAD_MODULE,
+	SYS_CTX_LOCATE_EXTENSION,
+	SYS_CTX_DOWNLOAD_EXTENSION,
 	SYS_CTX_IMPORT,
 	SYS_CTX_START,
 	SYS_CTX_MAX

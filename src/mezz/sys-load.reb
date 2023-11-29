@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Boot Sys: Load, Import, Modules"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2023 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -128,8 +129,8 @@ load-header: function/with [
 		not data: script? tmp [ ; no script header found
 			return either required ['no-header] [reduce [none tmp tail tmp]]
 		]
-		set/any [key: rest:] transcode/only data none ; get 'rebol keyword
-		set/any [hdr: rest:] transcode/next/error rest none ; get header block
+		set/any [key: rest: line:] transcode/only/line data 1           none ; get 'rebol keyword
+		set/any [hdr: rest: line:] transcode/next/error/line rest :line none ; get header block
 		not block? :hdr [return 'no-header] ; header block is incomplete
 		not attempt [hdr: construct/with :hdr system/standard/header][return 'bad-header]
 		word? :hdr/options [hdr/options: to block! :hdr/options]
@@ -138,10 +139,10 @@ load-header: function/with [
 		not tuple? :hdr/version [hdr/version: none]
 		find hdr/options 'content [repend hdr ['content data]] ; as of start of header
 		13 = rest/1 [rest: next rest] ; skip CR
-		10 = rest/1 [rest: next rest] ; skip LF
+		10 = rest/1 [rest: next rest ++ line] ; skip LF
 		integer? tmp: select hdr 'length [end: skip rest tmp]
 		not end [end: tail data]
-		only [return reduce [hdr rest end]] ; decompress and checksum not done
+		only [return reduce [hdr rest end line]] ; decompress and checksum not done
 		sum: hdr/checksum  none ;[print sum] ; none saved to simplify later code
 		:key = 'rebol [ ; regular script, binary or script encoded compression supported
 			case [
@@ -172,7 +173,7 @@ load-header: function/with [
 	]
 	;assert/type [hdr object! rest [binary! block!] end binary!]
 	;assert/type [hdr/checksum [binary! none!] hdr/options [block! none!]]
-	reduce [hdr rest end]
+	reduce [hdr rest end line]
 ][
 	non-ws: make bitset! [not 1 - 32]
 ]
@@ -281,8 +282,8 @@ load: function [
 	source [file! url! string! binary! block!] {Source or block of sources}
 	/header  {Result includes REBOL header object (preempts /all)}
 	/all     {Load all values (does not evaluate REBOL header)}
-	/type    {Override default file-type; use NONE to always load as code}
-		ftype [word! none!] "E.g. text, markup, jpeg, unbound, etc."
+	/as      {Override default file-type; use NONE to always load as code}
+	 type [word! none!] "E.g. text, markup, jpeg, unbound, etc."
 ] [
 	; WATCH OUT: for ALL and NEXT words! They are local.
 
@@ -290,13 +291,13 @@ load: function [
 	; Note that code/data can be embedded in other datatypes, including
 	; not just text, but any binary data, including images, etc. The type
 	; argument can be used to control how the raw source is converted.
-	; Pass a /type of none or 'unbound if you want embedded code or data.
+	; Pass a /as of none or 'unbound if you want embedded code or data.
 	; Scripts are normally bound to the user context, but no binding will
-	; happen for a module or if the /type is 'unbound. This allows the result
+	; happen for a module or if the /as is 'unbound. This allows the result
 	; to be handled properly by DO (keeping it out of user context.)
 	; Extensions will still be loaded properly if /type is 'unbound.
 	; Note that IMPORT has its own loader, and does not use LOAD directly.
-	; /type with anything other than 'extension disables extension loading.
+	; /as with anything other than 'extension disables extension loading.
 
 	assert/type [local none!] ; easiest way to protect against /local hacks
 
@@ -305,41 +306,44 @@ load: function [
 
 		;-- Load multiple sources?
 		block? source [
-			return map-each item source [apply :load [:item header all type ftype]]
+			return map-each item source [load/:header/:all/:as :item type]
 		]
 
 		;-- What type of file? Decode it too:
 		any [file? source url? source] [
-			sftype: file-type? source
-			ftype: case [
-				lib/all ['unbound = ftype 'extension = sftype] [sftype]
-				type [ftype]
-				'else [sftype]
+			stype: file-type? source
+			type: case [
+				lib/all ['unbound = type 'extension = stype] [stype]
+				as      [type]
+				'else   [stype]
 			]
-			data: read-decode source ftype
+			data: read-decode source type
+			if not find [0 extension unbound] any [type 0] [return data]
 		]
 		none? data [data: source]
 
 		;-- Is it not source code? Then return it now:
-		any [block? data not find [0 extension unbound] any [ftype 0]][ ; due to make-boot issue with #[none]
-			return data ; directory, image, txt, markup, etc.
+		any [block? data not find [0 extension unbound] any [type 0]][ ; due to make-boot issue with #[none]
+			unless type	[return data]
+			try [return decode type to binary! data]
+			cause-error 'access 'no-codec type
 		]
 
 		;-- Try to load the header, handle error:
 		not all [
-			set [hdr: data: end:] either object? data [load-ext-module data] [load-header data]
+			set [hdr: data: end: line:] either object? data [load-ext-module data] [load-header data]
 			if word? hdr [cause-error 'syntax hdr source]
 			unless tail? end [data: copy/part data end] 
 		]
 		; data is binary or block now, hdr is object or none
 
 		;-- Convert code to block, insert header if requested:
-		not block? data [data: make block! data]
+		not block? data [data: transcode/line data any [line 1]]
 		header [insert data hdr]
 
 		;-- Bind code to user context:
 		not any [
-			'unbound = ftype
+			'unbound = type
 			'module = select hdr 'type
 			find select hdr 'options 'unbound
 		][data: intern data]
@@ -485,7 +489,10 @@ load-module: function [
 				not tmp [unless attempt [data: read source] [return none]]
 				tmp = 'extension [ ; special processing for extensions
 					; load-extension also fails for url!
-					unless attempt [ext: load-extension source] [return none]
+					try/with [ext: load-extension source] [
+						log/error 'REBOL system/state/last-error
+						return none
+					]
 					data: ext/lib-boot ; save for checksum before it's unset
 					case [
 						import [set [hdr: code:] load-ext-module ext]
@@ -501,14 +508,31 @@ load-module: function [
 				'else [cause-error 'access 'no-script source] ; needs better error
 			]
 		]
-		module? source [ ; see if the same module is already in the list
+		module? source [ 
 			mod: source
-			foreach [n m] system/modules [
-				if source = m [
-					if as [cause-error 'script 'bad-refine /as] ; already imported
-					set mod: m
-					hdr: spec-of mod
-					return reduce [hdr/name mod]
+			hdr: spec-of mod
+			; see if the same module is already in the list
+			if all [
+				hdr/name
+				module? tmp: select system/modules hdr/name
+			][
+				if as [cause-error 'script 'bad-refine /as] ; already imported
+				;; the original code:
+				;; https://github.com/rebol/rebol/blob/25033f897b2bd466068d7663563cd3ff64740b94/src/mezz/sys-load.r#L488-L490
+				;; system/modules was a block with [name module modsum ...]
+				
+				;; For now I will return existing module when there was not used /version and /check
+				;; but it must be revisited and handled correctly! So far there is not good support
+				;; for modules with same name but different versions:-/
+
+				;; Main purpose of this code is to reuse existing module in cases like
+				;; running: `do "rebol [type: module name: n]..."` multiple times
+				if all [
+					not version
+					not check
+					equal? mod tmp
+				][
+					return reduce [hdr/name tmp]
 				]
 			]
 		]
@@ -539,19 +563,19 @@ load-module: function [
 			delay: no-share: none  hdr: spec-of mod
 			assert/type [hdr/options [block! none!]]
 		]
-		block? mod [set/any [hdr: code:] mod]
-		; module/block mod used later for override testing
+		block? mod [set/any [hdr: code:] mod] ; module/block mod used later for override testing
+		url?   mod [return none ] ; used by `import` for downloading extensions
 
 		; Get and process the header
 		not hdr [
 			; Only happens for string, binary or non-extension file/url source
 			set [hdr: code: end:] load-header/required data
-			unless tail? end [code: copy/part code end] 
 			case [
 				word? hdr [cause-error 'syntax hdr source]
 				import none ; /import overrides 'delay option
 				not delay [delay: true? find hdr/options 'delay]
 			]
+			unless tail? end [code: copy/part code end] 
 			if hdr/checksum [modsum: copy hdr/checksum]
 		]
 		no-share [hdr/options: append any [hdr/options make block! 1] 'isolate]
@@ -579,6 +603,7 @@ load-module: function [
 			case/all [
 				module? :mod0 [hdr0: spec-of mod0] ; final header
 				block?  :mod0 [hdr0: first   mod0] ; cached preparsed header
+				url?    :mod0 [hdr0: object [version: 0.0.0 url: :mod0 checksum: none]]
 				;assert/type [name0 word! hdr0 object! sum0 [binary! none!]] none
 				;not tuple? set/any 'ver0 :hdr0/version [ver0: 0.0.0] ;@@ remove?
 			]
@@ -647,9 +672,63 @@ load-module: function [
 	reduce [name if module? mod [mod]]
 ]
 
+locate-extension: function[name [word!]][
+	path: system/options/modules
+	foreach test [
+		[path name %.rebx]
+		[path name #"-" system/build/arch %.rebx]
+		;; not sure, if keep the folowing ones too.. it simplifies CI testing
+		;; they should be probably removed, when all used CI tests will be modified 
+		[path name #"-" system/build/os #"-" system/build/arch %.rebx]
+		[path name #"-" system/build/sys #"-" system/build/arch %.rebx]
+	][
+		if exists? file: as file! ajoin test [return file]
+		sys/log/debug 'REBOL ["Not found extension file:" file]
+	]
+	none
+]
+
+download-extension: function[
+	"Downloads extension from a given url and stores it in the modules directory!"
+	name [word!]
+	url  [url!]
+	;; currently the used urls are like: https://github.com/Oldes/Rebol-MiniAudio/releases/download/1.0.0/
+	;; and the file is made according Rebol version, which needs the extension
+][
+	so: system/options
+	file: as file! ajoin either dir? url [
+		url: as url! ajoin [url name #"-" system/platform #"-" system/build/arch %.rebx]
+		if system/platform <> 'Windows [append url %.gz]
+		;; save the file into the modules directory (using just name+arch)
+		[so/modules name #"-" system/build/arch %.rebx]
+	][	[so/modules lowercase second split-path url ]]
+	
+	opt: so/log
+	try/with [
+		if exists? file [
+			; we don't want to overwrite any existing files!
+			log/info 'REBOL ["File already exists:^[[m" file]
+			return file
+		]
+		log/info 'REBOL ["Downloading:^[[m" url]
+		;; temporary turn off any logs
+		so/log: #[map! [http: 0 tls: 0]]
+		bin: read url
+		if %.gz = suffix? url [bin: decompress bin 'gzip]
+		log/info 'REBOL ["Saving file:^[[m" file]
+		write file bin
+	][
+		err: system/state/last-error
+		log/error 'REBOL ["Failed to download:^[[m" file ajoin ["^[[35m" err/type ": " err/id]]
+		file: none
+	]
+	so/log: opt
+	file
+]
+
 import: function [
 	"Imports a module; locate, load, make, and setup its bindings."
-	module [word! file! url! string! binary! module! block!]
+	'module [any-word! file! url! string! binary! module! block!]
 	/version ver [tuple!] "Module must be this version or greater"
 	/check sum [binary!] "Match checksum (must be set in header)"
 	/no-share "Force module to use its own non-shared global namespace"
@@ -664,6 +743,8 @@ import: function [
 	]
 	; Note: IMPORT block! returns a block of all the modules imported.
 
+	if any-word? module [module: to word! module]
+
 	; Try to load and check the module.
 	set [name: mod:] apply :load-module [module version ver check sum no-share no-lib /import]
 
@@ -672,12 +753,28 @@ import: function [
 		word? module [
 			; Module (as word!) is not loaded already, so let's try to find it.
 			file: append to file! module system/options/default-suffix
-			foreach path system/options/module-paths [
-				if set [name: mod:] apply :load-module [
-					path/:file version ver check sum no-share no-lib /import /as module
-				] [break]
+			set [name: mod:] apply :load-module [
+				system/options/modules/:file version ver check sum no-share no-lib /import /as module
+			]
+			unless name [
+				; try to locate as an extension...
+				either file: any [
+					locate-extension module
+					all [
+						url? mod: select system/modules module
+						download-extension module mod
+					]
+				][
+					log/info 'REBOL ["Importing extension:^[[m" file]
+					set [name: mod:] apply :load-module [
+						file version ver check sum no-share no-lib /import /as module
+					]
+				][
+					mod: none ; failed
+				]
 			]
 		]
+
 		any [file? module url? module] [
 			cause-error 'access 'cannot-open reduce [module "not found or not valid"]
 		]
@@ -710,7 +807,7 @@ export [load import]
 test: [
 	[
 		write %test-emb.reb {123^/[REBOL [title: "embed"] 1 2 3]^/123^/}
-		[1 2 3] = xload/header/type %test-emb.reb 'unbound
+		[1 2 3] = xload/header/as %test-emb.reb 'unbound
 	]
 ][	; General function:
 	[[1 2 3] = xload ["1" "2" "3"]]
@@ -718,7 +815,7 @@ test: [
 	[1 = xload "1"]
 	[[1] = xload "[1]"]
 	[[1 2 3] = xload "1 2 3"]
-	[[1 2 3] = xload/type "1 2 3" none]
+	[[1 2 3] = xload/as "1 2 3" none]
 	[[1 2 3] = xload "rebol [] 1 2 3"]
 	[
 		d: xload/header "rebol [] 1 2 3"

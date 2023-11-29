@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Mezzanine: Help"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2022 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -11,7 +12,7 @@ REBOL [
 	}
 ]
 
-import module [
+import (module [
 	Title:  "Help related functions"
 	Name:    help
 	Version: 3.0.0
@@ -282,7 +283,7 @@ import module [
 					throw true
 				]
 				not any [word? :word path? :word] [
-					output ajoin ["^[[1;32m" uppercase mold :word "^[[m is " form-type :word]
+					output ajoin ["^[[1;32m" :word "^[[m is " form-type :word]
 					throw true
 				]
 				path? :word [
@@ -304,14 +305,15 @@ import module [
 						]
 					]
 				]
+				port? :value [
+					output ajoin ["^[[1;32m" uppercase mold :word "^[[m is " a-an value/spec/title " ^[[1;32m" value/spec/ref "^[[m^/"]
+				]
 				any-function? :value [
 					spec: copy/deep spec-of :value
 					args: copy []
 					refs: none
 					rets: none
 					type: type? :value
-
-					if path? word [word: first word]
 					
 					clear find spec /local
 					parse spec [
@@ -546,7 +548,7 @@ import module [
 		]
 		exit
 	]
-]
+])
 
 ;-- old alpha functions:
 ;pending: does [

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,10 +49,6 @@
 **      It is a critical part of its definition.
 **
 ***********************************************************************/
-
-#if defined(__cplusplus) && __cplusplus >= 201103L
-#include <type_traits> // used in CASTING MACROS
-#endif
 
 #ifdef __OBJC__
 #define HAS_BOOL // don't redefine BOOL in objective-c code
@@ -171,6 +168,7 @@ typedef struct sInt64 {
 
 typedef i32				REBINT;     // 32 bit (64 bit defined below)
 typedef u32				REBCNT;     // 32 bit (counting number)
+typedef u32             REBLEN;     // 32 bit series length/index - used instead of size_t
 typedef i64				REBI64;     // 64 bit integer
 typedef u64				REBU64;     // 64 bit unsigned integer
 typedef i8				REBOOL;     // 8  bit flag (for struct usage)
@@ -213,7 +211,7 @@ enum {
 **
 ***********************************************************************/
 
-#define MAX_INT_LEN     21
+#define MAX_INT_LEN     25
 #define MAX_HEX_LEN     16
 
 #ifdef ITOA64           // Integer to ascii conversion
@@ -253,6 +251,11 @@ typedef void(*CFUNC)(void *);
 
 #define UNUSED(x) (void)x;
 
+// Check a condition e at compile time. If the condition is false, it will
+// result in a compilation error because it attempts to create an array 
+// with a negative size, which is not allowed in C.
+#define STATIC_ASSERT(e) do {(void)sizeof(char[1 - 2*!(e)]);} while(0)
+
 #define FLAGIT(f)           (1<<(f))
 #define GET_FLAG(v,f)       (((v) & (1<<(f))) != 0)
 #define GET_FLAGS(v,f,g)    (((v) & ((1<<(f)) | (1<<(g)))) != 0)
@@ -260,12 +263,14 @@ typedef void(*CFUNC)(void *);
 #define CLR_FLAG(v,f)       ((v) &= ~(1<<(f)))
 #define CLR_FLAGS(v,f,g)    ((v) &= ~((1<<(f)) | (1<<(g))))
 
+#ifndef MIN
 #ifdef min
 #define MIN(a,b) min(a,b)
 #define MAX(a,b) max(a,b)
 #else
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
+#endif
 #endif
 
 // Memory related functions:
@@ -414,104 +419,24 @@ typedef void(*CFUNC)(void *);
   } while (0)
 
 
-
-//
-// CASTING MACROS
-//
-// The following code and explanation is from "Casts for the Masses (in C)":
-//
-// http://blog.hostilefork.com/c-casts-for-the-masses/
-//
-// But debug builds don't inline functions--not even no-op ones whose sole
-// purpose is static analysis.  This means the cast macros add a headache when
-// stepping through the debugger, and also they consume a measurable amount
-// of runtime.  Hence we sacrifice cast checking in the debug builds...and the
-// release C++ builds on Travis are relied upon to do the proper optimizations
-// as well as report any static analysis errors.
-//
-
-#if !defined(__cplusplus) || !defined(NDEBUG)
-    /* These macros are easier-to-spot variants of the parentheses cast.
-     * The 'm_cast' is when getting [M]utablity on a const is okay (RARELY!)
-     * Plain 'cast' can do everything else (except remove volatile)
-     * The 'c_cast' helper ensures you're ONLY adding [C]onst to a value
-     */
-    #define m_cast(t,v)     ((t)(v))
-    #define cast(t,v)       ((t)(v))
-    #define c_cast(t,v)     ((t)(v))
-    /*
-     * Q: Why divide roles?  A: Frequently, input to cast is const but you
-     * "just forget" to include const in the result type, gaining mutable
-     * access.  Stray writes to that can cause even time-traveling bugs, with
-     * effects *before* that write is made...due to "undefined behavior".
-     */
-#elif defined(__cplusplus) /* for gcc -Wundef */ && (__cplusplus < 201103L)
-    /* Well-intentioned macros aside, C has no way to enforce that you can't
-     * cast away a const without m_cast. C++98 builds can do that, at least:
-     */
-    #define m_cast(t,v)     const_cast<t>(v)
-    #define cast(t,v)       ((t)(v))
-    #define c_cast(t,v)     const_cast<t>(v)
+//! Function attribute used by functions that never return (that terminate the process).
+#if defined(__GNUC__)
+#define REB_NORETURN __attribute__((__noreturn__))
+#elif defined(_MSC_VER)
+#define REB_NORETURN __declspec(noreturn)
 #else
-    /* __cplusplus >= 201103L has C++11's type_traits, where we get some
-     * actual power.  cast becomes a reinterpret_cast for pointers and a
-     * static_cast otherwise.  We ensure c_cast added a const and m_cast
-     * removed one, and that neither affected volatility.
-     */
-    template<typename T, typename V>
-    T m_cast_helper(V v) {
-        static_assert(!std::is_const<T>::value,
-            "invalid m_cast() - requested a const type for output result");
-        static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
-            "invalid m_cast() - input and output have mismatched volatility");
-        return const_cast<T>(v);
-    }
-    /* reinterpret_cast for pointer to pointer casting (non-class source)*/
-    template<typename T, typename V,
-        typename std::enable_if<
-            !std::is_class<V>::value
-            && (std::is_pointer<V>::value || std::is_pointer<T>::value)
-        >::type* = nullptr>
-                T cast_helper(V v) { return reinterpret_cast<T>(v); }
-    /* static_cast for non-pointer to non-pointer casting (non-class source) */
-    template<typename T, typename V,
-        typename std::enable_if<
-            !std::is_class<V>::value
-            && (!std::is_pointer<V>::value && !std::is_pointer<T>::value)
-        >::type* = nullptr>
-                T cast_helper(V v) { return static_cast<T>(v); }
-    /* use static_cast on all classes, to go through their cast operators */
-    template<typename T, typename V,
-        typename std::enable_if<
-            std::is_class<V>::value
-        >::type* = nullptr>
-                T cast_helper(V v) { return static_cast<T>(v); }
-    template<typename T, typename V>
-    T c_cast_helper(V v) {
-        static_assert(!std::is_const<T>::value,
-            "invalid c_cast() - did not request const type for output result");
-        static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
-            "invalid c_cast() - input and output have mismatched volatility");
-        return const_cast<T>(v);
-    }
-    #define m_cast(t, v)    m_cast_helper<t>(v)
-    #define cast(t, v)      cast_helper<t>(v)
-    #define c_cast(t, v)    c_cast_helper<t>(v)
+#define REB_NORETURN
 #endif
 
+/* These macros are easier-to-spot variants of the parentheses cast.
+ * The 'm_cast' is when getting [M]utablity on a const is okay (RARELY!)
+ * Plain 'cast' can do everything else (except remove volatile)
+ * The 'c_cast' helper ensures you're ONLY adding [C]onst to a value
+ */
+#define m_cast(t,v)     ((t)(v))
+#define cast(t,v)       ((t)(v))
+#define c_cast(t,v)     ((t)(v))
 
-//=//// BYTE STRINGS VS UNENCODED CHARACTER STRINGS ///////////////////////=//
-//
-// Use these when you semantically are talking about unsigned characters as
-// bytes.  For instance: if you want to count unencoded chars in 'char *' us
-// strlen(), and the reader will know that is a count of letters.  If you have
-// something like UTF-8 with more than one byte per character, use LEN_BYTES.
-// The casting macros are derived from "Casts for the Masses (in C)":
-//
-// http://blog.hostilefork.com/c-casts-for-the-masses/
-//
-// For APPEND_BYTES_LIMIT, m is the max-size allocated for d (dest)
-//
 #include <string.h> // for strlen() etc, but also defines `size_t`
 #define strsize strlen
 #if defined(NDEBUG)
@@ -525,7 +450,7 @@ typedef void(*CFUNC)(void *);
     #define cb_cast(s)      ((const REBYTE *)(s))
 
     #define LEN_BYTES(s) \
-        strlen((const char*)(s))
+        (REBLEN)strlen((const char*)(s))
 
     #define COPY_BYTES(d,s,n) \
         strncpy((char*)(d), (const char*)(s), (n))
@@ -566,8 +491,8 @@ typedef void(*CFUNC)(void *);
         return b_cast(strncpy(s_cast(dest), cs_cast(src), count));
     }
 
-    inline static size_t LEN_BYTES(const REBYTE *str)
-        { return strlen(cs_cast(str)); }
+    inline static REBLEN LEN_BYTES(const REBYTE *str)
+        { return (REBLEN)strlen(cs_cast(str)); }
 
     inline static int CMP_BYTES(
         const REBYTE *lhs, const REBYTE *rhs

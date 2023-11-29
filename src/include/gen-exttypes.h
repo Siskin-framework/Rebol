@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Extension Type Equates
-**  Build: 3.7.2
-**  Date:  5-Jan-2022
+**  Build: 3.15.0
+**  Date:  29-Nov-2023
 **  File:  tmp-exttypes.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -79,7 +79,7 @@
 	RXT_GOB,                      // gob
 	0,                            // event
 	RXT_HANDLE,                   // handle
-	0,                            // struct
+	RXT_STRUCT,                   // struct
 	0,                            // library
 	0                             // utype
 };
@@ -139,7 +139,12 @@
 	0,                            // 46
 	REB_GOB,                      // 47
 	REB_OBJECT,                   // 48
-	REB_MODULE                    // 49
+	REB_MODULE,                   // 49
+	0,                            // 50
+	0,                            // 51
+	0,                            // 52
+	0,                            // 53
+	REB_STRUCT                    // 54
 };
 
 /***********************************************************************
@@ -197,7 +202,12 @@
 	0,                            // 46
 	RXE_SER,                      // gob
 	RXE_OBJECT,                   // object
-	RXE_OBJECT                    // module
+	RXE_OBJECT,                   // module
+	0,                            // 50
+	0,                            // 51
+	0,                            // 52
+	0,                            // 53
+	RXE_STRUCT                    // struct
 };
 
 #define RXT_ALLOWED_TYPES (((u64)1<<REB_UNSET) \
@@ -237,4 +247,5 @@
 |((u64)1<<REB_GOB) \
 |((u64)1<<REB_OBJECT) \
 |((u64)1<<REB_MODULE) \
+|((u64)1<<REB_STRUCT) \
 )

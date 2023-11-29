@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -170,7 +171,7 @@
 
 	// Append new value the target series:
 	if (mode > 1) {
-		hashes[hash] = SERIES_TAIL(series)+1;
+		hashes[hash] = (SERIES_TAIL(series) / wide) +1;
 		//Debug_Num("hash:", hashes[hash]);
 		Append_Series(series, (REBYTE*)key, wide);
 		//Dump_Series(series, "hash");
@@ -336,7 +337,8 @@
 	REBCNT n;
 
 	val = VAL_BLK_DATA(arg);
-	for (n = 0; n < len && NOT_END(val) && NOT_END(val+1); val += 2, n += 2) {
+	len >>= 1; // part must be number of key/value pairs
+	for (n = 0; n < len && NOT_END(val) && NOT_END(val+1); val += 2, n++) {
 		Find_Entry(ser, val, val+1, TRUE);
 	}
 }
@@ -365,7 +367,7 @@
 ***********************************************************************/
 {
 	REBCNT n;
-	REBSER *series;
+//	REBSER *series;
 
 	if (!IS_BLOCK(data) && !IS_MAP(data)) return FALSE;
 

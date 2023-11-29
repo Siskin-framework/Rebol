@@ -19,7 +19,7 @@ Throw: [
 	type: "throw error"
 	break:              {no loop to break}
 	return:             {return or exit not in function}
-	throw:              [{no catch for throw:} :arg1]
+	throw:              [{no catch for throw:} :arg2 "with value:" :arg1]
 	continue:           {no loop to continue}
 	halt:               [{halted by user or script}]
 	quit:               [{user script quit}]
@@ -120,6 +120,9 @@ Script: [
 	parse-variable:     [{PARSE - expected a variable, not:} :arg1]
 	parse-command:      [{PARSE - command cannot be used as variable:} :arg1]
 	parse-series:       [{PARSE - input must be a series:} :arg1]
+	parse-no-collect:    {PARSE - KEEP is used without a wrapping COLLECT}
+	parse-into-bad:		 {PARSE - COLLECT INTO/AFTER expects a series! argument}
+	parse-into-type:     {PARSE - COLLECT INTO/AFTER expects a series! of compatible datatype}
 
 ;   bad-prompt:         [{Error executing prompt block}]
 ;   bad-port-action:    [{Cannot use} :arg1 {on this type port}]
@@ -128,6 +131,7 @@ Script: [
 
 	invalid-handle:     {invalid handle}
 	invalid-value-for:  [{invalid value} :arg1 {for:} :arg2]
+	handle-exists:      [{handle already exists under id} :arg1 "and have different size"]
 ]
 
 Math: [
@@ -148,6 +152,7 @@ Access: [
 ;   already-closed:     [{port} :arg1 {already closed}]
 	no-connect:         [{cannot connect:} :arg1 {reason:} :arg2]
 	not-connected:      [{port is not connected:} :arg1]
+	not-ready:          [{port is not ready:} :arg1]
 ;   socket-open:        [{error opening socket:} :arg1]
 	no-script:          [{script not found:} :arg1]
 
@@ -185,7 +190,7 @@ Access: [
 ;   would-block:        [{operation on port} :arg1 {would block}]
 ;   no-action:          [{this type of port does not support the} :arg1 {action}]
 ;   serial-timeout:     {serial port timeout}
-	no-extension:       [{cannot open extension:} :arg1]
+	no-extension:       [{cannot open extension:} :arg1 {reason:} :arg2]
 	bad-extension:      [{invalid extension format:} :arg1]
 	extension-init:     [{extension cannot be initialized (check version):} :arg1]
 
@@ -242,3 +247,4 @@ Internal: [
 	not-done:           {reserved for future use (or not yet implemented)}
 	invalid-error:      {error object or fields were not valid}
 ]
+

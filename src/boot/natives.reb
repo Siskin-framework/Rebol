@@ -20,8 +20,10 @@ REBOL [
 ;-- Control Natives - nat_control.c
 
 ajoin: native [
-	{Reduces and joins a block of values into a new string.}
+	{Reduces and joins a block of values into a new string. Ignores none and unset values.}
 	block [block!]
+	/with delimiter [any-type!]
+	/all "Do not ignore none and unset values"
 ]
 
 also: native [
@@ -56,6 +58,7 @@ assert: native [
 attempt: native [
 	"Tries to evaluate a block and returns result or NONE on error."
 	block [block!]
+	/safer "Capture all possible errors and exceptions"
 ]
 
 break: native [
@@ -75,7 +78,9 @@ catch: native [
 	block [block!] {Block to evaluate}
 	/name {Catches a named throw}
 	word [word! block!] {One or more names}
+	/all  {Catches all throws, named and unnamed}
 	/quit {Special catch for QUIT native}
+	/with callback [block! function!] "Code to be evaluated on a catch"
 ]
 
 ;cause: native [
@@ -247,6 +252,11 @@ recycle: native [
 	/torture {Constant recycle (for internal debugging)}
 ]
 
+release: native [
+	"Release internal resources of the handle. Returns true on success."
+	handle [handle!]
+]
+
 reduce: native [
 	{Evaluates expressions and returns multiple results.}
 	value
@@ -281,8 +291,9 @@ switch: native [
 	"Selects a choice and evaluates the block that follows it."
 	value "Target value"
 	cases [block!] "Block of cases to check"
-	/default case "Default case if no others found"
+	/default  def "Default case if no others found"
 	/all "Evaluate all matches (not just first one)"
+	/case "Perform a case-sensitive comparison"
 ]
 
 throw: native [
@@ -301,9 +312,12 @@ trace: native [
 ]
 
 try: native [
-	{Tries to DO a block and returns its value or an error.}
-	block [block!]
-	/except "On exception, evaluate this code block"
+	{Tries to DO a block and returns its value or an error!.}
+	block [block! paren!]
+	/all    "Catch also BREAK, CONTINUE, RETURN, EXIT and THROW exceptions."
+	/with   "On error, evaluate the handler and return its result"
+	handler [block! any-function!]
+	/except "** DEPRERCATED **"
 	code [block! any-function!]
 ]
 
@@ -353,7 +367,7 @@ as: native [
 bind: native [
 	{Binds words to the specified context.}
 	word [block! any-word!] {A word or block (modified) (returned)}
-	context [any-word! any-object!] {A reference to the target context}
+	context [any-word! object! module! port!] {A reference to the target context}
 	/copy {Bind and return a deep copy of a block, don't modify original}
 	/only {Bind only first block (not deep)}
 	/new {Add to context any new words found}
@@ -388,19 +402,20 @@ construct: native [
 debase: native [
 	{Decodes binary-coded string to binary value.}
 	value [binary! any-string!] {The string to decode}
-	base  [integer!] {Binary base to use: 85, 64, 16, or 2}
+	base  [integer!] {Binary base to use: 85, 64, 36, 16, or 2}
 	/url  {Base 64 Decoding with URL and Filename Safe Alphabet}
 	/part {Limit the length of the input}
-	limit [integer!]
+	limit [integer! binary! any-string!]
 ]
 
 enbase: native [
 	{Encodes a string into a binary-coded string.}
-	value [binary! string!] {If string, will be UTF8 encoded}
-	base  [integer!] {Binary base to use: 85, 64, 16, or 2}
+	value [binary! any-string!] {If string, will be UTF8 encoded}
+	base  [integer!] {Binary base to use: 85, 64, 36, 16, or 2}
 	/url  {Base 64 Encoding with URL and Filename Safe Alphabet}
 	/part {Limit the length of the input}
-	limit [integer!]
+	limit [integer! binary! any-string!]
+	/flat {No line breaks}
 ]
 
 decloak: native [
@@ -446,8 +461,8 @@ entab: native [
 
 difference: native [
 	{Returns the special difference of two values.}
-	set1 [block! string! binary! bitset! date! typeset!] "First data set"
-	set2 [block! string! binary! bitset! date! typeset!] "Second data set"
+	set1 [block! string! bitset! date! typeset! map!] "First data set"
+	set2 [block! string! bitset! date! typeset! map!] "Second data set"
 	/case {Uses case-sensitive comparison}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
@@ -455,8 +470,8 @@ difference: native [
 
 exclude: native [
 	{Returns the first data set less the second data set.}
-	set1 [block! string! binary! bitset! typeset!] "First data set"
-	set2 [block! string! binary! bitset! typeset!] "Second data set"
+	set1 [block! string! bitset! typeset! map!] "First data set"
+	set2 [block! string! bitset! typeset! map!] "Second data set"
 	/case {Uses case-sensitive comparison}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
@@ -464,8 +479,8 @@ exclude: native [
 
 intersect: native [
 	{Returns the intersection of two data sets.}
-	set1 [block! string! binary! bitset! typeset!] "first set"
-	set2 [block! string! binary! bitset! typeset!] "second set"
+	set1 [block! string! bitset! typeset! map!] "first set"
+	set2 [block! string! bitset! typeset! map!] "second set"
 	/case {Uses case-sensitive comparison}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
@@ -473,8 +488,8 @@ intersect: native [
 
 union: native [
 	{Returns the union of two data sets.}
-	set1 [block! string! binary! bitset! typeset!] "first set"
-	set2 [block! string! binary! bitset! typeset!] "second set"
+	set1 [block! string! bitset! typeset! map!] "first set"
+	set2 [block! string! bitset! typeset! map!] "second set"
 	/case {Use case-sensitive comparison}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
@@ -482,7 +497,7 @@ union: native [
 
 unique: native [
 	{Returns the data set with duplicates removed.}
-	set1 [block! string! binary! bitset! typeset!]
+	set1 [block! string! bitset! typeset! map!]
 	/case  {Use case-sensitive comparison (except bitsets)}
 	/skip {Treat the series as records of fixed size}
 	size [integer!]
@@ -506,7 +521,7 @@ dehex: native [
 	{Converts URL-style hex encoded (%xx) strings. If input is UTF-8 encode, you should first convert it to binary!}
 	value [any-string! binary!] {The string to dehex}
 	/escape char [char!] {Can be used to change the default escape char #"%"}
-	/url {Decode + as a space}
+	/uri {Decode space from a special char (#"+" by default or #"_" when escape char is #"=")}
 ]
 
 enhex: native [
@@ -516,6 +531,7 @@ enhex: native [
 	 char [char!] 
 	/except {Can be used to specify, which chars can be left unescaped}
 	 unescaped [bitset!] {By default it is URI bitset when value is file or url, else URI-Component}
+	/uri {Encode space using a special char (#"+" by default or #"_" when escape char is #"=")}
 ]
 
 get: native [
@@ -533,8 +549,8 @@ in: native [
 parse: native [
 	{Parses a string or block series according to grammar rules.}
 	input [series!] {Input series to parse}
-	rules [block! string! char! none!] {Rules to parse by (none = ",;")}
-	/all {For simple rules (not blocks) parse all chars including whitespace}
+	rules [block!] {Rules to parse}
+	;/all {For simple rules (not blocks) parse all chars including whitespace}
 	/case {Uses case-sensitive comparison}
 ]
 
@@ -579,12 +595,17 @@ invalid-utf?: native [
 
 value?: native [
 	{Returns TRUE if the word has a value.}
-	value
+	value [word!]
 ]
 
 to-value: native [
 	{Returns the value if it is a value, NONE if unset.}
 	value [any-type!]
+]
+
+split-lines: native [
+	{Given a string series, split lines on CR-LF.}
+	value [string!]
 ]
 
 ;-- IO Natives - nat_io.c
@@ -640,11 +661,14 @@ to-rebol-file: native [
 ]
 
 transcode: native [
-	{Translates UTF-8 binary source to values. Returns [value binary].}
-	source [binary!] "Must be Unicode UTF-8 encoded"
+	{Translates UTF-8 binary source to values. Returns one or several values in a block.}
+	source [binary! string!] "UTF-8 input buffer; string argument will be UTF-8 encoded"
 	/next "Translate next complete value (blocks as single value)"
+	/one  "Translate next complete value (returns the value only)"
 	/only "Translate only a single value (blocks dissected)"
 	/error "Do not cause errors - return error object as value in place"
+	/line  "Return also information about number of lines scaned"
+	 count [integer!] "Initial line number"
 ]
 
 echo: native [
@@ -924,6 +948,10 @@ request-dir: native [
 	/dir   "Set starting directory" 
 	 name  [file!]
 	/keep  "Keep previous directory path"
+]
+
+request-password: native [
+	{Asks user for input without echoing, and the entered password is not stored in the command history.}
 ]
 
 ascii?: native [

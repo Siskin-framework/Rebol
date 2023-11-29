@@ -1,5 +1,5 @@
 REBOL [
-	title: "REBOL 3 codec for ZIP files"
+	title: "Codec: ZIP"
 	name: 'codec-zip
 	author: rights: "Oldes"
 	version: 0.0.4
@@ -23,7 +23,7 @@ register-codec [
 	name:  'zip
 	type:  'compression
 	title: "ZIP File Format"
-	suffixes: [%.zip %.aar %.jar %.apk %.zipx %.appx %.epub]
+	suffixes: [%.zip %.aar %.jar %.apk %.zipx %.appx %.epub %.docx]
 
 	decode: function [
 		{Decompress all content of the ZIP file}
@@ -163,7 +163,7 @@ register-codec [
 		compressed-size: size: crc: entries: filename-length: offset: 0
 
 		add-file: func[file [file!] /local dir spec][
-			try/except [
+			try/with [
 				spec: query/mode file [type: date:]
 				either spec [
 					file-name: find/tail file root
@@ -189,7 +189,7 @@ register-codec [
 		]
 
 		add-data: func[file spec /local no-compress? extra extra-length comm comm-length][
-			sys/log/info 'ZIP ["Adding:" as-green file]
+			if verbose [sys/log/info 'ZIP ["Adding:" as-green file]]
 
 			any [file? file cause-error 'user 'message reduce [reform ["found" type? file "where file! expected"]]]
 			data: date: none

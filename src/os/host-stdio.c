@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2021-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,7 +60,7 @@ static REBYTE *Get_Next_Line()
 {
 	REBYTE *bp = inbuf;
 	REBYTE *out;
-	REBCNT len;
+	size_t len;
 
 	// Scan for line terminator or end:
 	for (bp = inbuf; *bp != CR && *bp != LF && *bp != 0; bp++);
@@ -107,7 +108,7 @@ static int Fetch_Buf()
 
 /***********************************************************************
 **
-*/	REBREQ *Open_StdIO(void)
+*/	REBREQ *Open_StdIO(REBOOL cgi)
 /*
 **		Open REBOL's standard IO device. This same device is used
 **		by both the host code and the R3 DLL itself.
@@ -127,6 +128,8 @@ static int Fetch_Buf()
 
 	inbuf = OS_Make(inbuf_len);
 	inbuf[0] = 0;
+	if (!cgi)
+		SET_FLAG(Std_IO_Req.modes, RDM_READ_LINE);
 	return &Std_IO_Req;
 }
 
@@ -180,8 +183,8 @@ static int Fetch_Buf()
 **
 ***********************************************************************/
 {
-	Std_IO_Req.length = strlen(cs_cast(buf));
-	Std_IO_Req.data = (REBYTE*)buf;
+	Std_IO_Req.length = LEN_BYTES(buf);
+	Std_IO_Req.data = buf;
 	Std_IO_Req.actual = 0;
 
 	OS_Do_Device(&Std_IO_Req, RDC_WRITE);

@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Dialects
-**  Build: 3.7.2
-**  Date:  5-Jan-2022
+**  Build: 3.15.0
+**  Date:  29-Nov-2023
 **  File:  reb-dialect.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)

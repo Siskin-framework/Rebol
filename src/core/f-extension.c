@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2023 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,6 +47,7 @@ enum {
 	RXE_DATE,	// from upper section
 	RXE_OBJECT, // any object
 	RXE_TUPLE,  // 3-12 bytes tuple value
+	RXE_STRUCT,	// structure data and fields spec series
 	RXE_MAX
 };
 
@@ -96,6 +98,7 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 	case RXE_HANDLE:
 		arg.addr = VAL_HANDLE(val);
 		arg.handle.type = VAL_HANDLE_TYPE(val);
+		arg.handle.flags = VAL_HANDLE_FLAGS(val);
 		break;
 	case RXE_32:
 		arg.int32a = VAL_I32(val);
@@ -113,10 +116,16 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 		arg.series = VAL_SERIES(val);
 		arg.width  = VAL_IMAGE_WIDE(val);
 		arg.height = VAL_IMAGE_HIGH(val);
+		// There is no way how to pass index information in one RXIARG value!
+		//arg.index  = VAL_INDEX(val); // Don't do this! index is shared with the size and would overwrite it!
 		break;
 	case RXE_TUPLE:
 		arg.tuple_len = VAL_TUPLE_LEN(val);
 		COPY_MEM(arg.tuple_bytes, VAL_TUPLE(val), MAX_TUPLE);
+		break;
+	case RXE_STRUCT:
+		arg.structure.data = VAL_STRUCT_DATA(val);
+		arg.structure.fields = VAL_STRUCT_FIELDS(val);
 		break;
 	case RXE_NULL:
 	default:
@@ -165,10 +174,19 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 		VAL_SERIES(val) = arg.series;
 		VAL_IMAGE_WIDE(val) = arg.width;
 		VAL_IMAGE_HIGH(val) = arg.height;
+		// There can be only index or image size in the RXIARG, so the index is
+		// unfortunatelly lost when image is passed to extension and back!
+		VAL_INDEX(val) = 0;
 		break;
 	case RXE_TUPLE:
 		VAL_TUPLE_LEN(val) = arg.tuple_len;
 		COPY_MEM(VAL_TUPLE(val), arg.tuple_bytes, MAX_TUPLE);
+		break;
+	case RXE_STRUCT:
+		//TODO: review!
+		// There is no room in RXIARG to pass the spec part of the struct!
+		VAL_STRUCT_DATA(val) = arg.structure.data;
+		VAL_STRUCT_FIELDS(val) = arg.structure.fields;
 		break;
 	case RXE_NULL:
 		VAL_INT64(val) = 0;
@@ -342,9 +360,9 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		path = Value_To_OS_Path(val, FALSE);
 
 		// Try to load the DLL file:
-		if (!(dll = OS_OPEN_LIBRARY(SERIES_DATA(path), &error))) {
-			//printf("error: %i\n", error);
-			Trap1(RE_NO_EXTENSION, val);
+		if (!(dll = OS_OPEN_LIBRARY((REBCHR*)SERIES_DATA(path), &error))) {
+			DS_PUSH_INTEGER(error);
+			Trap2(RE_NO_EXTENSION, val, DS_TOP);
 		}
 
 		// Call its info() function for header and code body:
@@ -468,7 +486,7 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 
 	// Copy args to command frame (array of args):
 	RXA_COUNT(&frm) = argc = SERIES_TAIL(VAL_FUNC_ARGS(value))-1; // not self
-	if (argc > 7) Trap0(RE_BAD_COMMAND);
+	if (argc > MAX_RXI_ARGS) Trap0(RE_BAD_COMMAND);
 	val = DS_ARG(1);
 	for (n = 1; n <= argc; n++, val++) {
 		RXA_TYPE(&frm, n) = Reb_To_RXT[VAL_TYPE(val)];
@@ -500,9 +518,9 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 	case RXR_BAD_ARGS:
 	case RXR_ERROR:
 		{
-			const char* errmsg = frm.args[1].series;
+			const REBYTE* errmsg = frm.args[1].series;
 			if(errmsg != NULL) {
-				int len = strlen(errmsg);
+				REBLEN len = LEN_BYTES(errmsg);
 				VAL_SET(val, REB_STRING);		
 				VAL_SERIES(val) = Make_Binary(len);
 				VAL_INDEX(val) = 0;

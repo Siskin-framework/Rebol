@@ -62,6 +62,8 @@ static REBOOL Equal_Object(REBVAL *val, REBVAL *arg)
 
 	// Compare each entry:
 	for (n = 1; n < (REBINT)(f1->tail); n++) {
+		if (VAL_HIDDEN(BLK_SKIP(w1, n))) return VAL_HIDDEN(BLK_SKIP(w2, n));
+		if (VAL_HIDDEN(BLK_SKIP(w2, n))) return VAL_HIDDEN(BLK_SKIP(w1, n));
 		if (Cmp_Value(BLK_SKIP(w1, n), BLK_SKIP(w2, n), FALSE)) return FALSE;
 		// Use Compare_Values();
 		if (Cmp_Value(BLK_SKIP(f1, n), BLK_SKIP(f2, n), FALSE)) return FALSE;
@@ -70,22 +72,47 @@ static REBOOL Equal_Object(REBVAL *val, REBVAL *arg)
 	return TRUE;
 }
 
-static void Append_Obj(REBSER *obj, REBVAL *arg)
+static void Extend_Obj(REBSER *obj, REBVAL *key, REBVAL *value)
 {
-	REBCNT i, len;
+	REBCNT index;
+	REBVAL *val;
+
+	// Key must be a word only!
+	if (ANY_WORD(key)) {
+		// bug fix, 'self is protected only in selfish frames
+		if ((VAL_WORD_CANON(key) == SYM_SELF) && !IS_SELFLESS(obj))
+			Trap0(RE_SELF_PROTECTED);
+		index = Find_Word_Index(obj, VAL_WORD_SYM(key), TRUE);
+		if (index) {
+			if (!value) return;
+			val = FRM_VALUE(obj, index);
+			if (GET_FLAGS(VAL_OPTS(FRM_WORD(obj, index)), OPTS_HIDE, OPTS_LOCK)) {
+				if (VAL_PROTECTED(val)) Trap1(RE_LOCKED_WORD, val);
+				Trap0(RE_HIDDEN);
+			}
+		} else {
+			Expand_Frame(obj, 1, 1); // copy word table also
+			val = Append_Frame(obj, 0, VAL_WORD_SYM(key));
+		}
+		if (value)
+			*val = *value;
+		else
+			SET_UNSET(val);
+		return;
+	}
+	else {
+		Trap_Arg(key);
+	}
+}
+static void Append_Obj(REBSER *obj, REBVAL *arg, REBCNT part)
+{
+	REBCNT i, n, len;
 	REBVAL *word, *val;
 	REBINT *binds; // for binding table
 
 	// Can be a word:
 	if (ANY_WORD(arg)) {
-		if (!Find_Word_Index(obj, VAL_WORD_SYM(arg), TRUE)) {
-			// bug fix, 'self is protected only in selfish frames
-			if ((VAL_WORD_CANON(arg) == SYM_SELF) && !IS_SELFLESS(obj))
-				Trap0(RE_SELF_PROTECTED);
-			Expand_Frame(obj, 1, 1); // copy word table also
-			val = Append_Frame(obj, 0, VAL_WORD_SYM(arg));
-			SET_UNSET(val);
-		}
+		Extend_Obj(obj, arg, NULL);
 		return;
 	}
 
@@ -101,8 +128,10 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 	// Setup binding table with obj words:
 	Collect_Object(obj);
 
+	part >>= 1; // part must be number of key/value pairs
+
 	// Examine word/value argument block
-	for (word = arg; NOT_END(word); word += 2) {
+	for (word = arg, n = 0; n < part && NOT_END(word); word += 2, n++) {
 
 		if (!IS_WORD(word) && !IS_SET_WORD(word)) {
 			// release binding table
@@ -138,7 +167,7 @@ static void Append_Obj(REBSER *obj, REBVAL *arg)
 		Append_Frame(obj, 0, VAL_WORD_SYM(word));
 
 	// Set new values to obj words
-	for (word = arg; NOT_END(word); word += 2) {
+	for (word = arg, n = 0; n < part && NOT_END(word); word += 2, n++) {
 
 		i = binds[VAL_WORD_CANON(word)];
 		val = FRM_VALUE(obj, i);
@@ -396,6 +425,11 @@ static REBSER *Trim_Object(REBSER *obj)
 				break; // returns obj
 			}
 		}
+		else if (IS_ERROR(value)) {
+			Make_Error_Object(arg, value); // arg is block/string, returns value
+			type = 0;
+			break; // returns value
+		}
 		Trap_Make(VAL_TYPE(value), value);
 
 	case A_TO:
@@ -435,8 +469,21 @@ static REBSER *Trim_Object(REBSER *obj)
 	case A_INSERT:
 		TRAP_PROTECT(VAL_SERIES(value));
 		if (IS_OBJECT(value)) {
-			Append_Obj(VAL_OBJ_FRAME(value), arg);
+			if (DS_REF(AN_DUP)) {
+				n = Int32(DS_ARG(AN_COUNT));
+				if (n <= 0) break;
+			}
+			Append_Obj(VAL_OBJ_FRAME(value), arg, Partial1(arg, D_ARG(AN_LENGTH)));
 			return R_ARG1;
+		}
+		else
+			Trap_Action(VAL_TYPE(value), action); // !!! needs better error
+
+	case A_PUT:
+		TRAP_PROTECT(VAL_SERIES(value));
+		if (IS_OBJECT(value)) {
+			Extend_Obj(VAL_OBJ_FRAME(value), arg, D_ARG(3));
+			return R_ARG3;
 		}
 		else
 			Trap_Action(VAL_TYPE(value), action); // !!! needs better error

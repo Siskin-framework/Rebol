@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -154,12 +155,13 @@
 
 /***********************************************************************
 **
-*/	static int Dir_Actor(REBVAL *ds, REBSER *port, REBCNT action)
+*/	static int Dir_Actor(REBVAL *ds, REBVAL *port_value, REBCNT action)
 /*
 **		Internal port handler for file directories.
 **
 ***********************************************************************/
 {
+	REBSER *port;
 	REBVAL *spec;
 	REBVAL *path;
 	REBVAL *state;
@@ -169,7 +171,7 @@
 	REBCNT len;
 	//REBYTE *flags;
 
-	Validate_Port(port, action);
+	port = Validate_Port_Value(port_value);
 
 	*D_RET = *D_ARG(1);
 	CLEARS(&dir);
@@ -203,7 +205,7 @@
 			///OS_FREE(dir.file.path);
 			
 			// don't throw an error if the original path contains wildcard chars * or ?
-			if (result < 0 && !(dir.error == (REBCNT)-RFE_OPEN_FAIL && WILD_PATH(path)) ) {
+			if (result < 0 && !(result == -RFE_OPEN_FAIL && WILD_PATH(path)) ) {
 				Trap_Port(RE_CANNOT_OPEN, port, dir.error);
 			}
 
@@ -307,7 +309,7 @@ create:
 		Trap_Port(RE_NOT_OPEN, port, 0);
 
 	default:
-		Trap_Action(REB_PORT, action);
+		Trap1(RE_NO_PORT_ACTION, Get_Action_Word(action));
 	}
 
 	return R_RET;
