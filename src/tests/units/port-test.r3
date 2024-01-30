@@ -276,6 +276,61 @@ if system/platform = 'Windows [
 			--assert "a^/b^/c" = read/string %units/files/issue-622.txt
 			delete %units/files/issue-622.txt
 
+	--test-- "read write CRLF conversion"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2586
+		;; In these tests are used #"a" and #"á" to have internally plain and wide strings
+		;; write/binary keeps the linefeeds without modifications
+		--assert     #{0A} = read write/binary %tmp next "a^/"
+		--assert     #{0A} = read write/binary %tmp next "á^/"
+		--assert   #{0D0A} = read write/binary %tmp next "a^M^/"
+		--assert   #{0D0A} = read write/binary %tmp next "á^M^/"
+		--assert #{0D0D0A} = read write/binary %tmp next "a^M^M^/"
+		--assert #{0D0D0A} = read write/binary %tmp next "á^M^M^/"
+		--assert #{0D0A0A} = read write/binary %tmp next "a^M^/^/"
+		--assert #{0D0A0A} = read write/binary %tmp next "á^M^/^/"
+		;; it is possible to get the original string using implicit conversion
+		--assert "a^/"     = to string! read write/binary %tmp "a^/"
+		--assert "á^/"     = to string! read write/binary %tmp "á^/"
+		--assert "a^M^/"   = to string! read write/binary %tmp "a^M^/"
+		--assert "á^M^/"   = to string! read write/binary %tmp "á^M^/"
+		--assert "a^M^M^/" = to string! read write/binary %tmp "a^M^M^/"
+		--assert "á^M^M^/" = to string! read write/binary %tmp "á^M^M^/"
+		--assert "a^M^/^/" = to string! read write/binary %tmp "a^M^/^/"
+		--assert "á^M^/^/" = to string! read write/binary %tmp "á^M^/^/"
+		either system/platform = 'Windows [
+			;; on Windows `write` converts LF to CRLF by default (if the input is string!)
+			--assert     #{0D0A} = read write %tmp next "a^/"
+			--assert     #{0D0A} = read write %tmp next "á^/"
+			;; when there is already CRLF, it does not write it like CRCRLF!
+			--assert     #{0D0A} = read write %tmp next "a^M^/"
+			--assert     #{0D0A} = read write %tmp next "á^M^/"
+			--assert   #{0D0D0A} = read write %tmp next "a^M^M^/"
+			--assert   #{0D0D0A} = read write %tmp next "á^M^M^/"
+			--assert #{0D0A0D0A} = read write %tmp next "a^M^/^/"
+			--assert #{0D0A0D0A} = read write %tmp next "á^M^/^/"
+		][
+			;; on all other platforms it doesn't modify!
+			--assert     #{0A} = read write %tmp next "a^/"
+			--assert     #{0A} = read write %tmp next "á^/"
+			--assert   #{0D0A} = read write %tmp next "a^M^/"
+			--assert   #{0D0A} = read write %tmp next "á^M^/"
+			--assert #{0D0D0A} = read write %tmp next "a^M^M^/"
+			--assert #{0D0D0A} = read write %tmp next "á^M^M^/"
+			--assert #{0D0A0A} = read write %tmp next "a^M^/^/"
+			--assert #{0D0A0A} = read write %tmp next "á^M^/^/"
+		]
+		;; read/string converts CRLF (or plain CR) to LF
+		--assert   "^/" = read/string write/binary %tmp next "a^/"
+		--assert   "^/" = read/string write/binary %tmp next "á^/"
+		--assert   "^/" = read/string write/binary %tmp next "a^M"
+		--assert   "^/" = read/string write/binary %tmp next "á^M"
+		--assert   "^/" = read/string write/binary %tmp next "a^M^/"
+		--assert   "^/" = read/string write/binary %tmp next "á^M^/"
+		--assert "^/^/" = read/string write/binary %tmp next "a^M^M^/"
+		--assert "^/^/" = read/string write/binary %tmp next "á^M^M^/"
+		--assert "^/^/" = read/string write/binary %tmp next "a^M^/^/"
+		--assert "^/^/" = read/string write/binary %tmp next "á^M^/^/"
+
 
 	--test-- "write file result - wish/2337"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2337
@@ -523,6 +578,27 @@ if system/platform = 'Windows [
 		--assert all [error? e: try [append/dup p LF 10]  e/id = 'bad-refines]
 		--assert all [error? e: try [append/only p "aa"]  e/id = 'bad-refines]
 		try [delete %issue-1894]
+
+if exists? %/proc/cpuinfo [
+	--test-- "Reading from /proc files on Linux"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2303
+		--assert all [
+			not error? info: try [read/string %/proc/cpuinfo]
+			empty? info ;; empty, because to read this type of file, the size must be specified!
+		]
+		--assert all [
+			not error? info: try [read/string/part %/proc/cpuinfo 10000]
+			print info
+			0 < length? info
+		]
+]
+	--test-- "Reading an empty file"
+		--assert all [
+			file? write %empty ""
+			0 = length? read %empty
+			0 = length? read/part %empty 1000
+			port? delete %empty
+		]
 
 ===end-group===
 

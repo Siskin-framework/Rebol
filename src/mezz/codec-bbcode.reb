@@ -2,17 +2,20 @@ REBOL [
 	Name:    bbcode
 	Type:    module
 	Options: [delay]
-	Version: 0.3.0
+	Version: 0.3.4
 	Title:   "Codec: BBcode"
 	Purpose: {Basic BBCode implementation. For more info about BBCode check http://en.wikipedia.org/wiki/BBCode}
 	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-bbcode.reb
-	Date:    24-Apr-2020
+	Date:    13-Dec-2023
 	Author:  "Oldes"
 	History: [
 		0.1.0  5-Jan-2009 "initial version"
 		0.2.0 19-Feb-2012 "review"
 		0.2.1 22-Aug-2012 "added [hr] and [anchor]"
 		0.3.0 24-Apr-2020 "ported to Rebol3"
+		0.3.1 11-Dec-2023 "FIX: `bbcode` must accept only string input"
+		0.3.2 12-Dec-2023 "FEAT: csv table emitter"
+		0.3.3 13-Dec-2023 "FEAT: image gallery emitter"
 	]
 ]
 
@@ -38,6 +41,7 @@ ch_digits: charset [#"0" - #"9"]
 ch_hexa:   charset [#"a" - #"f" #"A" - #"F" #"0" - #"9"]
 ch_name:   charset [#"a" - #"z" #"A" - #"Z" #"*" #"0" - #"9"]
 ch_url:    charset [#"a" - #"z" #"A" - #"Z" #"0" - #"9" "./:~+-%#\_=&?@"]
+ch_crlf:   charset CRLF
 ch_safe-value-chars: complement charset {'"}
 
 rl_newline: [CRLF | LF]
@@ -187,6 +191,153 @@ emit-tag: func[tag][
 	insert tail html either block? tag [rejoin tag][tag]
 ]
 
+emit-tag-csv: function/with [spec [string!]][
+	row: "" ;; no copy, it is cleared each time
+	trim/head/tail spec
+	
+	close-p-if-possible
+	close-tags
+	emit-tag [{<table} form-attribute "class" form-attribute "align" form-attribute "style" {>^/}]
+	all [
+		widths: get-attribute "widths"
+		widths: transcode widths
+	]
+	if align: get-attribute "coltype" [
+		parse align [
+			some [
+				  #"c" (emit-tag {<col align="center">^/})
+				| #"l" (emit-tag {<col align="left">^/}) 
+				| #"r" (emit-tag {<col align="right">^/})
+				| #"j" (emit-tag {<col align="justify">^/})
+			]
+		]
+	]
+	ch_divider: charset get-attribute/default "divider" TAB
+	ch_notDivider: complement union ch_divider ch_crlf
+	rl_data: [copy data any ch_notDivider]
+	
+	data: align: none
+	row-num: col-num: col-width: 0
+	datatag: "th" ;; first row is always used for headers!
+	parse spec [
+		some [
+			(
+				clear row
+				++ row-num
+			)
+			any ch_space
+			some [
+				rl_data
+				1 ch_divider
+				(
+					append row ajoin [{<} datatag get-col-width {>} data {</} datatag {>}]
+				)
+			]
+			rl_data	[rl_newline | end] (
+				append row ajoin [{<} datatag get-col-width {>} data {</} datatag {>}]
+				datatag: "td"
+				emit-tag ["<tr>" row "</tr>^/"]
+			)
+		]
+	]
+	emit-tag "</table>"
+] [
+	data: widths: align: row-num: col-num: col-width: none
+	get-col-width: does [
+		++ col-num
+		either all [
+			row-num = 1
+			block? widths
+			col-width: pick widths col-num
+			integer? col-width
+		][ ajoin [" width=" col-width] ][ "" ]
+	]
+]
+
+;-- like: [images dir="foto/" alt="some text" maxWidth=680]
+emit-tag-images: function/with [][
+	close-tags
+	if attr [repend attributes ["dir" copy attr]]
+	;; maximum allowed width of the image (width of the gallery)
+	max-width:  to integer! any [get-attribute "width"  get-attribute "maxWidth"  680]
+	;; requested height of images on the row (may be higher!)
+	row-height: to integer! any [get-attribute "height" get-attribute "rowHeight" 300]
+	;; requested spacing between images on the row (may differ)
+	space:  get-attribute/default "space" 6
+	alt:    get-attribute/default "alt" ""
+	unless empty? alt [insert alt SP]
+
+	row-width: columns: num: 0
+	temp: clear []
+	files: none
+	dir: to-rebol-file get-attribute "dir"
+	files: read dir
+
+	foreach file files [
+		if any [
+			;use only jpegs...
+			none? find file %.jpg
+			;don't use files with names like: photo_150x.jpg or photo_x150.jpg or photo_150x150.jpg  
+			parse any [find/last file #"_" ""][
+				#"_" any ch_digits #"x" any ch_digits #"." to end
+			]
+		][continue]
+
+		img: load path: to-relative-file dir/:file
+		size: img/size
+		w: size/x
+		h: size/y
+		rw: to integer! (w * (row-height / h))
+		size-scaled: as-pair rw row-height
+
+		bgimg: enbase encode 'png resize img 6x3 64
+		replace/all bgimg LF ""
+
+		++ num
+
+		row-width: row-width + rw + space
+		title: ajoin [num #"." alt]
+		either row-width > (1.5 * max-width) [ ;; the value 1.5 is there to get more images on a row (which is then scaled down)
+			row-width: row-width - rw - space
+			emit-row
+			row-width: rw
+			columns: 1
+			append temp reduce [path size size-scaled bgimg title]
+		][
+			++ columns
+			append temp reduce [path size size-scaled bgimg title]
+		]
+	]
+	if columns > 0 [emit-row]
+][
+	temp: clear []
+	dir: files: none
+	max-width: row-width: 0
+
+	emit-img: func[
+		bgimg file size title
+		/local nw nh
+	][
+		nw: to integer! size/x
+		nh: to integer! size/y
+		append html ajoin [
+			{^/<div style="display:block;width:} nw {px;height:} nh {px;background-size:} nw {px } nh {px;background-image:url('data:image/png;base64,} bgimg {">}
+			{<a href=} file { rel="images">}
+			{<img src=} file { width=} nw { height=} nh { loading=lazy alt="} title {"/></a></div>}
+		]
+	]
+	emit-row: func[/local scale][
+		;; the final row is scaled to fit the maximal width
+		scale: max-width / row-width
+		append html "^/<div class=row>"
+		foreach [file size size-scaled bgimg title] temp [
+			emit-img bgimg file size-scaled * scale title
+		]
+		append html "^/</div>"
+		clear temp
+	]
+]
+
 enabled-tags: [
 	"b" "i" "s" "u" "del" "h1" "h2" "h3" "h4" "h5" "h6" "span" "class"
 	"ins" "dd" "dt" "ol" "ul" "li" "url" "list" "br" "hr"
@@ -195,7 +346,7 @@ enabled-tags: [
 	
 bbcode: func [
 	"Converts BBCode markup into HTML"
-	code [string! binary!] "Input with BBCode tags"
+	code [string!] "Input with BBCode tags"
 	/local tag err
 ][
 	err: try [
@@ -413,8 +564,8 @@ bbcode: func [
 		]
 		unless empty? opened-tags [	close-tags ]
 		html
-	]
-	if error? err [
+	][
+		probe err: system/state/last-error
 		; send possible trimmed error in the result instead of throwing it!
 		append html ajoin ["^/#[ERROR! [code: " err/code " type: " err/type " id: " err/id #"]"]
 	]
@@ -438,8 +589,10 @@ register-codec [
 		/local result
 		return: [string!]
 	][
-		if any [file? code url? code][code: read code]
+		switch type?/word code [
+			binary!    [code: to string! code]
+			file! url! [code: read/string code]
+		] 
 		result: bbcode code
-
 	]
 ]

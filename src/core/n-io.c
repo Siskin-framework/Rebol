@@ -791,7 +791,16 @@ chk_neg:
 	if (flag_shell) flags |= FLAG_SHELL;
 	if (flag_info) flags |= FLAG_INFO;
 
-	if (IS_STRING(arg)) {
+	if (IS_FILE(arg)) {
+		REBSER* ser = NULL;
+		REBSER* path = Value_To_OS_Path(arg, FALSE);
+		argc = 1;
+		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
+		argv = (REBCHR**)SERIES_DATA(ser);
+		argv[0] = (REBCHR*)SERIES_DATA(path);
+		argv[argc] = NULL;
+		cmd = NULL;
+	} else if (ANY_STR(arg)) {
 		REBSER * ser = NULL;
 		cmd = Val_Str_To_OS(arg);
 		argc = 1;
@@ -810,24 +819,26 @@ chk_neg:
 		argv = (REBCHR**)SERIES_DATA(ser);
 		for (i = 0; i < argc; i ++) {
 			REBVAL *param = VAL_BLK_SKIP(arg, i);
-			if (IS_STRING(param)) {
+			// to avoid call to reduce, resolve get-word! or get-path! values if used
+			if (IS_GET_WORD(param)) {
+				param = Get_Var(param);
+			}
+			else if (IS_GET_PATH(param)) {
+				Do_Path(&param, NULL);
+				param = DS_POP; // volatile stack reference
+			}
+			if (IS_FILE(param)) {
+				REBSER* path = Value_To_OS_Path(param, FALSE);
+				argv[i] = (REBCHR*)SERIES_DATA(path);
+			} else if (ANY_STR(param)) {
 				argv[i] = Val_Str_To_OS(param);
-			} else if (IS_FILE(param)) {
-				REBSER *path = Value_To_OS_Path(param, FALSE);
-				argv[i] = (REBCHR*) SERIES_DATA(path);
+			} else if (IS_WORD(param)) {
+				Set_Series(REB_STRING, D_RET, Copy_Form_Value(param, TRUE));
+				argv[i] = Val_Str_To_OS(D_RET);
 			} else {
 				Trap_Arg(param);
 			}
 		}
-		argv[argc] = NULL;
-		cmd = NULL;
-	} else if (IS_FILE(arg)) {
-		REBSER * ser = NULL;
-		REBSER *path = Value_To_OS_Path(arg, FALSE);
-		argc = 1;
-		ser = Make_Series(argc + 1, sizeof(REBCHR*), FALSE);
-		argv = (REBCHR**)SERIES_DATA(ser);
-		argv[0] = (REBCHR*) SERIES_DATA(path);
 		argv[argc] = NULL;
 		cmd = NULL;
 	} else {
