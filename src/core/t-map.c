@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -76,8 +76,59 @@
 {
 	if (mode < 0) return -1;
 	if (mode == 3) return VAL_SERIES(a) == VAL_SERIES(b);
-	return 0 == Cmp_Block(a, b, 0);
+	return 0 == Cmp_Map(a, b, mode == 2);
 }
+
+/***********************************************************************
+**
+*/	REBINT Cmp_Map(REBVAL* sval, REBVAL* tval, REBFLG is_case)
+/*
+**		Compare two maps and return 0 if maps have same keys and equal values.
+**		Keys may be in different order!
+**
+***********************************************************************/
+{
+	REBVAL* key;
+	REBVAL* val;
+	REBCNT  idx;
+	REBSER* hser;
+	REBCNT* hashes = NULL;
+	REBCNT  slen, tlen;
+
+	if (VAL_SERIES(sval) == VAL_SERIES(tval))
+		return 0;
+
+	// Compare real map lengths (ignoring deleted values)
+	slen = Length_Map(VAL_SERIES(sval));
+	tlen = Length_Map(VAL_SERIES(tval));
+	if (slen != tlen) return -1;
+
+	hser = VAL_SERIES(tval)->series;
+	if (VAL_TAIL(sval) < VAL_TAIL(tval)) {
+		// Make sure that the larger map will be on the left side!
+		val = sval;	sval = tval; tval = val;
+	}
+
+	hser = VAL_SERIES(tval)->series;
+	if (hser) hashes = (REBCNT*)hser->data;
+
+	// Traverse all keys of the left map and compare values if found in the second map
+	for (key = VAL_BLK(sval); NOT_END(key) && NOT_END(key + 1); key += 2) {
+		if (VAL_MAP_REMOVED(key)) continue; // ignore deleted key
+		idx = Find_Key(VAL_SERIES(tval), hser, key, 2, is_case, 1);
+		if (idx == NOT_FOUND) return -1; // stop if the target key is not found
+		if (hashes) {
+			// the target map has a hash table, so get the real index of the key
+			idx = ((hashes[idx] - 1) * 2);
+			// check if the target key is not removed; if so, we can end
+			if (VAL_MAP_REMOVED(VAL_BLK_SKIP(tval,idx))) return -1;
+		}
+		// compare both values
+		if (Cmp_Value(key + 1, VAL_BLK_SKIP(tval, idx + 1), is_case) != 0) return -1;
+	}
+	return 0;
+}
+
 
 
 /***********************************************************************
@@ -104,7 +155,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Find_Key(REBSER *series, REBSER *hser, REBVAL *key, REBINT wide, REBCNT cased, REBYTE mode)
+*/	REBCNT Find_Key(REBSER *series, REBSER *hser, REBVAL *key, REBINT wide, REBCNT cased, REBYTE mode)
 /*
 **		Returns hash index (either the match or the new one).
 **		A return of zero is valid (as a hash index);
@@ -119,11 +170,12 @@
 ***********************************************************************/
 {
 	REBCNT *hashes;
-	REBCNT skip;
-	REBCNT hash;
+	REBCNT hash = 0;
+	REBCNT hashed = 0;
 	REBCNT len;
 	REBCNT n;
 	REBVAL *val;
+	REBCNT i;
 
 	if (!hser) {
 		// If there are no hashes for the keys, use plain linear search...
@@ -133,54 +185,61 @@
 				// Append new value the target series:
 				Append_Series(series, (REBYTE*)key, wide);
 			}
-			return -1;
+			return NOT_FOUND;
 		}
 		return hash;
 	}
 
 	// Compute hash for value:
 	len = hser->tail;
-	hash = Hash_Value(key, len);
-	//o: use fallback hash value, if key is not a hashable type, instead of an error
-	//o: https://github.com/Oldes/Rebol-issues/issues/1765
-	if (!hash) hash = 3 * (len/5); //Trap_Type(key);
-
-	// Determine skip and first index:
-	skip  = (len == 0) ? 0 : (hash & 0x0000FFFF) % len;
-	if (skip == 0) skip = 1;
-	hash = (len == 0) ? 0 : (hash & 0x00FFFF00) % len;
-
-	// Scan hash table for match:
 	hashes = (REBCNT*)hser->data;
-	if (ANY_WORD(key)) {
-		while (NZ(n = hashes[hash])) {
-			val = BLK_SKIP(series, (n-1) * wide);
-			if (
-				ANY_WORD(val) &&
-				(VAL_WORD_SYM(key) == VAL_BIND_SYM(val) ||
-				(!cased && VAL_WORD_CANON(key) == VAL_BIND_CANON(val)))
-			) return hash;
-			hash += skip;
-			if (hash >= len) hash -= len;
+
+	if (len > 0) {
+		hashed = Hash_Value(key);
+
+		if (ANY_WORD(key)) {
+			for(i = 0; i < len; i++) {
+				hash = Hash_Probe(hashed, i, len);
+				n = hashes[hash];
+				if (!n) break;
+				val = BLK_SKIP(series, (n - 1) * wide);
+				if (ANY_WORD(val)
+					&& (
+						VAL_WORD_SYM(key) == VAL_BIND_SYM(val)
+						|| (!cased && VAL_WORD_CANON(key) == VAL_BIND_CANON(val))
+					)
+				) return hash;
+#ifdef DEBUG_HASH_COLLISIONS
+				++ Eval_Collisions;
+#endif
+			}
 		}
-	}
-	else if (ANY_BINSTR(key)) {
-		cased = !(IS_BINARY(key) || cased);
-		while (NZ(n = hashes[hash])) {
-			val = BLK_SKIP(series, (n-1) * wide);
-			if (
-				VAL_TYPE(val) == VAL_TYPE(key)
-				&& 0 == Compare_String_Vals(key, val, cased)
-			) return hash;
-			hash += skip;
-			if (hash >= len) hash -= len;
+		else if (ANY_BINSTR(key)) {
+			cased = !(IS_BINARY(key) || cased);
+			for (i = 0; i < len; i++) {
+				hash = Hash_Probe(hashed, i, len);
+				n = hashes[hash];
+				if (!n) break;
+				val = BLK_SKIP(series, (n - 1) * wide);
+				if (VAL_TYPE(val) == VAL_TYPE(key) && 0 == Compare_String_Vals(key, val, cased))
+					return hash;
+#ifdef DEBUG_HASH_COLLISIONS
+				++ Eval_Collisions;
+#endif
+			}
 		}
-	} else {
-		while (NZ(n = hashes[hash])) {
-			val = BLK_SKIP(series, (n-1) * wide);
-			if (VAL_TYPE(val) == VAL_TYPE(key) && 0 == Cmp_Value(key, val, cased)) return hash;
-			hash += skip;
-			if (hash >= len) hash -= len;
+		else {
+			for (i = 0; i < len; i++) {
+				hash = Hash_Probe(hashed, i, len);
+				n = hashes[hash];
+				if (!n) break;
+				val = BLK_SKIP(series, (n - 1) * wide);
+				if (VAL_TYPE(val) == VAL_TYPE(key) && 0 == Cmp_Value(key, val, cased))
+					return hash;
+#ifdef DEBUG_HASH_COLLISIONS
+				++ Eval_Collisions;
+#endif
+			}
 		}
 	}
 
@@ -192,7 +251,7 @@
 		//Dump_Series(series, "hash");
 	}
 
-	return (mode > 0) ? -1 : hash;
+	return (mode > 0) ? NOT_FOUND : hash;
 }
 
 
@@ -323,7 +382,7 @@ new_entry:
 
 /***********************************************************************
 **
-*/	REBINT Length_Map(REBSER *series)
+*/	REBCNT Length_Map(REBSER *series)
 /*
 ***********************************************************************/
 {
@@ -535,7 +594,7 @@ new_entry:
 {
 	REBVAL *val = D_ARG(1);
 	REBVAL *arg = D_ARG(2);
-	REBINT n = 0;
+	REBCNT n = 0;
 	REBSER *series = VAL_SERIES(val);
 
 	// Check must be in this order (to avoid checking a non-series value);
@@ -557,8 +616,7 @@ new_entry:
 		if (!IS_BLOCK(arg)) Trap_Arg(val);
 		*D_RET = *val;
 		if (DS_REF(AN_DUP)) {
-			n = Int32(DS_ARG(AN_COUNT));
-			if (n <= 0) break;
+			Trap0(RE_BAD_REFINES);
 		}
 		Append_Map(series, arg, Partial1(arg, D_ARG(AN_LENGTH)));
 		break;

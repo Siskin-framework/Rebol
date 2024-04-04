@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.16.0
+version: 3.16.1
 
 #if Linux?   [ defines: TO_LINUX   ]
 #if macOS?   [ defines: TO_MACOS   ]
@@ -28,6 +28,7 @@ version: 3.16.0
 #if FreeBSD? [ defines: TO_FREEBSD ]
 #if (system/platform = 'NetBSD)  [ defines: TO_NETBSD  ]
 #if (system/platform = 'Turris)  [ defines: TO_LINUX   ]
+#if (system/platform = 'DragonFlyBSD)  [ defines: TO_DRAGONFLYBSD  ]
 
 #if Posix? [ clfag: -Wno-pointer-sign ] ;@@ Review these warnings and fix them!
 
@@ -75,6 +76,13 @@ target-netbsd: [
 	platform: NetBSD
 	vendor:   pc
 	compiler: gcc
+]
+target-dragonflybsd: [
+	os:       dragonflybsd
+	sys:      dragonflybsd
+	platform: DragonFlyBSD
+	vendor:   pc
+	compiler: clang
 ]
 target-haiku: [
 	os:       haiku
@@ -182,6 +190,7 @@ core-files: [
 	%core/n-data.c
 ;	%core/n-draw.c          ;old source
 ;	%core/n-graphics.c      ;old source
+	%core/n-hash.c
 ;	%core/n-image.c         ;optional, use: include-image-natives
 	%core/n-io.c
 	%core/n-loop.c
@@ -396,6 +405,7 @@ boot-host-files: [] ; may be used for custom boot script
 config: [ ;- this is list of configuration (optional) defines
 	INCLUDE_MBEDTLS ;- replaced original checksum implementations
 	COLOR_CONSOLE   ;- use ANSI escape sequences in prompt and results
+	DEBUG_HASH_COLLISIONS
 
 	;*** Unfinished features **************************************************/
 	;INCLUDE_TASK    ;- tasks are not implemented yet, so include it only on demand
@@ -1685,6 +1695,24 @@ eggs: [
 			:make-x64-exe
 		]
 
+		"Rebol/Base openbsd-arm64" [
+			name:   %rebol3-base-openbsd-arm64
+			:target-openbsd
+			:make-arm64-exe
+		]
+		"Rebol/Core openbsd-arm64" [
+			name:   %rebol3-core-openbsd-arm64
+			:target-openbsd
+			:include-rebol-core
+			:make-arm64-exe
+		]
+		"Rebol/Bulk openbsd-arm64" [
+			name:   %rebol3-bulk-openbsd-arm64
+			:target-openbsd
+			:include-rebol-bulk
+			:make-arm64-exe
+		]
+
 		"Rebol/Core openbsd-x64 shared library" [
 			name:   %lib-rebol3-core-openbsd-x64
 			lflag:  "-Wl,-install_name,'/usr/local/lib/librebol-core.3.so'"
@@ -1751,6 +1779,61 @@ eggs: [
 			:target-netbsd
 			:include-rebol-bulk
 			:make-x64-exe
+		]
+
+		"Rebol/Base netbsd-arm64" [
+			name:   %rebol3-base-netbsd-arm64
+			:target-netbsd
+			:make-arm64-exe
+		]
+		"Rebol/Core netbsd-arm64" [
+			name:   %rebol3-core-netbsd-arm64
+			:target-netbsd
+			:include-rebol-core
+			:make-arm64-exe
+		]
+		"Rebol/Bulk netbsd-arm64" [
+			name:   %rebol3-bulk-netbsd-arm64
+			:target-netbsd
+			:include-rebol-bulk
+			:make-arm64-exe
+		]
+	]
+	#if (system/platform = 'dragonflybsd) [
+		"Rebol/Base dragonflybsd-x64" [
+			name:   %rebol3-base-dragonflybsd-x64
+			:target-dragonflybsd
+			:make-x64-exe
+		]
+		"Rebol/Core dragonflybsd-x64" [
+			name:   %rebol3-core-dragonflybsd-x64
+			:target-dragonflybsd
+			:include-rebol-core
+			:make-x64-exe
+		]
+		"Rebol/Bulk dragonflybsd-x64" [
+			name:   %rebol3-bulk-dragonflybsd-x64
+			:target-dragonflybsd
+			:include-rebol-bulk
+			:make-x64-exe
+		]
+
+		"Rebol/Base dragonflybsd-arm64" [
+			name:   %rebol3-base-dragonflybsd-arm64
+			:target-dragonflybsd
+			:make-arm64-exe
+		]
+		"Rebol/Core dragonflybsd-arm64" [
+			name:   %rebol3-core-dragonflybsd-arm64
+			:target-dragonflybsd
+			:include-rebol-core
+			:make-arm64-exe
+		]
+		"Rebol/Bulk dragonflybsd-arm64" [
+			name:   %rebol3-bulk-dragonflybsd-arm64
+			:target-dragonflybsd
+			:include-rebol-bulk
+			:make-arm64-exe
 		]
 	]
 	#if (system/platform = 'haiku) [

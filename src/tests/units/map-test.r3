@@ -28,6 +28,14 @@ Rebol [
 		--assert 2 = m/b
 		--assert empty? #[]
 
+	--test-- "word binding inside maps"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2593
+		a: 1
+		m1: make map! [k a]
+		m2: #[k a]
+		--assert 1 = try [get m1/k]
+		--assert 1 = try [get m2/k]
+
 	--test-- "case sensitivity"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1153
 		m: #[
@@ -125,6 +133,54 @@ Rebol [
 		mf4-m: make map! [b 1]
 		--assert 'b	= find mf4-m first [b:]
 		--assert 'b	= find mf4-m first [b:]
+===end-group===
+
+
+===start-group=== "compare"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2341
+	--test-- "equal?"
+	--assert equal? #[a: 1 b: 2] #[b: 2 a: 1]
+	--assert equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1 c: "A"]
+	--assert equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1  c "A"]
+	--assert equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1 'c "A"]
+	--assert not equal? #[a: 1] #[b: 2 c: 3 a: 1]
+	--assert not equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1]
+
+	--test-- "strict-equal?"
+	--assert     strict-equal? #[a: 1 b: 2] #[b: 2 a: 1]
+	--assert not strict-equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1 c: "A"]
+	--assert not strict-equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1  c "A"]
+	--assert not strict-equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1 'c "A"]
+	--assert not strict-equal? #[a: 1] #[b: 2 c: 3 a: 1]
+	--assert not strict-equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1]
+
+	;; repeating above tests with large enough maps, because hashing is not used in small enough maps
+
+	--test-- "equal? (large maps)"
+	--assert equal? #[e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9 a: 1 b: 2]        #[b: 2 a: 1        e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert equal? #[e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9 a: 1 b: 2 c: "a"] #[b: 2 a: 1 c: "A" e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert equal? #[e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9 a: 1 b: 2 c: "a"] #[b: 2 a: 1  c "A" e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert equal? #[e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9 a: 1 b: 2 c: "a"] #[b: 2 a: 1 'c "A" e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert not equal? #[a: 1] #[b: 2 c: 3 a: 1 e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert not equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1 e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+
+	--test-- "strict-equal? (large maps)"
+	--assert     strict-equal? #[e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9 a: 1 b: 2       ] #[b: 2 a: 1         e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert not strict-equal? #[e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9 a: 1 b: 2 c: "a"] #[b: 2 a: 1 c: "A"  e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert not strict-equal? #[e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9 a: 1 b: 2 c: "a"] #[b: 2 a: 1  c "A"  e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert not strict-equal? #[e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9 a: 1 b: 2 c: "a"] #[b: 2 a: 1 'c "A"  e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert not strict-equal? #[a: 1] #[b: 2 c: 3 a: 1 e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert not strict-equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1 e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2438
+	--test-- "equal? (after remove)"
+	m: remove/key #[a: 1 b: 2] 'b
+	--assert     equal? :m #[a: 1]
+	--assert     equal? #[a: 1] :m
+	--assert not equal? :m #[a: 1 b: 2]
+	--assert not equal? #[a: 1 b: 2] :m
+
+
 ===end-group===
 
 
@@ -236,6 +292,15 @@ Rebol [
 		--assert m == m
 		--assert not (m !== m)
 		--assert "" !== m
+
+	--test-- "select from cleared map"
+		m: make map! 50
+		--assert none? select m 'a
+		m/a: 1
+		--assert 1 == select m 'a
+		clear m
+		--assert none? select m 'a
+
 
 ===end-group===
 

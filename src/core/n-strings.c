@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Contributors
+**  Copyright 2012-2024 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -71,7 +71,7 @@ static struct digest {
 	{SHA3_384, SHA3_384_Starts,   SHA3_Update,   SHA3_384_Finish,   SHA3_CtxSize, SYM_SHA3_384, 48, 128},
 	{SHA3_512, SHA3_512_Starts,   SHA3_Update,   SHA3_512_Finish,   SHA3_CtxSize, SYM_SHA3_512, 64, 128},
 #endif
-#ifdef INCLUDE_MD4
+#ifdef INCLUDE_XXHASH
 	{HashXXH3,   XXH3_Starts,   XXH3_Update,   XXH3_Finish,   XXH3_CtxSize,   SYM_XXH3,    8, 64},
 	{HashXXH32,  XXH32_Starts,  XXH32_Update,  XXH32_Finish,  XXH32_CtxSize,  SYM_XXH32,   4, 64},
 	{HashXXH64,  XXH64_Starts,  XXH64_Update,  XXH64_Finish,  XXH64_CtxSize,  SYM_XXH64,   8, 64},
@@ -367,7 +367,7 @@ static struct digest {
 		if (!IS_INTEGER(spec)) Trap1(RE_BAD_REFINE, D_ARG(ARG_CHECKSUM_SPEC));
 		sum = VAL_INT32(spec); // size of the hash table
 		if (sum <= 1) sum = 1;
-		i = Hash_String(bin, len) % sum;
+		i = Hash_Value(data) % sum;
 	}
 	else if (sym == SYM_CRC24) {
 		i = Compute_CRC24(bin, len);

@@ -838,7 +838,7 @@
 				}
 			}
 		}
-		else if (ANY_BLOCK(value) && (mode & BIND_DEEP))
+		else if ((ANY_BLOCK(value) || IS_MAP(value)) && (mode & BIND_DEEP))
 			Bind_Block_Words(frame, VAL_BLK_DATA(value), mode);
 		else if ((IS_FUNCTION(value) || IS_CLOSURE(value)) && (mode & BIND_FUNC))
 			Bind_Block_Words(frame, BLK_HEAD(VAL_FUNC_BODY(value)), mode);
