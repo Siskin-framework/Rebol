@@ -78,6 +78,7 @@ FRAMEWORKS=
 
 LIBS= \
 	-lm \
+	-L/usr/local/lib/ \
 	-liconv
 
 CFLAGS= -c $(INCLUDES) $(DEFINES) -O2 -fPIC  $(USE_FLAGS)
