@@ -3,7 +3,7 @@ REBOL [
 	Title: "Native function specs"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2021 Rebol Open Source Developers
+		Copyright 2012-2024 Rebol Open Source Developers
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -908,7 +908,7 @@ list-env: native [
 
 call: native [
 	{Run another program; return immediately.}
-	command [string! block! file!] "An OS-local command line (quoted as necessary), a block with arguments, or an executable file"
+	command [any-string! block! file!] "An OS-local command line (quoted as necessary), a block with arguments, or an executable file"
 	/wait "Wait for command to terminate before returning"
 	/console "Runs command with I/O redirected to console"
 	/shell "Forces command to be run from shell"

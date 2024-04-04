@@ -44,19 +44,19 @@ Rebol [
 
 ===start-group=== "construct image"
 	--test-- "construct image valid"
-		--assert "make image! [1x1 #{FFFFFF}]" = mold #[image! 1x1]
-		--assert "make image! [1x1 #{FFFFFF}]" = mold #[image! 1x1 #{FFFFFF}]
-		--assert "make image! [1x1 #{FFFFFF}]" = mold #[image! 1x1 #{FF}]
-		--assert "make image! [1x1 #{141414}]" = mold #[image! 1x1 20.20.20]
-		--assert "make image! [1x1 #{141414} #{3C}]" = mold #[image! 1x1 20.20.20.60]
+		--assert "make image! [1x1 #{FFFFFF}]" = mold #(image! 1x1)
+		--assert "make image! [1x1 #{FFFFFF}]" = mold #(image! 1x1 #{FFFFFF})
+		--assert "make image! [1x1 #{FFFFFF}]" = mold #(image! 1x1 #{FF})
+		--assert "make image! [1x1 #{141414}]" = mold #(image! 1x1 20.20.20)
+		--assert "make image! [1x1 #{141414} #{3C}]" = mold #(image! 1x1 20.20.20.60)
 		--assert all [
-			"make image! [1x1 #{FFFFFF} #{30}]" = mold img: #[image! 1x1 #{FFFFFF} #{30}]
+			"make image! [1x1 #{FFFFFF} #{30}]" = mold img: #(image! 1x1 #{FFFFFF} #{30})
 			#{30} = img/alpha
 			#{FFFFFF} = img/rgb
 			#{FFFFFF30} = img/rgba
 		]
 		--assert all [
-			"make image! [1x1 #{}]" = mold img: #[image! 1x1 #{FFFFFF} 2]
+			"make image! [1x1 #{}]" = mold img: #(image! 1x1 #{FFFFFF} 2)
 			2 = index? img
 			#{} = img/alpha
 			#{} = img/rgba
@@ -67,17 +67,17 @@ Rebol [
 		]
 	--test-- "construct image invalid"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1034
-		--assert error? try [load {#[image! x]}]
-		--assert error? try [load {#[image! 1x-1]}]
-		--assert error? try [load {#[image! 1x1 x]}]
-		--assert error? try [load {#[image! 1x1 #{FF} x]}]
-		--assert error? try [load {#[image! 1x1 20.20.20.60 x]}]
-		--assert error? try [load {#[image! 1x1 #{FFFFFF} #{30} x]}]
+		--assert error? try [load {#(image! x)}]
+		--assert error? try [load {#(image! 1x-1)}]
+		--assert error? try [load {#(image! 1x1 x)}]
+		--assert error? try [load {#(image! 1x1 #{FF} x)}]
+		--assert error? try [load {#(image! 1x1 20.20.20.60 x)}]
+		--assert error? try [load {#(image! 1x1 #{FFFFFF} #{30} x)}]
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1037
 		--assert all [error? e: try [make image! [3x2 #{000000000000000000000000000000000000} 1x0]] e/id = 'malconstruct]
-		--assert all [error? e: try [load {#[image! 3x2 #{000000000000000000000000000000000000} 1x0]}] e/id = 'malconstruct]
+		--assert all [error? e: try [load {#(image! 3x2 #{000000000000000000000000000000000000} 1x0)}] e/id = 'malconstruct]
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2508
-		--assert datatype? try [load {#[image!]}]
+		--assert datatype? try [load {#(image!)}]
 
 ===end-group===
 
@@ -487,6 +487,15 @@ if value? 'blur [
 				#{FF00000AFF00000AFF00000AFF00000A}
 				#{0A00000A0A00000A0A00000A0A00000A} ;; premultiplied on macOS :/
 			] to binary! img2
+	]
+
+	if find codecs 'jpeg [
+		--test-- "loading JPEG file with an unexpected property type"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2587
+		--assert all [
+			image? try [img: load %units/files/issue-2587.jpg] ;; no error!
+			img/size = 105x150
+		]
 	]
 ===end-group===
 

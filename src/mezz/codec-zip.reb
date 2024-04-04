@@ -23,7 +23,7 @@ register-codec [
 	name:  'zip
 	type:  'compression
 	title: "ZIP File Format"
-	suffixes: [%.zip %.aar %.jar %.apk %.zipx %.appx %.epub %.docx]
+	suffixes: [%.zip %.aar %.jar %.apk %.zipx %.appx %.epub %.docx %.swc]
 
 	decode: function [
 		{Decompress all content of the ZIP file}
@@ -166,7 +166,7 @@ register-codec [
 			try/with [
 				spec: query/mode file [type: date:]
 				either spec [
-					file-name: find/tail file root
+					file-name: any [find/tail file root file]
 					either spec/type = 'dir [
 						dir: file
 						add-data file-name spec

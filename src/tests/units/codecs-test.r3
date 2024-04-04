@@ -175,7 +175,7 @@ if find codecs 'wav [
 			bin: none
 			
 		--test-- "Encode WAV"
-			samples: #[i16! [0 -1000 -2000 -1000 0 1000 2000 1000 0]]
+			samples: #(i16! [0 -1000 -2000 -1000 0 1000 2000 1000 0])
 			--assert binary? bin: encode 'wav :samples
 			--assert object? snd: decode 'wav :bin
 			--assert   'wave = snd/type
@@ -308,6 +308,32 @@ if find codecs 'zip [
 			--assert block? select data %ico/icon_128.png
 			delete %ico.zip
 
+		--test-- "Saving file to zip"
+			;@@ https://github.com/Oldes/Rebol-issues/issues/2588
+			write %temp.txt "Ahoj!"
+			--assert all [
+				not error? try [save %temp.zip %temp.txt]
+				block? data: load %temp.zip
+				data/1 = %temp.txt
+				data/2/2 = #{41686F6A21}
+			]
+			delete %temp.zip
+			delete %temp.txt
+
+			make-dir %temp/
+			write %temp/temp.txt "Ahoj!"
+			--assert all [
+				not error? try [save %temp.zip %temp/]
+				block? data: load %temp.zip
+				data/1 = %temp/
+				none? data/2/2
+				data/3 = %temp/temp.txt
+				data/4/2 = #{41686F6A21}
+			]
+			delete %temp.zip
+			delete-dir %temp/
+
+
 		--test-- "Encode ZIP using wildcard"
 			--assert not error? try [save %temp.zip %units/files/issue-2186*.txt]
 			data: load %temp.zip
@@ -404,7 +430,7 @@ try [import 'json]
 if find codecs 'JSON [
 	===start-group=== "JSON codec"
 	--test-- "JSON encode/decode"
-		data: #(a: 1 b: #(c: 2.0) d: "^/^-")
+		data: #[a: 1 b: #[c: 2.0] d: "^/^-"]
 		str: encode 'JSON data
 		--assert data = decode 'JSON str
 		; Github is using "+1" and "-1" keys in the `reactions` data now
@@ -765,7 +791,7 @@ if find codecs 'safe [
 	===start-group=== "SAFE codec"		
 		--test-- "Save/Load SAFE file"
 			foreach data [
-				#(key: "Hello")
+				#[key: "Hello"]
 				43
 				#{DEADBEEF}
 				[key: "aaa" value: 12]
@@ -786,7 +812,7 @@ if find codecs 'safe [
 			--assert none? system/user/name
 			--assert not error? try [set-user/p temp-user "passw"]
 			--assert "hello" = user's key               ;; resolve the data
-			--assert not error? try [su #[none]]        ;; release user using none value
+			--assert not error? try [su #(none)]        ;; release user using none value
 			--assert none? system/user/name
 
 			try [delete system/user/data/spec/ref]

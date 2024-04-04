@@ -18,7 +18,7 @@ rebol-cmd: func[cmd][
 	call/shell/wait/output/error cmd out-buffer err-buffer
 ] 
 
-===start-group=== "Command-Line Interface"
+===start-group=== "Command-Line Interface (/shell)"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2228
 	--test-- "--do"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2467
@@ -75,6 +75,30 @@ rebol-cmd: func[cmd][
 ===end-group===
 
 
+===start-group=== "Command-Line Interface"
+	--test-- "Block input"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2582
+	--assert all [
+		file? try [write %issue-2582.r3 {Rebol [] print now}]
+		tmp: clear ""
+		0 = call/wait/output reduce [system/options/boot %issue-2582.r3] tmp
+		date? transcode/one tmp
+	]
+	delete %issue-2582.r3
+	--test-- "Block input with word!, get-word! and get-path!"
+	--assert all [
+		file? try [write %probe-args.r3 {Rebol [] probe system/options/args}]
+		tmp: clear ""
+		url: http://example.org
+		;; not using reduce in this test...
+		0 = call/wait/output [:system/options/boot %probe-args.r3 :url foo] tmp
+		["http://example.org" "foo"] = transcode/one tmp
+	]
+	delete %probe-args.r3
+
+===end-group===
+
+
 ===start-group=== "Error pipe"
 	--test-- "User controlled error output"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2468
@@ -102,6 +126,15 @@ rebol-cmd: func[cmd][
 	--test-- "do launch/wait"
 		--assert 0:0:2 < delta-time [do %units/files/launch-wait.r3] ;; should wait
 		--assert 6 = try [length? read/lines %units/files/launched.txt] ;; 6 because 3x launched!
+
+	--test-- "do launch/with"
+		--assert all [
+			file? write %args.r3 {Rebol[] args: system/options/args forall args [args/1: transcode/one args/1] save %temp args}
+			0 == launch/with/wait %args.r3 args: [2 {a "b" c} %"foo space"]
+			args == load %temp
+		]
+		delete %temp
+		delete %args.r3
 
 	try [delete %units/files/launched.txt]
 ===end-group===

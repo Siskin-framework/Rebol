@@ -180,6 +180,7 @@ OBJS = \
 	$O/src/core/u-iconv.o \
 	$O/src/core/u-mbedtls.o \
 	$O/src/core/u-parse.o \
+	$O/src/core/u-xxhash.o \
 	$O/src/core/u-poly1305.o \
 	$O/src/core/u-rc4.o \
 	$O/src/core/u-rsa.o \
@@ -512,6 +513,9 @@ $O/src/core/u-mbedtls.o: $R/src/core/u-mbedtls.c
 
 $O/src/core/u-parse.o: $R/src/core/u-parse.c
 	$(CC) $R/src/core/u-parse.c $(CFLAGS) -o $O/src/core/u-parse.o
+
+$O/src/core/u-xxhash.o: $R/src/core/u-xxhash.c
+	$(CC) $R/src/core/u-xxhash.c $(CFLAGS) -o $O/src/core/u-xxhash.o
 
 $O/src/core/u-poly1305.o: $R/src/core/u-poly1305.c
 	$(CC) $R/src/core/u-poly1305.c $(CFLAGS) -o $O/src/core/u-poly1305.o

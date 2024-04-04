@@ -20,12 +20,30 @@ secure [%/ allow]
 	change-dir dir
 ===end-group===
 
-===start-group=== "concat url and file"
+===start-group=== "concat url/file using path notation"
 --test-- "issue-1427"
 ;@@https://github.com/Oldes/Rebol-issues/issues/1427
 	url: http://www.rebol.com page: %/test.html
 	--assert url/test  = http://www.rebol.com/test
 	--assert url/:page = http://www.rebol.com/test.html
+--test-- "issue-2585"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2585
+	url: http://www/
+	dir: %path/
+	file: next %a/bc ;== %/bc
+	--assert dir/:file = %path/bc
+	--assert url/:file = http://www/bc
+	file: next file  ;== %bc
+	--assert dir/:file = %path/bc
+	--assert url/:file = http://www/bc
+	file: next file  ;== %c
+	--assert dir/:file = %path/c
+	--assert url/:file = http://www/c
+--test-- "concat with integer"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2306
+	dir: %path
+	--assert dir/1 = %path/1
+	--assert #"p" = pick dir 1
 
 ===end-group===
 

@@ -14,7 +14,7 @@ Rebol [
 		https://developer.spotify.com/documentation/general/guides/authorization-guide/
 		https://aaronparecki.com/oauth-2-simplified/
 	}
-	Needs: 3.11.0 ;; using try/with instead of deprecated try/except
+	Needs: 3.16.0 ;; new construction syntax since 3.16.0
 ]
 
 default-scopes: [
@@ -70,7 +70,7 @@ config: function[
 		ctx/client-secret: ask/hide "Client Secret: "
 	][	;; when user hits ESC...
 		sys/log/error 'spotify "Missing credentials!"
-		return #()
+		return #[]
 	]
 	if empty? ctx/client-secret [ctx/client-secret: none] ;optional
 
@@ -124,7 +124,7 @@ authorize: function [
 	unless string? client-id [ client-id: form client-id ]
 
 	unless string? scopes: any [ctx/scopes default-scopes] [ scopes: form scopes ]
-	parse scopes [any [change some #[bitset! #{0064000080}] #"+" | skip]] ; url-encode spaces in scopes
+	parse scopes [any [change some #(bitset! #{0064000080}) #"+" | skip]] ; url-encode spaces in scopes
 
 	unless integer? ctx/port [ ctx/port: 8989 ]
 	;@@ The value of redirect_uri here must exactly match one of the values
@@ -162,28 +162,28 @@ authorize: function [
 	; Result from the server is returned as a redirect, so let's start simple server
 	; listening on specified port (limited to accept only local requests, as the redirect is
 	; going from the browser actually.. it automaticaly close itself once data are received
-	result: system/modules/httpd/http-server/config/actor ctx/port [
-		root:       #[false] ; we are not serving any content!
-		keep-alive: #[false]
-	] [
-		On-Accept: func [info [object!]][
-			; allow only connections from localhost
-			; TRUE = accepted, FALSE = refuse
-			find [ 127.0.0.1 ] info/remote-ip 
-		]
-		On-Header: func [ctx [object!]][
-			either ctx/inp/target/file == %/spotify-callback/ [
-				ctx/out/status: 200
-				ctx/out/content: ajoin [
-					"<h1>OAuth2 Spotify Callback</h1>"
-					"<br/>Request header:<pre>" mold ctx/inp/header </pre>
-					"<br/>Values:<pre>" mold ctx/inp/target/values </pre>
-					"<h2>You can close this window and return back to Rebol</h2>"
+	result: serve-http [
+		port: ctx/port
+		actor: [
+			On-Accept: func [info [object!]][
+				; allow only connections from localhost
+				; TRUE = accepted, FALSE = refuse
+				find [ 127.0.0.1 ] info/remote-ip 
+			]
+			On-Header: func [ctx [object!]][
+				either ctx/inp/target/file == %/spotify-callback/ [
+					ctx/out/status: 200
+					ctx/out/content: ajoin [
+						"<h1>OAuth2 Spotify Callback</h1>"
+						"<br/>Request header:<pre>" mold ctx/inp/header </pre>
+						"<br/>Values:<pre>" mold ctx/inp/target/values </pre>
+						"<h2>You can close this window and return back to Rebol</h2>"
+					]
+					ctx/done?: ctx/inp/target/values
+				][
+					ctx/out/status: 405
+					ctx/done?: true
 				]
-				ctx/done?: ctx/inp/target/values
-			][
-				ctx/out/status: 405
-				ctx/done?: true
 			]
 		]
 	]
@@ -285,7 +285,7 @@ request: func [
 	data   [any-type!]
 	/local ctx header result
 ][
-	header: clear #()
+	header: clear #[]
 
 	try/with [
 		ctx: config

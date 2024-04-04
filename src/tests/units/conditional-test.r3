@@ -10,13 +10,13 @@ Rebol [
 
 ===start-group=== "Dealing with unset! value in conditions"
 	--test-- "any"
-		--assert unset? any [() 2]
+		--assert 2 = any [() 2]
 		--assert true?  any [() 2]
 	--test-- "all"
 		--assert true? all []
 		--assert true? all [()]
 		--assert 3 = all [() 1 2 3]
-		--assert unset? all [1 ()]
+		--assert 1 = all [1 ()]
 		--assert 1 = if all [1 ()][1]
 		--assert 1 = either all [()][1][2]
 	--test-- "any and all"
@@ -25,6 +25,15 @@ Rebol [
 			all [true  x: 2 ()]
 		][ x: 2 * x]
 		--assert x = 4
+	--test-- "unset value transparency in any and all"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/850
+		;@@ https://github.com/Oldes/Rebol3/discussions/88
+		--assert  none? any []
+		--assert  none? any [()]
+		--assert    1 = any [() 1]
+		--assert    1 = all [1 ()]
+		--assert unset? all []
+		--assert unset? all [()]
 ===end-group===
 
 ===start-group=== "SWITCH"
@@ -129,9 +138,9 @@ Rebol [
 		sb10-i: true
 		sb10-j: "REBOL"
 		switch sb10-i [
-			#[false]	[sb10-j: "Earl"]
-			#[true]		[sb10-j: "Red"]
-			#[true]		[sb10-j: "Peter"]
+			#(false)	[sb10-j: "Earl"]
+			#(true)		[sb10-j: "Red"]
+			#(true)		[sb10-j: "Peter"]
 		]
         --assert sb10-j = "Red"
 	
@@ -171,8 +180,8 @@ Rebol [
 		switch sb15-i [
 			1 			[sb15-j: "Earl"]
 			integer!	[sb15-j: "Peter"]
-			#[integer!]	[sb15-j: "Red"]
-			#[char!]	[sb15-j: "Blue"]
+			#(integer!)	[sb15-j: "Red"]
+			#(char!)	[sb15-j: "Blue"]
 		]
         --assert sb15-j = "Red"
 

@@ -228,6 +228,7 @@ OBJS = \
 	$O/src/core/u-iconv.o \
 	$O/src/core/u-mbedtls.o \
 	$O/src/core/u-parse.o \
+	$O/src/core/u-xxhash.o \
 	$O/src/core/u-zlib.o \
 	$O/src/os/dev-dns.o \
 	$O/src/os/dev-net.o \
@@ -607,6 +608,9 @@ $O/src/core/u-mbedtls.o: $R/src/core/u-mbedtls.c
 
 $O/src/core/u-parse.o: $R/src/core/u-parse.c
 	$(CC) $R/src/core/u-parse.c $(CFLAGS) -o $O/src/core/u-parse.o
+
+$O/src/core/u-xxhash.o: $R/src/core/u-xxhash.c
+	$(CC) $R/src/core/u-xxhash.c $(CFLAGS) -o $O/src/core/u-xxhash.o
 
 $O/src/core/u-zlib.o: $R/src/core/u-zlib.c
 	$(CC) $R/src/core/u-zlib.c $(CFLAGS) -o $O/src/core/u-zlib.o
