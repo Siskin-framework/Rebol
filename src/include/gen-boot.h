@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Bootstrap Structure and Root Module
-**  Build: 3.15.0
-**  Date:  29-Nov-2023
+**  Build: 3.16.0
+**  Date:  4-Apr-2024
 **  File:  boot.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -20,8 +20,8 @@
 
 
 #define MAX_NATS      208
-#define NAT_SPEC_SIZE 102396
-#define CHECK_TITLE   15334738
+#define NAT_SPEC_SIZE 102672
+#define CHECK_TITLE   16298111
 
 extern const REBYTE Native_Specs[];
 extern const REBFUN Native_Funcs[];

@@ -2,7 +2,7 @@ Host/Extension API
 
 =r3
 
-=*Updated for 3.15.0 on 29-Nov-2023
+=*Updated for 3.16.0 on 4-Apr-2024
 
 =*Describes the functions of reb-lib, the REBOL API (both the DLL and extension library.)
 

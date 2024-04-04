@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Function Prototypes
-**  Build: 3.15.0
-**  Date:  29-Nov-2023
+**  Build: 3.16.0
+**  Date:  4-Apr-2024
 **  File:  funcs.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: pre-make)
@@ -569,6 +569,7 @@ extern REBTYPE(Bitset); // src/core/t-bitset.c
 extern REBINT CT_Block(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-block.c
 extern REBFLG MT_Block(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-block.c
 extern REBCNT Find_Block(REBSER *series, REBCNT index, REBCNT end, REBVAL *target, REBCNT len, REBCNT flags, REBINT skip); // src/core/t-block.c
+extern REBCNT Find_Block_Key(REBSER* series, REBVAL* key, REBCNT skip, REBOOL cased); // src/core/t-block.c
 extern void Modify_Blockx(REBCNT action, REBVAL *block, REBVAL *arg); // src/core/t-block.c
 extern void Make_Block_Type(REBFLG make, REBVAL *value, REBVAL *arg); // src/core/t-block.c
 extern void Shuffle_Block(REBVAL *value, REBFLG secure); // src/core/t-block.c

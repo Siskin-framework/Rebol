@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Build configuration
-**  Build: 3.15.0
-**  Date:  29-Nov-2023
+**  Build: 3.16.0
+**  Date:  4-Apr-2024
 **  File:  config.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -32,6 +32,7 @@
 #define MBEDTLS_ECP_DP_SECP521R1_ENABLED
 #define INCLUDE_RSA
 #define MBEDTLS_GCM_C
+#define INCLUDE_XXHASH
 #define INCLUDE_SHA224
 #define INCLUDE_SHA384
 

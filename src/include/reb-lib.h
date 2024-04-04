@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: REBOL Host and Extension API
-**  Build: 3.15.0
-**  Date:  29-Nov-2023
+**  Build: 3.16.0
+**  Date:  4-Apr-2024
 **  File:  reb-lib.reb
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-reb-lib.reb)
@@ -22,7 +22,7 @@
 // These constants are created by the release system and can be used to check
 // for compatiblity with the reb-lib DLL (using RL_Version.)
 #define RL_VER 3
-#define RL_REV 15
+#define RL_REV 16
 #define RL_UPD 0
 
 // Compatiblity with the lib requires that structs are aligned using the same
