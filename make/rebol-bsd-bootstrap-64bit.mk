@@ -77,7 +77,8 @@ DEFINES= \
 FRAMEWORKS=
 
 LIBS= \
-	-lm
+	-lm \
+	-liconv
 
 CFLAGS= -c $(INCLUDES) $(DEFINES) -O2 -fPIC  $(USE_FLAGS)
 LFLAGS= $(LIBS) $(FRAMEWORKS) -O2 -fPIC -Wl,-z,stack-size=4194304  $(USE_FLAGS)
