@@ -566,7 +566,7 @@ include-iconv: [
 	#if macOS? [
 		library: %iconv
 	]
-	#if (any [OpenBSD? FreeBSD?]) [
+	#if (find [OpenBSD FreeBSD NetBSD DragonFlyBSD] system/platform) [
 		include: %/usr/local/include
 		library: %/usr/local/lib/
 		library: %iconv
