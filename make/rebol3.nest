@@ -1051,7 +1051,7 @@ common: [
 		flag:    -mmacosx-version-min=10.9
 		entitlements: %make/Entitlements.plist
 	]
-	#if (find [Linux OpenBSD FreeBSD NetBSD Turris] system/platform) [
+	#if (find [Linux OpenBSD FreeBSD NetBSD DragonFlyBSD Turris] system/platform) [
 		library: %m
 		defines: ENDIAN_LITTLE
 	]
