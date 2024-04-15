@@ -75,6 +75,39 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "Special cases with < char"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1903
+	--test-- "date (19-Jan-2010<)"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/698
+		--assert [19-Jan-2010 <]   == try [transcode {19-Jan-2010<}]
+		--assert [19-Jan-2010 <a>] == try [transcode {19-Jan-2010<a>}]
+	--test-- "time (1:0:0<)"
+		--assert [1:0:0 <]    == try [transcode {1:0:0<}]
+		--assert [1:0:0 <a>]  == try [transcode {1:0:0<a>}]
+	--test-- "integer (1<)"
+		--assert [1 <]        == try [transcode {1<}]
+		--assert [1 <a>]      == try [transcode {1<a>}]
+		--assert [-1 <]       == try [transcode {-1<}]
+		--assert [-1 <a>]     == try [transcode {-1<a>}]
+	--test-- "decimal (1.0<)"
+		--assert [1.0 <]      == try [transcode {1.0<}]
+		--assert [1.0 <a>]    == try [transcode {1.0<a>}]
+		--assert [1.#INF <]   == try [transcode {1.#INF<}]
+		--assert [1.#INF <a>] == try [transcode {1.#INF<a>}]
+	--test-- "pair (1x1<)"
+		--assert [1x1 <]      == try [transcode {1x1<}]
+		--assert [1x1 <a>]    == try [transcode {1x1<a>}]
+	--test-- "tuple (1.1.1<)"
+		--assert [1.1.1 <]    == try [transcode {1.1.1<}]
+		--assert [1.1.1 <a>]  == try [transcode {1.1.1<a>}]
+	--test-- "special case with @ char as well"
+		--assert all [error? e: try [transcode {1.1.1<@foo}] e/id = 'invalid e/arg1 = "tag"]
+		--assert [1.1.1 <a> @foo] == try [transcode {1.1.1<a>@foo}]
+
+===end-group===
+
+
 ===start-group=== "Invalid construction"
 	--test-- "Invalid MAP"
 		--assert error? err: try [load {#[x]}]
@@ -111,11 +144,7 @@ Rebol [
 			e/id = 'invalid
 			e/arg1 = "word"
 		]
-		--assert all [
-			error? e: try [load {a/3<}]
-			e/id = 'invalid
-			e/arg1 = "integer"
-		]
+		--assert [a/3 <] == try [load {a/3<}]
 
 	--test-- "Invalid time"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/698
@@ -123,10 +152,6 @@ Rebol [
 			error? e: try [load {--1:23}]
 			e/id = 'invalid
 		]
-
-	--test-- "Invalid date"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/698
-		--assert all [error? e: try [load {19-Jan-2010<}] e/id = 'invalid]
 
 	--test-- "Invalid % escape"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1443
@@ -152,6 +177,10 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1442
 		--assert all [error? e: try [load {%a^^b}] e/id = 'invalid]
 		--assert all [error? e: try [load {%a^^ }] e/id = 'invalid]
+
+	--test-- "Invalid refine"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2281
+		--assert all [error? e: try [load {/a:}] e/id = 'invalid]
 
 ===end-group===
 
@@ -656,6 +685,41 @@ Rebol [
 
 
 ===start-group=== "Special tests"
+	--test-- "Transcode/part"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1915
+		--assert [1]    == transcode/part "1 23]" 1
+		--assert [1]    == transcode/part "1 23]" 2
+		--assert [1 2]  == transcode/part "1 23]" 3
+		--assert [1 23] == transcode/part "1 23]" 4
+		--assert all [error? e: try [transcode/part "1 23]" 5] e/id = 'missing]
+		--assert all [error? e: try [transcode/part "1 23]" 9] e/id = 'missing]
+
+		--assert []     == transcode/part next "1 23]" 1
+		--assert [2]    == transcode/part next "1 23]" 2
+		--assert [23]   == transcode/part next "1 23]" 3
+		--assert all [error? e: try [transcode/part next "1 23]" 4] e/id = 'missing]
+	--test-- "Transcode/part/one"
+		--assert 1   == transcode/part/one "123]" 1
+		--assert 12  == transcode/part/one "123]" 2
+		--assert 123 == transcode/part/one "123]" 3
+		--assert 123 == transcode/part/one "123]" 4
+		--assert 123 == transcode/part/one "123]" 10
+	--test-- "Transcode/part/next"
+		--assert [1 "23]"] == transcode/part/next "123]" 1
+		--assert [12 "3]"] == transcode/part/next "123]" 2
+		--assert [123 "]"] == transcode/part/next "123]" 3
+		--assert [123 "]"] == transcode/part/next "123]" 4
+		--assert [123 "]"] == transcode/part/next "123]" 10
+		--assert [1 " 23]"] == transcode/part/next "1 23]" 1
+		--assert [1 " 23]"] == transcode/part/next "1 23]" 3
+		--assert [1 " 23]"] == transcode/part/next "1 23]" 4
+		--assert [1 " 23]"] == transcode/part/next "1 23]" 10
+		--assert all [error? e: try [transcode/part/next next "1 23]" 1] e/id = 'past-end] ; because the input is empty
+		--assert [2 "3]"]   == transcode/part/next next "1 23]" 2
+		--assert [23 "]"]   == transcode/part/next next "1 23]" 3
+		--assert all [error? e: try [transcode/part next "1 23]" 4] e/id = 'missing]
+	
+	
 ;if "true" <> get-env "CONTINUOUS_INTEGRATION" [
 	;- don't do this test on Travis CI
 	;- it passes in my local tests, but fails on Travis because unknown reason

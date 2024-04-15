@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2024 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -454,6 +454,7 @@ mark_obj:
 		case REB_SET_PATH:
 		case REB_GET_PATH:
 		case REB_LIT_PATH:
+		case REB_HASH:
 			ser = VAL_SERIES(val);
 			ASSERT(ser != 0, RP_NULL_SERIES);
 			if (IS_BARE_SERIES(ser)) {

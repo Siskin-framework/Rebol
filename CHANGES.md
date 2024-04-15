@@ -3,6 +3,43 @@
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
 
+## 2024 April
+
+### Features:
+
+* [`7c6c10`](https://github.com/Oldes/Rebol3/commit/7c6c10859b1280e7cf9ad814fa12ae716201d7ad) Implemented `transcode/part`
+* [`fde583`](https://github.com/Oldes/Rebol3/commit/fde583014460d094b25acae27a687aed4cae9008) Possibility to see user defined `op!` sources
+* [`481446`](https://github.com/Oldes/Rebol3/commit/4814463beca29a122296d1d86fc8047d7747b7f5) Enhanced possible time limit from `2147483647ns` to `9223372036ns`
+* [`2cf831`](https://github.com/Oldes/Rebol3/commit/2cf83127a68a62d87a111774bc729d5d0682d81e) `hash!` datatype (works like `block!` for now, hashing not implemented yet)
+* [`f3060c`](https://github.com/Oldes/Rebol3/commit/f3060c0f1e21ce946a9fa21ab4c8bc1cf3c8125c) Implemented map comparison
+
+### Changes:
+
+* [`fa831f`](https://github.com/Oldes/Rebol3/commit/fa831fc77089cf14ac0207e6557a7c43c1c22c7d) Updated Mbed-TLS sources to version 3.6.0
+
+### Fixes:
+
+* [`06c115`](https://github.com/Oldes/Rebol3/commit/06c1159b1306879f5a9e62a84e6b97a9a5bbb0b1) Allow syntax like `+<tag>` or `1.1.1<tag>`
+* [`fdf662`](https://github.com/Oldes/Rebol3/commit/fdf662b46eb68aff65d9803c6f421d2e2776be13) Does not allow refinement ending with a colon char
+* [`409c96`](https://github.com/Oldes/Rebol3/commit/409c96e71c1bf193c381a324a384dd7d33983c90) Console string input does not handle percent char correctly
+* [`ca8b40`](https://github.com/Oldes/Rebol3/commit/ca8b40ad8128b24c255865902b0f5e58b8a5af2a) Block comparison with numeric and word values
+* [`583866`](https://github.com/Oldes/Rebol3/commit/583866b83d40f1453c0b0ebce2cbeb4f56b0e0b8) Word binding inside maps when construction syntax is used
+
+## 2024 March
+
+### Features:
+
+* [`9a90e2`](https://github.com/Oldes/Rebol3/commit/9a90e204f897b35768164ea5b9a37d899e6c9607) Improved hashing
+* [`185f45`](https://github.com/Oldes/Rebol3/commit/185f45399c175f903e1c7a7d9929a08049b0355f) Allow seeding random number generation using pairs and tuples
+
+### Fixes:
+
+* [`c9895f`](https://github.com/Oldes/Rebol3/commit/c9895fa110cea48445657adf2e530be0dce11058) Incorrect tuple values hashing
+* [`164a3f`](https://github.com/Oldes/Rebol3/commit/164a3fa59516ad706a169de443d9f88112e3adce) Invalid define for XXHash include
+* [`604720`](https://github.com/Oldes/Rebol3/commit/604720a5f7ca4b66d9b3b1a9549c5cb91673a1a4) Argument type validation of `catch` a callback function
+* [`62dd93`](https://github.com/Oldes/Rebol3/commit/62dd93c4415112cdf9ae5a6f57fa48daadcb4689) Code cleanup
+
+
 ## 2024 February
 
 ### Features:

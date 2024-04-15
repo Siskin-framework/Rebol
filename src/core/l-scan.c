@@ -905,6 +905,47 @@ new_line:
     }
 }
 
+/***********************************************************************
+**
+*/  static REBCNT Prescan_Part(SCAN_STATE* scan_state, REBLEN len)
+/*
+**		Same like Prescan, but with limited input length.
+**
+***********************************************************************/
+{
+	const REBYTE* cp = scan_state->begin; /* char scan pointer */
+	REBCNT flags = 0;               /* lexical flags */
+
+	while (IS_LEX_SPACE(*cp) && len > 0) cp++, len--; /* skip white space */
+	scan_state->begin = cp;         /* start of lexical symbol */
+
+	while (len > 0) {
+		switch (GET_LEX_CLASS(*cp)) {
+
+		case LEX_CLASS_DELIMIT:
+			if (cp == scan_state->begin) cp++;  /* returning delimiter */
+			scan_state->end = cp;
+			return flags;
+
+		case LEX_CLASS_SPECIAL:     /* Flag all but first special char: */
+			if (cp != scan_state->begin) SET_LEX_FLAG(flags, GET_LEX_VALUE(*cp));
+			cp++;
+			len--;
+			break;
+
+		case LEX_CLASS_WORD:
+			SET_LEX_FLAG(flags, LEX_SPECIAL_WORD);  /* flags word char (for nums) */
+			while (IS_LEX_AT_LEAST_WORD(*cp) && len > 0) cp++, len--; /* word or number */
+			break;
+
+		case LEX_CLASS_NUMBER:
+			while (IS_LEX_AT_LEAST_NUMBER(*cp) && len > 0) cp++, len--;
+			break;
+		}
+	}
+	return flags;
+}
+
 
 /***********************************************************************
 **
@@ -997,7 +1038,10 @@ new_line:
 				scan_state->begin--;
 				type = TOKEN_REFINE;
 				// Fast easy case:
-		        if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD)) return type;
+				if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD))
+					return type;
+				if (*(scan_state->end - 1) == ':')
+					return -type;
 				goto scanword;
             }
 			if (*cp == '<' || *cp == '>') {
@@ -1179,6 +1223,11 @@ new_line:
                     goto scanword;
 				}
 			}
+			if (HAS_LEX_FLAG(flags, LEX_SPECIAL_LESSER)) {
+				scan_state->end = Skip_To_Char(cp, scan_state->end, '<');
+				if ((scan_state->end - scan_state->begin) == 1)
+					return TOKEN_WORD;
+			}
             cp++;
             if (IS_LEX_AT_LEAST_NUMBER(*cp)) goto num;
             if (IS_LEX_SPECIAL(*cp)) {
@@ -1259,7 +1308,11 @@ new_line:
         goto scanword;
 
     case LEX_CLASS_NUMBER:      /* order of tests is important */
-    num:
+	num:
+		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_LESSER)) { /* 1<tag> 1.1<tag> 1.1.1<tag> */
+			scan_state->end = Skip_To_Char(cp, scan_state->end, '<');
+			flags = Prescan_Part(scan_state, scan_state->end - cp);
+		}
 		if (!flags) return TOKEN_INTEGER;       /* simple integer */
 		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) return TOKEN_EMAIL;
 		if (HAS_LEX_FLAG(flags, LEX_SPECIAL_POUND)) {
@@ -1414,14 +1467,15 @@ scan_arrow_word:
 		np = Skip_Left_Arrow(cp);
 		if (!np) return -type;
 		scan_state->end = np;
-		return type;
 	}
 	else {
 		np = Skip_Right_Arrow(cp);
 		if (!np) return -type;
 		scan_state->end = np;
-		return type;
 	}
+	if (type == TOKEN_REFINE && (*(scan_state->end - 1)) == ':')
+		type = -type;
+	return type;
 }
 
 
@@ -2021,10 +2075,13 @@ exit_block:
 	REBOOL relax = D_REF(5);
 	REBOOL line  = D_REF(6);
 	REBVAL *count = D_ARG(7);
+	REBVAL *length = D_ARG(9);
 	REBSER *blk;
 	REBSER *ser;
 	REBYTE *bin;
 	REBCNT  len;
+	REBYTE end_char;
+	REBLEN end_pos = NO_LIMIT;
 	
 	if (VAL_BYTE_SIZE(src)) {
 		bin = VAL_BIN_DATA(src);
@@ -2035,6 +2092,14 @@ exit_block:
 		ser = Encode_UTF8_String(VAL_UNI_DATA(src), VAL_LEN(src), TRUE, 0);
 		bin = BIN_HEAD(ser);
 		len = BIN_LEN(ser);
+	}
+	if (D_REF(8)) { // /part
+		if (0 > VAL_INT64(length)) Trap1(RE_OUT_OF_RANGE, length);
+		if (VAL_UNT32(length) < len) {
+			end_pos = VAL_UNT32(length);
+			end_char = bin[end_pos];
+			bin[end_pos] = 0;
+		}
 	}
 
     Init_Scan_State(&scan_state, bin, len);
@@ -2053,6 +2118,9 @@ exit_block:
 
 	blk = Scan_Code(&scan_state, 0);
 	DS_RELOAD(ds); // in case stack moved
+
+	if (end_pos != NO_LIMIT)
+		bin[end_pos] = end_char;
 	
 	if (next && IS_END((REBVAL*)BLK_SKIP(blk, 0))) {
 		if (relax) {

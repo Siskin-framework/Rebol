@@ -669,6 +669,8 @@ transcode: native [
 	/error "Do not cause errors - return error object as value in place"
 	/line  "Return also information about number of lines scaned"
 	 count [integer!] "Initial line number"
+	/part  "Translates only part of the input buffer"
+	 length [integer!] "Length in bytes or tail position"
 ]
 
 echo: native [

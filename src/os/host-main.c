@@ -201,9 +201,9 @@ void Host_Repl(void) {
 						if (cont_level < MAX_CONT_LEVEL) cont_stack[cont_level] = '{';
 						cont_level++;
 						state = INPUT_RAW_STRING;
+						line_len += n;
+						utf8byte += n;
 					}
-					line_len += n;
-					utf8byte += n;
 					break;
 				}
 			}

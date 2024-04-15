@@ -50,6 +50,7 @@ scan: ; Used by scanner. Keep in sync with Value_Types in scan.h file!
 	"issue"
 	"tag"
 	"path"
+	"ref"
 	"refine"
 	"construct"
 	"map"

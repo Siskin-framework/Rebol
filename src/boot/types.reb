@@ -3,7 +3,7 @@ REBOL [
 	Title: "Datatype definitions"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2021 Rebol Open Source Contributors
+		Copyright 2012-2024 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -66,6 +66,7 @@ REBOL [
 	get-path    path        block       *        *       *      *   [series block path]  
 	lit-path    lit-path    block       *        *       *      *   [series block path]  
 
+	hash        self        block       +        f*      *      *   [series block]
 	map         self        map         +        f*      *      *   -  
 
 	datatype    self        datatype    +        f*      -      *   -  

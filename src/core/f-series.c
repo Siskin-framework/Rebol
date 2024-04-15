@@ -177,8 +177,7 @@ is_true:
 
 	CHECK_STACK(&s);
 
-	while (!IS_END(s) && (VAL_TYPE(s) == VAL_TYPE(t) ||
-					(IS_NUMBER(s) && IS_NUMBER(t)))) {
+	while (!IS_END(s)) {
 		if ((diff = Cmp_Value(s, t, is_case)) != 0)
 			return diff;
 		s++, t++;
@@ -199,13 +198,18 @@ is_true:
 {
 	REBDEC	d1, d2;
 
-	if (VAL_TYPE(t) != VAL_TYPE(s) && !(IS_NUMBER(s) && IS_NUMBER(t)))
+	if ((ANY_NUMBER(s) && ANY_NUMBER(t)) || (ANY_WORD(s) && ANY_WORD(t))) {
+		//https://github.com/Oldes/Rebol-issues/issues/2501
+		if (is_case && VAL_TYPE(t) != VAL_TYPE(s))
+			return VAL_TYPE(s) - VAL_TYPE(t);
+	} else if (VAL_TYPE(t) != VAL_TYPE(s)) {
 		return VAL_TYPE(s) - VAL_TYPE(t);
+	}
 
 	switch(VAL_TYPE(s)) {
 
 	case REB_INTEGER:
-		if (IS_DECIMAL(t)) {
+		if (IS_DECIMAL(t) || IS_PERCENT(t)) {
 			d1 = (REBDEC)VAL_INT64(s);
 			d2 = VAL_DECIMAL(t);
 			goto chkDecimal;
@@ -225,7 +229,8 @@ is_true:
 		return THE_SIGN((REBINT)(ch1 - ch2));
 
 	case REB_DECIMAL:
-	case REB_MONEY:
+	case REB_PERCENT:
+		if (IS_MONEY(t)) goto chkMoney;
 			d1 = VAL_DECIMAL(s);
 		if (IS_INTEGER(t))
 			d2 = (REBDEC)VAL_INT64(t);
@@ -241,6 +246,10 @@ chkDecimal:
 		)
 			return -1;
 		return 1;
+	
+	case REB_MONEY:
+chkMoney:
+		return Cmp_Money(s, t);
 
 	case REB_PAIR:
 		return Cmp_Pair(s, t);

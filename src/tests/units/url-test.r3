@@ -8,6 +8,35 @@ Rebol [
 
 ~~~start-file~~~ "url"
 
+===start-group=== "url composition"
+	--test-- "slash deduplication"
+	;@@ https://github.com/red/red/issues/5496
+		url:   https://example.com/
+		url2:  https://example.com
+		file:  %/dir/file
+		home:  %/home/
+		home2: %/home
+
+		--assert home/:file  == %/home/dir/file
+		--assert home2/:file == %/home/dir/file
+		--assert url/:file   == https://example.com/dir/file
+		--assert url2/:file  == https://example.com/dir/file
+
+		file: %""
+		--assert home/:file	 == %/home/
+		--assert home2/:file == %/home/
+		--assert url/:file   == https://example.com/
+		--assert url2/:file  == https://example.com/
+
+		file: %/dir/file
+		home: %""
+		--assert home/:file == %/dir/file
+
+		url: clear http://
+		--assert url/:file == skip url:/dir/file 4
+===end-group===
+
+
 ===start-group=== "decode-url"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1644
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2014

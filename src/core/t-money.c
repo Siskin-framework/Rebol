@@ -52,6 +52,33 @@
 	return e != 0;;
 }
 
+/***********************************************************************
+**
+*/	REBINT Cmp_Money(REBVAL* a, REBVAL* b)
+/*
+**	Given two money, compare them (accetps ANY_NUMBER).
+**
+***********************************************************************/
+{
+	REBDCI d1, d2;
+	if (IS_MONEY(a))
+		d1 = VAL_DECI(a);
+	else if (IS_INTEGER(a))
+		d1 = int_to_deci(VAL_INT64(a));
+	else
+		d1 = decimal_to_deci(VAL_DECIMAL(a));
+
+	if (IS_MONEY(b))
+		d2 = VAL_DECI(b);
+	else if (IS_INTEGER(b))
+		d2 = int_to_deci(VAL_INT64(b));
+	else
+		d2 = decimal_to_deci(VAL_DECIMAL(b));
+
+	if (deci_is_equal(d1, d2))
+		return 0;
+	return deci_is_lesser_or_equal(d1, d2) ? -1 : 1;
+}
 
 /***********************************************************************
 **

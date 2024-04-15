@@ -3,6 +3,7 @@ REBOL [
 	Title: "Datatype help spec"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2024 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -35,6 +36,7 @@ get-path	["the value of a path" block]
 get-word	["the value of a word (variable)" word]
 gob			["graphical object" opt-object]
 handle		["arbitrary internal object or value" internal]
+hash		["series of values (using hash table)" block]
 image		["RGB image with alpha channel" vector]
 integer		["64 bit integer" scalar]
 issue		["identifying marker word" word]
