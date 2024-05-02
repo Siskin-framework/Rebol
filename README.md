@@ -11,7 +11,7 @@ Information provided in `system/build` info may not be correct!
 Modify existing files in the `/make` directory (if needed) and use classic `make` to build the bootstrap.
 For example:
 ```
-make -f rebol-linux-bootstrap-32bit.mk
+make -f rebol-linux-bootstrap-32bit.mk CC=clang
 ```
 If the compilation would not fail, you can use Rebol Siskin-builder script to build the normal Rebol using:
 ```

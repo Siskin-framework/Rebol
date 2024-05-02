@@ -4,7 +4,7 @@
 PRODUCT= rebol-linux-bootstrap-32bit
 
 # For the build toolchain:
-CC=	   $(TOOLS)gcc
+#CC=	   $(TOOLS)gcc
 NM=	   $(TOOLS)nm
 STRIP= $(TOOLS)strip
 
@@ -21,7 +21,7 @@ CD= ./
 
 # Paths used by make:
 R= $(UP)
-O= $(CD)/tmp/gcc-32bit/rebol-linux-bootstrap-32bit
+O= $(CD)/tmp/cc-32bit/rebol-linux-bootstrap-32bit
 S= $(R)/src
 
 USE_FLAGS=

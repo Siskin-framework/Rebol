@@ -4,7 +4,7 @@
 PRODUCT= rebol-linux-bootstrap-64bit
 
 # For the build toolchain:
-CC=	   $(TOOLS)gcc
+#CC=	   $(TOOLS)gcc
 NM=	   $(TOOLS)nm
 STRIP= $(TOOLS)strip
 
@@ -21,7 +21,7 @@ CD= ./
 
 # Paths used by make:
 R= $(UP)
-O= $(CD)/tmp/gcc-64bit/rebol-linux-bootstrap-64bit
+O= $(CD)/tmp/cc-64bit/rebol-linux-bootstrap-64bit
 S= $(R)/src
 
 USE_FLAGS=
@@ -31,6 +31,7 @@ INCLUDES= \
 
 DEFINES= \
 	-D_FILE_OFFSET_BITS=64 \
+	-D_LARGEFILE64_SOURCE \
 	-DTO_LINUX_X64 \
 	-D__LP64__ \
 	-DMBEDTLS_ASN1_PARSE_C \
