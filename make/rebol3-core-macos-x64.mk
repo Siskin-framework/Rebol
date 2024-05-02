@@ -4,7 +4,7 @@
 PRODUCT= rebol3-core-macos-x64
 
 # For the build toolchain:
-CC=	   $(TOOLS)clang
+#CC=	   $(TOOLS)clang
 NM=	   $(TOOLS)nm
 STRIP= $(TOOLS)strip
 
@@ -21,7 +21,7 @@ CD= ./
 
 # Paths used by make:
 R= $(UP)
-O= $(CD)/tmp/clang-x64/rebol3-core-macos-x64
+O= $(CD)/tmp/cc-x64/rebol3-core-macos-x64
 S= $(R)/src
 
 USE_FLAGS=
