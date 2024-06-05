@@ -113,7 +113,7 @@ enum Transport_Types {
 
 		if (!info || !IS_OBJECT(info)) {
 			Trap_Port(RE_INVALID_SPEC, port, -10);
-			return; // prevents compiler's warning
+			DEAD_END;
 		}
 
 		obj = CLONE_OBJECT(VAL_OBJ_FRAME(info));

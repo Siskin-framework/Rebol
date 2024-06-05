@@ -442,14 +442,40 @@ inline uint64_t rotl64(uint64_t x, int8_t r)
     (p)[7] = (u8)((v) >> 56) & 0xff;  \
   } while (0)
 
+#ifndef __has_builtin
+#define __has_builtin(x) 0
+#endif
+#if !defined(GCC_VERSION_AT_LEAST)
+# ifdef __GNUC__
+#  define GCC_VERSION_AT_LEAST(m, n) \
+                (__GNUC__ > (m) || (__GNUC__ == (m) && __GNUC_MINOR__ >= (n)))
+# else
+#  define GCC_VERSION_AT_LEAST(m, n) 0
+# endif
+#endif
 
 //! Function attribute used by functions that never return (that terminate the process).
-#if defined(__GNUC__)
-#define REB_NORETURN __attribute__((__noreturn__))
-#elif defined(_MSC_VER)
-#define REB_NORETURN __declspec(noreturn)
-#else
-#define REB_NORETURN
+#if !defined(REB_NORETURN)
+# if defined(__clang__) || GCC_VERSION_AT_LEAST(2, 5)
+#  define REB_NORETURN __attribute__ ((noreturn))
+# elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#  define REB_NORETURN _Noreturn
+# elif defined(__TINYC__)
+#  define REB_NORETURN  /* _Noreturn unreliable [1] */
+# elif defined(_MSC_VER)
+#  define REB_NORETURN __declspec(noreturn)
+# else
+#  define REB_NORETURN
+# endif
+#endif
+#if !defined(DEAD_END)
+# if __has_builtin(__builtin_unreachable) || GCC_VERSION_AT_LEAST(4, 5)
+#  define DEAD_END __builtin_unreachable()
+# elif defined(_MSC_VER)
+#  define DEAD_END __assume(0)
+# else
+#  define DEAD_END abort()
+# endif
 #endif
 
 /* These macros are easier-to-spot variants of the parentheses cast.

@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -112,9 +112,14 @@ static REBCNT find_string(REBSER *series, REBCNT index, REBCNT end, REBVAL *targ
 
 	if (flags & (AM_FIND_REVERSE | AM_FIND_LAST)) {
 		skip = -1;
-		start = 0;
-		if (flags & AM_FIND_LAST) index = end - len;
-		else index--;
+		if (flags & AM_FIND_LAST) {
+			start = index;
+			index = end - len;
+		}
+		else {
+			start = 0;
+			index--;
+		}
 	}
 
 	if (flags & AM_FIND_SAME) flags |= AM_FIND_CASE; // /SAME has same functionality as /CASE for any-string!
@@ -168,7 +173,7 @@ static REBSER *make_string(REBVAL *arg, REBOOL make)
 	}
 	// MAKE/TO <type> <any-word>
 	else if (ANY_WORD(arg) || ANY_PATH(arg)) {
-		ser = Copy_Form_Value(arg, TRUE);
+		ser = Form_Value(arg, TRUE, TRUE);
 		//ser = Append_UTF8(0, Get_Word_Name(arg), -1);
 	}
 	// MAKE/TO <type> #"A"
@@ -181,7 +186,7 @@ static REBSER *make_string(REBVAL *arg, REBOOL make)
 //		ser = Make_Binary(0);
 //	}
 	else
-		ser = Copy_Form_Value(arg, 1<<MOPT_TIGHT);
+		ser = Form_Value(arg, 1<<MOPT_TIGHT, TRUE);
 
 	return ser;
 }
@@ -631,7 +636,7 @@ find:
 		else {
 			if (IS_CHAR(arg) || IS_BITSET(arg)) len = 1;
 			else if (!ANY_STR(arg)) {
-				Set_String(arg, Copy_Form_Value(arg, 0));
+				Set_String(arg, Form_Value(arg, 0, FALSE));
 			}
 		}
 

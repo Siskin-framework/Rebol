@@ -582,14 +582,30 @@ if system/platform = 'Windows [
 if exists? %/proc/cpuinfo [
 	--test-- "Reading from /proc files on Linux"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2303
+		;; reading complete file
 		--assert all [
-			not error? info: try [read/string %/proc/cpuinfo]
-			empty? info ;; empty, because to read this type of file, the size must be specified!
+			not error? info: try [read %/proc/cpuinfo]
+			0 < len: length? info
+			print to string! info
 		]
+		;; test when requested longer part of the virtual file
 		--assert all [
-			not error? info: try [read/string/part %/proc/cpuinfo 10000]
-			print info
-			0 < length? info
+			not error? info: try [read/part %/proc/cpuinfo len + 1000]
+			len == length? info
+		]
+		;; test when requested just a short part of the virtual file
+		--assert all [
+			not error? info: try [read/part %/proc/cpuinfo 10]
+			10 == length? info
+		]
+		;; read a POSIX virtual file in chunks using an open port
+		--assert all [
+			port? port: try [open/read %/proc/cpuinfo]
+			bin: make binary! 16000
+			while [not empty? tmp: read/part port 1024][append bin tmp]
+			equal? bin try [read %/proc/cpuinfo]
+			port? try [close port]
+			not open? port
 		]
 ]
 	--test-- "Reading an empty file"
@@ -698,6 +714,10 @@ if all [
 	--test-- "query dns://"
 	;@@ https://github.com/Oldes/rebol-issues/issues/1826
 		--assert all [error? e: try [query dns://]  e/id = 'no-port-action]
+
+	--test-- "read dns://not-exists"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2498
+		--assert none? try [read dns://not-exists]
 ===end-group===
 
 

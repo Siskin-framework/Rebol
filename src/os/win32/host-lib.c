@@ -678,11 +678,21 @@ void Dispose_Windows(void);
 **		symbolic links are resolved, as are . and .. pathname components.
 **		Consecutive slash (/) characters are replaced by a single slash.
 **
-**		The result should be freed after copy/conversion.
-**
 ***********************************************************************/
 {
-	return _wfullpath(NULL, path, MAX_PATH);
+	static REBCHR result[MAX_PATH+2];
+	if (!_wfullpath(result, path, MAX_PATH)) return NULL;
+	size_t len = wcslen(result);
+	// if there is not a trailing slash, check if the result is not a directory anyway
+	if (result[len-1] != L'\\') {
+		// and append the slash, if it is...
+		// https://github.com/Oldes/Rebol-issues/issues/2600
+		DWORD fileAttr = GetFileAttributes(result);
+		if (fileAttr & FILE_ATTRIBUTE_DIRECTORY)
+			result[len++] = L'\\';
+	}
+	result[len] = 0;
+	return (REBCHR*)result; // Be sure to copy or process the result soon!
 }
 
 /***********************************************************************
@@ -1013,6 +1023,7 @@ void Dispose_Windows(void);
 			len += wcslen(argv[n]) + 1;
 		}
 		cmd = cast(wchar_t*, malloc(len * sizeof(wchar_t)));
+		if (cmd == NULL) goto cleanup;
 		cmd[0] = L'\0';
 		// construct the command line
 		for (int n = 0; n < argc; n++) {
@@ -1465,9 +1476,12 @@ static INT CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 	REBCNT size = 64;
 	REBCNT  pos = 0;
 	REBCHR *str = (REBUNI*)malloc(size * sizeof(REBCHR));
+	REBCHR *tmp;
 	REBCHR  c;
 
 	req->data = NULL;
+
+	if (str == NULL) return;
 
 	while ((c = _getwch()) != '\r') {
 		if (c ==  27) { // ESC
@@ -1481,7 +1495,13 @@ static INT CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 		str[pos++] = c;
 		if (pos+1 == size) {
 			size += 64;
-			str = (REBCHR *)realloc(str, size * sizeof(REBCHR));
+			tmp = (REBCHR *)realloc(str, size * sizeof(REBCHR));
+			if (tmp == NULL) {
+				free(str);
+				return;
+			}
+			str = tmp;
+
 		}
 	}
 	req->data = (REBYTE*)str;

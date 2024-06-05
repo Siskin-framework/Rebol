@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -172,7 +173,6 @@
 		return n;
 
 	Trap_Range(val);
-	return 0;
 }
 
 
@@ -186,7 +186,6 @@
 	if (IS_DECIMAL(val) || IS_PERCENT(val)) return (REBI64)VAL_DECIMAL(val);
 	if (IS_MONEY(val)) return deci_to_int(VAL_DECI(val));
 	Trap_Arg(val);
-	return 0;
 }
 
 
@@ -200,7 +199,6 @@
 	if (IS_INTEGER(val)) return (REBDEC)VAL_INT64(val);
 	if (IS_MONEY(val)) return deci_to_decimal(VAL_DECI(val));
 	Trap_Arg(val);
-	return 0;
 }
 
 
@@ -235,7 +233,6 @@
 		return n;
 
 	Trap_Range(val);
-	DEAD_END;
 }
 
 
@@ -612,7 +609,6 @@
 	if (IS_LOGIC(arg)) return (VAL_LOGIC(arg) != 0);
 	if (IS_DECIMAL(arg) || IS_PERCENT(arg)) return (VAL_DECIMAL(arg) != 0.0);
 	Trap_Arg(arg);
-	DEAD_END;
 }
 
 

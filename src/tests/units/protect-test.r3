@@ -145,6 +145,28 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1764
 		--assert is-locked-error? [new-block: reduce [1 2 protect/deep 'new-block 3 4]]
 
+	--test-- "protect paths"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1747
+		o: context [a: "aha"] p: 'o/a
+		;; by default it protects the value it points to
+		--assert all [
+			'o/a = protect p
+			is-locked-error? [o/a: none]
+		]
+		;; to protect the path value...
+		o: context [a: "aha"] p: 'o/a
+		--assert all [
+			'o/a = protect/values p
+			none? try [o/a: none]
+			is-protected-error? [append p 'x]
+		]
+		p: quote :o/a
+		--assert all [
+			(quote :o/a) = protect/values p
+			none? try [o/a: none]
+			is-protected-error? [append p 'x]
+		]
+
 
 ===end-group===
 

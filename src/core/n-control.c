@@ -224,7 +224,7 @@ enum {
 
 	if (D_REF(6)) SET_FLAG(flags, PROT_LOCK);
 
-	if (IS_WORD(val) || IS_PATH(val)) {
+	if (IS_WORD(val) || (ANY_PATH(val) && !D_REF(4))) {
 		Protect_Word_Value(val, flags); // will unmark if deep
 		return R_ARG1;
 	}

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -72,7 +73,6 @@
 			arg = (REBINT)VAL_DECIMAL(val);
         else {
 			Trap_Math_Args(REB_CHAR, action);
-            return R_NONE; // just to make xcode happy
         }
 	}
 

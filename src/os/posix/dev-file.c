@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -432,7 +433,24 @@ fail:
 	return DR_DONE;
 }
 
-
+// Resolves real size of virtual files (like /proc/cpuinfo)
+// NOTE: always use read/part with files like /dev/urandom
+static size_t get_virtual_file_size(const char *filepath) {
+	#define BUFFER_SIZE 4096
+	#define READ_LIMIT 0x80000000 // Rebol has limit 2GB for series
+	char buffer[BUFFER_SIZE];
+	size_t size = 0;
+	int file = open(filepath, O_RDONLY, S_IREAD);
+	if (file) {
+		while (size < READ_LIMIT) {
+			size_t bytesRead = read(file, buffer, BUFFER_SIZE);
+			if (bytesRead == 0) break;
+			size += bytesRead;
+		}
+		close(file);
+	}
+	return size;
+}
 /***********************************************************************
 **
 */	DEVICE_CMD Read_File(REBREQ *file)
@@ -463,16 +481,31 @@ init_pattern:
 		if (!Seek_File_64(file)) return DR_ERROR;
 	}
 
-	// printf("read %d len %d\n", file->id, file->length);
-	num_bytes = read(file->id, file->data, file->length);
-	if (num_bytes < 0) {
-		file->error = -RFE_BAD_READ;
-		return DR_ERROR;
-	} else {
-		file->actual = num_bytes;
-		file->file.index += file->actual;
+	// virtual files on Posix report its size as 0, so try to resolve the real one
+	// but only in case, when user did not set /part
+	if (file->file.size == 0 && file->length == 0) {
+		file->file.size = get_virtual_file_size(file->file.path);
+		if (file->file.size > 0 && file->length < file->file.size) {
+			file->error = -RFE_RESIZE_SERIES;
+			return DR_ERROR;
+		}
 	}
 
+	// printf("read %d len %d\n", file->id, file->length);
+	file->actual = 0;
+	// Using the loop, because the reading may be done in chunks!
+	while (1) {
+		num_bytes = read(file->id, file->data + file->actual, file->length - file->actual);
+		if (num_bytes == 0) break;
+		if (num_bytes < 0) {
+			file->error = -RFE_BAD_READ;
+			return DR_ERROR;
+		}
+		file->actual += num_bytes;
+		// stop in case that we have enough data (requested just part of it)
+		if (file->actual >= file->length) break;
+	}
+	file->file.index += file->actual;
 	return DR_DONE;
 }
 

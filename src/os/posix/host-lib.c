@@ -58,6 +58,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <string.h>
 #include <errno.h>
@@ -426,7 +427,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 **
 ***********************************************************************/
 {
-    if (!errnum) errnum = errno;
+	if (!errnum) errnum = errno;
 	strerror_r(errnum, s_cast(str), len);
 	return str;
 }
@@ -696,11 +697,20 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 **		symbolic links are resolved, as are . and .. pathname components.
 **		Consecutive slash (/) characters are replaced by a single slash.
 **
-**		The result should be freed after copy/conversion.
-**
 ***********************************************************************/
 {
-	return realpath(path, NULL); // Be sure to call free() after usage
+	static char result[PATH_MAX+2];
+	struct stat path_stat;
+	if (realpath(path, result) == NULL) return NULL;
+	if (stat(result, &path_stat) != 0) return NULL;
+
+	size_t len = strlen(result);
+	// Append the trailing slash if it is a directory
+	if (S_ISDIR(path_stat.st_mode)) {
+		result[len++] = '/';
+	}
+	result[len] = 0;
+	return (char*)result; // Be sure to copy or process the result soon!
 }
 
 
@@ -728,7 +738,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 {
 #ifndef NO_DL_LIB
 	void *dll = dlopen(path, RTLD_LAZY/*|RTLD_GLOBAL*/);
-	// if(!dll) printf("dlerror: %s\n", dlerror());
+	if (!dll) fprintf(stderr, "dlerror: %s\n", dlerror());
 	*error = 0; // dlerror() returns a char* error message, so there's
 				// no immediate way to return an "error code" in *error
 	return dll;
@@ -1330,14 +1340,14 @@ static int Try_Browser(char *browser, REBCHR *url)
 			exit(1);
 			break;
 		default:
-            sleep(1); // needed else WEXITSTATUS sometimes reports value 127
-            if (0 > waitpid(pid, &status, WUNTRACED)) {
-                result = FALSE;
-            } else {
-                //printf("status: %i WIFEXITED: %i WEXITSTATUS: %i\n", status, WIFEXITED(status), WEXITSTATUS(status) );
-                result = WIFEXITED(status)
+			sleep(1); // needed else WEXITSTATUS sometimes reports value 127
+			if (0 > waitpid(pid, &status, WUNTRACED)) {
+				result = FALSE;
+			} else {
+				//printf("status: %i WIFEXITED: %i WEXITSTATUS: %i\n", status, WIFEXITED(status), WEXITSTATUS(status) );
+				result = WIFEXITED(status)
 					&& (WEXITSTATUS(status) == 0);
-            }
+			}
 	}
 
 	return result;

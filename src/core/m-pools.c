@@ -278,6 +278,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	pool = &Mem_Pools[pool_id];
 	if (!pool->first) Fill_Pool(pool);
 	node = pool->first;
+#pragma warning(suppress: 28182)
 	pool->first = *node;
 #ifdef WATCH_SERIES_POOL
 	printf(cs_cast("*** SERIES_POOL Make_Node=> has: %u free: %u\n"), Mem_Pools[SERIES_POOL].has, Mem_Pools[SERIES_POOL].free);
@@ -334,6 +335,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		pool = &Mem_Pools[pool_num];
 		if (!pool->first) Fill_Pool(pool);
 		node = pool->first;
+#pragma warning(suppress: 28182)
 		pool->first = *node;
 		pool->free--;
 		length = pool->wide;
@@ -406,9 +408,11 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		pool = &Mem_Pools[pool_num];
 		if (!pool->first) Fill_Pool(pool);
 		node = pool->first;
+#pragma warning(suppress: 28182)
 		pool->first = *node;
 		pool->free--;
 		length = pool->wide;
+#pragma warning(suppress: 28183)
 		memset(node, 0, length);
 #ifdef WATCH_SERIES_POOL
 		if(pool_num == SERIES_POOL) printf(cs_cast("*** SERIES_POOL Make_Series=> has: %u free: %u (size: %u)\n"), Mem_Pools[SERIES_POOL].has, Mem_Pools[SERIES_POOL].free, length);

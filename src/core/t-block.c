@@ -66,11 +66,14 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 	REBCNT i;
 
 	if (!ANY_BLOCK(data)) return FALSE;
-	if (type >= REB_PATH && type <= REB_LIT_PATH)
-		if (!ANY_WORD(VAL_BLK(data))) return FALSE;
-
-	*out = *data++;
+	// set the output first...
+	*out = *data;
 	VAL_SET(out, type);
+	// ... to allow construction of empty path types too
+	if (IS_END(VAL_BLK(data)) && type >= REB_PATH && type <= REB_LIT_PATH)
+		return TRUE;
+	// and update the index, if needed...
+	data++;
 	i = IS_INTEGER(data) ? Int32(data) - 1 : 0;
 	if (i > VAL_TAIL(out)) i = VAL_TAIL(out); // clip it
 	VAL_INDEX(out) = i;
@@ -109,9 +112,14 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 
 	if (flags & (AM_FIND_REVERSE | AM_FIND_LAST)) {
 		skip = -1;
-		start = 0;
-		if (flags & AM_FIND_LAST) index = end - len;
-		else index--;
+		if (flags & AM_FIND_LAST) {
+			start = index;
+			index = end - len;
+		}
+		else {
+			start = 0;
+			index--;
+		}
 	}
 
 	// Optimized find word in block:
@@ -139,7 +147,11 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 			cnt = 0;
 			value = BLK_SKIP(series, index);
 			for (val = VAL_BLK_DATA(target); NOT_END(val); val++, value++) {
-				if (0 != Cmp_Value(value, val, (REBOOL)(flags & AM_FIND_CASE))) break;
+				if ((flags & AM_FIND_SAME)) {
+					if (0 == Compare_Values(value, val, 3))
+						break;
+				}
+				else if (0 != Cmp_Value(value, val, (REBOOL)(flags & AM_FIND_CASE))) break;
 				if (++cnt >= len) {
 					return index;
 				}

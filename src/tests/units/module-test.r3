@@ -8,10 +8,7 @@ Rebol [
 
 ~~~start-file~~~ "module!"
 
-; extend module-paths with units/files/ directory
-; so modules there can be located
-orig-modules-dir: system/options/modules
-system/options/modules: join what-dir %units/files/
+modules-dir: system/options/modules
 
 
 ===start-group=== "module keywords"
@@ -112,22 +109,22 @@ system/options/modules: join what-dir %units/files/
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1628
 		unset 'z1 z2: 2
 		--assert all [
-			error? e: try [do "rebol [type: module] attempt [z1: 12345] z1"]
+			error? e: try [import "rebol [type: module] attempt [z1: 12345] z1"]
 			e/id = 'not-defined
 			e/arg1 = 'z1
 		]
 		--assert all [
-			error? e: try [do "rebol [type: module] attempt [z2: 12345] z2"]
+			error? e: try [import "rebol [type: module] attempt [z2: 12345] z2"]
 			e/id = 'not-defined
 			e/arg1 = 'z2
 		]
 		--assert all [
-			error? e: try [do "rebol [] module [] [attempt [z1: 12345] z1]"]
+			error? e: try [import "rebol [] module [] [attempt [z1: 12345] z1]"]
 			e/id = 'not-defined
 			e/arg1 = 'z1
 		]
 		--assert all [
-			error? e: try [do "rebol [] module [] [attempt [z2: 12345] z2]"]
+			error? e: try [import "rebol [] module [] [attempt [z2: 12345] z2]"]
 			e/id = 'not-defined
 			e/arg1 = 'z2
 		]
@@ -182,7 +179,7 @@ system/options/modules: join what-dir %units/files/
 ===start-group=== "module import"
 	--test-- "import"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/923
-	write system/options/modules/mymodule.reb {
+	write modules-dir/mymodule.reb {
 Rebol [
     type: 'module
     name: 'mymodule
@@ -195,9 +192,9 @@ myfunc: func [arg [string!]][reverse arg]
 	--assert "cba" = myfunc "abc"
 	import 'mymodule     ;-- this works... the file isn't reloaded... and indeed the console doesn't print another "mymodule imported"
 	--assert "cba" = myfunc "abc"
-	import (system/options/modules/mymodule.reb) ;-- no crash (but must be in parens, because it is expression!)
+	import (modules-dir/mymodule.reb) ;-- no crash (but must be in parens, because it is expression!)
 	--assert "cba" = myfunc "abc"
-	delete system/options/modules/mymodule.reb
+	delete modules-dir/mymodule.reb
 
 ;;; This test would fail as the module needs itself! It should be detected, but it isn't yet.
 ;;	write %mymodule2.reb {
@@ -280,8 +277,8 @@ probe all [
 
 	--test-- "import block"
 	;- using external script again!
-	write %m1.reb {Rebol [name: m1 type: module] export m1a: 1}
-	write %m2.reb {Rebol [name: m2 type: module] export m2b: 2}
+	write modules-dir/m1.reb {Rebol [name: m1 type: module] export m1a: 1}
+	write modules-dir/m2.reb {Rebol [name: m2 type: module] export m2b: 2}
 	write %block-import-1.reb {
 Rebol []
 probe all [
@@ -311,8 +308,8 @@ probe all [
 	--assert "true^/" = o
 	delete %block-import-1.reb
 	delete %block-import-2.reb
-	delete %m1.reb
-	delete %m2.reb
+	delete modules-dir/m1.reb
+	delete modules-dir/m2.reb
 
 	--test-- "import/version"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1687
@@ -354,6 +351,7 @@ probe all [
 		--assert unset? :system/contexts/user/issue-1721-a
 		--assert system/contexts/user/issue-1721-b = 2
 
+system/options/modules: %units/files/
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1694
 	--test-- "import needs word!"
 		import 'test-needs-name
@@ -374,6 +372,7 @@ probe all [
 			import https://github.com/Oldes/Rebol3/raw/master/src/tests/units/files/test-needs-url.reb
 			--assert true? test-needs-url-result
 		]
+system/options/modules: modules-dir
 
 	--test-- "lib-local"
 	;@@ https://github.com/Oldes/Rebol-wishes/issues/13
@@ -409,7 +408,4 @@ probe all [
 ===end-group===
 
 ~~~end-file~~~
-
-;restore the original path
-system/options/modules: orig-modules-dir
 

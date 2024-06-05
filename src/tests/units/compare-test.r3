@@ -226,6 +226,28 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "object!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1133
+	--test-- "equal? objects with numeric values"
+		--assert equal? construct [c: 1] construct [c: 1]
+		--assert equal? construct [c: 1] construct [c: 1.0]
+		--assert equal? construct [c: 1] construct [c: $1]
+		--assert equal? construct [c: 1] construct [c: 100%]
+		--assert equal? construct [c: 1.0]  construct [c: 1]
+		--assert equal? construct [c: $1]   construct [c: 1]
+		--assert equal? construct [c: 100%] construct [c: 1]
+	--test-- "strict-equal? objects with numeric values"
+		--assert strict-equal? construct [c: 1] construct [c: 1]
+		--assert not strict-equal? construct [c: 1] construct [c: 1.0]
+		--assert not strict-equal? construct [c: 1] construct [c: $1]
+		--assert not strict-equal? construct [c: 1] construct [c: 100%]
+		--assert not strict-equal? construct [c: 1.0]  construct [c: 1]
+		--assert not strict-equal? construct [c: $1]   construct [c: 1]
+		--assert not strict-equal? construct [c: 100%] construct [c: 1]
+===end-group===
+
+
 ;- tests from Red Language...
 ===start-group=== "prefix equal same datatype"
 	--test-- "prefix-equal-same-datatype-1"		--assert equal? 0 0

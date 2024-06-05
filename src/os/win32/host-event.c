@@ -284,9 +284,8 @@ static void onModalBlock(
 			break;
 
 		case WM_SIZE:
-		
 		//case WM_SIZING:
-			RL_Print("SIZE %d\n", mode);
+			RL_Print(cb_cast("SIZE %d\n"), mode);
 			if (wParam == SIZE_MINIMIZED) {
 				//Invalidate the size but not win buffer
 				gob->old_size.x = 0;
@@ -607,7 +606,7 @@ static void onModalBlock(
 		};
 		int pf = ChoosePixelFormat(hdc, &pfd);
 		if (!pf) {
-			RL_Print("Could not find a pixel format.. OpenGL cannot create its context.\n");
+			RL_Print(cb_cast("Could not find a pixel format.. OpenGL cannot create its context.\n"));
 			return FALSE;
 		}
 		SetPixelFormat(hdc, pf, &pfd);
@@ -616,11 +615,11 @@ static void onModalBlock(
 			wglMakeCurrent(hdc, hglrc);
 		}
 		else {
-			RL_Print("Failed to create OpenGL context!\n");
+			RL_Print(cb_cast("Failed to create OpenGL context!\n"));
 			return FALSE;
 		}
-		RL_Print("OPENGL CONTEXT CREATED!\n");
-		RL_Print("Version %s\n", glGetString(GL_VERSION));
+		RL_Print(cb_cast("OPENGL CONTEXT CREATED!\n"));
+		RL_Print(cb_cast("Version %s\n"), glGetString(GL_VERSION));
 		return FALSE;
 
 	case WM_DESTROY:

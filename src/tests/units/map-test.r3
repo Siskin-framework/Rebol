@@ -89,12 +89,14 @@ Rebol [
 	--assert 1 = length? m
 	--assert 1 = length? append/part m [b 2] 0
 	--assert 2 = length? append/part m [b 2] 2
-	--assert 2 = length? append/dup  m [c 3] 0
-	--assert 3 = length? append/dup  m [c 3] 1
-	--assert 4 = length? append/dup  m [d 4] 2
-	--assert 4 = length? append/part m [e 5 f 6] 1 ;no-op!
-	--assert 5 = length? append/part m [e 5 f 6] 2
-	--assert [1 2 3 4 5] = values-of m
+	--assert 2 = length? append/part m [e 5 f 6] 1 ;no-op!
+	--assert 3 = length? append/part m [e 5 f 6] 2
+	--assert [1 2 5] = values-of m
+	--assert all [
+		error? e: try [append/dup  m [c 3] 0] e/id = 'bad-refines
+		error? e: try [append/dup  m [c 3] 1] e/id = 'bad-refines
+		error? e: try [append/dup  m [c 3] 2] e/id = 'bad-refines
+	]
 
 	--test-- "append/part map! with odd part"
 	--assert []     == body-of append/part make map! [] [a 1 b 2 c 3] 1

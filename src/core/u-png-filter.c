@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2024 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -71,7 +71,6 @@ static REBYTE get_png_filter_type(REBVAL* val) {
 		return MIN(PNG_FILTER_PAETH, MAX(0, VAL_INT32(val)));
 	}
 	Trap1(RE_INVALID_ARG, val);
-	return 0; // to make xcode happy
 }
 
 /***********************************************************************

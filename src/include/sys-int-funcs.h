@@ -27,15 +27,7 @@
 #ifndef __SYS_INT_FUNCS_H_
 #define __SYS_INT_FUNCS_H_
 
-#ifndef __has_builtin
-#define __has_builtin(x) 0
-#endif
 
-#ifdef __GNUC__
-#define GCC_VERSION_AT_LEAST(m, n) (__GNUC__ >= (m) && __GNUC_MINOR__ >= (n))
-#else
-#define GCC_VERSION_AT_LEAST(m, n) 0
-#endif
 
 #if __has_builtin(__builtin_sadd_overflow) || GCC_VERSION_AT_LEAST(5, 1)
 #define	REB_I32_ADD_OF(x, y, sum) __builtin_sadd_overflow((x), (y), (sum))

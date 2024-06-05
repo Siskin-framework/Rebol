@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.17.0
+version: 3.17.1
 
 #if Linux?   [ defines: TO_LINUX   ]
 #if macOS?   [ defines: TO_MACOS   ]
@@ -426,6 +426,7 @@ config: [ ;- this is list of configuration (optional) defines
 	;FORCE_ANSI_ESC_EMULATION_ON_WINDOWS  ; would not try to use MS' built-in VIRTUAL_TERMINAL_PROCESSING
 	;EXCLUDE_VECTOR_MATH  ; don't include vector math support (like: 3 * #[vector! integer! 8 3 [1 2 3]]); Used in t-vector.c file
 	;WRITE_ANY_VALUE_TO_CLIPBOARD ; https://github.com/Oldes/Rebol-issues/issues/1619
+	;CONSTRUCT_LIT_WORD_AS_WORD   ; https://github.com/Oldes/Rebol-issues/issues/2502
 
 	;SERIES_LABELS ; used for special debug purposes
 	;SHOW_SIZEOFS  ; for debugging ports to some new systems
@@ -433,6 +434,7 @@ config: [ ;- this is list of configuration (optional) defines
 	;NDEBUG        ; removes some asserts
 	;TEST_SCAN
 	;_DEBUG
+	;ALEVEL=2      ; maximal assert level
 
 	;*** Memory pool special defines (were not used!) *************************/
 	; these were found in sources, but never actually used...
@@ -1026,6 +1028,7 @@ common: [
 
 	;define: :config
 	define: {REBOL_OPTIONS_FILE=\"gen-config.h\"} ;@@ TODO: should be auto-escaped!
+	define: UNICODE
 
 	;cflags: [-ffast-math]
 

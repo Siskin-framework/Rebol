@@ -732,7 +732,9 @@ static struct termios Term_Attrs;	// Initial settings, restored on exit
 	// If we have leftovers:
 	if (term->residue[0]) {
 #pragma GCC diagnostic push
+#ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
 		end = (int)LEN_BYTES(term->residue);
 		if (end < len) len = end;
 		COPY_STR(buf, term->residue, len); // terminated below

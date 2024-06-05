@@ -59,9 +59,7 @@ static REBI64 ran_x[KK];					/* the generator state */
 #ifdef __STDC__
 void ran_array(REBI64 aa[], int n)
 #else
-void ran_array(aa,n)	/* put n new random numbers in aa */
-	REBI64 *aa;			/* destination */
-	int n;				/* array length (must be at least KK) */
+void ran_array(REBI64* aa, int n)	/* put n new random numbers in aa */
 #endif
 {
 	register int i,j;

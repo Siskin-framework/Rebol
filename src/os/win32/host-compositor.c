@@ -557,7 +557,7 @@ static REBXYF Zero_Pair = {0, 0};
 	   
 
 	// create our DIB section and select the bitmap into the dc 
-    hbitmap = CreateDIBSection(hdcbmp, &bmi, DIB_RGB_COLORS, &pvBits , NULL, 0x0);
+    hbitmap = CreateDIBSection(hdcbmp, &bmi, DIB_RGB_COLORS, (void**)&pvBits, NULL, 0x0);
  	SelectObject(hdcbmp, hbitmap);
 
 //	memcpy(pvBits, pixels, src_siz_x * src_siz_y * 4 );
@@ -585,7 +585,7 @@ static REBXYF Zero_Pair = {0, 0};
 	if (!AlphaBlend(hdc, left, top,
 		src_siz_x, src_siz_y,
 		hdcbmp, 0, 0, src_siz_x, src_siz_y, bf)) {
-		RL_Print("alphaBlend failed!\n");
+		RL_Print(cb_cast("alphaBlend failed!\n"));
 	}
 	
 	// do cleanup 

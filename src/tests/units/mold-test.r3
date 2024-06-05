@@ -286,6 +286,47 @@ Rebol [
 		--assert "#(path! [p p] 3)" = mold/all next next 'p/p
 		--assert "#(block! [a b] 3)" = mold/all next next [a b]
 
+	--test-- "mold/all series"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2022
+		--assert {#(email! "")}      == mold/all #(email! "")
+		--assert {#(email! "a")}     == mold/all #(email! "a")
+		--assert {#(url! "")}        == mold/all #(url! "")
+		--assert {#(url! "a")}       == mold/all #(url! "a")
+		--assert {#(tag! "")}        == mold/all #(tag! "")
+		--assert {#(image! 0x0 #{})} == mold/all #(image! 0x0 #{})
+		--assert {#(path! [])}       == mold/all quote #(path! [])
+		--assert {#(set-path! [])}   == mold/all quote #(set-path! [])
+		--assert {#(get-path! [])}   == mold/all quote #(get-path! [])
+		--assert {#(lit-path! [])}   == mold/all quote #(lit-path! [])
+		--assert {#(path! [a])}      == mold/all quote #(path! [a])
+		--assert {#(set-path! [a])}  == mold/all quote #(set-path! [a])
+		--assert {#(get-path! [a])}  == mold/all quote #(get-path! [a])
+		--assert {#(lit-path! [a])}  == mold/all quote #(lit-path! [a])
+		--assert {#(path! [])}       == mold/all clear quote  a/b
+		--assert {#(set-path! [])}   == mold/all clear quote  a/b:
+		--assert {#(get-path! [])}   == mold/all clear quote :a/b
+		--assert {#(lit-path! [])}   == mold/all clear quote 'a/b
+		--assert {#(path! [b])}      == mold/all remove quote  a/b
+		--assert {#(set-path! [b])}  == mold/all remove quote  a/b:
+		--assert {#(get-path! [b])}  == mold/all remove quote :a/b
+		--assert {#(lit-path! [b])}  == mold/all remove quote 'a/b
+
+	--test-- "mold/all block with index over tail"
+		a: [1 2 3 4]
+		b: tail a
+		clear a 
+		--assert "#(block! [])" == mold/all b
+		a: 'a/b/c/d/e
+		b: tail a
+		clear a 
+		--assert "#(path! [])" == mold/all b
+	--test-- "mold/all string with index over tail"
+		a: "12345678"
+		b: tail a
+		clear a 
+		--assert {#(string! "" 9)} == mold/all b
+
+
 ===end-group=== 
 
 

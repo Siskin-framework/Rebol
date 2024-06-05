@@ -94,6 +94,31 @@ if find [Linux macOS] system/platform [
 
 ===end-group===
 
+
+===start-group=== "to-real-file"
+--test-- "On file"
+	write file: %jesterka ""
+	full: join what-dir file
+	--assert equal? full to-real-file file
+	--assert equal? full to-real-file join %./ file
+	delete file
+--test-- "On file with Unicode chars"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2599
+	write file: %jěštěrka ""
+	full: join what-dir file
+	--assert equal? full to-real-file file
+	--assert equal? full to-real-file join %./ file
+	delete file
+--test-- "On directory"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2600
+	--assert equal? what-dir to-real-file %.
+	--assert equal? what-dir to-real-file %./
+	--assert equal? what-dir to-real-file %./units/files/../../
+
+===end-group===
+
+
+
 ===start-group=== "suffix?"
 	--test-- "suffix? file!"
 	--assert %.c = suffix? %b.c

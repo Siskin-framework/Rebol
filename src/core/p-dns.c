@@ -110,7 +110,8 @@ pick:
 			if (!sock->net.host_info || !GET_FLAG(sock->flags, RRF_DONE)) return R_NONE;
 			if (sock->error) {
 				OS_DO_DEVICE(sock, RDC_CLOSE);
-				Trap_Port(RE_READ_ERROR, port, sock->error);
+				return R_NONE;
+				//Trap_Port(RE_READ_ERROR, port, sock->error);
 			}
 			if (GET_FLAG(sock->modes, RST_REVERSE)) {
 				Set_String(D_RET, Copy_Bytes(sock->data, LEN_BYTES(sock->data)));

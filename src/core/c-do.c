@@ -674,7 +674,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 		Expand_Stack(STACK_MIN);
 	}
 
-	func = &DS_Base[func_offset];
+	func = DS_VALUE(func_offset);
 
 	if (IS_OP(func)) dsf--; // adjust for extra arg
 
@@ -706,7 +706,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 	ds = dsp;
 	for (; NOT_END(args); args++, ds++) {
 
-		func = &DS_Base[func_offset]; //DS_Base could be changed
+		func = DS_VALUE(func_offset); //DS_Base could be changed (data stack expansion)
 
 		//if (Trace_Flags) Trace_Arg(ds - dsp, args, path);
 
@@ -733,7 +733,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 					if (useArgs) DS_Base[ds] = *value;
 				}
 			} else
-				SET_UNSET(&DS_Base[ds]); // allowed to be none
+				SET_UNSET(DS_VALUE(ds)); // allowed to be none
 			break;
 
 		case REB_GET_WORD:	// :WORD - Get value
@@ -741,7 +741,7 @@ x*/	static REBINT Do_Args_Light(REBVAL *func, REBVAL *path, REBSER *block, REBCN
 				if (useArgs) DS_Base[ds] = *BLK_SKIP(block, index);
 				index++;
 			} else
-				SET_UNSET(&DS_Base[ds]); // allowed to be none
+				SET_UNSET(DS_VALUE(ds)); // allowed to be none
 			break;
 
 		case REB_REFINEMENT: // /WORD - Function refinement
@@ -953,11 +953,13 @@ eval_func0:
 		dsf = Push_Func(FALSE, block, index, VAL_WORD_SYM(word), value);
 eval_func:
 		value = DSF_FUNC(dsf); // a safe copy of function
+#if (ALEVEL>0)
 		if (VAL_TYPE(value) < REB_NATIVE) {
 			Debug_Value(word, 4, 0);
 			Dump_Values(value, 4);
 		}
-		index = Do_Args(dsf + 3, 0, block, index+1); // uses old DSF, updates DSP
+#endif
+		index = Do_Args(dsf + DSF_SIZE, 0, block, index+1); // uses old DSF, updates DSP
 		value = DSF_FUNC(dsf); //reevaluate value, because stack could be expanded in Do_Args
 eval_func2:
 		// Evaluate the function:
@@ -1023,7 +1025,7 @@ eval_func2:
 				offset = value - DS_Base;
 				ftype = VAL_TYPE(value)-REB_NATIVE;
 				index = Do_Args(offset, word+1, block, index+1);
-				value = &DS_Base[offset]; //restore in case the stack is expanded
+				value = DS_VALUE(offset); //restore in case the stack is expanded
 				goto eval_func2;
 			} else
 				index++;
@@ -1109,7 +1111,7 @@ eval_func2:
 		tos = DS_NEXT; SET_UNSET(tos);
 	}
 
-	if (start != DSP || tos != &DS_Base[start+1]) Trap0(RE_MISSING_ARG);
+	if (start != DSP || tos != DS_GET(start+1)) Trap0(RE_MISSING_ARG);
 
 //	ASSERT2(gcd == GC_Disabled, RP_GC_STUCK);
 
@@ -1146,7 +1148,7 @@ eval_func2:
 		tos = DS_NEXT; SET_UNSET(tos);
 	}
 
-	if (start != DSP || tos != &DS_Base[start+1]) Trap0(RE_MISSING_ARG);
+	if (start != DSP || tos != DS_GET(start+1)) Trap0(RE_MISSING_ARG);
 	DS_DROP;
 	return tos;
 }
@@ -1320,7 +1322,7 @@ eval_func2:
 		else if (VAL_TYPE(val) == type) DS_PUSH(val);
 		// !!! check stack size
 	}
-	SET_END(&DS_Base[++DSP]); // in case caller needs it
+	DS_PUSH_END; // in case caller needs it
 
 	//block = Copy_Values(DS_Base + start, DSP - start + 1);
 	//DSP = start;
@@ -1483,7 +1485,7 @@ reapply:  // Go back here to start over with a new func
 		// Copy block contents to stack:
 		if (len < n) n = len;
 		if (n + start + 100 > SERIES_REST(DS_Series)) Expand_Stack(STACK_MIN);
-		memcpy(&DS_Base[start], BLK_SKIP(block, index), n * sizeof(REBVAL));
+		memcpy(DS_GET(start), BLK_SKIP(block, index), n * sizeof(REBVAL));
 		DSP = start + n - 1;
 	}
 
@@ -1676,6 +1678,8 @@ reapply:  // Go back here to start over with a new func
 					VAL_SET(temp, REB_WORD);
 				}
 			}
+#ifdef CONSTRUCT_LIT_WORD_AS_WORD
+			//https://github.com/Oldes/Rebol-issues/issues/2502
 			else if (IS_LIT_WORD(value)) {
 				*temp = *value;
 				VAL_SET(temp, REB_WORD);
@@ -1684,6 +1688,7 @@ reapply:  // Go back here to start over with a new func
 				*temp = *value;
 				VAL_SET(temp, REB_PATH);
 			}
+#endif
 			else if (VAL_TYPE(value) >= REB_NONE) { // all valid values
 				*temp = *value;
 			}

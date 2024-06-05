@@ -399,7 +399,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
-*/	RL_API void RL_Print(REBYTE *fmt, ...)
+*/	RL_API void RL_Print(const REBYTE *fmt, ...)
 /*
 **	Low level print of formatted data to the console.
 **
@@ -1131,7 +1131,7 @@ RL_API REBSER* RL_Decode_UTF_String(REBYTE *src, REBCNT len, REBINT utf, REBFLG 
 
 /***********************************************************************
 **
-*/	RL_API REBCNT RL_Register_Handle(REBYTE *name, REBCNT size, void* free_func)
+*/	RL_API REBCNT RL_Register_Handle(const REBYTE *name, REBCNT size, void* free_func)
 /*
 **	Stores handle's specification (required data size and optional free callback.
 **
@@ -1202,7 +1202,7 @@ RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
 
 /***********************************************************************
 **
-*/	RL_API REBCNT RL_Register_Handle_Spec(REBYTE *name, REBHSP *spec)
+*/	RL_API REBCNT RL_Register_Handle_Spec(const REBYTE *name, REBHSP *spec)
 /*
 **	Stores handle's specification (required data size and optional callbacks).
 **  It's an extended version of old RL_Register_Handle function.

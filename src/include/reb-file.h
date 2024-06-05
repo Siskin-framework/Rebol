@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,6 +54,7 @@ enum {
 	RFE_BAD_READ,		// Read failed (general)
 	RFE_BAD_WRITE,		// Write failed (general)
 	RFE_DISK_FULL,		// No space on target volume
+	RFE_RESIZE_SERIES,  // Used on Posix to report, that the target series must be resized
 };
 
 #define MAX_FILE_NAME 1022

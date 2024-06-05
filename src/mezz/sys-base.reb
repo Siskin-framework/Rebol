@@ -46,11 +46,15 @@ do*: func [
 	;       Currently, load of URL has no special block forms.
 
 	; Load the data, first so it will error before change-dir
-	data: load/header/as value 'unbound ; unbound so DO-NEEDS runs before INTERN
-	; Get the header and advance 'data to the code position
-	hdr: first+ data  ; object or none
-	; data is a block! here, with the header object in the first position back
-	mod?: 'module = select hdr 'type
+	either string? value [
+		data: load/all/as value 'unbound ; does not evaluate REBOL header
+	][
+		data: load/header/as value 'unbound ; unbound so DO-NEEDS runs before INTERN
+		; Get the header and advance 'data to the code position
+		hdr: first+ data  ; object or none
+		; data is a block! here, with the header object in the first position back
+		mod?: 'module = select hdr 'type
+	]
 
 	either all [string? value  not mod?] [
 		; Return result without script overhead

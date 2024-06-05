@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -121,8 +121,8 @@ enum Crash_Msg_Nums {
 #else
 	OS_CRASH(Crash_Msgs[CM_ERROR], buf);
 #endif
-	// will not reach here, but...
-	abort(); // just to silent the function declared 'noreturn' should not return warning
+	// will not reach here...
+	DEAD_END;
 }
 
 /***********************************************************************

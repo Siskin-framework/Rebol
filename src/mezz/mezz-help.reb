@@ -3,7 +3,7 @@ REBOL [
 	Title: "REBOL 3 Mezzanine: Help"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2022 Rebol Open Source Contributors
+		Copyright 2012-2024 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -15,7 +15,7 @@ REBOL [
 import (module [
 	Title:  "Help related functions"
 	Name:    help
-	Version: 3.0.0
+	Version: 3.0.1
 	Exports: [? help about usage what license source dump-obj]
 ][
 	buffer: none
@@ -100,7 +100,8 @@ import (module [
 			module?       :val [
 				hdr: spec-of :val
 				either val: select hdr 'title [ if #"." <> last val [append val #"."] ][ val: copy "" ]
-				if tmp: select hdr 'exports [	append append val #" " mold/flat tmp ]
+				if tmp: select hdr 'version [ append val ajoin [SP "Version: " tmp] ]
+				if tmp: select hdr 'exports [ append append val SP mold/flat tmp ]
 				val
 			]
 			any-function? :val [ any [title-of :val spec-of :val] ]
@@ -130,6 +131,7 @@ import (module [
 		/weak "Provides sorting and does not displays unset values"
 		/match "Include only those that match a string or datatype"
 			pattern
+		/not-none "Ignore NONE values"
 		/local start wild type str result user?
 	][
 		result: clear ""
@@ -138,7 +140,10 @@ import (module [
 		wild: all [string? pattern  find pattern "*"]
 		foreach [word val] obj [
 			type: type?/word :val
-			if all [weak type = 'unset!][ continue ]
+			if any [
+				all [weak type = 'unset!]
+				all [not-none type = 'none!]
+			][ continue ]
 			str: either find [function! closure! native! action! op! object!] type [
 				reform [word mold spec-of :val words-of :val]
 			][
@@ -390,6 +395,16 @@ import (module [
 						output ["^/    " mold rets ]
 					]
 					output newline
+					throw true
+				]
+				module? :value [
+					output ajoin [
+						"^[[1;32m" uppercase mold :word "^[[m is " a-an "module with:^/"
+						"^[[4;1;36mSPEC^[[m:^/"
+						dump-obj/not-none spec-of :value
+						"^/^[[4;1;36mBODY^[[m:^/"
+						dump-obj :value
+					]
 					throw true
 				]
 				'else [

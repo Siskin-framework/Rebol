@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -1713,6 +1713,5 @@ static REBCNT EncodedU32_Size(u32 value) {
 
 error:
 	Trap_Word(RE_DIALECT, SYM_BINCODE, value);
-	return R_ARG1; //just to make Clang happy
 }
 #endif //IGNORE_BINCODE

@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Contributors
+**  Copyright 2012-2024 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -275,7 +275,9 @@ REBINT Mode_Syms[] = {
 {
 	REBSER *ser;
 	REBVAL *ds = DS_RETURN;
+	REBINT res;
 
+resize:
 	// Allocate read result buffer:
 	ser = Make_Binary(len);
 	Set_Series(REB_BINARY, ds, ser); //??? what if already set?
@@ -283,7 +285,14 @@ REBINT Mode_Syms[] = {
 	// Do the read, check for errors:
 	file->data = BIN_HEAD(ser);
 	file->length = len;
-	if (OS_DO_DEVICE(file, RDC_READ) < 0) return; // Trap_Port(RE_READ_ERROR, port, file->error);
+	res = OS_DO_DEVICE(file, RDC_READ);
+	if (res == -RFE_RESIZE_SERIES) {
+		// We are reading virtual file where the size was initialy reported as 0,
+		// but now we have the real size calculated, so allocate the buffer again.
+		len = file->file.size;
+		goto resize;
+	}
+	if (res < 0) return; // Trap_Port(RE_READ_ERROR, port, file->error);
 	// Not throwing the error from here!
 	// We may want to close the port before error reporting.
 	// It is passed above in the file->error
@@ -382,14 +391,16 @@ REBINT Mode_Syms[] = {
 **
 ***********************************************************************/
 {
-	REBI64 len;  // maximum size
+	REBI64 len = 0;  // maximum size
 	REBI64 cnt;
 //	int what_if_it_changed;
 
 	// Compute and bound bytes remaining:
-	len = file->file.size - file->file.index; // already read
-	if (len < 0) return 0;
-	len &= MAX_READ_MASK; // limit the size
+	if (file->file.size > 0) {
+		len = file->file.size - file->file.index; // already read
+		if (len < 0) return 0;
+		len &= MAX_READ_MASK; // limit the size
+	}
 
 	// Return requested length:
 	if (!D_REF(arg)) return (REBCNT)len;

@@ -116,7 +116,7 @@ static REBSER *Read_All_File(char *fname)
 **
 ***********************************************************************/
 {
-	Set_String(D_RET, Copy_Form_Value(D_ARG(1), 0));
+	Set_String(D_RET, Form_Value(D_ARG(1), 0, TRUE));
 	return R_RET;
 }
 
@@ -372,7 +372,7 @@ static REBSER *Read_All_File(char *fname)
 	case REB_TIME:
 		timeout = (REBINT) (VAL_TIME(val) / (SEC_SEC / 1000));
 chk_neg:
-		if (timeout < 0) Trap_Range(val);
+		if (timeout < 0) timeout = 0; //Trap_Range(val);
 		break;
 
 	case REB_PORT:
@@ -500,13 +500,22 @@ chk_neg:
 		return R_NONE;
 	}
 	// Try to call realpath on posix or _fullpath on Windows
-	// Returned string must be released once done!
 	tmp = OS_REAL_PATH((REBCHR*)SERIES_DATA(ser));
 	if (!tmp) return R_NONE;
 
 	// Convert OS native wide string back to Rebol file type
+#ifdef OS_WIDE == TRUE
 	new = To_REBOL_Path(tmp, 0, OS_WIDE, FALSE);
-	OS_FREE(tmp);
+#else
+	REBLEN len = LEN_BYTES(tmp);
+	if (Is_Not_ASCII(tmp, len)) {
+		// Result from the native call contains Unicode chars...
+		new = Decode_UTF_String(tmp, len, 8, FALSE, FALSE);
+		new = To_REBOL_Path(SERIES_DATA(new), SERIES_TAIL(new), -1, FALSE);
+	} else {
+		new = To_REBOL_Path(tmp, len, 0, FALSE);
+	}
+#endif
 	if (!new) return R_NONE;
 	
 	Set_Series(REB_FILE, D_RET, new);
@@ -833,7 +842,7 @@ chk_neg:
 			} else if (ANY_STR(param)) {
 				argv[i] = Val_Str_To_OS(param);
 			} else if (IS_WORD(param)) {
-				Set_Series(REB_STRING, D_RET, Copy_Form_Value(param, TRUE));
+				Set_Series(REB_STRING, D_RET, Form_Value(param, TRUE, TRUE));
 				argv[i] = Val_Str_To_OS(D_RET);
 			} else {
 				Trap_Arg(param);
@@ -1201,7 +1210,7 @@ chk_neg:
 
 	Check_Security(SYM_ENVR, POL_READ, arg);
 
-	if (ANY_WORD(arg)) Set_String(arg, Copy_Form_Value(arg, 0));
+	if (ANY_WORD(arg)) Set_String(arg, Form_Value(arg, 0, FALSE));
 	cmd = Val_Str_To_OS(arg);
 
 	lenplus = OS_GET_ENV(cmd, (REBCHR*)0, 0);
@@ -1231,7 +1240,7 @@ chk_neg:
 
 	Check_Security(SYM_ENVR, POL_WRITE, arg1);
 
-	if (ANY_WORD(arg1)) Set_String(arg1, Copy_Form_Value(arg1, 0));
+	if (ANY_WORD(arg1)) Set_String(arg1, Form_Value(arg1, 0, FALSE));
 	cmd = Val_Str_To_OS(arg1);
 	
 	if (ANY_STR(arg2)) {

@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Contributors
+**  Copyright 2012-2024 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -401,7 +401,6 @@ void BrotliDefaultFreeFunc(void* opaque, void* address) {
 		BrotliEncoderDestroyInstance(BrotliEncoder);
 		SET_INTEGER(DS_RETURN, 0);
 		Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
-		return NULL; // not reached!
 	}
 
 	BrotliEncoderDestroyInstance(BrotliEncoder);
@@ -435,7 +434,6 @@ static BrotliDecoderState *BrotliDecoder = NULL;
     if (!BrotliDecoder) {
 		// Failed to create the Brotli decoder
 		Trap0(RE_NO_MEMORY);
-        return 0;
     }
 
 	if (in_len < 0 || (index + in_len > BIN_LEN(input))) in_len = BIN_LEN(input) - index;
@@ -483,7 +481,6 @@ error:
 	BrotliDecoderDestroyInstance(BrotliDecoder);
 	BrotliDecoder = NULL;
 	Trap1(RE_BAD_PRESS, DS_RETURN);
-	return 0;  // Failed to decompress the input buffer
 }
 
 #endif //INCLUDE_BROTLI

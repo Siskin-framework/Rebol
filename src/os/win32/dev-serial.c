@@ -170,7 +170,7 @@ static REBOOL Set_Serial_Settings(HANDLE hComm, REBREQ *req)
 /*
 ***********************************************************************/
 {
-	REBINT result = 0;
+	DWORD result = 0;
 	if (!req->handle) {
 		req->error = -RFE_NO_HANDLE;
 		return DR_ERROR;
@@ -205,7 +205,7 @@ static REBOOL Set_Serial_Settings(HANDLE hComm, REBREQ *req)
 /*
 ***********************************************************************/
 {
-	REBINT result = 0, len = 0;
+	DWORD result = 0, len = 0;
 	len = req->length - req->actual;
 	if (!req->handle) {
 		req->error = -RFE_NO_HANDLE;

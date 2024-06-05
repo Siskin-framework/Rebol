@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -504,124 +505,135 @@ invalid_id:
 
 /***********************************************************************
 **
-*/	void Trap0(REBCNT num)
+*/	REB_NORETURN void Trap0(REBCNT num)
 /*
 ***********************************************************************/
 {
 	Throw_Error(Make_Error(num, 0, 0, 0));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap1(REBCNT num, REBVAL *arg1)
+*/	REB_NORETURN void Trap1(REBCNT num, REBVAL *arg1)
 /*
 ***********************************************************************/
 {
 	Throw_Error(Make_Error(num, arg1, 0, 0));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap2(REBCNT num, REBVAL *arg1, REBVAL *arg2)
+*/	REB_NORETURN void Trap2(REBCNT num, REBVAL *arg1, REBVAL *arg2)
 /*
 ***********************************************************************/
 {
 	Throw_Error(Make_Error(num, arg1, arg2, 0));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap3(REBCNT num, REBVAL *arg1, REBVAL *arg2, REBVAL *arg3)
+*/	REB_NORETURN void Trap3(REBCNT num, REBVAL *arg1, REBVAL *arg2, REBVAL *arg3)
 /*
 ***********************************************************************/
 {
 	Throw_Error(Make_Error(num, arg1, arg2, arg3));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Arg(REBVAL *arg)
+*/	REB_NORETURN void Trap_Arg(REBVAL *arg)
 /*
 ***********************************************************************/
 {
 	Trap1(RE_INVALID_ARG, arg);
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Type(REBVAL *arg)
+*/	REB_NORETURN void Trap_Type(REBVAL *arg)
 /*
 **		<type> type is not allowed here
 **
 ***********************************************************************/
 {
 	Trap1(RE_INVALID_TYPE, Of_Type(arg));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Range(REBVAL *arg)
+*/	REB_NORETURN void Trap_Range(REBVAL *arg)
 /*
 **		value out of range: <value>
 **
 ***********************************************************************/
 {
 	Trap1(RE_OUT_OF_RANGE, arg);
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Word(REBCNT num, REBCNT sym, REBVAL *arg)
+*/	REB_NORETURN void Trap_Word(REBCNT num, REBCNT sym, REBVAL *arg)
 /*
 ***********************************************************************/
 {
 	Init_Word(DS_TOP, sym);
 	if (arg) Trap2(num, DS_TOP, arg);
 	else Trap1(num, DS_TOP);
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Action(REBCNT type, REBCNT action)
+*/	REB_NORETURN void Trap_Action(REBCNT type, REBCNT action)
 /*
 ***********************************************************************/
 {
 	Trap2(RE_CANNOT_USE, Get_Action_Word(action), Get_Type(type));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Math_Args(REBCNT type, REBCNT action)
+*/	REB_NORETURN void Trap_Math_Args(REBCNT type, REBCNT action)
 /*
 ***********************************************************************/
 {
 	Trap2(RE_NOT_RELATED, Get_Action_Word(action), Get_Type(type));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Types(REBCNT errnum, REBCNT type1, REBCNT type2)
+*/	REB_NORETURN void Trap_Types(REBCNT errnum, REBCNT type1, REBCNT type2)
 /*
 ***********************************************************************/
 {
 	if (type2 != 0) Trap2(errnum, Get_Type(type1), Get_Type(type2));
 	Trap1(errnum, Get_Type(type1));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Expect(REBVAL *object, REBCNT index, REBCNT type)
+*/	REB_NORETURN void Trap_Expect(REBVAL *object, REBCNT index, REBCNT type)
 /*
 **		Object field is not of expected type.
 **		PORT expected SCHEME of OBJECT type
@@ -629,43 +641,47 @@ invalid_id:
 ***********************************************************************/
 {
 	Trap3(RE_EXPECT_TYPE, Of_Type(object), Obj_Word(object, index), Get_Type(type));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Make(REBCNT type, REBVAL *spec)
+*/	REB_NORETURN void Trap_Make(REBCNT type, REBVAL *spec)
 /*
 ***********************************************************************/
 {
 	Trap2(RE_BAD_MAKE_ARG, Get_Type(type), spec);
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Num(REBCNT err, REBCNT num)
+*/	REB_NORETURN void Trap_Num(REBCNT err, REBCNT num)
 /*
 ***********************************************************************/
 {
 	DS_PUSH_INTEGER(num);
 	Trap1(err, DS_TOP);
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Reflect(REBCNT type, REBVAL *arg)
+*/	REB_NORETURN void Trap_Reflect(REBCNT type, REBVAL *arg)
 /*
 ***********************************************************************/
 {
 	Trap2(RE_CANNOT_USE, arg, Get_Type(type));
+	DEAD_END;
 }
 
 
 /***********************************************************************
 **
-*/	void Trap_Port(REBCNT errnum, REBSER *port, REBINT err_code)
+*/	REB_NORETURN void Trap_Port(REBCNT errnum, REBSER *port, REBINT err_code)
 /*
 ***********************************************************************/
 {
@@ -679,6 +695,7 @@ invalid_id:
 
 	DS_PUSH_INTEGER(-err_code);
 	Trap2(errnum, val, DS_TOP);
+	DEAD_END;
 }
 
 

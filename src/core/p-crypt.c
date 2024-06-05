@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Contributors
+**  Copyright 2012-2024 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -478,7 +478,6 @@ failed:
 		Trap1(RE_INVALID_SPEC, spec);
 	}
 	Trap_Port(RE_CANNOT_OPEN, port, err);
-	return FALSE;
 }
 
 
@@ -1037,7 +1036,6 @@ failed:
 		}
 		if (!Crypt_Open(port)) {
 			Trap_Port(RE_CANNOT_OPEN, port, 0);
-			return R_FALSE;
 		}
 		return R_ARG1;
 	}

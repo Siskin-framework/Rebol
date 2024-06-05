@@ -232,6 +232,25 @@ foreach [n s] system/schemes [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/767
 	--assert same? :greater? copy :greater? ;-no crash
 
+if system/version > 3.17.0 [
+--test-- "recursive bind"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2278
+	obj: make object! [x: 10]
+	blk: copy [x]
+	append/only blk blk
+	--assert all [
+		block? try [bind blk obj]
+		same? blk/1 blk/2/1
+		10 == get blk/1
+		10 == get blk/2/1
+		10 == get blk/2/2/1
+	]
+--test-- "deep recursion recycle crash"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2278
+	blk: copy [] loop 200000 [blk: append/only copy [] blk]
+	--assert block? blk
+	blk: none recycle
+]
 ===end-group===
 
 ~~~end-file~~~

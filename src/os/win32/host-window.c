@@ -295,7 +295,7 @@ void Paint_Window(HWND window);
 	ZeroMemory(&wcex, sizeof(wcex));
 
 	if(!GetClassInfoEx(hInstance, old_class, &wcex)) {
-		RL_Print("Failed to get old class info!\n");
+		RL_Print(cb_cast("Failed to get old class info!\n"));
 	}
 	wcex.cbSize = sizeof(WNDCLASSEX);
 	wcex.cbWndExtra = 0; //sizeof(WNDEXTRA);
@@ -344,11 +344,11 @@ void Paint_Window(HWND window);
 
 	wc.lpfnWndProc = REBOL_OpenGL_Proc;
 	wc.lpszClassName = TXT("RebOpenGL");
-	if (!RegisterClassEx(&wc)) RL_Print("Failed to register OpenGL class\n");
+	if (!RegisterClassEx(&wc)) RL_Print(cb_cast("Failed to register OpenGL class\n"));
 
 	wc.lpfnWndProc = REBOL_Base_Proc;
 	wc.lpszClassName = TXT("RebBase");
-	if (!RegisterClassEx(&wc)) RL_Print("Failed to register Base class\n");
+	if (!RegisterClassEx(&wc)) RL_Print(cb_cast("Failed to register Base class\n"));
 
 	//Make_Subclass(Class_Name_Button, TEXT("BUTTON"), NULL, TRUE);
 
@@ -781,7 +781,7 @@ void Paint_Window(HWND window);
 
 		// Remove any closed windows:
 		for (n = 0; n < MAX_WINDOWS; n++) {
-			if (g = Gob_Windows[n].gob) {
+			if ((g = Gob_Windows[n].gob)) {
 				if (!GOB_PARENT(g) && GET_GOB_FLAG(g, GOBF_WINDOW))
 					OS_Close_Window(g);
 			}
@@ -922,7 +922,7 @@ void Paint_Window(HWND window);
 			style |= CS_OWNDC;
 			break;
 		default:
-			//RL_Print("unknown widget name");
+			//RL_Print(cb_cast("unknown widget name"));
 			return NULL;
 	}
 	
@@ -1151,6 +1151,11 @@ void Paint_Window(HWND window);
 		result = rect.top;
 	}
 	break;
+	case SM_SCREEN_NUM:
+	case SM_SCREEN_X:
+	case SM_SCREEN_Y:
+		// not used...
+		break;
 	}
 	return result;
 }
@@ -1458,7 +1463,7 @@ void Paint_Window(HWND window);
 						 | ICC_BAR_CLASSES
 						 | ICC_DATE_CLASSES;
 		if (!InitCommonControlsEx(&InitCtrlEx)) {
-			RL_Print("Could not initialize common controls!\n");
+			RL_Print(cb_cast("Could not initialize common controls!\n"));
 		}
 	}
 }

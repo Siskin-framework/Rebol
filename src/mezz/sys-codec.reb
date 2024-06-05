@@ -47,7 +47,7 @@ decode: function [
 			; original codecs were only natives
 			do-codec cod/entry 'decode data
 		][
-			either function? try [:cod/decode][
+			either any-function? try [:cod/decode][
 				cod/decode data
 			][
 				cause-error 'internal 'not-done type
@@ -75,7 +75,7 @@ encode: function [
 			]
 			do-codec cod/entry 'encode data
 		][
-			either function? try [:cod/encode][
+			either any-function? try [:cod/encode][
 				;@@ cannot use dynamic refinement, because some codecs don't have /as
 				either as [
 					cod/encode/as :data :options

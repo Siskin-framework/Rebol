@@ -814,6 +814,7 @@
 	REBINT *binds = WORDS_HEAD(Bind_Table); // GC safe to do here
 	REBCNT n;
 	REBFLG selfish = !IS_SELFLESS(frame);
+	REBVAL *val;
 
 	for (; NOT_END(value); value++) {
 		if (ANY_WORD(value)) {
@@ -838,11 +839,20 @@
 				}
 			}
 		}
-		else if ((ANY_BLOCK(value) || IS_MAP(value)) && (mode & BIND_DEEP))
+		else if ((ANY_BLOCK(value) || IS_MAP(value)) && (mode & BIND_DEEP)) {
+			// Recursion check: (variation of: Find_Same_Block(MOLD_LOOP, value))
+			for (val = BLK_HEAD(MOLD_LOOP); NOT_END(val); val++) {
+				if (VAL_SERIES(val) == VAL_SERIES(value)) return;
+			}
+			val = Append_Value(MOLD_LOOP);
+			Set_Block(val, VAL_SERIES(value));
 			Bind_Block_Words(frame, VAL_BLK_DATA(value), mode);
+			Remove_Last(MOLD_LOOP);
+		}
 		else if ((IS_FUNCTION(value) || IS_CLOSURE(value)) && (mode & BIND_FUNC))
 			Bind_Block_Words(frame, BLK_HEAD(VAL_FUNC_BODY(value)), mode);
 	}
+	
 }
 
 

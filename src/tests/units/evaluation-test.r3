@@ -90,6 +90,11 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/903
 		--assert all [error? e: try [do "<> 0"]  e/id = 'missing-arg]
 		--assert all [error? e: try [do next [1 <> 0]]  e/id = 'missing-arg]
+
+	--test-- "do string with Rebol header"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2596
+		--assert "Rebol []" == do "{Rebol []}"
+		--assert "^/Rebol []" == try [do "{^/Rebol []}"]
 		
 ===end-group===
 
@@ -845,7 +850,8 @@ Rebol [
 		]
 	--test-- "catch/with function!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1521
-		on-catch: func[value name][
+		;; using `any-type!` as `value` may be `unset!`
+		on-catch: func[value [any-type!] name][
 			if :name = 'foo    [return join "b" :value]
 			if unset?   :value [return true]
 			if integer? :value [return value * 10]
@@ -1092,10 +1098,9 @@ Rebol [
 ===start-group=== "WAIT"
 	--test-- "wait -1"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/342
-		--assert all [
-			error? err: try [wait -1]
-			err/id = 'out-of-range
-		]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2597
+		--assert none? try [wait -1]
+		--assert none? try [wait -1:0:0]
 
 ===end-group===
 

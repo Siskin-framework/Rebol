@@ -20,6 +20,7 @@ rebol-cmd: func[cmd][
 
 ===start-group=== "Command-Line Interface (/shell)"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2228
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2519
 	--test-- "--do"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2467
 		--assert 0 = rebol-cmd {--do "print 1 + 2"}

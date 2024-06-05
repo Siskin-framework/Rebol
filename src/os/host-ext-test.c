@@ -425,7 +425,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			REBSER* str = RL_MAKE_STRING(32, FALSE); // 32 bytes, latin1 (must be large enough!)
 			REBYTE ver[8];
 			RL_VERSION(ver);
-			snprintf(SERIES_DATA(str), SERIES_REST(str), "Version: %i.%i.%i", ver[1], ver[2], ver[3]);
+			snprintf(s_cast(SERIES_DATA(str)), SERIES_REST(str), "Version: %i.%i.%i", ver[1], ver[2], ver[3]);
 			SERIES_TAIL(str) = LEN_BYTES(SERIES_DATA(str));
 			RXA_SERIES(frm, 1) = str;
 			RXA_TYPE  (frm, 1) = RXT_STRING;
@@ -507,9 +507,9 @@ int XTestContext_mold(REBHOB *hob, REBSER *str) {
 	if (!str || !xtest) return 0;
 
 	len = snprintf(
-		SERIES_DATA(str),
+		s_cast(SERIES_DATA(str)),
 		SERIES_REST(str),
-		"0#%lx id: %u", (unsigned long)hob->data, xtest->id
+		"0#%lx id: %u", (unsigned long)(uintptr_t)hob->data, xtest->id
 	);
 	if (len > 0) SERIES_TAIL(str) += len;
 	return len;
@@ -527,6 +527,6 @@ void Init_Ext_Test(void)
 	spec.get_path  = XTestContext_get_path;
 	spec.set_path  = XTestContext_set_path;
 	spec.mold      = XTestContext_mold;
-	Handle_XTest = RL_REGISTER_HANDLE_SPEC("XTEST", &spec);
+	Handle_XTest = RL_REGISTER_HANDLE_SPEC((cb_cast("XTEST")), &spec);
 }
 #endif //TEST_EXTENSIONS

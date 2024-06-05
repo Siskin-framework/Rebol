@@ -1859,7 +1859,8 @@ extern REBSER *Scan_Full_Block(SCAN_STATE *scan_state, REBYTE mode_char);
 			if (!IS_ERROR(value)){
 				emitbuf->tail++; // Protect the block from GC
 				if (!Construct_Value(value, block)) {
-					if (IS_END(value)) Set_Block(value, block);
+					if (IS_END(value))
+						Set_Block(value, block);
 					if (GET_FLAG(scan_state->opts, SCAN_RELAX)) {
 						block = Make_Error(RE_MALCONSTRUCT, value, 0, 0);
 						SET_ERROR(value, RE_PAST_END, block);

@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Contributors
+**  Copyright 2012-2024 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -180,7 +180,7 @@
 		src_ser = Form_Tight_Block(src_val);
 	}
 	else if (!ANY_STR(src_val) || IS_TAG(src_val)) {
-		src_ser = Copy_Form_Value(src_val, 0);
+		src_ser = Form_Value(src_val, 0, FALSE);
 	}
 
 	// Use either new src or the one that was passed:

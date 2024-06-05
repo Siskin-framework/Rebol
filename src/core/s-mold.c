@@ -744,24 +744,24 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	REBYTE *sep = NULL;
 	REBOOL all = GET_MOPT(mold, MOPT_MOLD_ALL);
 	REBSER *series = mold->series;
-	REBFLG over = FALSE;
-
 
 	if (SERIES_WIDE(VAL_SERIES(value)) == 0)
 		Crash(RP_BAD_WIDTH, sizeof(REBVAL), 0, VAL_TYPE(value));
 
 	// Optimize when no index needed:
-	if (VAL_INDEX(value) == 0 && !IS_MAP(value)) // && (VAL_TYPE(value) <= REB_LIT_PATH))
+	if (VAL_INDEX(value) == 0)
 		all = FALSE;
+	// Force construction syntax in special path cases:
+	if (ANY_PATH(value) && (VAL_TAIL(value) <= 1 || !ANY_WORD(VAL_BLK(value))))
+		all = TRUE;
 
-	// If out of range, do not cause error to avoid error looping.
-	if (VAL_INDEX(value) >= VAL_TAIL(value)) over = TRUE; // Force it into []
+	// Reset index if it is over series tail: (a: [1 2]  b: tail a  clear a  mold b)
+	if (VAL_INDEX(value) > VAL_TAIL(value))
+		VAL_INDEX(value) = VAL_TAIL(value);
 
-	if (all || (over && !IS_BLOCK(value) && !IS_PAREN(value))) {
+	if (all) {
 		SET_FLAG(mold->opts, MOPT_MOLD_ALL);
 		Pre_Mold(value, mold); // #(block! part
-		//if (over) Append_Bytes(mold->series, "[]");
-		//else
 		Mold_Block_Series(mold, VAL_SERIES(value), 0, 0);
 		Post_Mold(value, mold);
 	}
@@ -799,8 +799,10 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 			break;
 		}
 
-		if (over) Append_Bytes(mold->series, sep ? cs_cast(sep) : "[]");
-		else Mold_Block_Series(mold, VAL_SERIES(value), VAL_INDEX(value), sep);
+		if (VAL_TAIL(value)==0)
+			Append_Bytes(mold->series, sep ? cs_cast(sep) : "[]");
+		else 
+			Mold_Block_Series(mold, VAL_SERIES(value), VAL_INDEX(value), sep);
 
 		if (VAL_TYPE(value) == REB_SET_PATH)
 			if (molded) Append_Byte(series, ':');
@@ -1149,7 +1151,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	ASSERT2(ser, RP_NO_BUFFER);
 
 	// Special handling of string series: {
-	if (ANY_STR(value) && !IS_TAG(value)) {
+	if (ANY_STR(value) && !IS_TAG(value)) { // tag! has different rules!
 
 		// Forming a string:
 		if (!molded) {
@@ -1158,9 +1160,10 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		}
 
 		// Special format for ALL string series when not at head:
-		if (GET_MOPT(mold, MOPT_MOLD_ALL) && VAL_INDEX(value) != 0) {
-			Mold_All_String(value, mold);
-			return;
+		if (GET_MOPT(mold, MOPT_MOLD_ALL)
+			&& (VAL_INDEX(value) != 0 || VAL_TYPE(value) >= REB_EMAIL && VAL_TAIL(value) == 0)) {
+				Mold_All_String(value, mold);
+				return;
 		}
 	}
 
@@ -1244,18 +1247,17 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_EMAIL:
 	case REB_URL:
-		if (VAL_LEN(value) == 0) {
-			Append_Bytes(ser, VAL_TYPE(value) == REB_EMAIL ? "#(email! \"\")" : "#(url! \"\")");
-			break;
+		if (GET_MOPT(mold, MOPT_MOLD_ALL)
+			&& NOT_FOUND == Find_Str_Char(VAL_SERIES(value), 0, 0,
+				VAL_TAIL(value), 1, VAL_TYPE(value) == REB_EMAIL ? '@' : ':', 0))
+		{
+			Mold_All_String(value, mold);
+			return;
 		}
 		Mold_Url(value, mold);
 		break;
 
 	case REB_TAG:
-		if (GET_MOPT(mold, MOPT_MOLD_ALL) && VAL_INDEX(value) != 0) {
-			Mold_All_String(value, mold);
-			return;
-		}
 		Mold_Tag(value, mold);
 		break;
 
@@ -1458,7 +1460,7 @@ append:
 
 /***********************************************************************
 **
-*/  REBSER *Copy_Form_Value(REBVAL *value, REBCNT opts)
+*/  REBSER *Form_Value(REBVAL *value, REBCNT opts, REBFLG copy)
 /*
 **		Form a value based on the mold opts provided.
 **
@@ -1469,7 +1471,7 @@ append:
 	mo.opts = opts;
 	Reset_Mold(&mo);
 	Mold_Value(&mo, value, 0);
-	return Copy_String(mo.series, 0, -1);
+	return copy ? Copy_String(mo.series, 0, -1) : mo.series;
 }
 
 

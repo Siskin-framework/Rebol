@@ -275,9 +275,55 @@ Rebol [
 	--assert 2 = index? find/same [1.0 1] 1
 	--assert 1 = index? find/same [1.0 1] 1.0
 
+--test-- "FIND block! block!"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2473
+	blk: [1.0 3 1 3 1.0 2.0 1 2]
+	--assert 5 = index? find blk [1 2]
+	--assert 1 = index? find blk [1 3]
+	--assert 5 = index? find blk [1.0 2]
+	--assert 7 = index? find/same blk [1 2]
+	--assert 3 = index? find/same blk [1 3]
+	--assert      none? find/same blk [1.0 2]
+	a: "a" b: "b" blk: reduce ["a" "b" a b]
+	--assert 1 = index? find blk reduce [a b]
+	--assert 1 = index? find blk reduce ["a" "b"]
+	--assert 3 = index? find/same blk reduce [a b]
+	--assert      none? find/same blk reduce [a "b"]
+	--assert      none? find/same blk reduce ["a" "b"]
+
+
 --test-- "FIND/SAME in string!"
 	--assert "AbcdAe" = find/same "aAbcdAe" "A"
 	--assert "Ae" = find/same/last "aAbcdAe" "A"
+
+
+;@@ https://github.com/Oldes/Rebol-issues/issues/1802
+--test-- "FIND/LAST string! in string!"
+	--assert "ab" = find/last "ab"  "a"
+	--assert "ab" = find/last "aab" "a"
+	--assert none?  find/last next "ab"  "a"
+	--assert "ab" = find/last next "aab" "a"
+--test-- "FIND/LAST char! in string!"
+	--assert "ab" = find/last "ab"  #"a"
+	--assert "ab" = find/last "aab" #"a"
+	--assert none?  find/last next "ab"  #"a"
+	--assert "ab" = find/last next "aab" #"a"
+--test-- "FIND/LAST tag! in string!"
+	--assert "<a>b" = find/last "<a>b"  <a>
+	--assert "<a>b" = find/last "<a><a>b" <a>
+	--assert none?    find/last next "<a>b" <a>
+	--assert none?    find/last find "<a>b" #"b" <a>
+	--assert "<a>"  = find/last find "<a>b<a>" #"b" <a>
+--test-- "FIND/LAST integer! in string!"
+	--assert "1b" = find/last "1b"  1
+	--assert "1b" = find/last "11b" 1
+	--assert none?  find/last next "1b"  1
+	--assert "1b" = find/last next "11b" 1
+--test-- "FIND/LAST integer! in block!"
+	--assert [1 b] = find/last [1 b] 1
+	--assert [1 b] = find/last [1 1 b] 1
+	--assert none?   find/last next [1 b] 1
+	--assert [1 b] = find/last next [1 1 b] 1
 
 --test-- "FIND/LAST/CASE in string!"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1495
@@ -400,6 +446,73 @@ Rebol [
 	--assert [%a %b #"a"] = supplement b #"A" ; case-insensitive
 	--assert [%a %b #"a" #"A"] = supplement/case b #"A"
 
+--test-- "SWITCH/SELECT/FIND consistency"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1830
+	--assert 1 == switch 1 [1.0 [1] 1 [2]]
+	--assert 1 == switch 1.0 [1 [1] 1.0 [2]]
+	--assert 1 == switch 1.0 [1 [1] 1.0 [2] 100% [3]]
+	--assert 1 == switch 100% [1 [1] 1.0 [2] 100% [3]]
+	--assert 1 == first select [1.0 [1] 1 [2]] 1
+	--assert 1 == first select [1 [1] 1.0 [2]] 1.0
+	--assert 1 == first select [1 [1] 1.0 [2] 100% [3]] 1.0
+	--assert 1 == first select [1 [1] 1.0 [2] 100% [3]] 100%
+	--assert 1 == first first find/tail [1.0 [1] 1 [2]] 1
+	--assert 1 == first first find/tail [1 [1] 1.0 [2]] 1.0
+	--assert 1 == first first find/tail [1 [1] 1.0 [2] 100% [3]] 1.0
+	--assert 1 == first first find/tail [1 [1] 1.0 [2] 100% [3]] 100%
+
+	--assert 2 == switch/case 1 [1.0 [1] 1 [2]]
+	--assert 2 == switch/case 1.0 [1 [1] 1.0 [2]]
+	--assert 2 == switch/case 1.0 [1 [1] 1.0 [2] 100% [3]]
+	--assert 3 == switch/case 100% [1 [1] 1.0 [2] 100% [3]]
+	--assert 2 == first select/case [1.0 [1] 1 [2]] 1
+	--assert 2 == first select/case [1 [1] 1.0 [2]] 1.0
+	--assert 2 == first select/case [1 [1] 1.0 [2] 100% [3]] 1.0
+	--assert 3 == first select/case [1 [1] 1.0 [2] 100% [3]] 100%
+	--assert 2 == first select/same [1.0 [1] 1 [2]] 1
+	--assert 2 == first select/same [1 [1] 1.0 [2]] 1.0
+	--assert 2 == first select/same [1 [1] 1.0 [2] 100% [3]] 1.0
+	--assert 3 == first select/same [1 [1] 1.0 [2] 100% [3]] 100%
+	--assert 2 == first first find/tail/case [1.0 [1] 1 [2]] 1
+	--assert 2 == first first find/tail/case [1 [1] 1.0 [2]] 1.0
+	--assert 2 == first first find/tail/case [1 [1] 1.0 [2] 100% [3]] 1.0
+	--assert 3 == first first find/tail/case [1 [1] 1.0 [2] 100% [3]] 100%
+	--assert 2 == first first find/tail/same [1.0 [1] 1 [2]] 1
+	--assert 2 == first first find/tail/same [1 [1] 1.0 [2]] 1.0
+	--assert 2 == first first find/tail/same [1 [1] 1.0 [2] 100% [3]] 1.0
+	--assert 3 == first first find/tail/same [1 [1] 1.0 [2] 100% [3]] 100%
+
+	--assert 2 == switch "a" [%a [1] "a" [2]]
+	--assert 1 == switch "a" ["A" [1] "a" [2]]
+	--assert 1 == switch quote 'a [a [1] 'a [2]]
+	--assert 1 == switch quote a [A [1] a [2]]
+	--assert 1 == switch #"a" [#"A" [1] #"a" [2]]
+	--assert 2 == first select [%a [1] "a" [2]] "a"
+	--assert 1 == first select ["A" [1] "a" [2]] "a"
+	--assert 1 == first select [a [1] 'a [2]] quote 'a
+	--assert 1 == first select [A [1]  a [2]] quote a
+	--assert 1 == first select [#"A" [1] #"a" [2]] #"a"
+	--assert 2 == first first find/tail [%a [1] "a" [2]] "a"
+	--assert 1 == first first find/tail ["A" [1] "a" [2]] "a"
+	--assert 1 == first first find/tail [a [1] 'a [2]] quote 'a
+	--assert 1 == first first find/tail [A [1]  a [2]] quote a
+	--assert 1 == first first find/tail [#"A" [1] #"a" [2]] #"a"
+
+	--assert 2 == switch/case "a" [%a [1] "a" [2]]
+	--assert 2 == switch/case "a" ["A" [1] "a" [2]]
+	--assert 2 == switch/case quote 'a [a [1] 'a [2]]
+	--assert 2 == switch/case quote a [A [1] a [2]]
+	--assert 2 == switch/case #"a" [#"A" [1] #"a" [2]]
+	--assert 2 == first select/case [%a [1] "a" [2]] "a"
+	--assert 2 == first select/case ["A" [1] "a" [2]] "a"
+	--assert 2 == first select/case [a [1] 'a [2]] quote 'a
+	--assert 2 == first select/case [A [1]  a [2]] quote a
+	--assert 2 == first select/case [#"A" [1] #"a" [2]] #"a"
+	--assert 2 == first first find/tail/case [%a [1] "a" [2]] "a"
+	--assert 2 == first first find/tail/case ["A" [1] "a" [2]] "a"
+	--assert 2 == first first find/tail/case [a [1] 'a [2]] quote 'a
+	--assert 2 == first first find/tail/case [A [1]  a [2]] quote a
+	--assert 2 == first first find/tail/case [#"A" [1] #"a" [2]] #"a"
 ===end-group===
 
 ===start-group=== "PATH notation"
@@ -1777,6 +1890,11 @@ Rebol [
 	][
 		--assert result == foreach [ref:] :values :code
 	]
+
+--test-- "Context of FOREACH words"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2273
+	--assert none? foreach [x x x] [1 2 3] [context? 'x]
+	--assert  3 == foreach [x x x] [1 2 3] [x]
 
 ===end-group===
 

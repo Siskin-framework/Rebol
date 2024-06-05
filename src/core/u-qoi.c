@@ -62,8 +62,10 @@
 	desc.height   = codi->h;
 	desc.channels = 4;
 	desc.colorspace = QOI_SRGB;
+	int out_len = 0;
 
-	codi->data = qoi_encode(codi->bits, &desc, &codi->len);
+	codi->data = qoi_encode(codi->bits, &desc, &out_len);
+	codi->len = (out_len > 0) ? out_len : 0;
 	codi->error = codi->data == NULL ? -1 : 0;
 }
 

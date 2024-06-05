@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -792,7 +793,6 @@ is_none:
 		tail = GOB_PANE(gob) ? GOB_TAIL(gob) : 0;
 	} else if (!(IS_DATATYPE(val) && action == A_MAKE)){
 		Trap_Arg(val);
-		return R_FALSE; // shut-up compiler's warnings
 	}
 
 	// unary actions

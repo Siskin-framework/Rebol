@@ -520,6 +520,13 @@ enum {
 #define	CHECK_MARK(s,d) if (!IS_MARK_SERIES(s)) Mark_Series(s, d);
 #endif
 
+// Using the mark queue only if we are deep enough
+#define	QUEUE_CHECK_MARK(s,d) \
+		if (!IS_MARK_SERIES(s)) {\
+			if (depth < 64) Mark_Series(s, d); \
+			else Queue_Mark_Series(s);\
+		}
+
 //#define LABEL_SERIES(s,l) s->label = (l)
 #define IS_BLOCK_SERIES(s) (SERIES_WIDE(s) == sizeof(REBVAL))
 
@@ -1318,6 +1325,7 @@ typedef struct Reb_All {
 #define ANY_EVAL_BLOCK(v)	(VAL_TYPE(v) >= REB_BLOCK  && VAL_TYPE(v) <= REB_PAREN)
 #define ANY_OBJECT(v)		(VAL_TYPE(v) >= REB_OBJECT && VAL_TYPE(v) <= REB_PORT)
 #define ANY_NUMBER(v)	    (VAL_TYPE(v) >= REB_INTEGER && VAL_TYPE(v) <= REB_MONEY)
+#define ANY_SCALAR(v)	    (VAL_TYPE(v) >= REB_UNSET  && VAL_TYPE(v) <= REB_DATE)
 
 #define ANY_BLOCK_TYPE(t)   (t >= REB_BLOCK   && t <= REB_LIT_PATH)
 #define ANY_STR_TYPE(t)     (t >= REB_STRING  && t <= REB_TAG)

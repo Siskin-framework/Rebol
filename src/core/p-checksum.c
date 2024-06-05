@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Contributors
+**  Copyright 2012-2024 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -284,7 +284,6 @@
 	method = Obj_Value(spec, STD_PORT_SPEC_CHECKSUM_METHOD);
     if (!method || !IS_WORD(method)) {
         Trap1(RE_INVALID_SPEC, spec);
-        return 0; //just to make xcode analyze happy
     }
 
 	req = Use_Port_State(port, RDI_CHECKSUM, sizeof(REBREQ));

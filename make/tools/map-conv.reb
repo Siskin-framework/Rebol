@@ -71,7 +71,7 @@ map-conv: function/with [
 		foreach file read path [
 			if dir? file [process-dir path/:file]
 			all [
-				find [%.reb %.r3] suffix? file
+				find [%.reb %.r3 %.red] suffix? file
 				process-file path/:file
 			]
 		]

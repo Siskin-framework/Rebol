@@ -2,8 +2,8 @@ Rebol [
 	Title:  "HTTPd Scheme"
 	Type:    module
 	Name:    httpd
-	Date:    10-Jan-2024
-	Version: 0.9.1
+	Date:    4-Jun-2024
+	Version: 0.9.2
 	Author: ["Andreas Bolka" "Christopher Ross-Gill" "Oldes"]
 	Exports: [serve-http http-server decode-target to-CLF-idate]
 	Home:    https://github.com/Oldes/Rebol-HTTPd
@@ -37,7 +37,7 @@ Rebol [
 		09-May-2023 "Oldes" {Root-less configuration possibility (default)}
 		14-Dec-2023 "Oldes" {Deprecated the `http-server` function in favor of `serve-http` with a different configuration input}
 	]
-	Needs: [3.16.0 mime-types] ;; new construction syntax since 3.16.0
+	Needs: [3.11.0 mime-types]
 ]
 
 append system/options/log [httpd: 1]
@@ -216,11 +216,11 @@ sys/make-scheme [
 					clients: make block! 16
 				]
 				subport/extra/config:
-				config: make map! [
-					root:       #(none)
+				config: make map! reduce/no-set [
+					root:        none
 					index:       [%index.html %index.htm]
-					keep-alive: #(true)
-					list-dir?:  #(true)
+					keep-alive:  true
+					list-dir?:   true
 					server-name: "Rebol3-HTTPd"
 				]
 			]
@@ -618,7 +618,7 @@ sys/make-scheme [
 	]
 
 	Awake-Client: wrap [
-		chars-method: #(bitset! #{00000000000000007FFFFFE0}) ; #"A" - #"Z"
+		chars-method: charset [#"A" - #"Z"]
 		;from-method: ["GET" | "POST" | "HEAD" | "PUT" | "DELETE" | "TRACE" | "CONNECT" | "OPTIONS"]
 		chars: complement union space: charset " " charset [#"^@" - #"^_"]
 		CRLF2BIN: #{0D0A0D0A}
@@ -917,7 +917,7 @@ sys/make-scheme [
 			;try [remove find clients port]
 		]
 		log-debug ["Ports open:" length? clients]
-		if ctx/done? [
+		if all [ctx/done? zero? length? clients][
 			log-more "Server's job done, closing initiated"
 			ctx/parent/data: ctx/done?
 			Awake-Server make event! [type: 'CLOSE port: ctx/parent]
@@ -988,11 +988,11 @@ http-server: function [
 	actions [block! object!] "Functions like: On-Get On-Post On-Post-Received On-Read On-List-Dir On-Not-Found"
 	/no-wait "Will not enter wait loop"
 ][
-	sys/log/error 'HTTPD "`http-server` function is deprecated, use `start-http` instead!"
+	sys/log/error 'HTTPD "`http-server` function is deprecated, use `serve-http` instead!"
 	spec: either config [[]][to block! spec]
 	if actor [extend spec 'actor actions]
 	extend spec 'port port
-	start-http/:no-wait spec
+	serve-http/:no-wait spec
 ]
 
 serve-http: function [

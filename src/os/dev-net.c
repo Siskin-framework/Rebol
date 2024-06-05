@@ -85,7 +85,7 @@ static void Get_Local_IP(REBREQ *sock)
 	// Get the local IP address and port number.
 	// This code should be fast and never fail.
 	SOCKAI sa;
-	unsigned int len = sizeof(sa);
+	int len = sizeof(sa);
 
 	getsockname(sock->socket, (struct sockaddr *)&sa, &len);
 	sock->net.local_ip = sa.sin_addr.s_addr; //htonl(ip); NOTE: REBOL stays in network byte order
@@ -96,7 +96,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 {
 	// Set non-blocking mode. Return TRUE if no error.
 #ifdef FIONBIO
-	long mode = 1;
+	u_long mode = 1;
 	return !IOCTL(sock, FIONBIO, &mode);
 #else
 	int flags;
@@ -317,7 +317,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 
 	// Else, make the lookup request:
 	host = OS_Make(MAXGETHOSTSTRUCT); // be sure to free it
-	handle = WSAAsyncGetHostByName(Event_Handle, WM_DNS, sock->data, (char*)host, MAXGETHOSTSTRUCT);
+	handle = WSAAsyncGetHostByName(Event_Handle, WM_DNS, (const char*)sock->data, (char*)host, MAXGETHOSTSTRUCT);
 	if (handle != 0) {
 		sock->net.host_info = host;
 		sock->length = sock->socket; // save TCP socket temporarily
@@ -475,13 +475,13 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 		//WATCH1("sendto data: %x\n", sock->data);
 		if (GET_FLAG(sock->modes, RST_UDP)) {
 			Set_Addr(&remote_addr, sock->net.remote_ip, sock->net.remote_port);
-			result = sendto(sock->socket, sock->data, len, flags,
+			result = sendto(sock->socket, (const char*)sock->data, len, flags,
 				(struct sockaddr*)&remote_addr, addr_len);
 		}
 		else {
 			// Expects that the socket is already connected and
 			// there is no need to specify the remote address again
-			result = send(sock->socket, sock->data, len, flags);
+			result = send(sock->socket, (const char*)sock->data, len, flags);
 		}
 
 		//printf("sento time: %d\n", OS_Delta_Time(tm,  0));
@@ -500,7 +500,7 @@ static REBOOL Nonblocking_Mode(SOCKET sock)
 		// if (result < 0) ...
 	}
 	else {
-		result = recvfrom(sock->socket, sock->data, len, 0,
+		result = recvfrom(sock->socket, (char*)sock->data, len, 0,
 						  (struct sockaddr*)&remote_addr, &addr_len);
 		WATCH2("recv() len: %d result: %d\n", len, result);
 
@@ -607,7 +607,7 @@ lserr:
 {
 	SOCKAI sa;
 	REBREQ *news;
-	unsigned int len = sizeof(sa);
+	int len = sizeof(sa);
 	int result;
 	extern void Attach_Request(REBREQ **prior, REBREQ *req);
 
