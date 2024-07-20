@@ -4,7 +4,7 @@
 PRODUCT= rebol-bsd-bootstrap-64bit
 
 # For the build toolchain:
-CC=	   $(TOOLS)clang
+#CC=	   $(TOOLS)clang
 NM=	   $(TOOLS)nm
 STRIP= $(TOOLS)strip
 
@@ -21,7 +21,7 @@ CD= ./
 
 # Paths used by make:
 R= $(UP)
-O= $(CD)/tmp/clang-64bit/rebol-bsd-bootstrap-64bit
+O= $(CD)/tmp/cc-64bit/rebol-bsd-bootstrap-64bit
 S= $(R)/src
 
 USE_FLAGS=
