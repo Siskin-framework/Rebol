@@ -275,11 +275,12 @@ copy: action [
 
 take: action [
 	{Removes and returns one or more elements.}
-	series [series! port! gob! none!] {At position (modified)}
+	series [series! port! gob! none!] {At the current position (modified)}
 	/part {Specifies a length or end position}
 	range [number! series! pair!]
 	/deep {Also copies series values within the block}
-	/last {Take it from the tail end}
+	/last {Takes from the tail end}
+	/all  {Copies the complete content of the series and then clears it}
 ]
 
 put: action [
@@ -396,7 +397,7 @@ delete: action [
 
 open: action [
 	{Opens a port; makes a new port from a specification if necessary.}
-	spec [port! file! url! block!]
+	spec [port! file! url! block! word!]
 	/new   {Create new file - if it exists, reset it (truncate)}
 	/read  {Open for read access}
 	/write {Open for write access}
@@ -412,7 +413,7 @@ close: action [
 
 read: action [
 	{Read from a file, URL, or other port.}
-	source [port! file! url! block!]
+	source [port! file! url! block! word!]
 	/part {Partial read a given number of units (source relative)}
 		length [number!]
 	/seek {Read from a specific position (source relative)}
@@ -427,7 +428,7 @@ read: action [
 
 write: action [
 	{Writes to a file, URL, or port - auto-converts text strings.}
-	destination [port! file! url! block!]
+	destination [port! file! url! block! word!]
 	data  {Data to write (non-binary converts to UTF-8)}
 	/part {Partial write a given number of units}
 		length [number!]
@@ -450,9 +451,9 @@ open?: action [
 
 query: action [
 	{Returns information about target if possible.}
-	target [port! file! url! block! vector! date! handle!]
-	/mode "Get mode information"
-	field [word! block! none!] "NONE will return valid modes for target type"
+	target [port! file! url! block! vector! date! handle! word!]
+	field [word! block! none! datatype!] "NONE will return valid modes for target type"
+	/mode "** DEPRECATED **"
 ]
 
 modify: action [

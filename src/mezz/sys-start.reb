@@ -110,6 +110,8 @@ start: func [
 	module-paths: does [
 		sys/log/error 'REBOL "`system/options/module-paths` is deprecated and will be removed!"
 		sys/log/error 'REBOL "Use `system/options/modules` as a path to the directory instead!"
+		sys/log/error 'REBOL "`query/mode` is deprecated; `field` is always required!"
+		sys/log/error 'REBOL "`date` field as a result from `query` on file ports is deprecated, use `modified`!"
 		self/module-paths: reduce [modules]
 	]
 

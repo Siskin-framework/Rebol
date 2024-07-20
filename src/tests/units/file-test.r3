@@ -86,7 +86,7 @@ if find [Linux macOS] system/platform [
 	call/shell/wait "touch a:0:0"
 	--assert %a%3A0%3A0 == to-rebol-file "a:0:0" 
 	--assert %a%3A0%3A0 == f: first read %.
-	--assert %a%3A0%3A0 == second split-path query/mode f 'name
+	--assert %a%3A0%3A0 == second split-path query f 'name
 	delete f
 	cd ..
 	delete %issue-2538
@@ -195,6 +195,43 @@ if find [Linux macOS] system/platform [
 	--test-- "echo failed"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/834
 		--assert all [error? e: try [echo %not-existing-dir/foo] e/id = 'cannot-open]
+===end-group===
+
+
+===start-group=== "QUERY"
+	--test-- "query file dates (some asserts may fail in CI and WSL)"
+		write %query-test "test"
+		fields: [:modified :created :accessed]
+		--assert all [
+			block? probe dates1: query %query-test fields
+			date? dates1/1
+			date? dates1/2
+			date? dates1/3
+		]
+		wait 1
+		--assert all [
+			block? probe dates2: query %query-test fields
+			dates1/1 = dates2/1
+			dates1/2 = dates2/2
+			dates1/3 = dates2/3
+		]
+		wait 1
+		read %query-test ;; should change access time
+		--assert all [
+			block? probe dates2: query %query-test fields
+			dates1/1 = dates2/1
+			dates1/2 = dates2/2
+			dates1/3 < dates2/3
+		]
+		wait 1
+		write/append %query-test "!" ;; should change modified and access times
+		--assert all [
+			block? probe dates3: query %query-test fields
+			dates2/1 < dates3/1
+			dates2/2 = dates3/2
+			dates2/3 <= dates3/3
+		]
+		delete %query-test
 ===end-group===
 
 

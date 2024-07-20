@@ -4,11 +4,11 @@ Rebol [
 	Author:   "Oldes"
 	File:     %test-midi.r3
 	Version:  1.0.0
-	Requires: 3.11.0
+	Needs:    3.11.0
 ]
 
-midi: query midi://
-unless object? midi [ print as-purple "No MIDI available!" quit]
+midi: query midi:// [devices-in devices-out]
+unless block? midi [ print as-purple "No MIDI available!" quit]
 
 print [as-yellow "Input devices: " length? midi/devices-in]
 foreach dev midi/devices-in  [ print [tab mold dev] ]

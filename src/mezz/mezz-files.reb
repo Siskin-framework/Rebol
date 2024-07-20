@@ -274,7 +274,7 @@ list-dir: closure/with [
 		value depth
 		/local info date time size
 	][
-		info: query/mode value [name size date]
+		info: query value [:name :size :date]
 		unless info [
 			return ajoin [
 				"^[[1;35m *** Invalid symbolic link:  ^[[0;35m"

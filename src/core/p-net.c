@@ -82,21 +82,22 @@ enum Transport_Types {
 	}
 	else if (IS_BLOCK(info)) {
 		// example:
-		//	query/mode port [remote-ip remote-port] ;== [127.0.0.1 1234]
+		//	query port [:remote-ip :remote-port] ;== [127.0.0.1 1234]
 		// or:
-		//	 query/mode port [remote-ip: remote-port:] ;== [remote-ip: 127.0.0.1 remote-port: 1234]
+		//	 query port [remote-ip remote-port] ;== [remote-ip: 127.0.0.1 remote-port: 1234]
 		// or combined:
-		//	 query/mode file [remote-ip: remote-port] ;== [remote-ip: 127.0.0.1 1234]
+		//	 query file [remote-ip: :remote-port] ;== [remote-ip: 127.0.0.1 1234]
 		// When not supported word is used, if will throw an error
 
 		REBSER *values = Make_Block(2 * BLK_LEN(VAL_SERIES(info)));
 		REBVAL *word = VAL_BLK_DATA(info);
 		for (; NOT_END(word); word++) {
 			if (ANY_WORD(word)) {
-				if (IS_SET_WORD(word)) {
-					// keep the set-word in result
+				if (!IS_GET_WORD(word)) {
+					// keep the word as a key (converted to the set-word) in the result
 					val = Append_Value(values);
 					*val = *word;
+					VAL_TYPE(val) = REB_SET_WORD;
 					VAL_SET_LINE(val);
 				}
 				val = Append_Value(values);
@@ -342,8 +343,7 @@ enum Transport_Types {
 	case A_QUERY:
 		// Get specific information - the scheme's info object.
 		// Special notation allows just getting part of the info.
-		refs = Find_Refines(ds, ALL_QUERY_REFS);
-		if ((refs & AM_QUERY_MODE) && IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
+		if (IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
 			Ret_Net_Modes(port, D_RET);
 			return R_RET;
 		}

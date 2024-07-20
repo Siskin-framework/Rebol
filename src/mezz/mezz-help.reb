@@ -88,7 +88,7 @@ import (module [
 	]
 
 	form-type: func [value] [
-		a-an head clear back tail mold type? :value
+		a-an head clear back tail form type? :value
 	]
 
 	form-val: func [val /local limit hdr tmp] [
@@ -106,12 +106,12 @@ import (module [
 			]
 			any-function? :val [ any [title-of :val spec-of :val] ]
 			datatype?     :val [ get in spec-of val 'title ]
-			typeset?      :val [ to block! val]
+			typeset?      :val [ ajoin [#"[" val #"]"] ]
 			port?         :val [ reduce [val/spec/title val/spec/ref] ]
 			image?        :val [ mold/part/all/flat val max-desc-width]
 			gob?          :val [ return reform ["offset:" val/offset "size:" val/size] ]
 			vector?       :val [ mold/part/all/flat val max-desc-width]
-			;none?         :val [ mold/all val]
+			any [logic? :val none? :val unset? :val] [ form val ]
 			true [:val]
 		]
 		unless string? val [val: mold/part/flat val max-desc-width]
@@ -201,7 +201,7 @@ import (module [
 	][
 		;@@ quering buffer width in CI under Windows now throws error: `Access error: protocol error: 6`
 		;@@ it should return `none` like under Posix systems!
-		cols: any [ attempt [ query/mode system/ports/input 'buffer-cols ] 120]
+		cols: any [ attempt [ query system/ports/input 'buffer-cols ] 120]
 		max-desc-width: cols - 35
 		buffer: any [string  clear ""]
 		catch [

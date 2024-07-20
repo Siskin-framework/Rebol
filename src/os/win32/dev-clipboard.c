@@ -76,6 +76,7 @@
 	REBUNI *cp;
 	REBUNI *bin;
 	REBINT len;
+	REBCNT ok;
 
 	req->actual = 0;
 
@@ -85,7 +86,14 @@
 		return DR_ERROR;
 	}
 
-	if (!OpenClipboard(NULL)) {
+	MSG msg;
+	for (int i = 1; i < 4; i++) {
+		ok = OpenClipboard(NULL);
+		if (ok) break;
+		Sleep(i);
+		PeekMessage(&msg, NULL, 0, 0, 0);
+	}
+	if (!ok) {
 		req->error = 20;
 		return DR_ERROR;
 	}
@@ -130,8 +138,9 @@
 ***********************************************************************/
 {
 	HANDLE data;
+	MSG msg;
 	REBYTE *bin;
-	REBCNT err;
+	REBCNT ok;
 	REBINT len = req->length; // in bytes
 
 	req->actual = 0;
@@ -151,20 +160,28 @@
 
 	COPY_MEM(bin, req->data, len);
 	bin[len] = 0;
-	GlobalUnlock(data);
 
-	if (!OpenClipboard(NULL)) {
+	
+	for (int i = 1; i < 4; i++) {
+		ok = OpenClipboard(NULL);
+		if (ok) break;
+		Sleep(i);
+		PeekMessage(&msg, NULL, 0, 0, 0);
+	}
+	if (!ok) {
+		GlobalUnlock(data);
 		req->error = 20;
 		return DR_ERROR;
 	}
 
 	EmptyClipboard();
 
-	err = !SetClipboardData(GET_FLAG(req->flags, RRF_WIDE) ? CF_UNICODETEXT : CF_TEXT, data);
-
+	ok = SetClipboardData(GET_FLAG(req->flags, RRF_WIDE) ? CF_UNICODETEXT : CF_TEXT, data);
+	
+	GlobalUnlock(data);
 	CloseClipboard();
 
-	if (err) {
+	if (!ok) {
 		req->error = 50;
 		return DR_ERROR;
 	}

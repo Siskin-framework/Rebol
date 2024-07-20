@@ -2035,7 +2035,7 @@ TLS-server-awake: func [event /local port info serv] [
 		accept [
 			serv: event/port
 			port: first serv
-			info: query port
+			info: query port [remote-ip remote-port]
 			;? info
 			;? serv
 			port/extra: make TLS-context [

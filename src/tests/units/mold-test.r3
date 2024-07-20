@@ -263,23 +263,23 @@ Rebol [
 
 
 ===start-group=== "mold-all"
-	
-	--test-- "mold-true" --assert "true" = mold true
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2159
+	--test-- "mold-true" --assert "#(true)" = mold true
 
 	--test-- "mold-all-true" --assert "#(true)" = mold/all true
 
-	--test-- "mold-false" --assert "false" = mold false
+	--test-- "mold-false" --assert "#(false)" = mold false
 
 	--test-- "mold-all-false" --assert "#(false)" = mold/all false
 
-	--test-- "mold-none" --assert "none" = mold none
+	--test-- "mold-none" --assert "#(none)" = mold none
 
 	--test-- "mold-all-none" --assert "#(none)" = mold/all none
 
-	--test-- "mold-block" --assert "[true false none]" = mold [#(true) #(false) #(none)]
+	--test-- "mold-block" --assert "[true false none #(true) #(false) #(none)]" = mold [true false none #(true) #(false) #(none)]
 
 	--test-- "mold-all-block"
-		--assert "[#(true) #(false) #(none)]" = mold/all [#(true) #(false) #(none)]
+		--assert "[true false none #(true) #(false) #(none)]" = mold/all [true false none #(true) #(false) #(none)]
 
 	--test-- "mold/all block at tail"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1192
@@ -315,7 +315,7 @@ Rebol [
 		a: [1 2 3 4]
 		b: tail a
 		clear a 
-		--assert "#(block! [])" == mold/all b
+		--assert "[]" == mold/all b
 		a: 'a/b/c/d/e
 		b: tail a
 		clear a 
@@ -567,7 +567,7 @@ Rebol [
 	--test-- "mold unset!"
 		--assert "#(unset)" = mold ()
 		--assert "#(unset)" = mold/all ()
-		--assert   "unset!" = mold type? () 
+		--assert "#(unset!)" = mold type? () 
 		--assert "#(unset!)" = mold/all type? () 
 	--test-- "form unset!"
 		--assert "" = form ()
@@ -575,13 +575,30 @@ Rebol [
 ===end-group===
 
 ===start-group=== "mold path!"
-	--test-- "mold path"
-		--assert "a/b" = mold 'a/b
-		--assert "b" = mold next 'a/b
-		--assert "#(path! [a b] 2)" = mold/all next 'a/b
-	--test-- "mold empty path"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/868
-		--assert "#(path! [])" = mold make path! []
+
+	--test-- "mold path!"
+		--assert "a/b" = mold 'a/b
+		--assert   "b" = mold next 'a/b
+		--assert    "" = mold clear 'a/b
+	--test-- "mold/all path!"
+		--assert "a/b" = mold/all 'a/b
+		--assert "#(path! [a b] 2)" = mold/all next 'a/b
+		--assert "#(path! [])"     = mold/all clear 'a/b
+	--test-- "form path!"
+		--assert "a/b" = form 'a/b
+		--assert   "b" = form next 'a/b
+		--assert    "" = form clear 'a/b
+
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1947
+	--assert equal? make path! [ ] load mold/all make path! [ ]
+	--assert equal? make path! [a] load mold/all make path! [a]
+	--assert equal? make lit-path! [ ] load mold/all make lit-path! [ ]
+	--assert equal? make lit-path! [a] load mold/all make lit-path! [a]
+	--assert equal? make get-path! [ ] load mold/all make get-path! [ ]
+	--assert equal? make get-path! [a] load mold/all make get-path! [a]
+	--assert equal? make set-path! [ ] load mold/all make set-path! [ ]
+	--assert equal? make set-path! [a] load mold/all make set-path! [a]
 
 ===end-group===
 
@@ -617,7 +634,7 @@ Rebol [
 ===start-group=== "mold error!"
 	--test-- "mold error!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1003
-		--assert {make error! [code: 101 type: 'Note id: 'exited arg1: none arg2: none arg3: none near: none where: none]} = mold/flat make error! [type: 'Note id: 'exited]
+		--assert {make error! [code: 101 type: 'Note id: 'exited arg1: #(none) arg2: #(none) arg3: #(none) near: #(none) where: #(none)]} = mold/flat make error! [type: 'Note id: 'exited]
 		--assert {#(error! [code: 101 type: Note id: exited arg1: #(none) arg2: #(none) arg3: #(none) near: #(none) where: #(none)])} = mold/all/flat make error! [type: 'Note id: 'exited]
 		--assert {#(error! [code: 401 type: Math id: overflow arg1: #(none) arg2: #(none) arg3: #(none) near: #(none) where: #(none)])} = mold/all/flat make error! [type: 'Math id: 'overflow]
 ===end-group===

@@ -971,7 +971,6 @@ Rebol [
 	--assert [4]   = take/part s 3
 	--assert []    = take/part s 1
 
-
 	--test-- "take binary!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/963
 	--assert 32 = take #{20}
@@ -982,6 +981,30 @@ Rebol [
 	--assert #{0102} = take/part s 2
 	--assert #{0304} = take/part skip s 2 -5 ;@@ https://github.com/Oldes/Rebol-issues/issues/373
 	--assert #{0506} = take/part s 10
+
+	--test-- "take/all binary!"
+	s: #{010203040506}
+	--assert all [#{010203040506} == take/all s  empty? s]
+	s: skip #{010203040506} 3
+	--assert all [#{040506} == take/all s  #{010203} == head s]
+	s: next #{0102} clear head s ;; tail over index
+	--assert all [#{} == take/all s #{} == head s]
+
+	--test-- "take/all block!"
+	s: [1 2 3 4 5 6]
+	--assert all [[1 2 3 4 5 6] == take/all s  empty? s]
+	s: skip [1 2 3 4 5 6] 3
+	--assert all [[4 5 6] == take/all s  [1 2 3] == head s]
+	s: next [1 2] clear head s ;; tail over index
+	--assert all [[] == take/all s [] == head s]
+
+	--test-- "take/all string!"
+	s: "123456"
+	--assert all ["123456" == take/all s  empty? s]
+	s: skip "123456" 3
+	--assert all ["456" == take/all s  "123" == head s]
+	s: next "12" clear head s ;; tail over index
+	--assert all ["" == take/all s "" == head s]
 
 ===end-group===
 
@@ -2724,8 +2747,8 @@ Rebol [
 ===start-group=== "TO-*"
 
 --test-- "to-path"
-	--assert (mold to-path [1 2 3]) = "1/2/3"
-	--assert (mold to-path [1 none 3]) = "1/none/3"
+	--assert (mold to-path [1 2 3]) = "#(path! [1 2 3])"
+	--assert (mold to-path [1 none 3]) = "#(path! [1 none 3])"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/477
 	--assert path? p: try [to-path b: [1 #(none) #(true) [] () #{}]]
 	--assert integer? p/1

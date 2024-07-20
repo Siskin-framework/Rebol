@@ -504,7 +504,7 @@ chk_neg:
 	if (!tmp) return R_NONE;
 
 	// Convert OS native wide string back to Rebol file type
-#ifdef OS_WIDE == TRUE
+#ifdef OS_WIDE_CHAR
 	new = To_REBOL_Path(tmp, 0, OS_WIDE, FALSE);
 #else
 	REBLEN len = LEN_BYTES(tmp);

@@ -125,6 +125,14 @@
 		}
 		break;
 
+	case A_OPEN:
+	case A_READ:
+	case A_WRITE:
+	case A_QUERY:
+		// Support for port: OPEN 'console, READ 'clipboard etc..
+		// The word is used as a name of the scheme
+		return T_Port(ds, action);
+
 	default:
 		Trap_Action(type, action);
 	}

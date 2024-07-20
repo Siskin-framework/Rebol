@@ -158,21 +158,21 @@ Rebol [
     3 4
 ]}
 
---test-- "QUERY on vector"
+--test-- "QUERY on vector as object"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2352
 	v: make vector! [unsigned integer! 16 2]
-	o: query v
+	o: query v object!
 	--assert object? o
 	--assert not o/signed
 	--assert o/type = 'integer!
 	--assert o/size = 16
 	--assert o/length = 2
---test-- "QUERY/MODE on vector"
-	--assert [signed type size length] = query/mode v none
-	--assert [16 integer!] = query/mode v [size type]
-	--assert block? b: query/mode v [signed: length:]
+--test-- "QUERY on vector"
+	--assert [signed type size length] = query v none
+	--assert [16 integer!] = query v [:size :type]
+	--assert block? b: query v [signed length]
 	--assert all [not b/signed b/length = 2]
-	--assert 16 = query/mode v 'size
+	--assert 16 = query v 'size
 	--assert 16 = size? v
 --test-- "REFLECT on vector"
 	--assert 16 = reflect v 'size

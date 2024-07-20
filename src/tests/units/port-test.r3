@@ -22,19 +22,19 @@ Rebol [
 		--assert  not error? [delete %port-issue-2320/]
 	--test-- "query directory info"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1712
-		--assert [name size date type] = query/mode %. none
-		--assert 'dir     = query/mode %. 'type
-		--assert date?      query/mode %. 'date
-		--assert what-dir = query/mode %. 'name
+		--assert (words-of system/standard/file-info) = query %. none
+		--assert 'dir     = query %. 'type
+		--assert date?      query %. 'date
+		--assert what-dir = query %. 'name
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2305
-		--assert      none? query/mode %. 'size
+		--assert      none? query %. 'size
 	--test-- "query directory type"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/606
 		make-dir %dir-606/
 		--assert all [
-			object? d: query %dir-606
+			object? d: query %dir-606 object!
 			d/type = 'dir
-			object? d: query %dir-606/
+			object? d: query %dir-606/ object!
 			d/type = 'dir
 			d/size = none
 		]
@@ -201,15 +201,15 @@ if system/platform = 'Windows [
 	--test-- "exists? %/"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2317
 		--assert 'dir = exists? %/       ;@@ https://github.com/Oldes/Rebol-issues/issues/612
-		--assert object? info: query %/
+		--assert object? info: query %/ object!
 		--assert info/name = %/
 		--assert info/type = 'dir
 		--assert none? info/size
 		either system/platform = 'Windows [
-			--assert none? info/date
+			--assert none? info/modified
 		][
 			; on linux %/ is just a normal directory root
-			--assert date? info/date
+			--assert date? info/modified
 		]
 		
 	--test-- "unicode directory"
@@ -231,27 +231,27 @@ if system/platform = 'Windows [
 	--test-- "query file info"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1712
 		file: %units/files/alice29.txt.gz
-		--assert [name size date type] = query/mode file none
-		--assert 'file = query/mode file 'type
-		--assert date?   query/mode file 'date
-		--assert 51732 = query/mode file 'size
-		--assert [file 51732] = query/mode file [type size]
-		--assert [type: file size: 51732] = query/mode file [type: size:]
+		--assert (words-of system/standard/file-info) = query file none
+		--assert 'file = query file 'type
+		--assert date?   query file 'modified
+		--assert 51732 = query file 'size
+		--assert [file 51732] = query file [:type :size]
+		--assert [type: file size: 51732] = query file [type size]
 
 	--test-- "query file name"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2442
 		file: %units/files/čeština.txt
-		--assert not none? find (query/mode file 'name) file
+		--assert not none? find (query file 'name) file
 
 	--test-- "query file info (port)"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2008
 		file: open %units/files/alice29.txt.gz
-		--assert [name size date type] = query/mode file none
-		--assert 'file = query/mode file 'type
-		--assert date?   query/mode file 'date
-		--assert 51732 = query/mode file 'size
-		--assert [file 51732] = query/mode file [type size]
-		--assert [type: file size: 51732] = query/mode file [type: size:]
+		--assert (words-of system/standard/file-info) = query file none
+		--assert 'file = query file 'type
+		--assert date?   query file 'modified
+		--assert 51732 = query file 'size
+		--assert [file 51732] = query file [:type :size]
+		--assert [type: file size: 51732] = query file [type size]
 		close file
 
 	--test-- "write/lines"
@@ -643,6 +643,14 @@ if system/platform = 'Windows [
 				write clipboard:// append copy "" ch
 				--assert (to binary! ch) = to binary! read clipboard://
 			]
+		--test-- "Using just a name of the scheme"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/826
+			txt: "hello"
+			--assert all [
+				port? try [write 'clipboard txt]
+				txt = try [read 'clipboard]
+				txt = try [read open 'clipboard] 
+			]
 			
 	===end-group===
 ]
@@ -681,24 +689,29 @@ if all [
 		--test-- "query input port"
 			--assert  port? system/ports/input
 			--assert  all [
-				object?  console-info: query system/ports/input
+				object?  console-info: query system/ports/input object!
 				integer? console-info/window-cols
 				integer? console-info/window-rows
 				integer? console-info/buffer-cols
 				integer? console-info/buffer-rows
 				;?? console-info
 			]
-			--assert integer? query/mode system/ports/input 'window-cols
-			--assert integer? query/mode system/ports/input 'window-rows
-			--assert integer? query/mode system/ports/input 'buffer-cols
-			--assert integer? query/mode system/ports/input 'buffer-rows
-			--assert [buffer-cols buffer-rows window-cols window-rows]
-							= m: query/mode system/ports/input none
-			--assert block?   v: query/mode system/ports/input m
-			--assert 4 = length? v
+			--assert integer? query system/ports/input 'window-cols
+			--assert integer? query system/ports/input 'window-rows
+			--assert integer? query system/ports/input 'buffer-cols
+			--assert integer? query system/ports/input 'buffer-rows
+			--assert (words-of system/standard/console-info)
+							= m: query system/ports/input none
+			--assert block?   v: query system/ports/input m
+			--assert 8 = length? v
+		--test-- "Using just a name of the console scheme"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/826
+			--assert all [
+				port? try [p: open 'console]
+				port? close p
+			]
 	===end-group===
 ]
-
 
 ===start-group=== "DNS"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1827
@@ -706,6 +719,11 @@ if all [
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1935
 	--test-- "read dns://"
 		--assert string? try [probe read dns://] ;- no crash!
+
+	--test-- "Using just a name of the dns scheme"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/826
+		--assert string? try [read 'dns]
+
 	--test-- "read dns://8.8.8.8"
 		--assert "dns.google" = try [probe read dns://8.8.8.8]
 	--test-- "read dns://google.com"
@@ -713,7 +731,7 @@ if all [
 
 	--test-- "query dns://"
 	;@@ https://github.com/Oldes/rebol-issues/issues/1826
-		--assert all [error? e: try [query dns://]  e/id = 'no-port-action]
+		--assert all [error? e: try [query dns:// object!]  e/id = 'no-port-action]
 
 	--test-- "read dns://not-exists"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2498
@@ -725,16 +743,16 @@ if all [
 	--test-- "query net info"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1712
 		port: open tcp://8.8.8.8:80
-		--assert [local-ip local-port remote-ip remote-port] = query/mode port none
-		--assert 0.0.0.0 = query/mode port 'local-ip
-		--assert       0 = query/mode port 'local-port
-		--assert not none? find [0.0.0.0 8.8.8.8] query/mode port 'remote-ip ;; on posix there is sync lookup and so it reports 8.8.8.8 even without wait
-		--assert      80 = query/mode port 'remote-port
+		--assert (words-of system/standard/net-info) = query port none
+		--assert 0.0.0.0 = query port 'local-ip
+		--assert       0 = query port 'local-port
+		--assert not none? find [0.0.0.0 8.8.8.8] query port 'remote-ip ;; on posix there is sync lookup and so it reports 8.8.8.8 even without wait
+		--assert      80 = query port 'remote-port
 		--assert all [
 			port? wait [port 1] ;= wait for lookup, so remote-ip is resolved
-			8.8.8.8 = query/mode port 'remote-ip
-			[80 8.8.8.8] = query/mode port [remote-port remote-ip]
-			[local-ip: 0.0.0.0 local-port: 0] = query/mode port [local-ip: local-port:]
+			8.8.8.8 = query port 'remote-ip
+			[80 8.8.8.8] = query port [:remote-port :remote-ip]
+			[local-ip: 0.0.0.0 local-port: 0] = query port [local-ip local-port]
 		]
 		try [close port]
 ===end-group===
@@ -743,7 +761,8 @@ if all [
 ===start-group=== "SYSTEM"
 	--test-- "query system://"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1373
-		--assert all [error? e: try [query system://]  e/id = 'no-port-action]
+	;; not implemented yet!
+		--assert all [error? e: try [query system:// object!]  e/id = 'no-port-action]
 ===end-group===
 
 ~~~end-file~~~

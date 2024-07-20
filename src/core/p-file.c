@@ -86,17 +86,17 @@
 
 /***********************************************************************
 **
-*/	static void Set_File_Date(REBREQ *file, REBVAL *val)
+*/	static void Set_File_Date(I64 time, REBVAL *val)
 /*
 **		Set a value with the UTC date of a file.
 **
 ***********************************************************************/
 {
 	REBOL_DAT dat;
-	if (file->file.time.h == 0 && file->file.time.l == 0) {
+	if (time.h == 0 && time.l == 0) {
 		SET_NONE(val);
 	} else {
-		OS_FILE_TIME(file, &dat);
+		OS_FILE_TIME(&time, &dat);
 		Set_Date(val, &dat);
 	}
 }
@@ -128,7 +128,8 @@
 		Init_Word(ret, GET_FLAG(file->modes, RFM_DIR) ? SYM_DIR : SYM_FILE);
 		break;
 	case SYM_DATE:
-		Set_File_Date(file, ret);
+	case SYM_MODIFIED:
+		Set_File_Date(file->file.modified_time, ret);
 		break;
 	case SYM_NAME:
 #ifdef TO_WINDOWS
@@ -140,6 +141,12 @@
 		if (len < 0) len = -len; // negative len means ASCII chars only
 		Set_Series(REB_FILE, ret, To_REBOL_Path(UNI_HEAD(ser), len, TRUE, 0));
 #endif
+		break;
+	case SYM_ACCESSED:
+		Set_File_Date(file->file.accessed_time, ret);
+		break;
+	case SYM_CREATED:
+		Set_File_Date(file->file.created_time, ret);
 		break;
 	default:
 		return FALSE;
@@ -163,21 +170,22 @@
 			Trap1(RE_INVALID_ARG, info);
 	} else if (IS_BLOCK(info)) {
 		// example:
-		//	query/mode file [type size] ;== [file 1234]
+		//	query file [:type :size] ;== [file 1234]
 		// or:
-		//	 query/mode file [type: size:] ;== [type: file size: 1234]
+		//	 query file [type size] ;== [type: file size: 1234]
 		// or combined:
-		//	 query/mode file [type: size] ;== [type: file 1234]
+		//	 query file [type: :size] ;== [type: file 1234]
 		// When not supported word is used, if will throw an error
 
 		REBSER *values = Make_Block(2 * BLK_LEN(VAL_SERIES(info)));
 		REBVAL *word = VAL_BLK_DATA(info);
 		for (; NOT_END(word); word++) {
 			if(ANY_WORD(word)) {
-				if (IS_SET_WORD(word)) {
-					// keep the set-word in result
+				if (!IS_GET_WORD(word)) {
+					// keep the word as a key (converted to the set-word) in the result
 					val = Append_Value(values);
 					*val = *word;
+					VAL_TYPE(val) = REB_SET_WORD;
 					VAL_SET_LINE(val);
 				}
 				val = Append_Value(values);
@@ -193,8 +201,11 @@
 		obj = CLONE_OBJECT(VAL_OBJ_FRAME(info));
 		Set_File_Mode_Value(file, SYM_TYPE, OFV(obj, STD_FILE_INFO_TYPE));
 		Set_File_Mode_Value(file, SYM_SIZE, OFV(obj, STD_FILE_INFO_SIZE));
-		Set_File_Mode_Value(file, SYM_DATE, OFV(obj, STD_FILE_INFO_DATE));
 		Set_File_Mode_Value(file, SYM_NAME, OFV(obj, STD_FILE_INFO_NAME));
+		Set_File_Mode_Value(file, SYM_CREATED,  OFV(obj, STD_FILE_INFO_CREATED));
+		Set_File_Mode_Value(file, SYM_ACCESSED, OFV(obj, STD_FILE_INFO_ACCESSED));
+		Set_File_Mode_Value(file, SYM_MODIFIED, OFV(obj, STD_FILE_INFO_MODIFIED));
+		Set_File_Mode_Value(file, SYM_DATE, OFV(obj, STD_FILE_INFO_MODIFIED)); // for backward compatibility
 		SET_OBJECT(ret, obj);
 	}
 }
@@ -629,8 +640,7 @@ resize:
 		break;
 
 	case A_QUERY:
-		args = Find_Refines(ds, ALL_QUERY_REFS);
-		if ((args & AM_QUERY_MODE) && IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
+		if (IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
 			Ret_File_Modes(port, D_RET);
 			return R_RET;
 		}

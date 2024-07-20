@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -285,8 +286,8 @@ static BOOL Seek_File_64(REBREQ *file)
 	// Fetch file size (if fails, then size is assumed zero):
 	if (GetFileInformationByHandle(h, &info)) {
 		file->file.size = ((i64)(info.nFileSizeHigh) << 32) + info.nFileSizeLow;
-		file->file.time.l = info.ftLastWriteTime.dwLowDateTime;
-		file->file.time.h = info.ftLastWriteTime.dwHighDateTime;
+		file->file.modified_time.l = info.ftLastWriteTime.dwLowDateTime;
+		file->file.modified_time.h = info.ftLastWriteTime.dwHighDateTime;
 	}
 
 	file->handle = (void *)h;
@@ -420,8 +421,12 @@ fail:
 			SET_FLAG(file->modes, RFM_DIR);
 			// but without size and date
 			file->file.size = MIN_I64;
-			file->file.time.l = 0;
-			file->file.time.h = 0;
+			file->file.modified_time.l = 0;
+			file->file.modified_time.h = 0;
+			file->file.accessed_time.l = 0;
+			file->file.accessed_time.h = 0;
+			file->file.created_time.l = 0;
+			file->file.created_time.h = 0;
 			// put back removed slash
 			file->file.path[0] = '/';
 			file->file.path[1] = 0;
@@ -439,8 +444,12 @@ fail:
 		CLR_FLAG(file->modes, RFM_DIR);
 		file->file.size = ((i64)info.nFileSizeHigh << 32) + (i64)info.nFileSizeLow;
 	}
-	file->file.time.l = info.ftLastWriteTime.dwLowDateTime;
-	file->file.time.h = info.ftLastWriteTime.dwHighDateTime;
+	file->file.modified_time.l = info.ftLastWriteTime.dwLowDateTime;
+	file->file.modified_time.h = info.ftLastWriteTime.dwHighDateTime;
+	file->file.accessed_time.l = info.ftLastAccessTime.dwLowDateTime;
+	file->file.accessed_time.h = info.ftLastAccessTime.dwHighDateTime;
+	file->file.created_time.l = info.ftCreationTime.dwLowDateTime;
+	file->file.created_time.h = info.ftCreationTime.dwHighDateTime;
 	return DR_DONE;
 }
 

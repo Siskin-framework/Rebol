@@ -141,7 +141,9 @@ static int Get_File_Info(REBREQ *file)
 		CLR_FLAG(file->modes, RFM_DIR);
 		file->file.size = info.st_size;
 	}
-	file->file.time.l = (long)(info.st_mtime);
+	file->file.modified_time.l = (i32)(info.st_mtime);
+	file->file.accessed_time.l = (i32)(info.st_atime);
+	file->file.created_time.l = (i32)(info.st_ctime);
 
 	return DR_DONE;
 }
@@ -406,7 +408,9 @@ static int Get_File_Info(REBREQ *file)
 	// Fetch file size (if fails, then size is assumed zero):
 	if (fstat(h, &info) == 0) {
 		file->file.size = info.st_size;
-		file->file.time.l = (i32)(info.st_mtime);
+		file->file.modified_time.l = (i32)(info.st_mtime);
+		file->file.accessed_time.l = (i32)(info.st_atime);
+		file->file.created_time.l = (i32)(info.st_ctime);
 	}
 
 	file->id = h;
@@ -552,7 +556,9 @@ init_pattern:
 	// update new file info
 	if (fstat(file->id, &info) == 0) {
 		file->file.size = info.st_size;
-		file->file.time.l = (i32)(info.st_mtime);
+		file->file.modified_time.l = (i32)(info.st_mtime);
+		file->file.accessed_time.l = (i32)(info.st_atime);
+		file->file.created_time.l = (i32)(info.st_ctime);
 	}
 
 	return DR_DONE;

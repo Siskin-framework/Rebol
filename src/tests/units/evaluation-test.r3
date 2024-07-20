@@ -88,7 +88,7 @@ Rebol [
 
 	--test-- "issue-903"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/903
-		--assert all [error? e: try [do "<> 0"]  e/id = 'missing-arg]
+		--assert all [error? e: try [do "<> 0"]  e/id = 'no-op-arg]
 		--assert all [error? e: try [do next [1 <> 0]]  e/id = 'missing-arg]
 
 	--test-- "do string with Rebol header"
@@ -558,15 +558,15 @@ Rebol [
 		obj:  object [a: 3 b: 4]
 		obj2: object [z: 0 a: none b: 7]
 		--assert obj2 = set obj obj2
-		--assert "make object! [a: none b: 7]" = mold/flat obj
-		--assert "make object! [z: 0 a: none b: 7]" = mold/flat obj2
+		--assert "make object! [a: #(none) b: 7]" = mold/flat obj
+		--assert "make object! [z: 0 a: #(none) b: 7]" = mold/flat obj2
 
 	--test-- "set-11"
 		obj:  object [a: 3 b: 4]
 		obj2: object [z: 0 a: none b: 7]
 		--assert obj2 = set/some obj obj2
 		--assert "make object! [a: 3 b: 7]" = mold/flat obj
-		--assert "make object! [z: 0 a: none b: 7]" = mold/flat obj2
+		--assert "make object! [z: 0 a: #(none) b: 7]" = mold/flat obj2
 
 	--test-- "set-12"
 		o1: object [a: 1 b: 2 ]

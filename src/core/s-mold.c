@@ -124,17 +124,14 @@ enum {
 		case 'N':	// Symbol name
 			Append_UTF8(series, Get_Sym_Name(va_arg(args, REBCNT)), -1);
 			break;
-		case '+':	// Add #[ if mold/all
+		case '+':	// Add #( if mold/all
 			if (GET_MOPT(mold, MOPT_MOLD_ALL)) {
 				Append_Bytes(series, "#(");
 				ender = ')';
 			}
 			break;
-		case 'D':	// Datatype symbol: #[type
-			if (ender) {
-				Append_UTF8(series, Get_Sym_Name(va_arg(args, REBCNT)), -1);
-				Append_Byte(series, ' ');
-			} else va_arg(args, REBCNT); // ignore it
+		case 'D':	// Datatype symbol: #(type
+			Append_UTF8(series, Get_Sym_Name(va_arg(args, REBCNT)), -1);
 			break;
 		case 'B':	// Boot string
 			Append_Boot_Str(series, va_arg(args, REBINT));
@@ -748,16 +745,28 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	if (SERIES_WIDE(VAL_SERIES(value)) == 0)
 		Crash(RP_BAD_WIDTH, sizeof(REBVAL), 0, VAL_TYPE(value));
 
+	// Reset index if it is over series tail: (a: [1 2]  b: tail a  clear a  mold b)
+	if (VAL_INDEX(value) > VAL_TAIL(value))
+		VAL_INDEX(value) = VAL_TAIL(value);
+
 	// Optimize when no index needed:
 	if (VAL_INDEX(value) == 0)
 		all = FALSE;
 	// Force construction syntax in special path cases:
-	if (ANY_PATH(value) && (VAL_TAIL(value) <= 1 || !ANY_WORD(VAL_BLK(value))))
-		all = TRUE;
+	if (ANY_PATH(value)) {
+		if (!GET_MOPT(mold, MOPT_MOLD_ALL) && VAL_TAIL(value) == VAL_INDEX(value)) return;
+		if (VAL_TAIL(value) <= 1 || !IS_WORD(VAL_BLK_DATA(value)))
+			all = TRUE;
+		//else {
+		//	REBVAL* val;
+		//	for (val = VAL_BLK_DATA(value); NOT_END(val); val++) {
+		//		if (!(ANY_WORD(val))
+		//	}
+		//}
+		//	
+		//all = TRUE;
+	}
 
-	// Reset index if it is over series tail: (a: [1 2]  b: tail a  clear a  mold b)
-	if (VAL_INDEX(value) > VAL_TAIL(value))
-		VAL_INDEX(value) = VAL_TAIL(value);
 
 	if (all) {
 		SET_FLAG(mold->opts, MOPT_MOLD_ALL);
@@ -1169,14 +1178,11 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	switch (VAL_TYPE(value)) {
 	case REB_NONE:
-		Emit(mold, "+N", SYM_NONE);
+		Append_Bytes(ser, molded ? "#(none)" : "none");
 		break;
 
 	case REB_LOGIC:
-//		if (!molded || !VAL_LOGIC_WORDS(value) || !GET_MOPT(mold, MOPT_MOLD_ALL))
-			Emit(mold, "+N", VAL_LOGIC(value) ? SYM_TRUE : SYM_FALSE);
-//		else
-//			Mold_Logic(mold, value);
+		Append_Bytes(ser, VAL_LOGIC(value) ? (molded?"#(true)":"true") : (molded?"#(false)":"false"));
 		break;
 
 	case REB_INTEGER:
@@ -1258,7 +1264,11 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		break;
 
 	case REB_TAG:
-		Mold_Tag(value, mold);
+		if (GET_MOPT(mold, MOPT_MOLD_ALL)
+			&& (VAL_INDEX(value) != 0 || VAL_TAIL(value) == 0)) {
+			Mold_All_String(value, mold);
+		}
+		else Mold_Tag(value, mold);
 		break;
 
 //		Mold_Issue(value, mold);
@@ -1313,10 +1323,12 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		break;
 
 	case REB_DATATYPE:
-		if (!molded)
-			Emit(mold, "N", VAL_DATATYPE(value) + 1);
-		else
-			Emit(mold, "+N", VAL_DATATYPE(value) + 1);
+		if (molded) {
+			Emit(mold, "#(D)", VAL_DATATYPE(value) + 1);
+		}
+		else {
+			Append_UTF8(ser, Get_Sym_Name(VAL_DATATYPE(value) + 1), -1);
+		}
 		break;
 
 	case REB_TYPESET:

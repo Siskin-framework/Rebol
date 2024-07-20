@@ -760,8 +760,12 @@ pick_it:
 */
 
 	case A_TAKE:
-		// take/part:
-		if (D_REF(ARG_TAKE_PART)) {
+		if (D_REF(ARG_TAKE_ALL)) {
+			if (tail <= index) goto zero_blk;
+			len = tail - index;
+			SET_TRUE(D_ARG(ARG_TAKE_PART));
+		}
+		else if (D_REF(ARG_TAKE_PART)) {
 			len = Partial1(value, D_ARG(ARG_TAKE_RANGE));
 			if (len == 0) {
 zero_blk:

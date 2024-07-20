@@ -19,7 +19,10 @@ wp/awake: func [event /local port] [
     switch/default event/type [
         read [print ["^/read:" length? port/data] read port]
         wrote [read port]
-        lookup [print query port open port]
+        lookup [
+        	print query port [remote-ip remote-port]
+        	open port
+        ]
         connect [write port http-request]
     ][true]
 ]

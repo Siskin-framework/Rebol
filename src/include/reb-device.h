@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2013-2023 Rebol Open Source Developers
+**  Copyright 2013-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -164,6 +164,7 @@ struct rebol_device {
 #define DEFINE_DEV(w,t,v,c,m,s) REBDEV w = {t, v, 0, c, m, 0, 0, s}
 
 // Request structure:		// Allowed to be extended by some devices
+// NOTE: when size of this struct is modified, reflect it in the make-reb-lib.reb file! (CHECK_STRUCT_ALIGN)
 struct rebol_devreq {
 	u32 clen;				// size of extended structure
 
@@ -200,7 +201,9 @@ struct rebol_devreq {
 			REBCHR *path;			// file string (in OS local format)
 			i64  size;				// file size
 			i64  index;				// file index position
-			I64  time;				// file modification time (struct)
+			I64  modified_time;     // file modification time (struct)
+			I64  accessed_time;     // file access time (struct)
+			I64  created_time;      // file creartion time (struct)
 		} file;
 		struct {
 			u32  local_ip;			// local address used

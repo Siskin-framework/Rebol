@@ -94,6 +94,13 @@ Rebol [
 		port: open checksum:md5
 		--assert 'md5 = port/spec/method
 
+		;; using just a name of the scheme...
+		;@@ https://github.com/Oldes/Rebol-issues/issues/826
+		--assert all [
+			port? try [port: open 'checksum]
+			'md5 = port/spec/method
+		]
+
 	--test-- "checksum-port-sha1"
 		port: open checksum:sha1
 		sum1: checksum bin 'sha1

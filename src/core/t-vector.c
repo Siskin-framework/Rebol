@@ -832,36 +832,36 @@ static void reverse_vector(REBVAL *value, REBCNT len)
 		bits = VECT_TYPE(vect);
 		REBVAL *spec = Get_System(SYS_STANDARD, STD_VECTOR_INFO);
 		if (!IS_OBJECT(spec)) Trap_Arg(spec);
-		if (D_REF(2)) { // query/mode refinement
-			REBVAL *field = D_ARG(3);
-			if(IS_WORD(field)) {
-				if (!Query_Vector_Field(vect, VAL_WORD_SYM(field), value))
-					Trap_Reflect(VAL_TYPE(value), field); // better error?
-			}
-			else if (IS_BLOCK(field)) {
-				REBSER *values = Make_Block(2 * BLK_LEN(VAL_SERIES(field)));
-				REBVAL *word = VAL_BLK_DATA(field);
-				for (; NOT_END(word); word++) {
-					if (ANY_WORD(word)) {
-						if (IS_SET_WORD(word)) {
-							// keep the set-word in result
-							val = Append_Value(values);
-							*val = *word;
-							VAL_SET_LINE(val);
-						}
+		REBVAL *field = D_ARG(ARG_QUERY_FIELD);
+		if(IS_WORD(field)) {
+			if (!Query_Vector_Field(vect, VAL_WORD_SYM(field), value))
+				Trap_Reflect(VAL_TYPE(value), field); // better error?
+		}
+		else if (IS_BLOCK(field)) {
+			REBSER *values = Make_Block(2 * BLK_LEN(VAL_SERIES(field)));
+			REBVAL *word = VAL_BLK_DATA(field);
+			for (; NOT_END(word); word++) {
+				if (ANY_WORD(word)) {
+					if (!IS_GET_WORD(word)) {
+						// keep the word as a key (converted to the set-word) in the result
 						val = Append_Value(values);
-						if (!Query_Vector_Field(vect, VAL_WORD_SYM(word), val))
-							Trap1(RE_INVALID_ARG, word);
+						*val = *word;
+						VAL_TYPE(val) = REB_SET_WORD;
+						VAL_SET_LINE(val);
 					}
-					else  Trap1(RE_INVALID_ARG, word);
+					val = Append_Value(values);
+					if (!Query_Vector_Field(vect, VAL_WORD_SYM(word), val))
+						Trap1(RE_INVALID_ARG, word);
 				}
-				Set_Series(REB_BLOCK, value, values);
+				else  Trap1(RE_INVALID_ARG, word);
 			}
-			else {
-				Set_Block(D_RET, Get_Object_Words(spec));
-				return R_RET;
-			}
-		} else {
+			Set_Series(REB_BLOCK, value, values);
+		}
+		else if (IS_NONE(field)) {
+			Set_Block(D_RET, Get_Object_Words(spec));
+			return R_RET;
+		}
+		else {
 			REBSER *obj = CLONE_OBJECT(VAL_OBJ_FRAME(spec));
 			Query_Vector_Field(vect, SYM_SIGNED, OFV(obj, STD_VECTOR_INFO_SIGNED));
 			Query_Vector_Field(vect, SYM_TYPE,   OFV(obj, STD_VECTOR_INFO_TYPE));

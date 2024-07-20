@@ -147,8 +147,7 @@
 	case A_QUERY:
 		spec = Get_System(SYS_STANDARD, STD_CONSOLE_INFO);
 		if (!IS_OBJECT(spec)) Trap_Arg(spec);
-		args = Find_Refines(ds, ALL_QUERY_REFS);
-		if ((args & AM_QUERY_MODE) && IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
+		if (IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
 			Set_Block(D_RET, Get_Object_Words(spec));
 			return R_RET;
 		}
@@ -218,10 +217,11 @@
 		REBVAL *word = VAL_BLK_DATA(info);
 		for (; NOT_END(word); word++) {
 			if (ANY_WORD(word)) {
-				if (IS_SET_WORD(word)) {
-					// keep the set-word in result
+				if (!IS_GET_WORD(word)) {
+					// keep the word as a key (converted to the set-word) in the result
 					val = Append_Value(values);
 					*val = *word;
+					VAL_TYPE(val) = REB_SET_WORD;
 					VAL_SET_LINE(val);
 				}
 				val = Append_Value(values);

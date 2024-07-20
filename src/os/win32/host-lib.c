@@ -697,9 +697,9 @@ void Dispose_Windows(void);
 
 /***********************************************************************
 **
-*/	void OS_File_Time(REBREQ *file, REBOL_DAT *dat)
+*/	void OS_File_Time(I64 *time, REBOL_DAT *dat)
 /*
-**		Convert file.time to REBOL date/time format.
+**		Convert file time to REBOL date/time format.
 **		Time zone is UTC.
 **
 ***********************************************************************/
@@ -710,7 +710,7 @@ void Dispose_Windows(void);
 	if (TIME_ZONE_ID_DAYLIGHT == GetTimeZoneInformation(&tzone))
 		tzone.Bias += tzone.DaylightBias;
 
-	FileTimeToSystemTime((FILETIME *)(&(file->file.time)), &stime);
+	FileTimeToSystemTime((FILETIME *)time, &stime);
 	Convert_Date(&stime, dat, -tzone.Bias);
 }
 

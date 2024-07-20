@@ -3,6 +3,7 @@ REBOL [
 	Title: "REBOL 3 Boot Base: File Functions"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2024 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -21,7 +22,7 @@ exists?: func [
 	target [file! url!]
 ][
 	all [
-		word? target: try [query/mode target 'type]
+		word? target: try [query target 'type]
 		target
 	]
 ]
@@ -30,14 +31,14 @@ size?: func [
 	{Returns the size of a file or vector (bits per value).}
 	target [file! url! port! vector!]
 ][
-	query/mode target 'size
+	query target 'size
 ]
 
 modified?: func [
 	{Returns the last modified date of a file.}
 	target [file! url!]
 ][
-	query/mode target 'date
+	query target 'modified
 ]
 
 suffix?: func [

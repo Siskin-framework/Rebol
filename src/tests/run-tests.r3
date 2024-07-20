@@ -68,6 +68,7 @@ dt [ ;- delta time
 		%units/url-test.r3
 		%units/vector-test.r3
 		%units/word-test.r3
+		%units/thru-cache-test.r3
 		;- cryptography tests:
 		%units/aes-test.r3
 		%units/chacha20-test.r3

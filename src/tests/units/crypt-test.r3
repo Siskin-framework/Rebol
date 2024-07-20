@@ -228,7 +228,7 @@ sY29ouezv4Xz2PuMch5VGPP+CDqzCM4loWgV
 --test-- "Init public DH params from file"
 	--assert all [
 		handle? key: load %units/files/dhparam2048.key
-		'dhm = query/mode key 'type
+		'dhm = query key 'type
 		release key ; release it now (don't wait on GC)
 	]
 ===end-group===

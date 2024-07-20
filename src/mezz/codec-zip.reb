@@ -164,7 +164,7 @@ register-codec [
 
 		add-file: func[file [file!] /local dir spec][
 			try/with [
-				spec: query/mode file [type: date:]
+				spec: query file [type: date:]
 				either spec [
 					file-name: any [find/tail file root file]
 					either spec/type = 'dir [

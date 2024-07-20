@@ -5,15 +5,16 @@ REBOL [
 	Type: module
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2022 Rebol Open Source Contributors
+		Copyright 2012-2024 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
 		Licensed under the Apache License, Version 2.0
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-	Version: 0.5.2
-	Date: 22-Jul-2023
+	Version: 0.5.5
+	Needs: 3.17.2
+	Date: 19-Jul-2024
 	File: %prot-http.r3
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -40,6 +41,9 @@ REBOL [
 		0.5.0 18-Jul-2022 "Oldes" "FEAT: `read/seek` and `read/all` implementation"
 		0.5.1 12-Jun-2023 "Oldes" "FEAT: anonymize authentication tokens in log"
 		0.5.2 22-Jul-2023 "Oldes" "FEAT: support for optional Brotli encoding"
+		0.5.3 11-Jul-2024 "Oldes" "FIX: redirection with a missing slash in the location field"
+		0.5.4 15-Jul-2024 "Oldes" "FIX: HTTP query validated when building a request"
+		0.5.5 19-Jul-2024 "Oldes" "CHANGE: updated for use with Rebol 3.17.2 and newer (query changes)"
 	]
 ]
 
@@ -252,6 +256,22 @@ throw-http-error: func [
 	][  do error ]
 ]
 
+escape-query: function/with [
+;;	"Escapes all chars which are not allowed in the HTTP query part (if not yet escaped)"
+	query [any-string!]
+][
+	parse query [some [
+		some allowed
+		| #"%" 2 hex ;; already escaped
+		| change #" " #"+" 
+		| change set c: skip (ajoin [#"%" enbase to binary! c 16])
+	]]
+	query
+][
+	hex: system/catalog/bitsets/hex-digits
+	allowed: charset [#"a"-#"z" #"A"-#"Z" #"0"-#"9" "-~!@*/|\;,._()[]{}+=?~&"]
+]
+
 make-http-request: func [
 	"Create an HTTP request (returns binary!)"
 	spec [block! object!] "Request specification from an opened port"
@@ -269,7 +289,7 @@ make-http-request: func [
 		mold as url! :path        ;; `mold as url!` is used because it produces correct escaping
 	]
 	if :target [append request mold as url! :target]
-	if :query  [append append request #"?"  :query]
+	if :query  [append append request #"?" escape-query :query]
 
 	append request " HTTP/1.1^M^/"
 	
@@ -317,7 +337,7 @@ do-request: func [
 	]
 	port/state/state: 'doing-request
 	info/headers: info/response-line: info/status-code: port/data:
-	info/size: info/date: info/name: none
+	info/size: info/modified: info/name: none
 
 	write port/state/connection make-http-request :spec
 ]
@@ -428,7 +448,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 			select headers 'date
 		][
 			; allow invalid date, but ignore it on error
-			try [info/date: to-date/utc date]
+			try [info/modified: to-date/utc date]
 		]
 		remove/part conn/data d2
 		state/state: 'reading-data
@@ -507,7 +527,7 @@ http-response-headers: construct [
 	Last-Modified:
 ]
 
-do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state headers][
+do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state headers temp][
 	spec: port/spec
 	state: port/state
 	port/data: none
@@ -523,16 +543,21 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 
 	spec/query: spec/target: none ; old parts not used in redirection!
 
-	if #"/" = first new-uri [
-		; if it's redirection under same url, we can reuse the opened connection
+	;; If decoding of the new uri fails, then it must be just change of the path
+	either temp: decode-url new-uri [
+		new-uri: temp
+	][
+		;; Some servers may have invalid location (missing slash) - Rebol-issues/issues/2604
+		if new-uri/1 != #"/" [insert new-uri #"/"]
+		spec/path: new-uri
+		;; If it's redirection under same url, we can reuse the opened connection
 		if "keep-alive" = select state/info/headers 'Connection [
-			spec/path: new-uri
 			do-request port
 			return true
 		]
-		new-uri: as url! ajoin [spec/scheme "://" spec/host #":" spec/port new-uri]
+		new-uri: decode-url as url! ajoin [spec/scheme "://" spec/host #":" spec/port new-uri]
 	]
-	new-uri: decode-url new-uri
+
 	spec/headers/host: new-uri/host
 
 	unless select new-uri 'port [
@@ -673,11 +698,10 @@ decode-result: func[
 	result [block!] {[header body]}
 	/local body content-type code-page encoding
 ][
-	if encoding: select result/2 'Content-Encoding [
-		either find ["gzip" "deflate" "br"] encoding [
-			if encoding == "br" [encoding: 'brotli]
+	if encoding: attempt [to word! result/2/Content-Encoding] [
+		either find system/catalog/compressions encoding [
 			try/with [
-				result/3: decompress result/3 to word! encoding
+				result/3: decompress result/3 encoding
 			][
 				sys/log/info 'HTTP ["Failed to decode data using:^[[22m" encoding]
 				return result
@@ -910,11 +934,11 @@ sys/make-scheme [
 		]
 		query: func [
 			port [port!]
-			/mode
-			field [word! block! none!]
+			field [word! block! none! datatype!]
+			/mode ;@@ deprecated!
 			/local error state result
 		][
-			if all [mode none? field][ return words-of system/schemes/http/info]
+			if none? field [ return words-of system/schemes/http/info]
 			if none? state: port/state [
 				open port ;there is port opening in sync-op, but it would also close the port later and so clear the state
 				attempt [sync-op port [parse-write-dialect port [HEAD]]]
@@ -958,7 +982,7 @@ sys/make-scheme [
 		;@@ One can set above value for example to: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
 		;@@ And so pretend that request is coming from Chrome on Windows10
 	]
-	if find system/catalog/compressions 'brotli [
+	if find system/catalog/compressions 'br [
 		append headers/Accept-Encoding ",br"
 	]
 ]

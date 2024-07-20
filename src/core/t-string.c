@@ -713,8 +713,13 @@ pick_it:
 		break;
 
 	case A_TAKE:
-		if (D_REF(2)) {
-			len = Partial(value, 0, D_ARG(3), 0);
+		if (D_REF(ARG_TAKE_ALL)) {
+			if (tail <= index) goto zero_str;
+			len = tail - index;
+			SET_TRUE(D_ARG(ARG_TAKE_PART));
+		}
+		else if (D_REF(ARG_TAKE_PART)) {
+			len = Partial(value, 0, D_ARG(ARG_TAKE_RANGE), 0);
 			if (len == 0) {
 zero_str:
 				Set_Series(VAL_TYPE(value), D_RET, Make_Binary(0));
@@ -727,15 +732,15 @@ zero_str:
 
 		// take/last:
 		if (tail <= index) goto is_none;
-		if (D_REF(5)) index = tail - len;
+		if (D_REF(ARG_TAKE_LAST)) index = tail - len;
 		if (index < 0 || index >= tail) {
-			if (!D_REF(2)) goto is_none;
+			if (!D_REF(ARG_TAKE_PART)) goto is_none;
 			goto zero_str;
 		}
 
 		ser = VAL_SERIES(value);
 		// if no /part, just return value, else return string:
-		if (!D_REF(2)) {
+		if (!D_REF(ARG_TAKE_PART)) {
 			if (IS_BINARY(value)) {
 				SET_INTEGER(value, *VAL_BIN_SKIP(value, index));
 			} else

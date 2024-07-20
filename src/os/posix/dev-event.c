@@ -111,40 +111,21 @@ void Done_Device(int handle, int error);
 **
 ***********************************************************************/
 {
-	poll(&poller, 1, req->length);
+	struct timeval tv = {0,0};
 
-//	struct timeval tv;
+#ifdef REB_VIEW
+	//TODO: process GUI events!!!
+#endif
 
-//#ifdef REB_VIEW
-	//int max_priority;
-	//GPollFD poll_fds[10];
-	//gint timeout = tv.tv_usec;
-
-	//if (g_main_context_acquire(GTKCtx)) {
-	//	if (g_main_context_prepare(GTKCtx, &max_priority)) {
-	//		result = g_main_context_query (GTKCtx, max_priority, &timeout, poll_fds, 10);
-	//		//printf("g_main_context_query: %i timeout: %i\n", result, timeout);
-	//	}
-	//	g_main_context_release(GTKCtx);
-	//	if (result >= 0) return DR_DONE;
-	//}
-//#endif	
-
-//	int result = select(STDIN_FILENO+1, &readfds, 0, 0, &tv);
-//	if (result < 0) {
-//		//
-//		// !!! In R3-Alpha this had a TBD that said "set error code" and had a
-//		// printf that said "ERROR!!!!".  However this can happen when a
-//		// Ctrl-C interrupts a timer on a WAIT.  As a patch this is tolerant
-//		// of EINTR, but still returns the error code.  :-/
-//		//
-//		if (errno == EINTR)
-//			return DR_ERROR;
-//
-//		printf("select() returned -1 in dev-event.c (I/O error!)\n");
-//		return DR_ERROR;
-//	}
-
+	tv.tv_usec = req->length * 1000; // converts ms to us
+	if (select(0, 0, 0, 0, &tv) < 0) {
+		if (errno == EINTR) return DR_DONE; // Ctrl-C interrupts a timer on a WAIT
+		req->error = errno; // report the error code
+		#ifdef _DEBUG
+			printf("select() returned -1 in dev-event.c (I/O error!)\n");
+		#endif
+		return DR_ERROR;
+	}
 	return DR_DONE;
 }
 

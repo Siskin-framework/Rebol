@@ -426,7 +426,7 @@ static struct digest {
 		windowBits |= 16;
 		goto zlib_compress;
 	
-	case SYM_BROTLI:
+	case SYM_BR:
 #ifdef INCLUDE_BROTLI
 		Set_Binary(D_RET, CompressBrotli(ser, index, (REBINT)len, ref_level ? VAL_INT32(level) : -1));
 #else
@@ -507,7 +507,7 @@ static struct digest {
 		windowBits |= 16;
 		goto zlib_decompress;
 
-	case SYM_BROTLI:
+	case SYM_BR:
 #ifdef INCLUDE_BROTLI
 		Set_Binary(D_RET, DecompressBrotli(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit));
 #else

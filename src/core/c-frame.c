@@ -1180,7 +1180,7 @@
 */	REBSER* Get_Object_Words(REBVAL *object)
 /*
 **		Returns block of object's words converted to simple word (not set-word)
-**		Note:  used in query/mode function to return default modes
+**		Note:  used in query function to return default modes
 **
 ***********************************************************************/
 {

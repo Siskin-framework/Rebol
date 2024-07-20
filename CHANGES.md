@@ -3,10 +3,103 @@
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
 
+## 2024 July
+
+### Features:
+
+* [`89b07d`](https://github.com/Oldes/Rebol3/commit/89b07d98bc6f43226d8d34b39450e57f4c3301cc) Included an `upgrade` module (currently just a placeholder)
+* [`f4b1a2`](https://github.com/Oldes/Rebol3/commit/f4b1a2dd435507860e8461d7d08cb711d7494f22) Allow to use `word!` as a name of scheme in some port actions
+* [`d9189e`](https://github.com/Oldes/Rebol3/commit/d9189e9499ee71d2cca0ce302148b8e68f3ecf28) Included `delete-thru` in the `thru-cache` module and storing content locally only when response code is 200 (OK)
+* [`c485c8`](https://github.com/Oldes/Rebol3/commit/c485c8966dac6b6a9121f5f85bb0dffcd0835102) Improved the speed of the `soundex` code and fixed it to produce the same results as PHP.
+* [`31ca95`](https://github.com/Oldes/Rebol3/commit/31ca9586621742dc1de6094b7edaac93eb7b52ce) Including original Allen Kamp's `Soundex` script
+* [`f72f9b`](https://github.com/Oldes/Rebol3/commit/f72f9b61dc8e5d0ad33f31c6d8ad50b32e753652) `thru-cache` module updated to version 0.2.0 (`exists-thru?`, `list-thru`) + bugfix
+* [`7193a0`](https://github.com/Oldes/Rebol3/commit/7193a0760e49b8d18ff2d4445b0f642a4adbff10) Added the ability to query a file's access and creation times as well
+* [`bde84d`](https://github.com/Oldes/Rebol3/commit/bde84d71dfc21e5dc259112d250eb723c7fb19b1) Included a module with `*-thru` functions for accessing files through a local disk cache
+* [`4a8fb2`](https://github.com/Oldes/Rebol3/commit/4a8fb22f7bf70277438791365f9afec9c5852b36) Allow any string as input to the `to-ascii` function
+* [`cd366f`](https://github.com/Oldes/Rebol3/commit/cd366fad18189d0139dc5d678f9791d020233a5c) `to-ascii` module - Latin to ASCII characters transliteration
+* [`f9519c`](https://github.com/Oldes/Rebol3/commit/f9519c6147a8b0745711d56da5214e84784edb47) Bincode - added command `EncodedU64` (for variable-length integers)
+* [`ac5df5`](https://github.com/Oldes/Rebol3/commit/ac5df53c6cb36397215240fb82903305e1749a73) Implemented `take/all`, which copies all content and clears the series
+
+### Changes:
+
+* [`b9932b`](https://github.com/Oldes/Rebol3/commit/b9932bfecac2b3cf0e200da5bc29bc72fad47e3c) Logic, none and datatype values are now always molded using construction syntax
+* [`e37c0e`](https://github.com/Oldes/Rebol3/commit/e37c0e21ff2342ee144c0022750149453d31bb4f) Updated `http` protocol to be compatible with the new `query` changes
+* [`4e052b`](https://github.com/Oldes/Rebol3/commit/4e052bc999b429e7828efd0886ae44e073d336f8) When using block as a `query` field, get-words are required to get just the value
+* [`cd8df5`](https://github.com/Oldes/Rebol3/commit/cd8df5c403daa8845dc02aaa8ea24c1e407fe052) ** `query/mode` is deprecated; `field` value is always required **
+* [`0b0b6e`](https://github.com/Oldes/Rebol3/commit/0b0b6ec855c47df791ad350113ceabcf8b6abe46) Ported Kamp's Soundex script to Rebol3 module
+* [`197e63`](https://github.com/Oldes/Rebol3/commit/197e63b2b080475cad0a72a6512909eb1e35d357) Updated link to the latest version of the `SQLite` native extension
+* [`fc5554`](https://github.com/Oldes/Rebol3/commit/fc55543cb702d712cb0f8b104ed4bd8b5e10497b) Use the standardized `br` instead of `brotli` as the compression method name
+
+### Fixes:
+
+* [`b4b165`](https://github.com/Oldes/Rebol3/commit/b4b165161877948d033af38afa81a8e0411355c6) Do not use construction syntax when displaying typeset value in help output
+* [`1a431d`](https://github.com/Oldes/Rebol3/commit/1a431d693b2e91b58b266317aa4f569237bede13) Fixed wrong definition name (regression)
+* [`d6c899`](https://github.com/Oldes/Rebol3/commit/d6c8994359ee3d17909b2deeb69717856e4d40b7) Retain setting the `date` value when querying file/dir ports as an object (for backwards compatibility)
+* [`7e1560`](https://github.com/Oldes/Rebol3/commit/7e156030449844ebd7cb38b058783275002df2a5) Better handling of fast read/write operations to the clipboard on Windows
+* [`9671f8`](https://github.com/Oldes/Rebol3/commit/9671f84bc0bcfed9aa46eac1b3bb92fb058e20c0) Better handle some special MOLD cases
+* [`9907c6`](https://github.com/Oldes/Rebol3/commit/9907c605f3bd33ebff4fc8f6a95804b403e2f5b0) Query multiple values of a datetime value
+* [`5ebb52`](https://github.com/Oldes/Rebol3/commit/5ebb5298b744ebc7bc0c90242fdf1d3cf9a0bda5) Including `datatype!` as allowed query field in the HTTP scheme
+* [`bb6c73`](https://github.com/Oldes/Rebol3/commit/bb6c737cb8cd5e5af159fff8146d9e8d692ad281) High CPU usage when running the Rebol server as a Linux service
+* [`d9e52c`](https://github.com/Oldes/Rebol3/commit/d9e52c6e94a9f641ad905fa26d6ecb430f05ba8d) HTTP query validation fixed
+* [`274923`](https://github.com/Oldes/Rebol3/commit/27492356b9d76e8040697630371d511093c92da8) HTTP query validated when building a request
+* [`ea7b6d`](https://github.com/Oldes/Rebol3/commit/ea7b6de657d82db7616b8f9c78290f9c75308f6d) Using the new `modified` instead of `date` in the HTTP scheme
+* [`9bde6a`](https://github.com/Oldes/Rebol3/commit/9bde6a32781ef2734afb8e624c075abb63340ff2) `bincode` write code block does not handle its index position correctly
+* [`541cc5`](https://github.com/Oldes/Rebol3/commit/541cc5199be557cc415cd0cbd9b1db8f4b24ab45) Missing lowercase `eth` letter in `to-ascii` transliterations table
+* [`57f2cf`](https://github.com/Oldes/Rebol3/commit/57f2cfadd8e7f54f4a72f478acbcde09c44ec79e) Redirection with a missing slash in the location field
+* [`5e5e93`](https://github.com/Oldes/Rebol3/commit/5e5e93b2f77128c79222b5d2b1254c98517741b6) `bincode` code block does not handle its index position correctly
+* [`433d06`](https://github.com/Oldes/Rebol3/commit/433d068e801ba206ad6aaff9f691d547f88d70bd) `take/all` on a series with a tail over the index must return an empty series instead of `none`
+
+## 2024 June
+
+### Features:
+
+* [`3cb158`](https://github.com/Oldes/Rebol3/commit/3cb158b7180903c6d7cfb1c6da1c1ef8fd4b4370) Bincode - added command `VINT` (for variable-length integers)
+
+### Changes:
+
+* [`8342af`](https://github.com/Oldes/Rebol3/commit/8342afda05e0f7d72274c006a5cc7210718ad4a9) Updated source of `httpd` module to make it compatible also with older Rebol versions
+* [`f1cab2`](https://github.com/Oldes/Rebol3/commit/f1cab27e195b3957baf4bd59c9614d009ac1d524) Update Brotli sources to version 1.1.0
+* [`7de7e9`](https://github.com/Oldes/Rebol3/commit/7de7e9e28f67b32c35872b485d927281c33bd21c) Show an error message when failing to load a library on POSIX
+
+### Fixes:
+
+* [`d8e1af`](https://github.com/Oldes/Rebol3/commit/d8e1af2399a71055cdab89d247ce3edfa64d0726) Leak of internal `#(end)` value in `bincode` error messages
+* [`c0f3fb`](https://github.com/Oldes/Rebol3/commit/c0f3fb5e19db8cb755cf425d12e946b384a4863d) Warning that `malloc` might return null pointer
+* [`338cdd`](https://github.com/Oldes/Rebol3/commit/338cdd9c4635475266d8422575ea4ad71784d986) Resolved warning C6308 (`realloc` might return null pointer)
+* [`6c8240`](https://github.com/Oldes/Rebol3/commit/6c8240c091a09b3bd23832701b34b558afe9fd00) Use a macro within the preprocessor to avoid compiler warnings
+* [`e52542`](https://github.com/Oldes/Rebol3/commit/e52542b0f9ade285e06654e5632474f391e5b0a8) Allow use of any function type for codec's encode/decode
+* [`e0b163`](https://github.com/Oldes/Rebol3/commit/e0b1635f9d4c1d7add03c3fbc3800686c6db9928) `to-real-file` not working correctly with Unicode paths on Posix
+* [`a2ec87`](https://github.com/Oldes/Rebol3/commit/a2ec872af0b01079130218e1c58c775edcaf72bb) Result of `to-real-file` not containing a trailing slash for directories on Posix
+
+## 2024 May
+
+### Features:
+
+* [`3cc232`](https://github.com/Oldes/Rebol3/commit/3cc232a929e0616748fafb09d465c4ae400ec599) Including link to the latest Rebol/WebP extension
+* [`44fa97`](https://github.com/Oldes/Rebol3/commit/44fa97ec719961d1830052bc7665631549964506) Avoiding series copy where possible (like in `append "" 1`)
+* [`de38b4`](https://github.com/Oldes/Rebol3/commit/de38b4be6510238354c7ffe1c93a05756dc88871) Included module with C64 color palettes
+
+### Changes:
+
+* [`2ed680`](https://github.com/Oldes/Rebol3/commit/2ed680c96bf247b2f43d817b762895d09117dbb0) `construct` not converting `lit-word!` and `lit-path!` to `word!` and `path!`
+
+### Fixes:
+
+* [`de294f`](https://github.com/Oldes/Rebol3/commit/de294f3ed167ebf251c2f9ae9c2e47fddd309582) Correctly read POSIX virtual files in chunks using an open port
+* [`d0f3bf`](https://github.com/Oldes/Rebol3/commit/d0f3bfdb83b3a0699c3fef1cca341f68f2a6f170) Prevent infinite loop when resolving the size of virtual files
+* [`055c09`](https://github.com/Oldes/Rebol3/commit/055c092ea37e6d30643f8d4590719008c81658fe) Improved handling of virtual files on POSIX systems
+* [`592351`](https://github.com/Oldes/Rebol3/commit/59235186abfb344728fc6b83327c6084ad2ba6d6) Regression from https://github.com/Oldes/Rebol3/commit/7bb6e7b5507ade30c1c17b5f2d1ed0d63f21c437 (appending to `tag!` has different rules)
+
 ## 2024 April
 
 ### Features:
 
+* [`77f0e2`](https://github.com/Oldes/Rebol3/commit/77f0e279fb27bb22914088e736fcab02b7019780) Including Softinnov's task scheduler as Rebol3 module
+* [`d17b0c`](https://github.com/Oldes/Rebol3/commit/d17b0cd0c4522583510f3a4884adb3bc8a6a1142) Improved `help` function also displays the `module`'s specification
+* [`e15640`](https://github.com/Oldes/Rebol3/commit/e156405d9587db1e509f0b882848eb5c44f7f42a) Allow path value protection
+* [`d05956`](https://github.com/Oldes/Rebol3/commit/d059565b5a9dd8507f49ec97928a0700a3f0ff38) Implemented `ask/char`, which waits only for a single key press
+* [`6b8269`](https://github.com/Oldes/Rebol3/commit/6b8269c8331b41950a7655b05cbeb7491262d50d) Slightly optimize GC by checking the most common value types first
+* [`f95e6f`](https://github.com/Oldes/Rebol3/commit/f95e6f2f7cc8a8d5c1e7094b5a4dc121a2c96376) Handle gracefully `bind` with recursive data
 * [`7c6c10`](https://github.com/Oldes/Rebol3/commit/7c6c10859b1280e7cf9ad814fa12ae716201d7ad) Implemented `transcode/part`
 * [`fde583`](https://github.com/Oldes/Rebol3/commit/fde583014460d094b25acae27a687aed4cae9008) Possibility to see user defined `op!` sources
 * [`481446`](https://github.com/Oldes/Rebol3/commit/4814463beca29a122296d1d86fc8047d7747b7f5) Enhanced possible time limit from `2147483647ns` to `9223372036ns`
@@ -15,10 +108,32 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Changes:
 
+* [`70b87e`](https://github.com/Oldes/Rebol3/commit/70b87e569eae96815f590558392cb0d138ac87ec) Display the module's version in the help output
+* [`25d4e8`](https://github.com/Oldes/Rebol3/commit/25d4e8574d1bdae6353ff71747b9a3af617977da) Don't throw an error when used `wait` with a negative timeout value
+* [`ea437a`](https://github.com/Oldes/Rebol3/commit/ea437a691b3ee2ab1ed1b1deb5aa4ef6ee230d06) Use `noreturn` attribute in `Trap*` functions and mark these as DEAD_END to silence compiler warnings
+* [`1d4825`](https://github.com/Oldes/Rebol3/commit/1d4825db13cdb8a11cb5fb2ead5f43cfb6eb4b18) Using stack related defines
+* [`a82d73`](https://github.com/Oldes/Rebol3/commit/a82d7364bfdd553436cd05846b0be4d1f438d3a1) Not throwing an error when attempting to read the DNS of a non-existent host
 * [`fa831f`](https://github.com/Oldes/Rebol3/commit/fa831fc77089cf14ac0207e6557a7c43c1c22c7d) Updated Mbed-TLS sources to version 3.6.0
 
 ### Fixes:
 
+* [`9a3a11`](https://github.com/Oldes/Rebol3/commit/9a3a117fa922dc8683d902f52d7558113db77a42) Suppress a `signed/unsigned mismatch` MSVC warning
+* [`735ce7`](https://github.com/Oldes/Rebol3/commit/735ce7d4ad8e2d008401db599b586c8c08dd1b54) Removed a debug `probe` from the `cd` function
+* [`1999b1`](https://github.com/Oldes/Rebol3/commit/1999b1bd1ea80a619ccd2764b4397b0793fbf66b) On Windows (when used in console) `wait-for-key` exits immediately with `CR` value
+* [`7bb6e7`](https://github.com/Oldes/Rebol3/commit/7bb6e7b5507ade30c1c17b5f2d1ed0d63f21c437) Special cases when `mold/all` paths, emails, tags and urls
+* [`e28e41`](https://github.com/Oldes/Rebol3/commit/e28e41e7d5366becf75ac42794c695eb2ea102a3) `find/last` not respecting series index
+* [`e10e98`](https://github.com/Oldes/Rebol3/commit/e10e98df1fa6aa4a7ab1c33abc70f71648114a7e) Objects equality
+* [`65878e`](https://github.com/Oldes/Rebol3/commit/65878e15f56a004f325ff4572093ee10a439a1a9) `do` not expecting a Rebol header when input is a string value
+* [`fd64bd`](https://github.com/Oldes/Rebol3/commit/fd64bd60ad3fcfed37cd10ae5086280d9f965818) Avoid a stack overflow in case of deep recursion recycle
+* [`ddad4b`](https://github.com/Oldes/Rebol3/commit/ddad4bb39069bd6582685348de2acb7e89b1c81e) Crash when used `bind` on recursive data
+* [`cfe4ff`](https://github.com/Oldes/Rebol3/commit/cfe4ffcccc8134540a467ec08cba690c8b943b0f) `find/same` not working when used a block as a key
+* [`58c969`](https://github.com/Oldes/Rebol3/commit/58c96992a8c190bc967caa2e7c7e382800d5827d) Reverted GCC compiler-specific directive but used only with GCC
+* [`01bccc`](https://github.com/Oldes/Rebol3/commit/01bccc02c184950af1693582e2f8012e7d2f3999) Suppress msvc's C4334 warnings in the Brotli source
+* [`0de175`](https://github.com/Oldes/Rebol3/commit/0de175220db2bd08a051636c9c3f1e53504b83f7) Removed unnecessary GCC compiler-specific directive causing a warning when used CLANG
+* [`b3b982`](https://github.com/Oldes/Rebol3/commit/b3b98247cb008af0a8a5a3c4c26564479a9c7c49) Clang compiler warning
+* [`fcf2d4`](https://github.com/Oldes/Rebol3/commit/fcf2d4db4563a8f94015b991b3633c8da0a39c86) Msvc compiler warnings
+* [`f6443c`](https://github.com/Oldes/Rebol3/commit/f6443ce4245b99d17967dae1c35c3ed457a2fea9) Clang compiler warnings
+* [`04c82a`](https://github.com/Oldes/Rebol3/commit/04c82aed31a321f104569e494e6b392ee30a9dee) Warning: implicit truncation from 'int' to a one-bit wide bit-field changes value from 1 to -1
 * [`06c115`](https://github.com/Oldes/Rebol3/commit/06c1159b1306879f5a9e62a84e6b97a9a5bbb0b1) Allow syntax like `+<tag>` or `1.1.1<tag>`
 * [`fdf662`](https://github.com/Oldes/Rebol3/commit/fdf662b46eb68aff65d9803c6f421d2e2776be13) Does not allow refinement ending with a colon char
 * [`409c96`](https://github.com/Oldes/Rebol3/commit/409c96e71c1bf193c381a324a384dd7d33983c90) Console string input does not handle percent char correctly

@@ -249,15 +249,19 @@ modules: object [
 	easing:        https://github.com/Siskin-framework/Rebol-Easing/releases/download/1.0.0/
 	mathpresso:    https://github.com/Siskin-framework/Rebol-MathPresso/releases/download/0.1.0/
 	miniaudio:     https://github.com/Oldes/Rebol-MiniAudio/releases/download/0.11.18.0/
-	sqlite:        https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.42.0.0/
+	sqlite:        https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.46.0.0/
 	triangulate:   https://github.com/Siskin-framework/Rebol-Triangulate/releases/download/1.6.0.0/
 	webp:          https://github.com/Oldes/Rebol-WebP/releases/download/1.4.0.0/
 	;; optional modules, protocol and codecs
 	httpd:            https://src.rebol.tech/modules/httpd.reb
 	prebol:           https://src.rebol.tech/modules/prebol.reb
 	scheduler:        https://src.rebol.tech/modules/scheduler.reb
+	soundex:          https://src.rebol.tech/modules/soundex.reb
 	spotify:          https://src.rebol.tech/modules/spotify.reb
+	thru-cache:       https://src.rebol.tech/modules/thru-cache.reb
+	to-ascii:         https://src.rebol.tech/modules/to-ascii.reb
 	unicode-utils:    https://src.rebol.tech/modules/unicode-utils.reb
+	upgrade:          https://src.rebol.tech/modules/upgrade.red
 	daytime:          https://src.rebol.tech/mezz/prot-daytime.reb
 	mail:             https://src.rebol.tech/mezz/prot-mail.reb
 	mysql:            https://src.rebol.tech/mezz/prot-mysql.reb
@@ -457,8 +461,11 @@ standard: object [
 	file-info: construct [
 		name:
 		size:
-		date:
 		type:
+		date:     ;; same as `modified` (it is here just for backwards compatibility)
+		modified:
+		accessed:
+		created:
 	]
 
 	net-info: construct [

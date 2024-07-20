@@ -716,14 +716,14 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	void OS_File_Time(REBREQ *file, REBOL_DAT *dat)
+*/	void OS_File_Time(I64 *time, REBOL_DAT *dat)
 /*
-**		Convert file.time to REBOL date/time format.
+**		Convert file time to REBOL date/time format.
 **		Time zone is UTC.
 **
 ***********************************************************************/
 {
-	Convert_Date((time_t *)&(file->file.time.l), dat, 0);
+	Convert_Date((time_t *)&time->l, dat, 0);
 }
 
 

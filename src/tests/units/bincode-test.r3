@@ -335,6 +335,34 @@ is-protected-error?: func[code][
 		--assert [0 1 128 129 130 2214768806] = binary/read b [
 			EncodedU32 EncodedU32 EncodedU32 EncodedU32 EncodedU32 EncodedU32]
 
+	--test-- "BinCode - EncodedU64"
+		b: binary/init none 16
+		binary/write b [
+			EncodedU64 0
+			EncodedU64 0#0102030405
+			EncodedU64 0#7FFFFFFFFFFF
+			EncodedU64 0#7FFFFFFFFFFFFF
+			EncodedU64 0#7FFFFFFFFFFFFFFF
+		]
+		--assert b/buffer = #{0085888C9010FFFFFFFFFFFF1FFFFFFFFFFFFFFF3FFFFFFFFFFFFFFFFF7F}
+		--assert [0 0#0102030405 0#7FFFFFFFFFFF 0#7FFFFFFFFFFFFF 0#7FFFFFFFFFFFFFFF] = binary/read b [
+			EncodedU64 EncodedU64 EncodedU64 EncodedU64 EncodedU64]
+
+	--test-- "BinCode - VINT"
+	;; Another variable-length integer encoding (used in EBML/Matroska files)
+		b: binary/init none 16
+		binary/write b [
+			VINT 0
+			VINT 1
+			VINT 128
+			VINT 129
+			VINT 130
+			VINT 2214768806
+		]
+		--assert b/buffer = #{8081408040814082088402B0A6}
+		--assert [0 1 128 129 130 2214768806] = binary/read b [
+			VINT VINT VINT VINT VINT VINT]
+
 	--test-- "BinCode - BITSET8, BITSET16, BITSET32 (read)"
 		binary/read #{81800180000001} [
 			f8:  BITSET8
@@ -514,5 +542,29 @@ is-protected-error?: func[code][
 			empty? head b/buffer
 			empty? head b/buffer-write
 		]
+===end-group===
+
+
+===start-group=== "BinCode other issues"
+	--test-- "Missing additional read value"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2601
+	--assert all [error? e: try [binary/read #{010203} [UI8 UB]] e/arg1 = 'UB]
+	--assert all [error? e: try [binary/read #{010203} [UI8 FB]] e/arg1 = 'FB]
+	--assert all [error? e: try [binary/read #{010203} [UI8 SB]] e/arg1 = 'SB]
+	--assert all [error? e: try [binary/read #{010203} [UI8 AT]] e/arg1 = 'AT]
+	--assert all [error? e: try [binary/read #{010203} [UI8 ATz]] e/arg1 = 'ATz]
+	--assert all [error? e: try [binary/read #{010203} [UI8 PAD]] e/arg1 = 'PAD]
+	--assert all [error? e: try [binary/read #{010203} [UI8 SKIP]] e/arg1 = 'SKIP]
+	--assert all [error? e: try [binary/read #{010203} [UI8 SKIPBITS]] e/arg1 = 'SKIPBITS]
+
+	--test-- "Code block not at its head"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2603
+	--assert [1 2] == try [binary/read #{0102} next [ignored UI8 UI8]]
+	--assert all [
+		not error? try [binary/write b: #{} next [ignored UI8 1 UI8 2]]
+		b == #{0102}
+	]
+
+===end-group===
 
 ~~~end-file~~~

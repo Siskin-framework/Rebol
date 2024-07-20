@@ -124,41 +124,41 @@ text: {Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempo
 
 ===start-group=== "Brotli compression / decompression"
 	--test-- "Brotli compress/decompress"
-	either error? e: try [compress "test" 'brotli][
+	either error? e: try [compress "test" 'br][
 		;-- Brotli compression is not available in current build
 		--assert  'feature-na = e/id
 	][	
-		--assert  data = to string! decompress compress data 'brotli 'brotli
+		--assert  data = to string! decompress compress data 'br 'br
 
 		--test-- "Brotli compress/decompress while specifing level of compression"
-			--assert (compress/level "" 'brotli 0) =
+			--assert (compress/level "" 'br 0) =
 			#{3B}
-			--assert (compress/level data 'brotli 0) =
+			--assert (compress/level data 'br 0) =
 			#{8B0680746573742074657374207465737403}
-			--assert  text = to string! decompress compress/level text 'brotli 0 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 1 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 2 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 3 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 4 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 5 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 6 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 7 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 8 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 9 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 10 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 11 'brotli
+			--assert  text = to string! decompress compress/level text 'br 0 'br
+			--assert  text = to string! decompress compress/level text 'br 1 'br
+			--assert  text = to string! decompress compress/level text 'br 2 'br
+			--assert  text = to string! decompress compress/level text 'br 3 'br
+			--assert  text = to string! decompress compress/level text 'br 4 'br
+			--assert  text = to string! decompress compress/level text 'br 5 'br
+			--assert  text = to string! decompress compress/level text 'br 6 'br
+			--assert  text = to string! decompress compress/level text 'br 7 'br
+			--assert  text = to string! decompress compress/level text 'br 8 'br
+			--assert  text = to string! decompress compress/level text 'br 9 'br
+			--assert  text = to string! decompress compress/level text 'br 10 'br
+			--assert  text = to string! decompress compress/level text 'br 11 'br
 
 		--test-- "Brotli decompression with specified uncompressed size"
-			bin: compress data 'brotli
-			--assert  #{74657374} = decompress/size bin 'brotli 4
+			bin: compress data 'br
+			--assert  #{74657374} = decompress/size bin 'br 4
 
 		--test-- "Brotli compression when input is limited"
-			--assert  #{74657374} = decompress compress/part      data   'brotli  4 'brotli
-			--assert  #{74657374} = decompress compress/part skip data 5 'brotli  4 'brotli
-			--assert  #{74657374} = decompress compress/part tail data   'brotli -4 'brotli
+			--assert  #{74657374} = decompress compress/part      data   'br  4 'br
+			--assert  #{74657374} = decompress compress/part skip data 5 'br  4 'br
+			--assert  #{74657374} = decompress compress/part tail data   'br -4 'br
 
 		--test-- "Brotli decompress when not at head"
-			--assert data = to string! decompress next join #{00} compress data 'brotli 'brotli
+			--assert data = to string! decompress next join #{00} compress data 'br 'br
 	]
 ===end-group===
 
