@@ -680,38 +680,33 @@ if system/platform = 'Windows [
 ;===end-group===
 ;]
 
-if all [
-	"true" <> get-env "CONTINUOUS_INTEGRATION"
-	"true" <> get-env "CI" ; for GitHub workflows
-][
-	;- don't do these tests on Travis CI
-	===start-group=== "console port"	
-		--test-- "query input port"
-			--assert  port? system/ports/input
-			--assert  all [
-				object?  console-info: query system/ports/input object!
-				integer? console-info/window-cols
-				integer? console-info/window-rows
-				integer? console-info/buffer-cols
-				integer? console-info/buffer-rows
-				;?? console-info
-			]
-			--assert integer? query system/ports/input 'window-cols
-			--assert integer? query system/ports/input 'window-rows
-			--assert integer? query system/ports/input 'buffer-cols
-			--assert integer? query system/ports/input 'buffer-rows
-			--assert (words-of system/standard/console-info)
-							= m: query system/ports/input none
-			--assert block?   v: query system/ports/input m
-			--assert 8 = length? v
-		--test-- "Using just a name of the console scheme"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/826
-			--assert all [
-				port? try [p: open 'console]
-				port? close p
-			]
-	===end-group===
-]
+===start-group=== "console port"	
+	--test-- "query input port"
+		--assert  port? system/ports/input
+		--assert  all [
+			object?  console-info: query system/ports/input object!
+			integer? console-info/window-cols
+			integer? console-info/window-rows
+			integer? console-info/buffer-cols
+			integer? console-info/buffer-rows
+			;?? console-info
+		]
+		--assert integer? query system/ports/input 'window-cols
+		--assert integer? query system/ports/input 'window-rows
+		--assert integer? query system/ports/input 'buffer-cols
+		--assert integer? query system/ports/input 'buffer-rows
+		--assert integer? query system/ports/input 'length
+		--assert (words-of system/standard/console-info)
+						= m: query system/ports/input none
+		--assert block?   v: query system/ports/input m
+		--assert 10 = length? v
+	--test-- "Using just a name of the console scheme"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/826
+		--assert all [
+			port? try [p: open 'console]
+			port? close p
+		]
+===end-group===
 
 ===start-group=== "DNS"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1827

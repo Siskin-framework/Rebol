@@ -313,7 +313,7 @@ static void Close_StdIO_Local(void)
 	//puts("Read_IO");
 
 	if (Std_Inp >= 0) {
-
+		if (!Term_IO) CLR_FLAG(req->modes, RDM_READ_LINE);
 		// Perform a processed read or a raw read?
 #ifndef HAS_SMART_CONSOLE
 		if (Term_IO && GET_FLAG(req->modes, RDM_READ_LINE)) 
@@ -516,23 +516,25 @@ throw_event:
 **
 */	DEVICE_CMD Query_IO(REBREQ *req)
 /*
-**		Resolve port information. Currently just size of console.
+**		Resolve console port information. Currently just:
+**		- size of console
+**		- number of bytes available in the stdin
 **		Note: Windows console have BUFFER size, which may be bigger than
 **		visible window size. There seems to be nothing like it on POSIX,
-**		so the `buffer-size` info is reported same as `window-info`
+**		so the `buffer-size` info is reported same as `window-size`
 **
 ***********************************************************************/
 {
-	int cols, rows, err;
-	err = Get_Console_Size(&cols, &rows);
-	if ( err ) {
-		req->error = errno;
-		return DR_ERROR;
-	}
+	int cols = 0, rows = 0, bytes = 0;
+	Get_Console_Size(&cols, &rows); // possible error is ignored (sizes will be zero in zhis case)
 	req->console.window_rows =
 	req->console.buffer_rows = rows;
 	req->console.window_cols =
 	req->console.buffer_cols = cols;
+
+	ioctl(Std_Inp, FIONREAD, &bytes); // how many bytes is available in the stdin
+	req->console.length = bytes;
+
 	return DR_DONE;
 }
 

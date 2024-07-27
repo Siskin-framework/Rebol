@@ -33,6 +33,10 @@
 
 #define OUT_BUF_SIZE 32*1024
 
+#ifndef DEFAULT_WINDOW_COLS
+#define DEFAULT_WINDOW_COLS 80 // used when reported console width is zero (not available)
+#endif
+
 // Does OS use wide chars or byte chars (UTF-8):
 #ifdef OS_WIDE_CHAR
 #define MAKE_OS_BUFFER Make_Unicode
@@ -188,10 +192,15 @@
 		SET_INTEGER(ret, req->console.buffer_rows);
 		break;
 	case SYM_WINDOW_COLS:
+		if (req->console.window_cols == 0)
+			req->console.window_cols = DEFAULT_WINDOW_COLS;
 		SET_INTEGER(ret, req->console.window_cols);
 		break;
 	case SYM_WINDOW_ROWS:
 		SET_INTEGER(ret, req->console.window_rows);
+		break;
+	case SYM_LENGTH:
+		SET_INTEGER(ret, req->console.length);
 		break;
 	default:
 		return FALSE;
@@ -238,6 +247,7 @@
 		SET_INTEGER(OFV(obj, STD_CONSOLE_INFO_BUFFER_ROWS), req->console.buffer_rows);
 		SET_INTEGER(OFV(obj, STD_CONSOLE_INFO_WINDOW_COLS), req->console.window_cols);
 		SET_INTEGER(OFV(obj, STD_CONSOLE_INFO_WINDOW_ROWS), req->console.window_rows);
+		SET_INTEGER(OFV(obj, STD_CONSOLE_INFO_LENGTH), req->console.length);
 		SET_OBJECT(ret, obj);
 	}
 }

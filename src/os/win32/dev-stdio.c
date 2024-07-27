@@ -749,19 +749,27 @@ static void Close_StdIO_Local(void)
 **
 */	DEVICE_CMD Query_IO(REBREQ *req)
 /*
-**		Resolve console port information. Currently just size of console.
+**		Resolve console port information. Currently just:
+**		- size of console
+**		- number of bytes available in the stdin
 **
 ***********************************************************************/
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
 	if(0 == GetConsoleScreenBufferInfo(Std_Out, &csbiInfo)) {
-		req->error = GetLastError();
-		return DR_ERROR;
+		// return zero sizes in case of error...
+		ZeroMemory(&csbiInfo, sizeof(CONSOLE_SCREEN_BUFFER_INFO));
 	}
 	req->console.buffer_rows = csbiInfo.dwSize.Y;
 	req->console.buffer_cols = csbiInfo.dwSize.X;
 	req->console.window_rows = csbiInfo.srWindow.Bottom - csbiInfo.srWindow.Top + 1;
 	req->console.window_cols = csbiInfo.srWindow.Right - csbiInfo.srWindow.Left + 1;
+
+	// resolve number of bytes already available in the stdin
+	DWORD bytes_available = 0;
+	PeekNamedPipe(Std_Inp, NULL, 0, NULL, &bytes_available, NULL);
+	req->console.length = bytes_available;
+
 	return DR_DONE;
 }
 

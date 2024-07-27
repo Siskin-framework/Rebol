@@ -58,14 +58,6 @@ Special internal defines used by RT, not Host-Kit developers:
 
 	REB_DEF			- special includes, symbols, and tables
 
-These are now obsolete (as of A107) and should be removed:
-
-	REB_LIB
-	CORE_ONLY
-	REBOL_ONLY
-	FULL_DEFS
-	AS_LIB
-
 */
 
 

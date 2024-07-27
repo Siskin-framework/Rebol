@@ -217,6 +217,7 @@ struct rebol_devreq {
 			u32  buffer_cols;
 			u32  window_rows;
 			u32  window_cols;
+			i32  length;            // number of bytes already available to read (from stdio) 
 		} console;
 		struct {
 			u32 device_in;  // requested device ID (1-based; 0 = none)

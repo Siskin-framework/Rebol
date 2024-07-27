@@ -480,6 +480,7 @@ standard: object [
 		buffer-rows:
 		window-cols:
 		window-rows:
+		length:      ; number of bytes already available to read (from stdio) 
 	]
 
 	vector-info: construct [
