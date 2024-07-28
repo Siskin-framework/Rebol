@@ -204,7 +204,7 @@ void Trap_ZStream_Error(z_stream *stream, int err, REBOOL while_compression)
 			SERIES_TAIL(output) = stream.total_out;
 			Expand_Series(output, AT_TAIL, len);
 			stream.next_out = BIN_SKIP(output, stream.total_out);
-			stream.avail_out = SERIES_REST(output) - stream.total_out;
+			stream.avail_out = SERIES_REST(output) - stream.total_out - 1;
 		}
 	}
 	//printf("total_out: %i\n", stream.total_out);

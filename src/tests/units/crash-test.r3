@@ -251,6 +251,14 @@ if system/version > 3.17.0 [
 	--assert block? blk
 	blk: none recycle
 ]
+
+--test-- "decompress large data"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2615
+	bin: read/binary https://github.com/json-iterator/test-data/raw/master/large-file.json
+	loop 6 [
+		--assert not error? try [decompress bin 'gzip]
+	]
+
 ===end-group===
 
 ~~~end-file~~~
