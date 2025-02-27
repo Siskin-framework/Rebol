@@ -638,7 +638,7 @@ test-cases: [
 ]
 
 n: 1
-foreach test cases [
+foreach test test-cases [
 	--test-- join "Test case " ++ n
 	;; Using copy/part, because one test is with a truncation!
 	--assert test/HMAC-SHA-224 == copy/part checksum/with test/data 'sha224 test/key length? test/HMAC-SHA-224 
@@ -648,6 +648,58 @@ foreach test cases [
 ]
 ===end-group===
 
+===start-group=== "Checksum/with rfc2202"
+;-- https://datatracker.ietf.org/doc/html/rfc2202
+sha1-tests: [
+	[
+	key: #{0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b}
+	data: "Hi There"
+	digest: #{b617318655057264e28bc0b6fb378c8ef146be00}
+	][
+	key: "Jefe"
+	data: "what do ya want for nothing?"
+	digest: #{effcdf6ae5eb2fa2d27416d5f184df9c259a7c79}
+	][
+	key: #{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+	data: #{DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD}
+	digest: #{125d7342b9ac11cd91a39af48aa17b4f63f175d3}
+	][
+	key: #{0102030405060708090a0b0c0d0e0f10111213141516171819}
+	data: #{CDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCDCD}
+	digest: #{4c9007f4026250c6bc8414f9bf50c86c2d7235da}
+	][
+	key: #{0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c}
+	data: "Test With Truncation"
+	digest: #{4c1a03424b55e07fe7f27be1d58bb9324a9a5a04}
+	][
+	key: #{
+	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA}
+	data: "Test Using Larger Than Block-Size Key - Hash Key First"
+	digest: #{aa4ae5e15272d00e95705637ce8a3b55ed402112}
+	][
+	key: #{
+	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA}
+	data: "Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data"
+	digest: #{e8e99d0f45237d786d6bbaa7965c7808bbff1a91}
+	][
+	key: #{
+	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA}
+	data: "Test Using Larger Than Block-Size Key - Hash Key First"
+	digest: #{aa4ae5e15272d00e95705637ce8a3b55ed402112}
+	]
+]
+n: 1
+foreach test sha1-tests [
+	--test-- join "Test case " ++ n
+	--assert test/digest == checksum/with test/data 'sha1 test/key
+]
+===end-group===
 
 
 ~~~end-file~~~
