@@ -195,10 +195,18 @@ import (module [
 	?: help: func [
 		"Prints information about words and values"
 		'word [any-type!]
+		/doc "Open web browser to related documentation"
 		/into "Help text will be inserted into provided string instead of printed"
 			string [string!] "Returned series will be past the insertion"
 		/local value spec args refs rets type ret desc arg def des ref str cols tmp ret-desc
 	][
+		if all [
+			doc
+			word? :word
+			any-function? get :word
+		][
+			browse join https://rebol.tech/doc/functions.html# word
+		]
 		cols: query system/ports/output 'window-cols
 		max-desc-width: cols - 35
 		buffer: any [string  clear ""]
@@ -569,10 +577,11 @@ import (module [
 ;	print "Pending implementation."
 ;]
 ;
-;say-browser: does [
-;	comment "temp function"
-;	print "Opening web browser..."
-;]
+*browse: :lib/browse
+browse: func[url [url!]] [
+	sys/log/info 'REBOL ["Opening web browser:" as-green url]
+	*browse url
+]
 ;
 ;upgrade: function [
 ;	"Check for newer versions (update REBOL)."
@@ -597,26 +606,23 @@ import (module [
 ;docs: func [
 ;	"Browse on-line documentation."
 ;][
-;	say-browser
 ;	browse http://www.rebol.com/r3/docs
 ;	exit
 ;]
-;
-;bugs: func [
-;	"View bug database."
-;][
-;	say-browser
-;	browse http://curecode.org/rebol3/
-;	exit
-;]
-;
-;changes: func [
-;	"What's new about this version."
-;][
-;	say-browser
-;	browse http://www.rebol.com/r3/changes.html
-;	exit
-;]
+
+bugs: func [
+	"View bug database."
+][
+	browse https://github.com/Oldes/Rebol-issues/issues
+	exit
+]
+
+changes: func [
+	"What's new about this version."
+][
+	browse https://github.com/Oldes/Rebol3/blob/master/CHANGES.md
+	exit
+]
 ;
 ;why?: func [
 ;	"Explain the last error in more detail."
@@ -632,7 +638,6 @@ import (module [
 ;		error? err: any [:err system/state/last-error]
 ;		err/type ; avoids lower level error types (like halt)
 ;	][
-;		say-browser
 ;		err: lowercase ajoin [err/type #"-" err/id]
 ;		browse join http://www.rebol.com/r3/docs/errors/ [err ".html"]
 ;	][
