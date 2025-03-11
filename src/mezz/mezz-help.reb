@@ -16,7 +16,7 @@ import (module [
 	Title:  "Help related functions"
 	Name:    help
 	Version: 3.0.1
-	Exports: [? help about usage what license source dump-obj]
+	Exports: [? help about usage what license source dump-obj bugs changes]
 ][
 	buffer: none
 	cols:   80 ; default terminal width
@@ -569,18 +569,15 @@ import (module [
 		]
 		exit
 	]
-])
-
 ;-- old alpha functions:
 ;pending: does [
 ;	comment "temp function"
 ;	print "Pending implementation."
 ;]
 ;
-*browse: :lib/browse
 browse: func[url [url!]] [
 	sys/log/info 'REBOL ["Opening web browser:" as-green url]
-	*browse url
+	lib/browse url
 ]
 ;
 ;upgrade: function [
@@ -667,3 +664,5 @@ changes: func [
 ;	]
 ;	exit
 ;]
+])
+
