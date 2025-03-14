@@ -3,7 +3,7 @@ Rebol [
 	type: module
 	name: css
 	Date:    14-Mar-2025
-	Version: 0.1.0
+	Version: 0.1.1
 	Author:  @Oldes
 	Home:    https://github.com/Oldes/Rebol-CSS
 	Rights:  MIT
@@ -75,8 +75,8 @@ css-tokenize: function/with [
 	parse/case css [
 		any *whitespace
 		collect any [
-			  "<!--" thru "-->"
-			| "/*" thru "*/"
+			  "<!--" thru "-->" any *whitespace
+			| "/*" thru "*/" any *whitespace
 			| keep [
 				  *token-char
 				| *combinator
@@ -100,10 +100,10 @@ css-minify: function [tokens][
 	unless block? tokens [tokens: css-tokenize tokens]
 	ajoin parse tokens [collect any [
 		  #";" opt #" " ahead #"}" ;== removes ; in front of }
-		| #"{" #" " keep (#"{")
+		| #"{" any [#" " | #";"] keep (#"{")
 		| #"}" #" " keep (#"}")
 		| #":" #" " keep (#":")
-		| #";" #" " keep (#";")
+		| #";" any [#" " | #";"] [ahead #"}" | keep (#";")]
 		| #"(" (expr?: on ) #" " keep (#"(")
 		| #")" (expr?: off) #" " keep (#")")
 		| #"," #" " keep (#",")
@@ -119,6 +119,14 @@ css-minify: function [tokens][
 		]
 		| #"+" ahead number!
 		| #"-" ahead quote 0
+		;= and in a media query must be separated with a space
+		| "and" #" " ahead #"(" keep ("and ")
+		| if (expr?) [
+			  #" " #"/" #" " keep (#"/")
+			| #" " #"*" #" " keep (#"*")
+		]
+		| "black" keep ("#000")
+		| "white" keep ("#fff")
 		| keep skip
 	]]
 ]
