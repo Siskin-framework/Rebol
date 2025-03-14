@@ -565,6 +565,17 @@ is-protected-error?: func[code][
 		b == #{0102}
 	]
 
+	--test-- "Write at tail"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2637
+	bin: #{010203} binary/write at bin 2 [ui8 255]
+	--assert bin == #{01FF03}
+	bin: #{010203} binary/write at bin 2 [ui8 255 ui8 255 ui8 255 ui8 255]
+	--assert bin == #{01FFFFFFFF}
+	bin: #{010203} binary/write tail bin [ui8 255]
+	--assert bin == #{010203FF}
+	bin: #{010203} binary/write tail bin [ui8 255 ui8 255]
+	--assert bin == #{010203FFFF}
+
 ===end-group===
 
 ~~~end-file~~~
