@@ -12,9 +12,9 @@ REBOL [
 		Licensed under the Apache License, Version 2.0
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-	Version: 0.6.0
+	Version: 0.7.0
 	Needs: 3.17.2
-	Date: 15-Mar-2025
+	Date: 18-Mar-2025
 	File: %prot-http.r3
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -45,7 +45,9 @@ REBOL [
 	;;	0.5.4 15-Jul-2024 "Oldes" "FIX: HTTP query validated when building a request"
 	;;	0.5.5 19-Jul-2024 "Oldes" "CHANGE: updated for use with Rebol 3.17.2 and newer (query changes)"
 	;;	0.6.0 15-Mar-2025 "Oldes" "FIX: Use 'identity' encoding in HEAD request"
+	;;	0.7.0 18-Mar-2025 "Oldes" "FEAT: automatic cookies support"
 	;;]
+	exports: [set-cookies get-cookies]
 ]
 
 sync-op: func [port body /local header state][
@@ -263,20 +265,19 @@ escape-query: function/with [
 ][
 	parse query [some [
 		some allowed
-		| #"%" 2 hex ;; already escaped
+		| #"%" 2 hex-digits ;; already escaped
 		| change #" " #"+" 
 		| change set c: skip (ajoin [#"%" enbase to binary! c 16])
 	]]
 	query
 ][
-	hex: system/catalog/bitsets/hex-digits
 	allowed: charset [#"a"-#"z" #"A"-#"Z" #"0"-#"9" "-~!@*/|\;,._()[]{}+=?~&"]
 ]
 
 make-http-request: func [
 	"Create an HTTP request (returns binary!)"
 	spec [block! object!] "Request specification from an opened port"
-	/local method path target query headers content request 
+	/local method path target query headers content request cookies-to-send
 ][
 	method:  any [select spec 'method 'GET]
 	path:    any [select spec 'path    %/]
@@ -291,6 +292,10 @@ make-http-request: func [
 	]
 	if :target [append request mold as url! :target]
 	if :query  [append append request #"?" escape-query :query]
+
+	if cookies-to-send: get-cookies spec/host path [
+		put headers 'Cookie cookies-to-send
+	]
 
 	append request " HTTP/1.1^M^/"
 	
@@ -409,7 +414,7 @@ put system/catalog 'http-status-codes http-status-codes: #[
 	510 "Not Extended"
 	511 "Network Authentication Required"
 ]
-check-response: func [port /local conn res headers d1 d2 line info state awake spec date code][
+check-response: func [port /local conn res headers d1 d2 line info state awake spec date code cook][
 	state:   port/state
 	spec:    port/spec
 	conn:    state/connection
@@ -435,7 +440,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 	][
 		info/response-line: line: to string! copy/part conn/data d1
 		sys/log/info 'HTTP line
-		;probe to-string copy/part d1 d2
+		probe to-string copy/part d1 d2
 		info/headers: headers: construct/with d1 http-response-headers
 		sys/log/info 'HTTP ["Headers:^[[22m" mold body-of headers]
 		info/name: spec/ref
@@ -446,6 +451,10 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 		][
 			awake make event! [type: 'error port: port]
 		]
+		if cook: select headers 'set-cookie [
+			;probe port
+			set-cookies port/spec/host cook
+		] 
 		if date: any [
 			;@@ https://github.com/Oldes/Rebol-issues/issues/2496
 			select headers 'last-modified
@@ -998,3 +1007,160 @@ sys/make-scheme/with [
 		port: 443
 	]
 ] 'http
+
+
+;-- Cookies support --
+
+with cookies-rules: context [
+	; US-ASCII characters excluding CTLs, whitespace DQUOTE, comma, semicolon, and backslash:
+	cookie-octet: make bitset! #{000000005FF7FFEFFFFFFFF7FFFFFFFE}
+	cookie-octet-sp: make bitset! #{00400000DFF7FFEFFFFFFFF7FFFFFFFE} ; includes SPACE
+	; any CHAR except CTLs or separators:
+	token-char: complement charset [{()<>@,;:\"/[]?={} ^-} 0 - 31 127]
+	domain-char: charset [#"a"-#"z" #"A"-#"Z" ".-"]
+	path-char: complement charset [0 - 31 #";"]
+	digit: system/catalog/bitsets/numeric
+
+	=cookie-value: [#"^"" any cookie-octet #"^"" | any cookie-octet]
+	=cookie-name:  [some token-char]
+
+	;https://datatracker.ietf.org/doc/html/rfc2616#section-3.3.1
+	=month: ["Jan"|"Feb"|"Mar"|"Apr"|"May"|"Jun"|"Jul"|"Aug"|"Sep"|"Oct"|"Nov"|"Dec"]
+	=wkday: ["Mon"|"Tue"|"Wed"|"Thu"|"Fri"|"Sat"|"Sun"]
+	=itime: [2 digit #":" 2 digit #":" 2 digit]
+	;; The rule automatically fixes common non-compliant dates:
+	=date:  [2 digit [SP | change #"-" #" "]  =month [SP | change #"-" #" "] 4 digit]
+	=rfc1123-date: [=wkday ", " =date SP =itime SP "GMT"]
+	unless cookies-data: select system/state 'cookies [
+		cookies-data: make map! []
+		extend system/state 'cookies :cookies-data
+	]
+][
+	set-cookies: function [
+		"Processes `Set-Cookie` headers and stores cookies according to RFC 6265."
+		"Cookies are stored in `system/state/cookies` map."
+		host [string!] "Current host (used when the cookie doesn't set its domain)"
+		data [string! block!] "Either a string or block containing `Set-Cookie` lines."
+	][
+		timestamp: to integer! now/utc
+		foreach line to block! data [
+			Expires: domain: path: max-age: none
+			attr: parse line [
+				copy c-name:  =cookie-name #"="
+				[
+					#"^"" copy c-value: any cookie-octet-sp #"^""
+					| copy c-value: any cookie-octet
+				]
+				collect any ["; " [
+					"Expires=" copy Expires: =rfc1123-date |
+					"Domain="  copy Domain: any domain-char |
+					"Path="    copy Path:   any path-char |
+					"Max-Age=" copy Max-Age: some digit |
+					"Secure"   keep ('Secure) |
+					"HttpOnly" keep ('HttpOnly) |
+					keep some path-char
+				]]
+			]
+			;print [Domain Path Expires mold head attr]
+			;; The Expires attribute indicates the maximum lifetime of the cookie
+			try [Expires: to integer! to-date expires]
+			;; the Max-Age attribute has precedence and controls the expiration date of the cookie!
+			if Max-Age [Expires: timestamp + to integer! Max-Age]
+			unless Expires [Expires: timestamp + 3600 append attr 'not-persistent]
+
+			;; https://datatracker.ietf.org/doc/html/rfc6265#section-4.1.2.3
+			either Domain [
+				;; If the value of the Domain attribute is "example.com", the user
+				;; agent will include the cookie in the Cookie header to example.com,
+				;; www.example.com, and www.corp.example.com
+				if #"." != Domain/1 [insert Domain #"."]
+			][
+				;; When domain is not specified, use host name without the trailing dot!
+				;; So when host was: "example.com", cookie must be available only to this
+				;; exact domain.. not for e.g. www.example.com!
+				Domain: copy host
+			]
+			if empty? attr [attr: none]
+			
+			set?: false
+			dcooks: head cookies-data/:Domain: any [cookies-data/:Domain copy []]
+			while [not tail? dcooks] [
+				if all [
+					dcooks/3 == c-name
+					dcooks/2 == Path
+				][	;; cookie with this name and path already exists
+					either Expires <= timestamp [
+						;; cookie is expired, so remove it
+						remove/part dcooks 5
+						sys/log/info 'COOKIES ["DEL" domain path c-name]
+					][
+						;; update the cookie
+						dcooks/1: Expires
+						dcooks/4: c-value
+						dcooks/5: attr
+						;; and skip to the next one
+						sys/log/info 'COOKIES ["UPD" Expires Path c-name "=>" c-value]
+					]
+					set?: true
+					break
+				]
+				either dcooks/1 <= timestamp [
+					sys/log/info 'COOKIES ["DEL" domain dcooks/2 dcooks/3]
+					remove/part dcooks 5
+				][	dcooks: skip dcooks 5 ]
+			]
+			
+			unless set? [
+				sys/log/info 'COOKIES ["SET" domain Path c-name "=>" c-value]
+				repend dcooks [Expires Path c-name c-value attr]
+				new-line skip dcooks -5 true
+			]
+			dcooks: head dcooks
+		]
+		() ;= no return
+	]
+	get-cookies: function/with [
+		"Retrieves and formats valid cookies for HTTP requests."
+		host [string!] "The host for which cookies are being retrieved."
+		path [string! file!] "The path for which cookies are being retrieved."
+		return: [string!] "Formats cookies into a single string suitable for HTTP requests."
+	][
+		clear values
+		timestamp: to integer! now/utc
+		domain: ajoin ["." host]
+		;; collect values for subdomains
+		while [ all [domain temp: find next domain #"."] ][
+			get-host-cookies domain
+			domain: temp
+		]
+		;; collect "host-only" cookies
+		get-host-cookies host
+		if empty? values [return none]
+		foreach [key value] values [
+			append str ajoin [key #"=" value "; "]
+		]
+		clear skip tail str -2
+		also copy str  clear str
+	][
+		values: make map! []
+		str: make string! 500
+		timestamp: domain: none
+		get-host-cookies: func[domain /local data Expires Path Name Value attr][
+			;print ["get-host-cookies for" domain]
+			if block? data: cookies-data/:domain [
+				while [not tail? data][
+					set [Expires: Path: Name: Value: attr:] data
+					either Expires >= timestamp [
+						values/:Name: Value
+						data: skip data 5
+					][
+						sys/log/info 'COOKIES ["DEL" domain path name]
+						remove/part data 5
+					]
+				]
+			]
+			values
+		]
+	]
+]
+
