@@ -2,11 +2,12 @@ REBOL [
 	title: "Codec: DER/BER structures"
 	name: 'codec-der
 	author: "Oldes"
-	version: 0.2.0
-	date:    17-Feb-2022
+	version: 0.3.0
+	date:    18-Mar-2025
 	history: [
 		0.1.0 17-Oct-2018 "Oldes" {Initial version with DECODE and IDENTIFY functions.}
 		0.2.0 17-Feb-2022 "Oldes" {Including `form-id`}
+		0.3.0 18-Mar-2025 "Oldes" {Decoding a few more common OIDs used in TLS}
 	]
 	notes: {
 	Useful command for cross-testing:
@@ -409,8 +410,14 @@ register-codec [
 				;| #"^(23)" (name: 'bundleSecurity)
 			] end
 			|
-			#{2B0601040182370201} (main: "Microsoft") [
-				  #"^(15)" (name: 'individualCodeSigning)
+			#{2B06010401} [
+				#{82370201} (main: "Microsoft") [
+					#"^(15)" (name: 'individualCodeSigning)
+				]
+				|
+				#{D679} (main: "Google") [
+					#{020402} (name: 'X509Extension)
+				]
 			] end
 			|
 			#{0992268993F22C6401} (main: "Attribute") [
@@ -427,10 +434,10 @@ register-codec [
 				rejoin [ any [name "<?name>"] " (" any [main "<?main>"] ")"]
 			][	name ]
 		][
-			sys/log/error 'DER ["Failed to decode OID" oid "->" form-oid oid]
+			sys/log/debug 'DER ["Failed to decode OID" oid "->" form-oid oid]
 			form-oid oid
 		]
 	]
 
-	verbose: 0
+	system/options/log/der: verbose: 0
 ]
