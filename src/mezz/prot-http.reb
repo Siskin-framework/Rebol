@@ -414,7 +414,7 @@ put system/catalog 'http-status-codes http-status-codes: #[
 	510 "Not Extended"
 	511 "Network Authentication Required"
 ]
-check-response: func [port /local conn res headers d1 d2 line info state awake spec date code cook][
+check-response: func [port /local conn res headers d1 d2 line info state awake spec date code cookies][
 	state:   port/state
 	spec:    port/spec
 	conn:    state/connection
@@ -440,7 +440,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 	][
 		info/response-line: line: to string! copy/part conn/data d1
 		sys/log/info 'HTTP line
-		probe to-string copy/part d1 d2
+		;probe to-string copy/part d1 d2
 		info/headers: headers: construct/with d1 http-response-headers
 		sys/log/info 'HTTP ["Headers:^[[22m" mold body-of headers]
 		info/name: spec/ref
@@ -451,9 +451,8 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 		][
 			awake make event! [type: 'error port: port]
 		]
-		if cook: select headers 'set-cookie [
-			;probe port
-			set-cookies port/spec/host cook
+		if cookies: select headers 'set-cookie [
+			set-cookies port/spec/host cookies
 		] 
 		if date: any [
 			;@@ https://github.com/Oldes/Rebol-issues/issues/2496
@@ -1021,7 +1020,7 @@ with cookies-rules: context [
 	path-char: complement charset [0 - 31 #";"]
 	digit: system/catalog/bitsets/numeric
 
-	=cookie-value: [#"^"" any cookie-octet #"^"" | any cookie-octet]
+	=cookie-value: [#"^"" any cookie-octet-sp #"^"" | any cookie-octet]
 	=cookie-name:  [some token-char]
 
 	;https://datatracker.ietf.org/doc/html/rfc2616#section-3.3.1
@@ -1075,9 +1074,9 @@ with cookies-rules: context [
 				;; www.example.com, and www.corp.example.com
 				if #"." != Domain/1 [insert Domain #"."]
 			][
-				;; When domain is not specified, use host name without the trailing dot!
+				;; When domain is not specified, use host name without the leading dot!
 				;; So when host was: "example.com", cookie must be available only to this
-				;; exact domain.. not for e.g. www.example.com!
+				;; exact domain. Not for "www.example.com"!
 				Domain: copy host
 			]
 			if empty? attr [attr: none]

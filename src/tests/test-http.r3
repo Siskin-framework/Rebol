@@ -26,7 +26,7 @@ foreach [label test] [
 	"Set another 2 cookies" [
 		result: read-json https://httpbun.org/cookies/set?a=1&b=2%202
 		probe result
-		result/cookies == #[name: "Rebol" a: "1" b: "222"]
+		result/cookies == #[name: "Rebol" a: "1" b: "2 2"]
 	]
 	"Delete 2 cookies" [
 		result: read-json https://httpbun.org/cookies/delete?a=&b=
