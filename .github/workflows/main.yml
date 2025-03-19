@@ -147,3 +147,32 @@ jobs:
         with:
           name: Rebol-CI-${{github.run_id}}-macos
           path: ./rebol3-*.gz
+
+Haiku-x64:
+    runs-on: ubuntu-latest
+    if: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Download Haiku Rebol-dev container
+        run: docker pull docker.io/oldes/rebol-dev:haiku-x64
+
+      - name: Build all Rebol for Haiku OS x64
+        run: docker run --rm -v $PWD:/siskin oldes/rebol-dev:haiku-x64 bash -c 'cd /siskin; rebol siskin.r3 rebol rebol3-bulk-haiku-x64'
+
+      - name: Compress result before uploading
+        run: |
+          sudo mv ./tree/rebol/Rebol/build/rebol3-bulk-haiku-x64 ./
+          sudo gzip -9 ./rebol3-bulk-haiku-x64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Rebol-${{github.run_id}}-haiku-x64
+          path: ./rebol3-*.gz
