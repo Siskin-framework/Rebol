@@ -51,7 +51,7 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
-#ifdef TO_LINUX
+#if (defined TO_LINUX) && !defined(__HAIKU__ )
 #include <linux/stat.h>
 //#include <linux/fcntl.h>
 #include <fcntl.h>
@@ -80,6 +80,8 @@ struct statx_timestamp;
 #      define SYS_statx 360
 #    elif defined __x86_64__
 #      define SYS_statx 332
+#    elif defined __riscv && __riscv_xlen == 64 // riscv64
+#      define SYS_statx 291
 #    else
 #      warning "SYS_statx not defined for your architecture"
 #    endif
