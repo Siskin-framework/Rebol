@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -87,6 +87,7 @@ enum test_cmd_words {
 	CMD_hob2,
 	CMD_str0,
 	CMD_echo,
+	CMD_path,
 };
 char *RX_Spec =
 	"REBOL [\n"
@@ -117,12 +118,12 @@ char *RX_Spec =
 	"hob2:   command [{prints XTEST handle's data} hndl [handle!]]\n"
 	"str0:   command [{return a constructed string}]\n"
 	"echo:   command [{return the input value} value]\n"
-	"ref1:   command [/a [integer!]]\n"
+	"path:   command [{converts Rebol file to OS file as string or binary} f [file!] /full {full path} /utf8]\n"
 
 	"init-words [id data length] protect/hide 'init-words\n"
 	"a: b: c: h: x: y: none\n"
 	"i: make image! 2x2\n"
-	"s: #[struct! [r [uint8!]]]\n"
+	"s: #(struct! [r [uint8!]])\n"
 	"xtest: does [\n"
 		"foreach blk [\n"
 			"[x: hob1 #{0102}]"
@@ -170,6 +171,9 @@ char *RX_Spec =
 			
 			// https://github.com/Oldes/Rebol-issues/issues/2536
 			"[same? s probe echo s]\n"
+
+			"[{foo} == path %foo]\n"
+			"[#{66C3AD6B} == path/utf8 to file! #{66C3AD6B}]\n"
 		"][\n"
 			"print [{^/^[[7mtest:^[[0m^[[1;32m} mold blk {^[[0m}]\n"
 			//"replace {x} {x} {y}\n"
@@ -221,15 +225,16 @@ REBCNT Test_Async_Callback(REBSER *obj, REBCNT word)
 
 	// These cannot be on the stack, because they are used
 	// when the callback happens later.
-	cbi = MAKE_NEW(*cbi);
-	args = MAKE_MEM(sizeof(RXIARG) * 4);
+	cbi  = MAKE_CLEAR_MEM(sizeof(RXICBI));
+	args = MAKE_CLEAR_MEM(sizeof(RXIARG) * 4);
+	// It's freed in do_callback function (f-extension.c) when RXC_ALLOC flag is set.
+
 	if (!cbi || !args) return 0; // silent compiler's warnings
-	CLEAR(cbi, sizeof(cbi));
-	CLEAR(args, sizeof(RXIARG) * 4);
 	cbi->obj = obj;
 	cbi->word = word;
 	cbi->args = args;
 	SET_FLAG(cbi->flags, RXC_ASYNC);
+	SET_FLAG(cbi->flags, RXC_ALLOC);
 
 	// Pass a single integer arg to the callback function:
 	RXI_COUNT(args) = 1;
@@ -434,6 +439,17 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 		break;
 	case CMD_echo: //command [{return the input value} value]
 		return RXR_VALUE;
+
+	case CMD_path: //command [f [file!] /full /utf8]
+		// to test file argument input used in native calls
+		// if used /utf8, the output path is utf8 encoded and is returned as a binary value
+	{
+		REBSER* ser = RL_TO_LOCAL_PATH(&RXA_ARG(frm, 1), RXA_REF(frm, 2), RXA_REF(frm, 3));
+		RXA_SERIES(frm, 1) = ser;
+		RXA_TYPE(frm, 1) = RXA_REF(frm, 3) ? RXT_BINARY : RXT_STRING;
+		RXA_INDEX(frm, 1) = 0;
+	}
+		break;
 
 	case CMD_init: // init words
 		x_arg_words = RL_MAP_WORDS(RXA_SERIES(frm,1));

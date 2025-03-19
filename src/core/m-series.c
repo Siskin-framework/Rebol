@@ -119,7 +119,7 @@
 			Trap0(RE_PAST_END);
 		}
 
-		newser = Make_Series(new_size, wide, TRUE);
+		newser = Make_Series(new_size, wide, new_size < 512*1024);
 		// If necessary, add series to the recently expanded list:
 		if (Prior_Expand[n] != series) {
 			n = (REBUPT)(Prior_Expand[0]) + 1;

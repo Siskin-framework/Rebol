@@ -311,7 +311,7 @@ static struct digest {
 					}
 					REBYTE tmpdigest[128];		// Size must be max of all digest[].len;
 					REBYTE ipad[128],opad[128];	// Size must be max of all digest[].hmacblock;
-					void *ctx = Make_Mem(digests[i].ctxsize());
+					void *ctx = Make_CMem(digests[i].ctxsize());
 
 					REBCNT blocklen = digests[i].hmacblock;
 

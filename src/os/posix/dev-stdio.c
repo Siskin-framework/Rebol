@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -579,8 +580,10 @@ throw_event:
 
 				tcsetattr(Std_Inp, TCSANOW, &original_settings);
 
-				// Turn off bracketed paste - https://cirw.in/blog/bracketed-paste
-				printf("\e[?2004l");
+				if(!GET_FLAG(req->modes, RDM_CGI)) {
+					// Turn off bracketed paste - https://cirw.in/blog/bracketed-paste
+					printf("\e[?2004l");
+				}
 			}
 			else {
 				//printf("char inp %s\n", dev->title);
@@ -593,8 +596,10 @@ throw_event:
   				//flags |= O_NONBLOCK;
 				tcsetattr(Std_Inp, TCSANOW, &settings);
 
-				// Turn on bracketed paste - https://cirw.in/blog/bracketed-paste
-				printf("\e[?2004h");
+				if(!GET_FLAG(req->modes, RDM_CGI)) {
+					// Turn on bracketed paste - https://cirw.in/blog/bracketed-paste
+					printf("\e[?2004h");
+				}
 			}
 			//fcntl(Std_Inp, F_SETFL, flags);
 

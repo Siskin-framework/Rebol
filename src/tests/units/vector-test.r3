@@ -167,8 +167,10 @@ Rebol [
 	--assert o/type = 'integer!
 	--assert o/size = 16
 	--assert o/length = 2
+	--assert o/minimum = 0
+	--assert o/maximum = 0
 --test-- "QUERY on vector"
-	--assert [signed type size length] = query v none
+	--assert [signed type size length minimum maximum] = query v none
 	--assert [16 integer!] = query v [:size :type]
 	--assert block? b: query v [signed length]
 	--assert all [not b/signed b/length = 2]
@@ -462,6 +464,99 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "VECTOR ´minimum/maximum"
+	vi08: #(i8!  [1 -2 0])
+	vi16: #(i16! [1 -2 0])
+	vi32: #(i32! [1 -2 0])
+	vi64: #(i64! [1 -2 0])
+	vu08: #(u8!  [1 2 0])
+	vu16: #(u16! [1 2 0])
+	vu32: #(u32! [1 2 0])
+	vu64: #(u64! [1 2 0])
+	vf32: #(f32! [1 -2 0])
+	vf64: #(f64! [1 -2 0])
+	--test-- "Find minimum of the vector"
+		--assert vi08/min == -2
+		--assert vi16/min == -2
+		--assert vi32/min == -2
+		--assert vi64/min == -2
+		--assert vu08/min ==  0
+		--assert vu16/min ==  0
+		--assert vu32/min ==  0
+		--assert vu64/min ==  0
+		--assert vf32/min == -2.0
+		--assert vf64/min == -2.0
+		;; it can be used also full word
+		--assert vi08/minimum == -2
+	--test-- "Find maximum of the vector"
+		--assert vi08/max == 1
+		--assert vi16/max == 1
+		--assert vi32/max == 1
+		--assert vi64/max == 1
+		--assert vu08/max == 2
+		--assert vu16/max == 2
+		--assert vu32/max == 2
+		--assert vu64/max == 2
+		--assert vf32/max == 1.0
+		--assert vf64/max == 1.0
+		--assert vi08/maximum == 1
+
+	--test-- "Find min/max using query v1"
+		--assert [minimum: -2   maximum: 1]   == query vi08 [minimum maximum]
+		--assert [minimum: -2   maximum: 1]   == query vi16 [minimum maximum]
+		--assert [minimum: -2   maximum: 1]   == query vi32 [minimum maximum]
+		--assert [minimum: -2   maximum: 1]   == query vi64 [minimum maximum]
+		--assert [minimum:  0   maximum: 2]   == query vu08 [minimum maximum]
+		--assert [minimum:  0   maximum: 2]   == query vu16 [minimum maximum]
+		--assert [minimum:  0   maximum: 2]   == query vu32 [minimum maximum]
+		--assert [minimum:  0   maximum: 2]   == query vu64 [minimum maximum]
+		--assert [minimum: -2.0 maximum: 1.0] == query vf32 [minimum maximum]
+		--assert [minimum: -2.0 maximum: 1.0] == query vf64 [minimum maximum]
+	--test-- "Find min/max using query v2"
+		--assert [-2   1]   == query vi08 [:minimum :maximum]
+		--assert [-2   1]   == query vi16 [:minimum :maximum]
+		--assert [-2   1]   == query vi32 [:minimum :maximum]
+		--assert [-2   1]   == query vi64 [:minimum :maximum]
+		--assert [ 0   2]   == query vu08 [:minimum :maximum]
+		--assert [ 0   2]   == query vu16 [:minimum :maximum]
+		--assert [ 0   2]   == query vu32 [:minimum :maximum]
+		--assert [ 0   2]   == query vu64 [:minimum :maximum]
+		--assert [-2.0 1.0] == query vf32 [:minimum :maximum]
+		--assert [-2.0 1.0] == query vf64 [:minimum :maximum]
+
+	vi08: #(i8!  [])
+	vi16: #(i16! [])
+	vi32: #(i32! [])
+	vi64: #(i64! [])
+	vu08: #(u8!  [])
+	vu16: #(u16! [])
+	vu32: #(u32! [])
+	vu64: #(u64! [])
+	vf32: #(f32! [])
+	vf64: #(f64! [])
+	--test-- "Find minimum of the empty vector"
+		--assert none? vi08/min
+		--assert none? vi16/min
+		--assert none? vi32/min
+		--assert none? vi64/min
+		--assert none? vu08/min
+		--assert none? vu16/min
+		--assert none? vu32/min
+		--assert none? vu64/min
+		--assert none? vf32/min
+		--assert none? vf64/min
+	--test-- "Find maximum of the empty vector"
+		--assert none? vi08/max
+		--assert none? vi16/max
+		--assert none? vi32/max
+		--assert none? vi64/max
+		--assert none? vu08/max
+		--assert none? vu16/max
+		--assert none? vu32/max
+		--assert none? vu64/max
+		--assert none? vf32/max
+		--assert none? vf64/max
 
 ===start-group=== "VECTOR Compare"
 	--test-- "compare vectors"

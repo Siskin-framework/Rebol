@@ -20,5 +20,5 @@ upgrade: function [
 	try [delete system/options/modules/upgrade.reb] 
 	try [unset in system/contexts/user 'upgrade]
 	try [unset in system/contexts/lib  'upgrade]
-	system/modules/upgrade: https://src.rebol.tech/modules/upgrade.red
+	system/modules/upgrade: https://src.rebol.tech/modules/upgrade.reb
 ]

@@ -51,6 +51,10 @@ typedef struct rebol_dat {
 
 typedef int	cmp_t(const void *, const void *);
 void reb_qsort(void *a, size_t n, size_t es, cmp_t *cmp);
+#define SORT_FLAG_REVERSE 1
+#define SORT_FLAG_WIDE    2
+#define SORT_FLAG_CASE    3
+
 
 // Encoding_opts was originally in sys-core.h, but I moved it here so it can
 // be used also while makking external extensions. (oldes)

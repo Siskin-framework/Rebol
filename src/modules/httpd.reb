@@ -2,8 +2,8 @@ Rebol [
 	Title:  "HTTPd Scheme"
 	Type:    module
 	Name:    httpd
-	Date:    4-Jun-2024
-	Version: 0.9.2
+	Date:    22-Jul-2024
+	Version: 0.9.4
 	Author: ["Andreas Bolka" "Christopher Ross-Gill" "Oldes"]
 	Exports: [serve-http http-server decode-target to-CLF-idate]
 	Home:    https://github.com/Oldes/Rebol-HTTPd
@@ -222,6 +222,7 @@ sys/make-scheme [
 					keep-alive:  true
 					list-dir?:   true
 					server-name: "Rebol3-HTTPd"
+					trust-ips:   [127.0.0.1]
 				]
 			]
 			port/state: port/extra/subport/extra/clients
@@ -263,9 +264,9 @@ sys/make-scheme [
 						return Actor/On-List-Dir ctx target
 					]
 				]
-				info: query path [modified size]
+				info: query/mode path [date: size:]
 				; prepare modified date of the target
-				modified: info/modified
+				modified: info/date
 				modified/timezone: 0 ; converted to UTC
 				modified/second: to integer! modified/second ; remove miliseconds from time
 
@@ -273,7 +274,7 @@ sys/make-scheme [
 				ctx/out/status: 200
 				ctx/out/target: path
 				ctx/out/header/Content-Length: info/size
-				ctx/out/header/Last-Modified:  to-idate/gmt info/modified
+				ctx/out/header/Last-Modified:  to-idate/gmt info/date
 				if ctx/inp/method = "GET" [
 					;? ctx/inp/header
 					either all [
@@ -417,7 +418,7 @@ sys/make-scheme [
 				append files dirs
 
 				foreach file files [
-					set [size date] query dir/:file [:size :date]
+					set [size date] query/mode dir/:file [:size :date]
 					append out ajoin [
 						{<a href="} file {">} file {</a> }
 						pad copy "" 50 - length? file
@@ -432,6 +433,7 @@ sys/make-scheme [
 				ctx/out/content: out
 				return true
 			][
+				print system/state/last-error
 				ctx/out/status: 404 ; using not-found response!
 				return false
 			]
@@ -591,8 +593,17 @@ sys/make-scheme [
 
 	Write-log: function [ctx][
 		try/with [
+			remote-ip: ctx/remote-ip
+			if all [
+				;; Resolve real IP from the header...
+				ip: attempt [to tuple! ctx/inp/header/X-Real-IP]
+				4 = length? ip
+				;; ...but only if we trust the real IP used to connect
+				any [none? ips: ctx/config/trust-ips find ips remote-ip]
+				remote-ip: :ip
+			]
 			msg: ajoin [
-				ctx/remote-ip
+				remote-ip
 				{ - - [} to-CLF-idate now {] "}
 				ctx/inp/method #" "
 				to string! ctx/inp/target/original
@@ -846,14 +857,7 @@ sys/make-scheme [
 
 	New-Client: func[port [port!] /local client info err][
 		client: first port
-		info: query client [remote-ip remote-port]
-		unless Actor/On-Accept info [
-			; connection not allowed
-			log-more ["Client not accepted:^[[22m" info/remote-ip]
-			close client
-			return false
-		]
-		client/awake: :Awake-Client
+		info: query/mode client [remote-ip: remote-port: local-ip: local-port:]
 		client/extra: make object! [
 			state: none
 			parent: port
@@ -880,6 +884,14 @@ sys/make-scheme [
 		]
 		;? port
 		client/extra/config: port/extra/config
+		
+		unless Actor/On-Accept client/extra [
+			; connection not allowed
+			log-more ["Client not accepted:^[[22m" info/remote-ip]
+			close client
+			return false
+		]
+		client/awake: :Awake-Client
 		append port/extra/clients client
 
 		log-more ["New client:^[[1;31m" client/extra/remote]

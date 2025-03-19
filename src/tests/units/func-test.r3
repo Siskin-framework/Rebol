@@ -46,6 +46,57 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "function construction"
+
+--test-- "return: keyword"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2602
+	;; because unit tests are guearded by `wrap`, the return value would be unset:/
+	return: :lib/return ;; so use the original function
+	;; maybe it would be good not to use return as a set-word in this case at all!
+	
+	fun: func[a [integer!] return: [integer!]][ return 2 * a 'foo]
+	--assert 2 == fun 1
+
+	foreach spec [
+		[return: []]
+		[return: [] "Foo"]
+		[a return: []]
+		[return: [] a]
+		[return: [integer!]]
+		[a [integer!] return: [integer!]]
+		[/foo return: [integer!]]
+		["test" return: []]
+		["test" return: [] "Foo"]
+		["test" a return: []]
+		["test" return: [] a]
+		["test" return: [integer!]]
+		["test" a [integer!] return: [integer!]]
+		["test" /foo return: [integer!]]
+	][
+		--assert all [
+			function? fun: try [ func :spec [true] ]
+			spec == spec-of :fun
+		]
+	]
+	foreach spec [
+		[return:]
+		[return: ""]
+	][
+		--assert all [
+			error? e: try [ func :spec [] ]
+			e/id = 'bad-func-def
+			e/arg1 == spec
+		]
+	]
+	--assert all [
+		error? e: try [ func [return: [] a return: []][] ]
+		e/id = 'dup-vars
+		e/arg1 = 'return
+	]
+	
+===end-group===
+
+
 ===start-group=== "Apply"
 
 --test-- "apply :do [:func]"

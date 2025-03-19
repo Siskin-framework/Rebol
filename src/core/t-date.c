@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2024 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -313,7 +314,7 @@ static const REBI64 DAYS_OF_JAN_1ST_1970 = 719468; // number of days for 1st Jan
 
 /***********************************************************************
 **
-*/	REBCNT Date_To_Timestamp(REBVAL *date)
+*/	REBI64 Date_To_Timestamp(REBVAL *date)
 /*
 **		Return the unix time stamp for a specific date value.
 **
@@ -326,6 +327,22 @@ static const REBI64 DAYS_OF_JAN_1ST_1970 = 719468; // number of days for 1st Jan
 	return epoch + ((time + 500000000) / SEC_SEC);
 }
 
+
+/***********************************************************************
+**
+*/	REBDEC Date_To_Timestamp_Decimal(REBVAL *date)
+/*
+**		Return the unix time stamp as a decimal for a specific date value.
+**
+***********************************************************************/
+{
+	REBDAT d = VAL_DATE(date);
+	REBI64 epoch = (Days_Of_Date(d.date.day, d.date.month, d.date.year) - DAYS_OF_JAN_1ST_1970) * SECS_IN_DAY;
+	REBDEC time = (REBDEC)VAL_TIME(date);
+	if (time == NO_TIME) time = 0;
+	return (REBDEC)epoch + (time/ SEC_SEC);
+}
+
 /***********************************************************************
 **
 */	void Timestamp_To_Date(REBVAL *date, REBI64 epoch)
@@ -335,10 +352,39 @@ static const REBI64 DAYS_OF_JAN_1ST_1970 = 719468; // number of days for 1st Jan
 ***********************************************************************/
 {
 	REBI64 days = (epoch / SECS_IN_DAY) + DAYS_OF_JAN_1ST_1970;
-
+	REBI64 secs =  epoch % SECS_IN_DAY;
+	// Adjust for negative seconds
+	if (secs < 0) {
+		days--;
+		secs = SECS_IN_DAY + secs;
+	}
 	VAL_SET(date, REB_DATE);
 	Date_Of_Days(days, &VAL_DATE(date));
-	VAL_TIME(date) = TIME_SEC((epoch % 86400));
+	VAL_TIME(date) = TIME_SEC(secs);
+	VAL_ZONE(date) = 0;
+}
+
+/***********************************************************************
+**
+*/	void Timestamp_Decimal_To_Date(REBVAL *date, REBDEC epoch)
+/*
+**		Set Rebol date from the unix time stamp epoch with a decimal precision.
+**		NOTE: Using microseconds for time precision instead of nanoseconds
+**		      to avoid rounding errors. 
+**
+***********************************************************************/
+{
+	REBI64 usecs = (REBI64)(epoch * 1000000);
+	REBI64 days = (usecs / MICROSECONDS_IN_DAY) + DAYS_OF_JAN_1ST_1970;
+	usecs = usecs % MICROSECONDS_IN_DAY;
+	// Adjust for negative seconds
+	if (usecs < 0) {
+		days--;
+		usecs = MICROSECONDS_IN_DAY + usecs;
+	}
+	VAL_SET(date, REB_DATE);
+	Date_Of_Days(days, &VAL_DATE(date));
+	VAL_TIME(date) = 1000 * usecs;
 	VAL_ZONE(date) = 0;
 }
 
@@ -588,11 +634,13 @@ static const REBI64 DAYS_OF_JAN_1ST_1970 = 719468; // number of days for 1st Jan
 	REBI64 secs = NO_TIME;
 	REBINT tz = 0;
 	REBDAT date;
-	REBCNT year, month, day;
+	REBCNT year, month, day, hour, minute;
+	REBDEC second;
 
 	if (IS_DATE(arg)) {
 		*val = *arg;
-		if (IS_TIME(++arg)) {
+		arg++;
+		if (IS_TIME(arg) || IS_INTEGER(arg)) {
 			// make date! [1-1-2000 100:0]
 			// we must get date parts here so can be used
 			// for time normalization later
@@ -634,12 +682,30 @@ set_time:
 		secs = VAL_TIME(arg);
 		arg++;
 	}
+	else if (IS_INTEGER(arg)) {
+		hour = VAL_UNT64(arg++);
+		if (!IS_INTEGER(arg)) return FALSE;
+		minute = VAL_UNT64(arg++);
+		if (IS_INTEGER(arg)) {
+			second = (REBDEC)VAL_INT64(arg);
+		}
+		else if (IS_DECIMAL(arg)) {
+			second = VAL_DECIMAL(arg);
+		}
+		else return FALSE;
+
+		if (hour > 23 || minute >= 60 || second >= 60.0) return FALSE;
+		secs = HOUR_TIME(hour) + MIN_TIME(minute) + DEC_TO_SECS(second);
+		arg++;
+
+	}
 
 	if (IS_TIME(arg)) {
 		tz = (REBINT)(VAL_TIME(arg) / (ZONE_MINS * MIN_SEC));
 		if (tz < -MAX_ZONE || tz > MAX_ZONE) Trap_Range(arg);
 		arg++;
 	}
+
 
 	if (!IS_END(arg)) return FALSE;
 
@@ -1015,9 +1081,8 @@ setDate:
 				return R_RET;
 			}
 			else if (IS_DECIMAL(arg)) {
-				Julian_To_Gregorian_Date(VAL_DECIMAL(arg) + 2400000.5, &day, &month, &year, &secs);
-				day--; month--; // The date/time normalization expects 0-based day and month
-				goto fixTime;
+				Timestamp_Decimal_To_Date(D_RET, VAL_DECIMAL(arg));
+				return R_RET;
 			}
 //			else if (IS_NONE(arg)) {
 //				secs = nsec = day = month = year = tz = 0;

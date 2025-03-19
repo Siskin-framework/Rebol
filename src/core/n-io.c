@@ -899,6 +899,15 @@ chk_neg:
 			SET_INTEGER(val, exit_code);
 		}
 
+		// based on f-stubs Make_OS_Error()
+		if (r != 0) {
+			REBCHR str[100];
+			OS_FORM_ERROR(r, str, 100);
+
+			val = Append_Frame(obj, NULL, SYM_ERROR);
+			SET_STRING(val, Copy_OS_Str(str, (REBINT)LEN_STR(str)));
+		}
+
 		SET_OBJECT(D_RET, obj);
 		return R_RET;
 	}

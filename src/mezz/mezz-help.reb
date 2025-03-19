@@ -16,7 +16,7 @@ import (module [
 	Title:  "Help related functions"
 	Name:    help
 	Version: 3.0.1
-	Exports: [? help about usage what license source dump-obj]
+	Exports: [? help about usage what license source dump-obj bugs changes]
 ][
 	buffer: none
 	cols:   80 ; default terminal width
@@ -84,7 +84,7 @@ import (module [
 		"Prepends the appropriate variant of a or an into a string"
 		s [string!]
 	][
-		form reduce [pick ["an" "a"] make logic! find "aeiou" s/1 s]
+		form reduce [pick ["an" "a"] make logic! find "aeiou" s/1 as-yellow s]
 	]
 
 	form-type: func [value] [
@@ -127,7 +127,7 @@ import (module [
 
 	dump-obj: func [
 		"Returns a string with information about an object value"
-		obj [any-object!]
+		obj [any-object! map!]
 		/weak "Provides sorting and does not displays unset values"
 		/match "Include only those that match a string or datatype"
 			pattern
@@ -170,7 +170,7 @@ import (module [
 					]
 				][ continue ]
 
-				str: join "^[[1;32m" form-pad word 15
+				str: join "^[[1;32m" form-pad either map? :obj [mold/flat :word][word] 15
 				append str "^[[m "
 				append str form-pad type 11 - min 0 ((length? str) - 15)
 				append result rejoin [
@@ -195,13 +195,19 @@ import (module [
 	?: help: func [
 		"Prints information about words and values"
 		'word [any-type!]
+		/doc "Open web browser to related documentation"
 		/into "Help text will be inserted into provided string instead of printed"
 			string [string!] "Returned series will be past the insertion"
-		/local value spec args refs rets type ret desc arg def des ref str cols tmp
+		/local value spec args refs rets type ret desc arg def des ref str cols tmp ret-desc
 	][
-		;@@ quering buffer width in CI under Windows now throws error: `Access error: protocol error: 6`
-		;@@ it should return `none` like under Posix systems!
-		cols: any [ attempt [ query system/ports/input 'buffer-cols ] 120]
+		if all [
+			doc
+			word? :word
+			any-function? get :word
+		][
+			browse join https://rebol.tech/doc/functions.html# word
+		]
+		cols: query system/ports/output 'window-cols
 		max-desc-width: cols - 35
 		buffer: any [string  clear ""]
 		catch [
@@ -317,7 +323,7 @@ import (module [
 					spec: copy/deep spec-of :value
 					args: copy []
 					refs: none
-					rets: none
+					rets: ret-desc: none
 					type: type? :value
 					
 					clear find spec /local
@@ -331,7 +337,7 @@ import (module [
 								repend args [arg def des]
 							)
 							|
-							quote return: set rets block!
+							quote return: set rets block! opt [set ret-desc string!]
 						]
 						opt [refinement! refs:]
 						to end
@@ -356,7 +362,7 @@ import (module [
 							]
 						]
 					]
-					output ["    " uppercase form word "is" a-an mold type "value."]
+					output ["    " uppercase form word "is" a-an form :type "value."]
 
 					unless empty? args [
 						output "^/^/^[[4;1;36mARGUMENTS^[[m:"
@@ -392,6 +398,7 @@ import (module [
 					]
 					if rets [
 						output  "^/^/^[[4;1;36mRETURNS^[[m:"
+						if ret-desc [output ["^/    " ret-desc]]
 						output ["^/    " mold rets ]
 					]
 					output newline
@@ -411,7 +418,7 @@ import (module [
 					word: uppercase mold word
 					type: form-type :value
 					output ajoin ["^[[1;32m" word "^[[m is " type " of value: ^[[32m"]
-					output either any [any-object? value] [
+					output either any [any-object? value map? value] [
 						output lf dump-obj :value
 					][
 						max-desc-width: cols - (length? word) - (length? type) - 21
@@ -498,6 +505,7 @@ import (module [
       ^[[1;32m--secure policy^[[m  Can be: none allow ask throw quit
       ^[[1;32m--trace (-t)^[[m     Enable trace mode during boot
       ^[[1;32m--verbose^[[m        Show detailed startup information
+      ^[[1;32m--cgi (-c)^[[m       Starts in a CGI mode
   
   ^[[4;1;36mOther quick options^[[m:
   
@@ -511,8 +519,6 @@ import (module [
       REBOL -s script.r
       REBOL script.r 10:30 test@example.com
       REBOL --do "watch: on" script.r}
-
-      ; --cgi (-c)       Load CGI utiliy module and modes
 	]
 
 
@@ -563,18 +569,16 @@ import (module [
 		]
 		exit
 	]
-])
-
 ;-- old alpha functions:
 ;pending: does [
 ;	comment "temp function"
 ;	print "Pending implementation."
 ;]
 ;
-;say-browser: does [
-;	comment "temp function"
-;	print "Opening web browser..."
-;]
+browse: func[url [url!]] [
+	sys/log/info 'REBOL ["Opening web browser:" as-green url]
+	lib/browse url
+]
 ;
 ;upgrade: function [
 ;	"Check for newer versions (update REBOL)."
@@ -599,26 +603,23 @@ import (module [
 ;docs: func [
 ;	"Browse on-line documentation."
 ;][
-;	say-browser
 ;	browse http://www.rebol.com/r3/docs
 ;	exit
 ;]
-;
-;bugs: func [
-;	"View bug database."
-;][
-;	say-browser
-;	browse http://curecode.org/rebol3/
-;	exit
-;]
-;
-;changes: func [
-;	"What's new about this version."
-;][
-;	say-browser
-;	browse http://www.rebol.com/r3/changes.html
-;	exit
-;]
+
+bugs: func [
+	"View bug database."
+][
+	browse https://github.com/Oldes/Rebol-issues/issues
+	exit
+]
+
+changes: func [
+	"What's new about this version."
+][
+	browse https://github.com/Oldes/Rebol3/blob/master/CHANGES.md
+	exit
+]
 ;
 ;why?: func [
 ;	"Explain the last error in more detail."
@@ -634,7 +635,6 @@ import (module [
 ;		error? err: any [:err system/state/last-error]
 ;		err/type ; avoids lower level error types (like halt)
 ;	][
-;		say-browser
 ;		err: lowercase ajoin [err/type #"-" err/id]
 ;		browse join http://www.rebol.com/r3/docs/errors/ [err ".html"]
 ;	][
@@ -664,3 +664,5 @@ import (module [
 ;	]
 ;	exit
 ;]
+])
+

@@ -176,7 +176,7 @@
 
 	EmptyClipboard();
 
-	ok = SetClipboardData(GET_FLAG(req->flags, RRF_WIDE) ? CF_UNICODETEXT : CF_TEXT, data);
+	ok = (NULL != SetClipboardData(GET_FLAG(req->flags, RRF_WIDE) ? CF_UNICODETEXT : CF_TEXT, data));
 	
 	GlobalUnlock(data);
 	CloseClipboard();

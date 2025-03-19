@@ -43,7 +43,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <errno.h>
@@ -51,6 +50,51 @@
 
 #include "reb-host.h"
 #include "host-lib.h"
+
+#ifdef TO_LINUX
+#include <linux/stat.h>
+//#include <linux/fcntl.h>
+#include <fcntl.h>
+#define statx foo
+#define statx_timestamp foo_timestamp
+struct statx;
+struct statx_timestamp;
+#include <sys/stat.h>
+#undef statx
+#undef statx_timestamp
+
+#define AT_STATX_SYNC_TYPE	  0x6000
+#define AT_STATX_SYNC_AS_STAT 0x0000
+#define AT_STATX_FORCE_SYNC   0x2000
+#define AT_STATX_DONT_SYNC    0x4000
+
+// Manually define SYS_statx if not present in the system headers
+#  ifndef SYS_statx
+#    if defined __aarch64__ || defined __arm__
+#      define SYS_statx 397
+#    elif defined __alpha__
+#      define SYS_statx 522
+#    elif defined __i386__ || defined __powerpc64__
+#      define SYS_statx 383
+#    elif defined __sparc__
+#      define SYS_statx 360
+#    elif defined __x86_64__
+#      define SYS_statx 332
+#    else
+#      warning "SYS_statx not defined for your architecture"
+#    endif
+#  endif
+
+static __attribute__((unused))
+ssize_t statx(int dfd, const char *filename, unsigned flags, unsigned int mask, struct statx *buffer)
+{
+	return syscall(SYS_statx, dfd, filename, flags, mask, buffer);
+}
+#else
+// stat on non Linux systems
+#include <sys/stat.h>
+#endif
+
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -63,6 +107,7 @@
 #ifndef S_IWRITE
 #define S_IWRITE S_IWUSR
 #endif
+
 
 // NOTE: the code below assumes a file id will never by zero. This should
 // be safe. In posix, zero is stdin, which is handled by dev-stdio.c.
@@ -127,7 +172,34 @@ static REBOOL Seek_File_64(REBREQ *file)
 static int Get_File_Info(REBREQ *file)
 {
 	struct stat info;
+#ifdef SYS_statx
+	struct statx infox;
+	if (statx(AT_FDCWD | AT_STATX_FORCE_SYNC, file->file.path, 0, STATX_BASIC_STATS | STATX_BTIME, &infox) == -1) {
+		goto use_stat;
+	}
 
+	if (S_ISDIR(infox.stx_mode)) {
+		SET_FLAG(file->modes, RFM_DIR);
+		file->file.size = MIN_I64; // using MIN_I64 to notify, that size should be reported as NONE
+	}
+	else {
+		CLR_FLAG(file->modes, RFM_DIR);
+		file->file.size = infox.stx_size;
+	}
+	file->file.modified_time.l = (i32)(infox.stx_mtime.tv_sec);
+	file->file.accessed_time.l = (i32)(infox.stx_atime.tv_sec);
+	file->file.modified_time.h = (i32)(infox.stx_mtime.tv_nsec);
+	file->file.accessed_time.h = (i32)(infox.stx_atime.tv_nsec);
+
+	if (infox.stx_btime.tv_sec) {
+		file->file.created_time.l  = (i32)(infox.stx_btime.tv_sec);
+		file->file.created_time.h  = (i32)(infox.stx_btime.tv_nsec);
+	} else {
+		file->file.created_time = file->file.modified_time;
+	}
+	return DR_DONE;
+#endif
+use_stat:
 	if (stat(file->file.path, &info)) {
 		file->error = errno;
 		return DR_ERROR;
@@ -141,9 +213,21 @@ static int Get_File_Info(REBREQ *file)
 		CLR_FLAG(file->modes, RFM_DIR);
 		file->file.size = info.st_size;
 	}
-	file->file.modified_time.l = (i32)(info.st_mtime);
-	file->file.accessed_time.l = (i32)(info.st_atime);
-	file->file.created_time.l = (i32)(info.st_ctime);
+#ifdef TO_MACOS
+	file->file.modified_time.l = (i32)(info.st_mtimespec.tv_sec);
+	file->file.accessed_time.l = (i32)(info.st_atimespec.tv_sec);
+	file->file.created_time.l  = (i32)(info.st_birthtimespec.tv_sec);
+	file->file.modified_time.h = (i32)(info.st_mtimespec.tv_nsec);
+	file->file.accessed_time.h = (i32)(info.st_atimespec.tv_nsec);
+	file->file.created_time.h  = (i32)(info.st_birthtimespec.tv_nsec);
+#else
+	file->file.modified_time.l = (i32)(info.st_mtim.tv_sec);
+	file->file.accessed_time.l = (i32)(info.st_atim.tv_sec);
+	file->file.modified_time.h = (i32)(info.st_mtim.tv_nsec);
+	file->file.accessed_time.h = (i32)(info.st_atim.tv_nsec);
+	// creation time is not available, so use the modification time...
+	file->file.created_time = file->file.modified_time;
+#endif
 
 	return DR_DONE;
 }

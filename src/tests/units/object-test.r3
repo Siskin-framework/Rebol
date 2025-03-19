@@ -52,7 +52,19 @@ Rebol [
 		--assert 3 = obj/b
 		--assert unset? put obj 'b #(unset)
 		--assert unset? obj/b
-		
+	
+	--test-- "any-word as an object's key"
+		obj: object []
+		--assert 1 = try [put obj quote 'a 1]
+		--assert 2 = try [put obj quote :b 2]
+		--assert 3 = try [put obj quote c: 3]
+		--assert 4 = try [put obj quote #d 4]
+		--assert [a: 1 b: 2 c: 3 d: 4] == body-of obj
+		foreach [k v] ['a 1 :b 2 c: 3 #d 4] [
+			--assert not error? try [obj/:k: v * 10]
+		]
+		--assert [a: 10 b: 20 c: 30 d: 40] == body-of obj
+
 	--test-- "compare extended objects"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2507
 		--assert equal? #(object! [a: 1]) #(object! [a: 1])

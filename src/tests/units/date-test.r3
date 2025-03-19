@@ -339,9 +339,31 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2551
 	--test-- "Julian accessor"
 		date: 10-Jun-2023/20:47:53+2:00
-		--assert date/julian = (2400000.5 + to decimal! date) ;; conversion using TO counts with Modified Julian Date
+;; `to decimal! date` now returns unix timestamp with a precision instead of MJD 
+;;		--assert date/julian = (2400000.5 + to decimal! date) ;; conversion using TO counts with Modified Julian Date
 		--assert 2460106.28325231 = date/julian
 		--assert 2460106.28325231 = pick date 'julian
+
+		--assert (pick 17-Nov-1858/00:00:00 'julian) == 2400000.5
+		--assert (pick 17-Nov-1858/00:00:00 'julian) == 2400000.5
+		--assert (pick 01-Jan-1900/00:00:00 'julian) == 2415020.5
+		--assert (pick 01-Jan-1900/00:00:00 'julian) == 2415020.5
+		--assert (pick 02-May-2003/12:00:00 'julian) == 2452762.0
+		--assert (pick 02-May-2003/12:00:00 'julian) == 2452762.0
+		--assert (pick 10-Jun-2023/01:30:00 'julian) == 2460105.5625
+		--assert (pick 10-Jun-2023/01:30:00 'julian) == 2460105.5625
+		--assert (pick 10-Jun-2023/19:30:00 'julian) == 2460106.3125
+		--assert (pick 10-Jun-2023/19:30:00 'julian) == 2460106.3125
+		--assert (pick 01-Jan-2023/12:00:00 'julian) == 2459946.0
+		--assert (pick 01-Jan-2023/12:00:00 'julian) == 2459946.0
+		--assert (pick 01-Jan-2023/19:30:00 'julian) == 2459946.3125
+		--assert (pick 01-Jan-2023/19:30:00 'julian) == 2459946.3125
+		--assert (pick 01-Jan-2023/01:30:00 'julian) == 2459945.5625
+		--assert (pick 01-Jan-2023/01:30:00 'julian) == 2459945.5625
+		--assert (pick 31-Aug-2132/00:00:00 'julian) == 2499999.5
+		--assert (pick 31-Aug-2132/00:00:00 'julian) == 2499999.5
+		--assert (pick 01-Sep-2132/00:00:00 'julian) == 2500000.5
+		--assert (pick 01-Sep-2132/00:00:00 'julian) == 2500000.5
 	--test-- "Julian date setter"
 		--assert 2415020.5 = date/julian: 2415020.5
 		--assert date = 1-Jan-1900/0:00

@@ -309,6 +309,7 @@ typedef void(*CFUNC)(void *);
 
 // Memory related functions:
 #define MAKE_MEM(n)     malloc(n)
+#define MAKE_CLEAR_MEM(n)     calloc(n, 1)
 #define MAKE_NEW(s)     MAKE_MEM(sizeof(s))
 #define FREE_MEM(m)     free(m)
 #define CLEAR(m, s)     memset((void*)(m), 0, s);

@@ -489,8 +489,11 @@ if system/platform = 'Windows [
 			0 = length? f
 			5 =   size? f
 			port? close f
-			5 = length? f ; because there is still "Hello" left and we are counting from head again (port is closed)
-			all [         ; it is not allowed to clear not opened port
+			all [ ; It is not allowed because the port is no longer open
+				error? e: try [length? f]
+				e/id = 'not-open
+			]
+			all [ ; It is not allowed to clear a port that is not open
 				error? e: try [clear f]
 				e/id = 'not-open
 			]
@@ -512,6 +515,16 @@ if system/platform = 'Windows [
 			5 = size? %file-812-b
 			not error? try [delete %file-812-b]
 		]
+		;; When the port is opened with a read-only policy, there must be an error on clear.
+		--assert all [
+			file? write %file-812-c "No clear!"
+			port? f: open/read %file-812-c
+			error? e: try [clear f]
+			e/id = 'write-error
+			port? close f
+			not error? try [delete %file-812-c]
+		]
+
 
 
 	--test-- "RENAME file"
@@ -575,11 +588,13 @@ if system/platform = 'Windows [
 			]
 			"Hello^/Rebol" = read/string %issue-1894
 		]
+		p: open %issue-1894
 		--assert all [error? e: try [append/dup p LF 10]  e/id = 'bad-refines]
 		--assert all [error? e: try [append/only p "aa"]  e/id = 'bad-refines]
+		close p
 		try [delete %issue-1894]
 
-if exists? %/proc/cpuinfo [
+if all [system/platform != 'Windows exists? %/proc/cpuinfo] [
 	--test-- "Reading from /proc files on Linux"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2303
 		;; reading complete file
@@ -616,140 +631,6 @@ if exists? %/proc/cpuinfo [
 			port? delete %empty
 		]
 
-===end-group===
-
-if system/platform = 'Windows [
-	===start-group=== "CLIPBOARD"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/1968
-		--test-- "Clipboard port test"
-			c: "Clipboard port test"
-			--assert all [
-				port? p: try [open clipboard://]
-				not error? try [write p c]
-				strict-equal? c try [read p]
-			]
-			close p
-		--test-- "Clipboard scheme test"
-			c: "Clipboard scheme test"
-			; this tests now seems to be failing when done from a run-tests script
-			; but is ok when done in console :-/
-			--assert all [
-				not error? try [write clipboard:// c]
-				strict-equal? c try [read clipboard://]
-			]
-		--test-- "issue-2486"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/2486
-			foreach ch [#"a" #"^(7F)" #"^(80)" #"^(A0)"][
-				write clipboard:// append copy "" ch
-				--assert (to binary! ch) = to binary! read clipboard://
-			]
-		--test-- "Using just a name of the scheme"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/826
-			txt: "hello"
-			--assert all [
-				port? try [write 'clipboard txt]
-				txt = try [read 'clipboard]
-				txt = try [read open 'clipboard] 
-			]
-			
-	===end-group===
-]
-
-;- "HTTP scheme" moved to %port-http-test.r3
-
-
-===start-group=== "WHOIS scheme"
-	--test-- "read WHOIS"
-		--assert  string? probe try [read whois://google.com]
-	--test-- "write WHOIS"
-		--assert string? try [write whois://whois.nic.cz "seznam.cz"]
-===end-group===
-
-
-;- not using this test, because the serives limits number of requests from the IP
-;- and on CI it may return "Access denied -- too many requests"
-;import 'daytime
-;if find system/schemes 'daytime [
-;===start-group=== "DAYTIME scheme"
-;	--test-- "read DAYTIME"
-;		--assert  all [
-;			block? res: try [read daytime://]
-;			res/2/date = now/date
-;		]
-;
-;===end-group===
-;]
-
-===start-group=== "console port"	
-	--test-- "query input port"
-		--assert  port? system/ports/input
-		--assert  all [
-			object?  console-info: query system/ports/input object!
-			integer? console-info/window-cols
-			integer? console-info/window-rows
-			integer? console-info/buffer-cols
-			integer? console-info/buffer-rows
-			;?? console-info
-		]
-		--assert integer? query system/ports/input 'window-cols
-		--assert integer? query system/ports/input 'window-rows
-		--assert integer? query system/ports/input 'buffer-cols
-		--assert integer? query system/ports/input 'buffer-rows
-		--assert integer? query system/ports/input 'length
-		--assert (words-of system/standard/console-info)
-						= m: query system/ports/input none
-		--assert block?   v: query system/ports/input m
-		--assert 10 = length? v
-	--test-- "Using just a name of the console scheme"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/826
-		--assert all [
-			port? try [p: open 'console]
-			port? close p
-		]
-===end-group===
-
-===start-group=== "DNS"
-;@@ https://github.com/Oldes/Rebol-issues/issues/1827
-;@@ https://github.com/Oldes/Rebol-issues/issues/1860
-;@@ https://github.com/Oldes/Rebol-issues/issues/1935
-	--test-- "read dns://"
-		--assert string? try [probe read dns://] ;- no crash!
-
-	--test-- "Using just a name of the dns scheme"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/826
-		--assert string? try [read 'dns]
-
-	--test-- "read dns://8.8.8.8"
-		--assert "dns.google" = try [probe read dns://8.8.8.8]
-	--test-- "read dns://google.com"
-		--assert tuple? try [read dns://google.com]
-
-	--test-- "query dns://"
-	;@@ https://github.com/Oldes/rebol-issues/issues/1826
-		--assert all [error? e: try [query dns:// object!]  e/id = 'no-port-action]
-
-	--test-- "read dns://not-exists"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/2498
-		--assert none? try [read dns://not-exists]
-===end-group===
-
-
-===start-group=== "TCP"
-	--test-- "query net info"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/1712
-		port: open tcp://8.8.8.8:80
-		--assert (words-of system/standard/net-info) = query port none
-		--assert 0.0.0.0 = query port 'local-ip
-		--assert       0 = query port 'local-port
-		--assert not none? find [0.0.0.0 8.8.8.8] query port 'remote-ip ;; on posix there is sync lookup and so it reports 8.8.8.8 even without wait
-		--assert      80 = query port 'remote-port
-		--assert all [
-			port? wait [port 1] ;= wait for lookup, so remote-ip is resolved
-			8.8.8.8 = query port 'remote-ip
-			[80 8.8.8.8] = query port [:remote-port :remote-ip]
-			[local-ip: 0.0.0.0 local-port: 0] = query port [local-ip local-port]
-		]
-		try [close port]
 ===end-group===
 
 

@@ -374,3 +374,5 @@ aad-length
 file-checksum
 
 xaudio-voice
+
+port-state!

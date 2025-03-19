@@ -97,7 +97,17 @@
 		SET_INT32(TASK_BALLAST, 0);
 	}
 
+	// If auto-recycling was disabled, activate GC for this manual request.
+	if (!GC_Active) {
+		SET_TRUE(D_ARG(1));
+		GC_Active = TRUE;
+	}
+
 	count = Recycle(TRUE);
+
+	// Disable auto-recycling if it was disabled.
+	if (D_REF(1))
+		GC_Active = FALSE;
 
 	DS_Ret_Int(count);
 	return R_RET;

@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2024 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -90,26 +90,26 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	MOD_POOL( 7, 128),
 	MOD_POOL( 8,  64),
 	MOD_POOL( 9,  64),
-	MOD_POOL(10,  64),
-	MOD_POOL(11,  32),
+	MOD_POOL(10,  128),
+	MOD_POOL(11,  64),
 	MOD_POOL(12,  32),
 	MOD_POOL(13,  32),
 	MOD_POOL(14,  32),
 	MOD_POOL(15,  32),
 	MOD_POOL(16,  64),	// 257
 	MOD_POOL(20,  32),	// 321 - Mid-size series (x 64)
-	MOD_POOL(24,  16),	// 385
-	MOD_POOL(28,  16),	// 449
+	MOD_POOL(24,  32),	// 385 / 768
+	MOD_POOL(28,  16),	// 449 / 896
 	MOD_POOL(LAST_SMALL_SIZE,  16),	// 513
 
 	DEF_POOL(MEM_BIG_SIZE,   16),	// 1K - Large series (x 1024)
-	DEF_POOL(MEM_BIG_SIZE*2, 16),	// 2K
+	DEF_POOL(MEM_BIG_SIZE*2, 32),	// 2K
 	DEF_POOL(MEM_BIG_SIZE*3,  4),	// 3K
 	DEF_POOL(MEM_BIG_SIZE*4,  8),	// 4K
 
 	DEF_POOL(sizeof(REBSER), 4096),	// Series headers
 	DEF_POOL(sizeof(REBGOB), 128),	// Gobs
-	DEF_POOL(sizeof(REBHOB), 16),	// Handle objects
+	DEF_POOL(sizeof(REBHOB), 256),	// Handle objects
 	DEF_POOL(1, 1),	// Just used for tracking main memory
 };
 
@@ -119,6 +119,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 */	void *Make_Mem(size_t size)
 /*
 **		Main memory allocation wrapper function.
+**		NOTE: use Make_Clear_Mem if you need zeroed memory!
 **
 ***********************************************************************/
 {
@@ -129,9 +130,45 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	if (PG_Mem_Limit != 0 && (PG_Mem_Usage > PG_Mem_Limit)) {
 		Check_Security(SYM_MEMORY, POL_EXEC, 0);
 	}
-	CLEAR(ptr, size);
+
+#ifdef _DEBUG
+	// Fill the allocated memory with content to detect
+	// potential issues where it should have been cleared.
+	memset(ptr, 42, size);
+#endif
 
 	return ptr;
+}
+
+/***********************************************************************
+**
+*/	void *Make_Clear_Mem(size_t nmemb, size_t size)
+/*
+**		Memory allocation wrapper around `calloc` function.
+**
+***********************************************************************/
+{
+	void *ptr;
+
+	if (!(ptr = calloc(nmemb, size))) return 0;
+	PG_Mem_Usage += (size * nmemb);
+	if (PG_Mem_Limit != 0 && (PG_Mem_Usage > PG_Mem_Limit)) {
+		Check_Security(SYM_MEMORY, POL_EXEC, 0);
+	}
+
+	return ptr;
+}
+
+FORCE_INLINE
+/***********************************************************************
+**
+*/	void *Make_CMem(size_t size)
+/*
+**		Memory allocation wrapper around `calloc` function.
+**
+***********************************************************************/
+{
+	return Make_Clear_Mem(size, 1);
 }
 
 
@@ -148,6 +185,94 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
 /***********************************************************************
 **
+*/	void *Make_Managed_Mem(void *opaque, size_t size)
+/*
+**		Allocates memory either using a memory pool or standard dynamic memory allocation.
+**		It keeps info about this memory and checks if memory use is not over policy.
+**		Such an allocated memory must be freed using Free_Managed_Mem function!
+**
+***********************************************************************/
+{
+	REBCNT pool_id;
+	size_t *ptr;
+
+	UNUSED(opaque);
+
+	size += 2 * sizeof(size_t);
+	pool_id = FIND_POOL(size);
+	if (pool_id < SYSTEM_POOL) {
+		ptr = Make_Node(pool_id);
+	}
+	else {
+		ptr = Make_Mem(size);
+	}
+	ptr[0] = pool_id;
+	ptr[1] = size;
+	//printf("memory alloc pool: %zu size: %zu\n", pool_id, size);
+	return (void*)(ptr+2);
+}
+
+/***********************************************************************
+**
+*/	void *Make_Managed_CMem(size_t nmemb, size_t size)
+/*
+**		Same like `Make_Managed_Mem` but with zereoed memory.
+**
+***********************************************************************/
+{
+	REBCNT pool_id;
+	size_t *ptr;
+	size_t bytes;
+
+	bytes = (nmemb * size) + (2 * sizeof(size_t));
+	pool_id = FIND_POOL(bytes);
+	if (pool_id < SYSTEM_POOL) {
+		ptr = Make_Node(pool_id);
+		CLEAR(ptr, bytes);
+	}
+	else {
+		ptr = Make_Clear_Mem(nmemb, size);
+	}
+	ptr[0] = pool_id;
+	ptr[1] = bytes;
+	//printf("memory alloc pool: %zu size: %zu\n", pool_id, size);
+	return (void *)(ptr + 2);
+}
+
+/***********************************************************************
+**
+*/	void Free_Managed_Mem(void *opaque, void *address)
+/*
+**		Frees memory allocated using the `Make_Managed_Mem` function.
+**
+***********************************************************************/
+{
+	UNUSED(opaque);
+	if (address) {
+		size_t *mem = ((size_t *)address) - 2;
+		//printf("memory free pool: %zu size: %zu\n", mem[0], mem[1]);
+		PG_Mem_Usage -= mem[1];
+		if (mem[0] < SYSTEM_POOL) {
+			Free_Node((REBCNT)mem[0], (REBNOD *)mem);
+		}
+		else {
+			free((void *)mem);
+		}
+	}
+}
+
+FORCE_INLINE
+/***********************************************************************
+**
+*/	void Free_Managed_CMem(void *address)
+/*
+***********************************************************************/
+{
+	return Free_Managed_Mem(0, address);
+}
+
+/***********************************************************************
+**
 */	void Init_Pools(REBINT scale)
 /*
 **		Initialize memory pool array.
@@ -161,7 +286,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	else if (scale < 0) unscale = -scale, scale = 1;
 
 	// Copy pool sizes to new pool structure:
-	Mem_Pools = Make_Mem(sizeof(REBPOL) * MAX_POOLS);
+	Mem_Pools = Make_Clear_Mem(sizeof(REBPOL), MAX_POOLS);
 	for (n = 0; n < MAX_POOLS; n++) {
 		Mem_Pools[n].wide = Mem_Pool_Spec[n].wide;
 		Mem_Pools[n].units = (Mem_Pool_Spec[n].units * scale) / unscale;
@@ -169,7 +294,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	}
 
 	// For pool lookup. Maps size to pool index. (See Find_Pool below)
-	PG_Pool_Map = Make_Mem((4 * MEM_BIG_SIZE) + 4); // extra
+	PG_Pool_Map = Make_CMem((4 * MEM_BIG_SIZE) + 4); // extra
 	n = 9;  // sizes 0 - 8 are pool 0
 	for (; n <= 16 * MEM_MIN_SIZE; n++) PG_Pool_Map[n] = MEM_TINY_POOL     + ((n-1) / MEM_MIN_SIZE);
 	for (; n <= LAST_SMALL_SIZE * MEM_MIN_SIZE; n++) PG_Pool_Map[n] = MEM_SMALL_POOLS-4 + ((n-1) / (MEM_MIN_SIZE * 4));
@@ -232,10 +357,9 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	REBCNT	mem_size = pool->wide * units + sizeof(REBSEG);
 #endif
 
-	seg = (REBSEG *) Make_Mem(mem_size);
+	seg = (REBSEG *) Make_CMem(mem_size);
 	if (!seg) Crash(RP_NO_MEMORY, mem_size);
 
-	CLEAR(seg, mem_size);  // needed to clear series nodes
 	seg->size = mem_size;
 	seg->next = pool->segs;
    	pool->segs = seg;
@@ -350,7 +474,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 #ifdef MUNGWALL
 		node = (REBNOD *) Make_Mem(length+2*MUNG_SIZE);
 #else
-		node = (REBNOD *) Make_Mem(length);
+		node = (REBNOD *) Make_CMem(length);
 #endif
 		if (!node) Trap0(RE_NO_MEMORY);
 #ifdef MUNGWALL
@@ -421,7 +545,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		if (powerof2) {
 			U32_ROUND_UP_POWER_OF_2(length);
 		} else
-			length = ALIGN(length, 2048);
+			length = ALIGN(length, 1024);
 #ifdef DEBUGGING
 			Debug_Num("Alloc2:", length);
 #endif
@@ -429,6 +553,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		node = (REBNOD *) Make_Mem(length+2*MUNG_SIZE);
 #else
 		node = (REBNOD *) Make_Mem(length);
+		// NOTE: allocated node's memory is not cleared!
 #endif
 		if (!node) {
 			Free_Node(SERIES_POOL, (REBNOD *)series);
@@ -635,7 +760,7 @@ clear_header:
 	}
 	
 	CLEAR(hob->data, spec.size); 
-	FREE_MEM(hob->data);
+	Free_Managed_CMem(hob->data);
 	UNUSE_HOB(hob);
 	Free_Node(HOB_POOL, (REBNOD *)hob);
 	return 1;

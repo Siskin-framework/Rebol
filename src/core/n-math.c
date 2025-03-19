@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -955,6 +956,21 @@ compare:
 ***********************************************************************/
 {
 	SET_INTEGER(D_RET, Lcm(VAL_INT64(D_ARG(1)), VAL_INT64(D_ARG(2))));
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(fraction)
+/*
+//	fraction: native [
+//		{Returns the fractional part of a decimal value}
+//		number [decimal!]
+//	]
+***********************************************************************/
+{
+	double intptr;
+	SET_DECIMAL(D_RET, modf(VAL_DECIMAL(D_ARG(1)), &intptr));
 	return R_RET;
 }
 

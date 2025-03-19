@@ -273,8 +273,7 @@ static void PrintMidiDevices()
     LOG("in %u out %u\n", gInPort, gOutPort);
  
     Midi_Ports_Pool.count = MIDI_PORTS_ALLOC;
-    Midi_Ports_Pool.ports = MAKE_MEM(MIDI_PORTS_ALLOC * sizeof(REBMID));
-    CLEAR(Midi_Ports_Pool.ports, MIDI_PORTS_ALLOC * sizeof(REBMID));
+    Midi_Ports_Pool.ports = MAKE_CLEAR_MEM(MIDI_PORTS_ALLOC * sizeof(REBMID));
     return DR_DONE;
 }
 

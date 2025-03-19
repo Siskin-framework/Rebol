@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2021-2023 Rebol Open Source Developers
+**  Copyright 2021-2025 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -349,7 +349,7 @@ int main(int argc, char **argv) {
 
 	Parse_Args(argc, (REBCHR **)argv, &Main_Args);
 
-	cgi = Main_Args.options & RO_CGI;
+	cgi = RO_CGI == (Main_Args.options & RO_CGI);
 
 	// Must be done before an console I/O can occur. Does not use reb-lib,
 	// so this device should open even if there are other problems.

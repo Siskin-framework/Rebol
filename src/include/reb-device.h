@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2013-2024 Rebol Open Source Developers
+**  Copyright 2013-2025 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -118,7 +118,8 @@ enum {
 
 enum {
 	RDM_NULL,		// Null device
-	RDM_READ_LINE,
+	RDM_READ_LINE,	// Read line mode
+	RDM_CGI
 };
 
 // Serial Parity

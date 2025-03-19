@@ -681,7 +681,7 @@ combine: func [
 	/into "Output results into a serie of required type"
 	 out [series!]
 	/ignore  "Fine tune, what value types will be ignored"
-	 ignored [typeset!] "Default is: #[typeset! [none! unset! error! any-function!]]"
+	 ignored [typeset!] "Default is: #(typeset! [none! unset! error! any-function!])"
 	/only "Insert a block as a single value"
 	/local val rule append-del append-val block-rule
 ][

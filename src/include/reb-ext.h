@@ -206,6 +206,7 @@ enum {
 	RXC_ASYNC,		// async callback
 	RXC_QUEUED,		// pending in event queue
 	RXC_DONE,		// call completed, structs can be freed
+	RXC_ALLOC,		// callback was allocated and must be freed on done
 };
 
 

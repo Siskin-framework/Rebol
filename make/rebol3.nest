@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.18.1
+version: 3.18.4
 
 #if Linux?   [ defines: TO_LINUX   ]
 #if macOS?   [ defines: TO_MACOS   ]
@@ -408,7 +408,7 @@ config: [ ;- this is list of configuration (optional) defines
 	DEBUG_HASH_COLLISIONS
 
 	;*** Unfinished features **************************************************/
-	;INCLUDE_TASK    ;- tasks are not implemented yet, so include it only on demand
+	INCLUDE_TASK    ;- tasks are not implemented yet, so include it only on demand
 
 	;*** Other (not recommanded) options **************************************/
 	;HAS_WIDGET_GOB  ;- used in t-gob.c
@@ -676,20 +676,16 @@ include-cryptography: [
 		library: %Bcrypt ;; used by mbedtls_platform_entropy_poll
 	]
 
-	define: MBEDTLS_ASN1_PARSE_C ; The generic ASN1 parser.
-	define: MBEDTLS_ASN1_WRITE_C ; The generic ASN1 writer.
-
-	define: MBEDTLS_CTR_DRBG_C   ; The CTR_DRBG AES-based random generator.
-
-	define: MBEDTLS_AES_C        ; The AES block cipher.
-	define: MBEDTLS_DHM_C        ; The Diffie-Hellman-Merkle module.
-	define: MBEDTLS_ECDSA_C      ; The elliptic curve DSA library.
-	define: MBEDTLS_ECP_C        ; The elliptic curve over GF(p) library.
-	define: MBEDTLS_ECDH_C       ; The elliptic curve Diffie-Hellman library.
-	define: MBEDTLS_BIGNUM_C     ; The multi-precision integer library. Required for: RSA, ECDSA, ECP, DHM
-	define: MBEDTLS_ENTROPY_C    ; The platform-specific entropy code.
-	define: MBEDTLS_OID_C        ; Required for RSA
-	define: MBEDTLS_PKCS1_V15
+	config: MBEDTLS_CTR_DRBG_C   ; The CTR_DRBG AES-based random generator.
+	config: MBEDTLS_AES_C        ; The AES block cipher.
+	config: MBEDTLS_DHM_C        ; The Diffie-Hellman-Merkle module.
+	config: MBEDTLS_ECDSA_C      ; The elliptic curve DSA library.
+	config: MBEDTLS_ECP_C        ; The elliptic curve over GF(p) library.
+	config: MBEDTLS_ECDH_C       ; The elliptic curve Diffie-Hellman library.
+	config: MBEDTLS_BIGNUM_C     ; The multi-precision integer library. Required for: RSA, ECDSA, ECP, DHM
+	config: MBEDTLS_ENTROPY_C    ; The platform-specific entropy code.
+	config: MBEDTLS_OID_C        ; Required for RSA
+	config: MBEDTLS_PKCS1_V15
 
 	core-files: [
 		%core/n-crypt.c

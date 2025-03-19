@@ -36,6 +36,15 @@ Rebol [
 		--assert unset? all [()]
 ===end-group===
 
+===start-group=== "CASE"
+	--test-- "unset case condition"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2634
+		--assert 1 = case [() [1]]
+		--assert 1 = if () [1]
+		--assert 1 = either () [1][2]
+===end-group===
+
+
 ===start-group=== "SWITCH"
 	--test-- "switch ref!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2466

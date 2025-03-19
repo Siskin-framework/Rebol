@@ -2,11 +2,12 @@ REBOL [
 	title: "Codec: DER/BER structures"
 	name: 'codec-der
 	author: "Oldes"
-	version: 0.2.0
-	date:    17-Feb-2022
+	version: 0.3.0
+	date:    18-Mar-2025
 	history: [
 		0.1.0 17-Oct-2018 "Oldes" {Initial version with DECODE and IDENTIFY functions.}
 		0.2.0 17-Feb-2022 "Oldes" {Including `form-id`}
+		0.3.0 18-Mar-2025 "Oldes" {Decoding a few more common OIDs used in TLS}
 	]
 	notes: {
 	Useful command for cross-testing:
@@ -322,7 +323,31 @@ register-codec [
 				| #"^(07)" (name: "des-ede3-cbc")
 			] end
 			|
-
+			#{2B810400} (main: "SECG curve") [
+			;; ANSI X9.62 standard, which defines elliptic curves for cryptographic use
+			;; https://oid-base.com/get/1.3.132.0
+				set n: skip (
+					name: select #[
+						0#01 secp192r1 ;(NIST P-192)
+						0#02 sect163k1
+						0#03 sect163r1
+						0#04 sect239k1
+						0#05 sect283k1
+						0#06 sect283r1
+						0#07 secp160k1
+						0#08 secp160r1
+						0#09 secp160r2
+						0#0A secp192k1
+						0#0F secp256k1
+						0#10 sect233k1
+						0#11 sect233r1
+						0#21 secp224r1 ;(NIST P-224)
+						0#22 secp384r1 ;(NIST P-384)
+						0#23 secp521r1 ;(NIST P-521)
+					] n
+				)
+			]
+			|
 			#{5504} (main: "X.520 DN component") [
 				  #"^(03)" (name: 'commonName)
 				| #"^(06)" (name: 'countryName)
@@ -385,8 +410,14 @@ register-codec [
 				;| #"^(23)" (name: 'bundleSecurity)
 			] end
 			|
-			#{2B0601040182370201} (main: "Microsoft") [
-				  #"^(15)" (name: 'individualCodeSigning)
+			#{2B06010401} [
+				#{82370201} (main: "Microsoft") [
+					#"^(15)" (name: 'individualCodeSigning)
+				]
+				|
+				#{D679} (main: "Google") [
+					#{020402} (name: 'X509Extension)
+				]
 			] end
 			|
 			#{0992268993F22C6401} (main: "Attribute") [
@@ -402,8 +433,11 @@ register-codec [
 			either full [
 				rejoin [ any [name "<?name>"] " (" any [main "<?main>"] ")"]
 			][	name ]
-		][ form-oid oid ]
+		][
+			sys/log/debug 'DER ["Failed to decode OID" oid "->" form-oid oid]
+			form-oid oid
+		]
 	]
 
-	verbose: 0
+	system/options/log/der: verbose: 0
 ]

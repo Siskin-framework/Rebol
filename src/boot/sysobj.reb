@@ -253,6 +253,7 @@ modules: object [
 	triangulate:   https://github.com/Siskin-framework/Rebol-Triangulate/releases/download/1.6.0.0/
 	webp:          https://github.com/Oldes/Rebol-WebP/releases/download/1.4.0.0/
 	;; optional modules, protocol and codecs
+	github:           https://src.rebol.tech/modules/github.reb
 	httpd:            https://src.rebol.tech/modules/httpd.reb
 	prebol:           https://src.rebol.tech/modules/prebol.reb
 	scheduler:        https://src.rebol.tech/modules/scheduler.reb
@@ -261,13 +262,15 @@ modules: object [
 	thru-cache:       https://src.rebol.tech/modules/thru-cache.reb
 	to-ascii:         https://src.rebol.tech/modules/to-ascii.reb
 	unicode-utils:    https://src.rebol.tech/modules/unicode-utils.reb
-	upgrade:          https://src.rebol.tech/modules/upgrade.red
+	upgrade:          https://src.rebol.tech/modules/upgrade.reb
 	daytime:          https://src.rebol.tech/mezz/prot-daytime.reb
 	mail:             https://src.rebol.tech/mezz/prot-mail.reb
 	mysql:            https://src.rebol.tech/mezz/prot-mysql.reb
+	css:              https://src.rebol.tech/mezz/codec-css.reb
 	csv:              https://src.rebol.tech/mezz/codec-csv.reb
 	ico:              https://src.rebol.tech/mezz/codec-ico.reb
 	pdf:              https://src.rebol.tech/mezz/codec-pdf.reb
+	srt:              https://src.rebol.tech/mezz/codec-srt.reb
 	swf:              https://src.rebol.tech/mezz/codec-swf.reb
 	xml:              https://src.rebol.tech/mezz/codec-xml.reb
 	json:             https://src.rebol.tech/mezz/codec-json.reb
@@ -488,6 +491,8 @@ standard: object [
 		type:       ; integer! or decimal! so far
 		size:       ; size per value in bits
 		length:     ; number of values
+		minimum:
+		maximum:
 	]
 
 	date-info: construct [

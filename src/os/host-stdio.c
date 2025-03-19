@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2021-2023 Rebol Open Source Developers
+**  Copyright 2021-2025 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -128,7 +128,9 @@ static int Fetch_Buf()
 
 	inbuf = OS_Make(inbuf_len);
 	inbuf[0] = 0;
-	if (!cgi)
+	if (cgi)
+		SET_FLAG(Std_IO_Req.modes, RDM_CGI);
+	else
 		SET_FLAG(Std_IO_Req.modes, RDM_READ_LINE);
 	return &Std_IO_Req;
 }

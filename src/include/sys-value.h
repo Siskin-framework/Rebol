@@ -235,6 +235,7 @@ typedef struct Reb_Time {
 #define DEC_TO_SECS(n) (i64)(((n) + 5.0e-10) * SEC_SEC)
 
 #define SECS_IN_DAY 86400
+#define MICROSECONDS_IN_DAY 86400000000
 #define TIME_IN_DAY (SEC_TIME((i64)SECS_IN_DAY))
 
 #define NO_TIME		MIN_I64

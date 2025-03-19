@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,11 +47,9 @@
 	REBCNT len;
 	//REBOOL sync = FALSE; // act synchronously
 
-	port = Validate_Port_Value(port_value);
+	port = Validate_Port_With_Request(port_value, RDI_AUDIO, &req);
 
 	arg = D_ARG(2);
-
-	req = Use_Port_State(port, RDI_AUDIO, sizeof(REBREQ));
 
 	switch (action) {
 	case A_WRITE:
@@ -136,6 +134,7 @@
 
 	case A_CLOSE:
 		OS_DO_DEVICE(req, RDC_CLOSE);
+		Release_Port_State(port);
 		break;
 
 	case A_OPENQ:

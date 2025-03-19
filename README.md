@@ -17,8 +17,10 @@ Preferred way to report issues is using the [dedicated issue repository](https:/
 
 There are available precompiled binaries for each [release](https://github.com/Oldes/Rebol3/releases). So far there are 3 main build types:
 1. **Base** is a build with minimal additions (not much useful)
-2. **Core** includes a little bit more stuff than the **Base**
-3. **Bulk** is a build which includes almost everything.
+2. **Core** [includes](https://github.com/Oldes/Rebol3/blob/master/make/rebol3.nest#L940) a little bit more stuff than the **Base**
+3. **Bulk** is a build which [includes](https://github.com/Oldes/Rebol3/blob/master/make/rebol3.nest#L967) almost everything.
+
+Please, take note that the inclusion of some extra components in the binary does not mean they will be immediately available for use in the REPL. You would have to register them as active modules first. This will be further explained in the next section.
 
 And there is also the Host exe and the DLL - the Rebol library is separated and used from the host application. That is from times before open sourcing Rebol completely. Only host part was open and the library was still closed. In theory you can have one library and many tiny host applications. I'm building just the Core on Windows so far to see, if it is still working.
 
@@ -29,12 +31,14 @@ xattr -d -r com.apple.quarantine /path/to/file
 
 ### Rebol extensions
 
-It is possible to extend Rebol functionality using external modules (native and or written in Rebol itself). Here are links to some of them:
+It is possible to extend Rebol functionality using external modules (native or written in Rebol itself). Here are links to some of them:
 * [Rebol/BCM2835](https://github.com/Oldes/Rebol-BCM2835) - Broadcom BCM 2835 chip extension (for GPIO on RaspberryPI)
 * [Rebol/Blend2D](https://github.com/Siskin-framework/Rebol-Blend2D) - Drawing dialect using [Blend2D](https://blend2d.com) as a high performance 2D vector graphics engine
 * [Rebol/BlurHash](https://github.com/Siskin-framework/Rebol-BlurHash) - Compact representation of a placeholder for an image
+* [Rebol/CSS](https://github.com/Oldes/Rebol-CSS)  - Cascading Style Sheets (CSS) utilities
 * [Rebol/Easing](https://github.com/Oldes/Rebol-Easing) - Collection of easing functions
 * [Rebol/EBML](https://github.com/Oldes/Rebol-EBML) - Extensible Binary Meta Language codec
+* [Rebol/GitHub](https://github.com/Oldes/Rebol-GitHub) - GitHub GraphQL and REST API
 * [Rebol/Godot](https://github.com/Oldes/Rebol-Godot) - Extractor of Godot's `.pck` files
 * [Rebol/Google](https://github.com/Oldes/Rebol-Google) - Google Web API
 * [Rebol/HTTPd](https://github.com/Oldes/Rebol-HTTPd) - Webserver scheme
@@ -58,6 +62,22 @@ codesign --sign "5D94...EED5" -f -o runtime /path/to/extension.rebx
 ```
 To find a signing identity, use: `security find-identity`
 
+#### Enabling extensions
+
+To check what extensions are immediately available as modules, and which ones require explicit registering, list the active system state like this:
+```
+>> help system/modules
+```
+Any already enabled extension will have a `module!` type. Bundled extensions, that require explicit registering, will have a `block!` type. Likewise, the extensions that can be automatically downloaded and registered will show up with a `url!` type.
+
+To register any extension as a module, you need to import it into the active namespace first. For example, to make the `csv` module and its words available for use, do this:
+```
+>> import csv
+```
+Now you will be able to use the words, provided by this module, e.g.:
+```
+>> load-csv %file.csv
+```
 
 ### Building Rebol
 

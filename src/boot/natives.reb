@@ -57,7 +57,7 @@ assert: native [
 
 attempt: native [
 	"Tries to evaluate a block and returns result or NONE on error."
-	block [block!]
+	block [block! paren!]
 	/safer "Capture all possible errors and exceptions"
 ]
 
@@ -909,12 +909,12 @@ list-env: native [
 ]
 
 call: native [
-	{Run another program; return immediately.}
+	{Run another program; return immediately with the process ID.}
 	command [any-string! block! file!] "An OS-local command line (quoted as necessary), a block with arguments, or an executable file"
-	/wait "Wait for command to terminate before returning"
+	/wait "Wait for command to terminate and then return the exit code"
 	/console "Runs command with I/O redirected to console"
 	/shell "Forces command to be run from shell"
-	/info "Returns process information object"
+	/info {Returns process information object containing the ID of the process (or 0 if failed to run), includes the exit code when used with /wait}
 	/input in [string! binary! file! none!] "Redirects stdin to in"
 	/output out [string! binary! file! none!] "Redirects stdout to out"
 	/error err [string! binary! file! none!] "Redirects stderr to err"

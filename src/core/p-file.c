@@ -70,22 +70,6 @@
 
 /***********************************************************************
 **
-*/	static void Cleanup_File(REBREQ *file)
-/*
-***********************************************************************/
-{
-	if (GET_FLAG(file->modes, RFM_NAME_MEM)) {
-		//NOTE: file->file.path will get GC'd
-		file->file.path = 0;
-		file->file.index = 0;
-		CLR_FLAG(file->modes, RFM_NAME_MEM);
-	}
-	SET_CLOSED(file);
-}
-
-
-/***********************************************************************
-**
 */	static void Set_File_Date(I64 time, REBVAL *val)
 /*
 **		Set a value with the UTC date of a file.
@@ -229,11 +213,11 @@
 **
 ***********************************************************************/
 {
-	if (Is_Port_Open(port)) Trap1(RE_ALREADY_OPEN, path);
+	if (IS_OPEN(file)) Trap1(RE_ALREADY_OPEN, path);
 
 	if (OS_DO_DEVICE(file, RDC_OPEN) < 0) Trap_Port(RE_CANNOT_OPEN, port, file->error);
 
-	Set_Port_Open(port, TRUE);
+	SET_OPEN(file);
 }
 
 
@@ -474,23 +458,24 @@ resize:
 	REBINT result, error;
 	REBOOL opened = FALSE;	// had to be opened (shortcut case)
 
-	//Print("FILE ACTION: %r", Get_Action_Word(action));
+	//Debug_Fmt_("FILE ACTION: %r\n", Get_Action_Word(action));
 
-	port = Validate_Port_Value(port_value);
-
-	*D_RET = *D_ARG(1);
+	port = Validate_Port_With_Request(port_value, RDI_FILE, &file);
 
 	// Validate PORT fields:
-	spec = BLK_SKIP(port, STD_PORT_SPEC);
-	if (!IS_OBJECT(spec)) Trap1(RE_INVALID_SPEC, spec);
+	spec = OFV(port, STD_PORT_SPEC);
 	path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
 	if (!path) Trap1(RE_INVALID_SPEC, spec);
-
 	if (IS_URL(path)) path = Obj_Value(spec, STD_PORT_SPEC_FILE_PATH);
 	else if (!IS_FILE(path)) Trap1(RE_INVALID_SPEC, path);
 
-	// Get or setup internal state data:
-	file = (REBREQ*)Use_Port_State(port, RDI_FILE, sizeof(*file));
+	//-- Port Series Actions only called if opened as a port
+	if (action < A_CREATE && !IS_OPEN(file)) {
+		Release_Port_State(port);
+		Trap1(RE_NOT_OPEN, path);
+	}
+
+	*D_RET = *D_ARG(1);
 
 	switch (action) {
 
@@ -513,7 +498,7 @@ resize:
 		error = (REBINT)file->error; // store error value, before closing the file!
 		if (opened) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
-			Cleanup_File(file);
+			Release_Port_State(port);
 		}
 
 		if (error) Trap_Port(RE_READ_ERROR, port, error);
@@ -571,7 +556,7 @@ resize:
 		error = (REBINT)file->error; // store error value, before closing the file!
 		if (opened) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
-			Cleanup_File(file);
+			Release_Port_State(port);
 		}
 
 		if (error) Trap_Port(RE_WRITE_ERROR, port, error);
@@ -599,7 +584,7 @@ resize:
 	case A_CLOSE:
 		if (IS_OPEN(file)) {
 			OS_DO_DEVICE(file, RDC_CLOSE);
-			Cleanup_File(file);
+			Release_Port_State(port);
 		}
 		break;
 
@@ -647,9 +632,10 @@ resize:
 		if (!IS_OPEN(file)) {
 			Setup_File(file, 0, path);
 			if (OS_DO_DEVICE(file, RDC_QUERY) < 0) return R_NONE;
+			opened = TRUE;
 		}
 		Ret_Query_File(port, file, D_RET, D_ARG(ARG_QUERY_FIELD));
-		// !!! free file path?
+		if (opened) Release_Port_State(port);
 		break;
 
 	case A_MODIFY:
@@ -708,8 +694,10 @@ resize:
 		DECIDE(file->file.index > file->file.size);
 
 	case A_CLEAR:
-		if (!IS_OPEN(file)) Trap1(RE_NOT_OPEN, path);
-		// !! check for write enabled?
+		// The write policy is checked when the port is opened.
+		// When the port is opened with a read-only policy, this call
+		// would be silently ignored without the check below.
+		if(!GET_FLAG(file->modes, RFM_WRITE)) Trap1(RE_WRITE_ERROR, path);
 		SET_FLAG(file->modes, RFM_RESEEK);
 		SET_FLAG(file->modes, RFM_TRUNCATE);
 		file->length = 0;

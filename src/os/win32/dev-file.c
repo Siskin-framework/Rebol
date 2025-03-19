@@ -308,7 +308,12 @@ fail:
 ***********************************************************************/
 {
 	if (file->handle) {
-		CloseHandle((HANDLE)(file->handle));
+		if (GET_FLAG(file->modes, RFM_DIR)) {
+			FindClose((HANDLE)(file->handle));
+		}
+		else {
+			CloseHandle((HANDLE)(file->handle));
+		}
 		file->handle = 0;
 	}
 	return DR_DONE;

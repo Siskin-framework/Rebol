@@ -275,7 +275,7 @@ static REBSER *Trim_Object(REBSER *obj)
 		return PE_NONE; // Error objects may not have a frame.
 	}
 
-	if (IS_WORD(pvs->select)) {
+	if (ANY_WORD(pvs->select)) {
 		n = Find_Word_Index(VAL_OBJ_FRAME(pvs->value), VAL_WORD_SYM(pvs->select), FALSE);
 	}
 	if (n == 0)

@@ -2,22 +2,20 @@ Rebol [
 	Title:  "WebSocket scheme and codec"
 	Type:    module
 	Name:    websocket
-	Date:    01-Jan-2024
-	Version: 0.1.0
+	Date:    02-Jan-2024
+	Version: 0.2.1
 	Author:  @Oldes
-	Exports: [http-server decode-target to-CLF-idate]
 	Home:    https://github.com/Oldes/Rebol-WebSocket
 	Rights:  http://opensource.org/licenses/Apache-2.0
 	Purpose: {Communicate with a server over WebSocket's connection.}
 	History: [
 		01-Jan-2024 "Oldes" {Initial version}
 	]
-	Needs: [3.11.0]
+	Needs: [3.11.0] ;; used bit/hexadecimal integer syntax
 ]
 
 ;--- WebSocket Codec --------------------------------------------------
-append system/options/log [ws: 4]
-system/options/quiet: false
+system/options/log/ws: 2
 register-codec [
 	name:  'ws
 	type:  'text
@@ -65,7 +63,7 @@ register-codec [
 		"Decodes WebSocket messages from a given input."
 		data [binary!] "Consumed data are removed! (modified)"
 	][
-		out: clear []
+		out: copy []
 		;; minimal WebSocket message has 2 bytes at least (when no masking involved)
 		while [2 < length? data][
 			final?: data/1 & 2#10000000 = 2#10000000
@@ -74,17 +72,21 @@ register-codec [
 			len:    data/2 & 2#01111111
 			data: skip data 2
 
+			sys/log/debug 'WS ["Length:" len "opcode:" opcode "final?" final? "data-length?" length? data]
+
 			;@@ Not removing bytes until we make sure, that there is enough data!
 			case [
 				len = 126 [
 					;; there must be at least 2 bytes for the message length
 					if 2 >= length? data [break]
 					len: binary/read data 'UI16
+					sys/log/debug 'WS ["Real length:" len]
 					data: skip data 2
 				]
 				len = 127 [
 					if 8 >= length? data [break]
 					len: binary/read data 'UI64
+					sys/log/debug 'WS ["Real length:" len]
 					data: skip data 8
 				]
 			]
@@ -108,13 +110,14 @@ ws-decode: :codecs/ws/decode
 ;--- WebSocket Scheme -------------------------------------------------
 ws-conn-awake: func [event /local port extra parent spec temp] [
 	port: event/port
+	;; wakeup if there is no parent
 	unless parent: port/parent [return true]
 	extra: parent/extra
-	sys/log/more 'WS ["==TCP-event:" as-red event/type]
+	sys/log/debug 'WS ["==TCP-event:" as-red event/type]
 	either extra/handshake [
 		switch event/type [
 			read [
-				append parent/data port/data
+				append extra/buffer port/data
 				clear port/data
 			]
 		]
@@ -122,17 +125,17 @@ ws-conn-awake: func [event /local port extra parent spec temp] [
 		port
 	][
 		switch/default event/type [
-			;- Upgrading from HTTP to WS...]
+			;- Upgrading from HTTP to WS...
 			read [
 				;print ["^/read:" length? port/data]
-				append parent/data port/data
+				append extra/buffer port/data
 				clear port/data
 				;probe to string! parent/data
-				either find parent/data #{0D0A0D0A} [
+				either find extra/buffer #{0D0A0D0A} [
 					;; parse response header...
 					try/with [
 						;; skip the first line and construct response fields
-						extra/fields: temp: construct find/tail parent/data #{0D0A}
+						extra/fields: temp: construct find/tail extra/buffer #{0D0A}
 						unless all [
 							"websocket" = select temp 'Upgrade
 							"Upgrade"   = select temp 'Connection
@@ -141,16 +144,15 @@ ws-conn-awake: func [event /local port extra parent spec temp] [
 							insert system/ports/system make event! [ type: 'error port: parent ]
 							return true
 						]
-						
 					] :print
 
 					clear port/data
-					clear parent/data
+					clear extra/buffer
 					extra/handshake: true
 					insert system/ports/system make event! [ type: 'connect port: parent ]
 				][
 					;; missing end of the response header...			
-					read port
+					read port ;; keep reading...
 				]
 			]
 			wrote  [read port]
@@ -177,22 +179,42 @@ sys/make-scheme [
 	name: 'ws
 	title: "Websocket"
 	spec: make system/standard/port-spec-net []
-	awake: func [event /local port extra parent spec temp] [
+	awake: func [event /local port ctx raw temp] [
+		;; This is just a default awake handler...
+		;; one may want to redefine it for a real life use!
 		port: event/port
-		sys/log/debug 'WS ["== WS-event:" as-red event/type]
+		ctx: port/extra
+		raw: ctx/buffer  ;; used to store unprocessed raw data
+		sys/log/more 'WS ["== WS-event:" as-red event/type port/spec/ref]
 		switch event/type [
 			read  [
-				sys/log/debug 'WS ["== raw-data:" as-blue port/data]
-				ws-decode port/data 
+				sys/log/debug 'WS ["== raw-data:" as-blue mold/flat/part raw 100]
+				if empty? temp: ws-decode raw [
+					sys/log/debug 'WS "data not complete..."
+					read port    ;; keep reading...
+					return false ;; don't wake up yet...
+				]
+				;; there may be more then one message in the decoded data
+				foreach [fin op data] temp [
+					;; store only decoded messages...
+					if fin [append port/data data] ;@@ what if the data are just partial (not final)?
+				]
+				sys/log/more 'WS ["Received messages:" as-yellow length? port/data]
+				;; notify the parent port
+				insert system/ports/system make event! [ type: 'read port: port/parent ]
 			]
-			wrote []
+			wrote [
+				;; don't wake up and instead wait for a response...
+				read port
+				return false
+			]
 			connect [
 				;; optional validation of response headers
-				?? port/extra/fields
+				sys/log/debug 'WS ["Connect response:" mold/flat ctx/fields]
 			]
 			error [
-				print "closing..."
-				try [close port/extra/connection]
+				sys/log/info 'WS "Closing..."
+				try [close ctx/connection]
 				;wait port/extra/connection
 			]
 		]
@@ -206,14 +228,18 @@ sys/make-scheme [
 				key:
 				handshake:
 				fields: none
+				buffer: make binary! 200 ;; used to hold undecoded raw websocket data
 			]
-			port/data: make binary! 200
+			port/data: copy [] ;; used to hold decoeded packets
+
 			;; `ref` is used in logging and errors
 			conn: make port/spec [ref: none]
 			conn/scheme: 'tcp
 			port-spec: if spec/port [join #":" spec/port]
-            conn/ref: as url! ajoin [conn/scheme "://" spec/host port-spec]
-            spec/ref: as url! ajoin ["ws://" spec/host port-spec]
+			conn/ref: as url! ajoin [conn/scheme "://" spec/host port-spec]
+			unless url? spec/ref [
+				spec/ref: as url! ajoin ["ws://" spec/host port-spec spec/path spec/target]
+			]
 			port/extra/connection: conn: make port! conn
 			conn/parent: port
 			conn/awake: :ws-conn-awake
@@ -231,17 +257,15 @@ sys/make-scheme [
 			close port/extra/connection
 		]
 		write: func[port data][
-			sys/log/debug 'WS ["write:" as-green mold data]
+			sys/log/debug 'WS ["Write:" as-green mold/flat data]
 			either open? port [
 				write port/extra/connection ws-encode data
 			][	sys/log/error 'WS "Not open!"]
-			
 		]
 		read: func[port][
 			either open? port [
 				read port/extra/connection
 			][	sys/log/error 'WS "Not open!"]
-			
 		]
 	]
 ]

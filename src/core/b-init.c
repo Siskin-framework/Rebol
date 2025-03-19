@@ -1040,9 +1040,9 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	PG_Boot_Level = BOOT_LEVEL_FULL;
 	PG_Mem_Usage = 0;
 	PG_Mem_Limit = 0;
-	PG_Reb_Stats = Make_Mem(sizeof(*PG_Reb_Stats));
+	PG_Reb_Stats = Make_CMem(sizeof(*PG_Reb_Stats));
 	Halt_State = 0;
-	Reb_Opts = Make_Mem(sizeof(*Reb_Opts));
+	Reb_Opts = Make_CMem(sizeof(*Reb_Opts));
 
 	// Thread locals:
 	Trace_Level = 0;

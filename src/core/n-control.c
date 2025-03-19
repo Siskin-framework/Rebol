@@ -395,7 +395,7 @@ enum {
 		ds = DS_POP;  // volatile stack reference
 		if (IS_FALSE(ds)) index++;
 		else {
-			if (IS_UNSET(ds)) Trap0(RE_NO_RETURN);
+			//if (IS_UNSET(ds)) Trap0(RE_NO_RETURN);
 			if (THROWN(ds)) return R_TOS1;
 			if (index >= SERIES_TAIL(block)) return R_TRUE;
 			index = Do_Next(block, index, 0);

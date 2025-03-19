@@ -320,9 +320,6 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 		if (IS_PATH(blk) && !Cmp_Block(blk, item, HAS_CASE(parse))) break;
 		goto no_result;
 
-	case REB_NONE:
-		break;
-
 	// Parse a sub-rule block:
 	case REB_BLOCK:
 		index = Parse_Rules_Loop(parse, index, VAL_BLK_DATA(item), depth);

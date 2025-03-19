@@ -708,6 +708,13 @@ Rebol [
 
 ===start-group=== "Other parse issues"
 
+--test-- "parse with none or unset"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2639
+	--assert true? attempt [parse [#(true)][#(true)]]
+	--assert true? attempt [parse [#(false)][#(false)]]
+	--assert true? attempt [parse [#(none)][#(none)]]
+	--assert none? attempt [parse [#(unset)][#(unset)]] ;;because of #1273
+
 --test-- "issue-215"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/215
 ;-- This functionality was removed!

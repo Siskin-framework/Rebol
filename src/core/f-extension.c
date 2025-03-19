@@ -298,19 +298,31 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 {
 	RXICBI *cbi;
 	REBVAL *event = D_ARG(1);
-	REBCNT n;
+	REBCNT n, err = 0;
 
 	// Sanity check:
 	if (VAL_EVENT_TYPE(event) != EVT_CALLBACK || !(cbi = VAL_EVENT_SER(event)))
 		return R_NONE;
 
 	n = Do_Callback(cbi->obj, cbi->word, cbi->args, &(cbi->result));
+	if (n) {
+		RXI_To_Value(ds, cbi->result, n);
+	}
+	else {
+		// In case of error, resolve it now so the CBI may be freed
+		err = GET_EXT_ERROR(&cbi->result);
+	}
 
-	SET_FLAG(cbi->flags, RXC_DONE);
+	if (GET_FLAG(cbi->flags, RXC_ALLOC)) {
+		FREE_MEM(cbi->args);
+		FREE_MEM(cbi);
+	}
+	else {
+		SET_FLAG(cbi->flags, RXC_DONE);
+	}
 
-	if (!n) Trap_Num(RE_INVALID_ARG, GET_EXT_ERROR(&cbi->result));
-
-	RXI_To_Value(ds, cbi->result, n);
+	if (err) Trap_Num(RE_INVALID_ARG, err);
+	
 	return R_RET;
 }
 

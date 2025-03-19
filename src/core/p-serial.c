@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2013 REBOL Technologies
-**  Copyright 2013-2023 Rebol Open Source Developers
+**  Copyright 2013-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,22 +47,15 @@
 	REBCNT refs;	// refinement argument flags
 	REBCNT len;		// generic length
 	REBSER *ser;	// simplifier
-	REBVAL *path;
 	REBSER *port;
 
-	port = Validate_Port_Value(port_value);
+	port = Validate_Port_With_Request(port_value, RDI_SERIAL, &req);
 
 	*D_RET = *D_ARG(1);
 
 	// Validate PORT fields:
 	spec = OFV(port, STD_PORT_SPEC);
 	if (!IS_OBJECT(spec)) Trap0(RE_INVALID_PORT);
-	path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
-	if (!path) Trap1(RE_INVALID_SPEC, spec);
-
-	//if (!IS_FILE(path)) Trap1(RE_INVALID_SPEC, path);
-
-	req = Use_Port_State(port, RDI_SERIAL, sizeof(*req));
 
 	// Actions for an unopened serial port:
 	if (!IS_OPEN(req)) {
@@ -222,7 +215,7 @@
 	case A_CLOSE:
 		if (IS_OPEN(req)) {
 			OS_DO_DEVICE(req, RDC_CLOSE);
-			SET_CLOSED(req);
+			Release_Port_State(port);
 		}
 		break;
 	case A_MODIFY:

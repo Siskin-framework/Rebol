@@ -146,6 +146,14 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "fraction"
+	--test-- "fraction 1.25"
+		--assert 0.25 == fraction 1.25
+	--test-- "fraction -1.25"
+		--assert -0.25 == fraction -1.25
+===end-group===
+
+
 ===start-group=== "log"
 	--test-- "log-* -1"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2431

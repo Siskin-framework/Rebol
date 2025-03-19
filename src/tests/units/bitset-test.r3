@@ -174,8 +174,22 @@ Rebol [
 		b/97: false  ; Just like POKE
 		--assert not b/97
 
-
 ===end-group===
+
+
+===start-group=== "pickz bitset!"
+
+	--test-- "pickz"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2625
+	;; as `pick` on bitset is zero-based, pickz has same result
+		b: make bitset! [4]
+		--assert pickz b 4
+		--assert pick  b 4
+		--assert b/4
+		--assert find b 4
+		
+===end-group===
+
 
 ===start-group=== "modify"
 	--test-- "alter"

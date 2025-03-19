@@ -347,15 +347,6 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	return ((int)LO_CASE(*(REBYTE*)v2)) - ((int)LO_CASE(*(REBYTE*)v1));
 }
 
-// WARNING! Not re-entrant. !!!  Must find a way to push it on stack?
-static struct {
-	REBFLG cased;
-	REBFLG reverse;
-	REBCNT offset;
-	REBVAL *compare;
-	REBFLG wide;
-} sort_flags = {0};
-
 /***********************************************************************
 **
 */	static int Compare_Call(const void *p1, const void *p2)
@@ -366,12 +357,16 @@ static struct {
 	REBVAL *v2;
 	REBVAL *val;
 	REBVAL *tmp;
+	REBVAL *func;
+	REBU64 flags;
 
-	// O: is there better way how to temporary use 2 values?
+	func  = DS_GET(DSP - 1);
+	flags = VAL_UNT64(DS_TOP);
+
 	DS_SKIP; v1 = DS_TOP;
 	DS_SKIP; v2 = DS_TOP;
 
-	if (sort_flags.wide) {
+	if (GET_FLAG(flags, SORT_FLAG_WIDE)) {
 		SET_CHAR(v1, (int)(*(REBUNI*)p2));
 		SET_CHAR(v2, (int)(*(REBUNI*)p1));
 	} else {
@@ -379,31 +374,28 @@ static struct {
 		SET_CHAR(v2, (int)(*(REBYTE*)p1));
 	}
 	
-	if (sort_flags.reverse) {
+	if (GET_FLAG(flags, SORT_FLAG_REVERSE)) {
 		tmp = v1;
 		v1 = v2;
 		v2 = tmp;
 	}
 
-	val = Apply_Func(0, sort_flags.compare, v1, v2, 0);
+	val = Apply_Func(0, func, v1, v2, 0);
 
 	// v1 and v2 no more needed...
-	DS_POP;
-	DS_POP;
+	DS_DROP;
+	DS_DROP;
 
 	if (IS_LOGIC(val)) {
 		if (IS_TRUE(val)) return 1;
-		return -1;
 	}
-	if (IS_INTEGER(val)) {
+	else if (IS_INTEGER(val)) {
 		if (VAL_INT64(val) < 0) return 1;
 		if (VAL_INT64(val) == 0) return 0;
-		return -1;
 	}
-	if (IS_DECIMAL(val)) {
+	else if (IS_DECIMAL(val)) {
 		if (VAL_DECIMAL(val) < 0) return 1;
 		if (VAL_DECIMAL(val) == 0) return 0;
-		return -1;
 	}
 	return -1;
 }
@@ -436,18 +428,20 @@ static struct {
 	if (skip > 1) len /= skip, size *= skip;
 
 	if (ANY_FUNC(compv)) {
-		// Check argument types of comparator function.
+		// Check argument types of the comparator function.
 		args = VAL_FUNC_ARGS(compv);
 		if (BLK_LEN(args) > 1 && !TYPE_CHECK(BLK_SKIP(args, 1), REB_CHAR))
 			Trap3(RE_EXPECT_ARG, Of_Type(compv), BLK_SKIP(args, 1), Get_Type_Word(REB_CHAR));
 		if (BLK_LEN(args) > 2 && !TYPE_CHECK(BLK_SKIP(args, 2), REB_CHAR))
 			Trap3(RE_EXPECT_ARG, Of_Type(compv), BLK_SKIP(args, 2), Get_Type_Word(REB_CHAR));
-		sort_flags.cased = ccase;
-		sort_flags.reverse = rev;
-		sort_flags.compare = 0;
-		sort_flags.offset = 0;
-		sort_flags.compare = compv;
-		sort_flags.wide = 1 < SERIES_WIDE(VAL_SERIES(string));
+
+		REBU64 flags = 0;
+		if (rev) SET_FLAG(flags, SORT_FLAG_REVERSE);
+		if (1 < SERIES_WIDE(VAL_SERIES(string))) SET_FLAG(flags, SORT_FLAG_WIDE);
+		
+		// Store the comparator function and flags on the stack
+		DS_PUSH(compv);
+		DS_PUSH_INTEGER(flags);
 		sfunc = Compare_Call;
 
 	} else if (ccase) {
@@ -458,6 +452,12 @@ static struct {
 
 	//!!uni - needs to compare wide chars too
 	reb_qsort((void *)VAL_DATA(string), len, size * SERIES_WIDE(VAL_SERIES(string)), sfunc);
+
+	if (ANY_FUNC(compv)) {
+		// Stored comparator and flags are not needed anymore
+		DS_DROP;
+		DS_DROP;
+	}
 }
 
 

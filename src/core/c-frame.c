@@ -123,8 +123,10 @@
 
 	//DISABLE_GC;
 	words = Make_Block(len + 1); // size + room for SELF
+	CLEAR_SERIES(words);
 	BARE_SERIES(words);
 	frame = Make_Block(len + 1);
+	CLEAR_SERIES(frame);
 	//ENABLE_GC;
 	// Note: cannot use Append_Frame for first word.
 	value = Append_Value(frame);

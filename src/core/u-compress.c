@@ -33,19 +33,12 @@
 #include "sys-lzma.h"
 #endif // INCLUDE_LZMA
 
-static void *zalloc(void *opaque, unsigned nr, unsigned size)
-{
-	UNUSED(opaque);
-	void *ptr = malloc(nr * size);
-	//printf("zalloc: %x - %i\n", ptr, nr * size);
-	return ptr;
+static void *zalloc(void *opaque, unsigned nr, unsigned size) {
+	return Make_Managed_Mem(opaque, nr*size);
 }
 
-static void zfree(void *opaque, void *addr)
-{
-	UNUSED(opaque);
-	//printf("zfree: %x\n", addr);
-	free(addr);
+static void zfree(void *opaque, void *address) {
+	Free_Managed_Mem(opaque, address);
 }
 
 //#ifdef old_Sterlings_code // used also in LZMA code at this moment
@@ -224,8 +217,8 @@ void Trap_ZStream_Error(z_stream *stream, int err, REBOOL while_compression)
 
 #ifdef INCLUDE_LZMA
 
-static void *SzAlloc(ISzAllocPtr p, size_t size) { UNUSED(p); return malloc(size); }
-static void SzFree(ISzAllocPtr p, void *address) { UNUSED(p); free(address); }
+static void *SzAlloc(ISzAllocPtr p, size_t size) { return Make_Managed_Mem((void*)p, size); }
+static void SzFree(ISzAllocPtr p, void *address) { Free_Managed_Mem((void *)p, address); }
 static const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 
 /***********************************************************************
@@ -352,12 +345,12 @@ static const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 
 /* Default brotli_alloc_func */
 void* BrotliDefaultAllocFunc(void* opaque, size_t size) {
-  return malloc(size);
+	return Make_Managed_Mem(opaque, size);
 }
 
 /* Default brotli_free_func */
 void BrotliDefaultFreeFunc(void* opaque, void* address) {
-  free(address);
+	Free_Managed_Mem(opaque, address);
 }
 
 /***********************************************************************
@@ -383,7 +376,7 @@ void BrotliDefaultFreeFunc(void* opaque, void* address) {
 	else if (level > 11)
 		level = 11;
 
-	BrotliEncoderState *BrotliEncoder = BrotliEncoderCreateInstance(NULL, NULL, NULL);
+	BrotliEncoderState *BrotliEncoder = BrotliEncoderCreateInstance(Make_Managed_Mem, Free_Managed_Mem, NULL);
 	if (!BrotliEncoder) {
 		Trap0(RE_NO_MEMORY);
 		return 0;  // Failed to create the Brotli encoder
@@ -430,7 +423,7 @@ static BrotliDecoderState *BrotliDecoder = NULL;
 	if (BrotliDecoder)
 		BrotliDecoderDestroyInstance(BrotliDecoder); // in case that there was a Rebol error in previous call
 
-	BrotliDecoder = BrotliDecoderCreateInstance(NULL, NULL, NULL);
+	BrotliDecoder = BrotliDecoderCreateInstance(Make_Managed_Mem, Free_Managed_Mem, NULL);
     if (!BrotliDecoder) {
 		// Failed to create the Brotli decoder
 		Trap0(RE_NO_MEMORY);

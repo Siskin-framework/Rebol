@@ -378,6 +378,15 @@ Rebol [
 		m: make map! [1-1-2000 1 10:00 2 1.1.1 3 ]
 		--assert [1-Jan-2000 10:00 1.1.1] = keys-of m
 
+	--test-- "foreach consistent with keys-of"
+	;@@ https://github.com/red/red/issues/5533
+		m: make map! []
+		m/a: 1
+		--assert [a] == keys-of m
+		b: copy []
+		foreach [k v] m [append b k]
+		--assert [a] == b
+
 ===end-group===
 
 ===start-group=== "MAP with NONE"

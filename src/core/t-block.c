@@ -449,33 +449,21 @@ done:
 	return;
 }
 
-// WARNING! Not re-entrant. !!!  Must find a way to push it on stack?
-static struct {
-	REBFLG cased;
-	REBFLG reverse;
-	REBCNT offset;
-	REBVAL *compare;
-} sort_flags = {0};
-
 /***********************************************************************
 **
 */	static int Compare_Val(const void *v1, const void *v2)
 /*
 ***********************************************************************/
 {
-	// !!!! BE SURE that 64 bit large difference comparisons work
+	REBVAL *val = DS_GET(DSP - 1);
+	REBU64 flags = VAL_UNT64(DS_TOP);
+	REBINT offset = 0;
+	if (IS_INTEGER(val)) offset = VAL_INT64(val) - 1;
 
-	if (sort_flags.reverse)
-		return Cmp_Value((REBVAL*)v2+sort_flags.offset, (REBVAL*)v1+sort_flags.offset, sort_flags.cased);
+	if (GET_FLAG(flags, SORT_FLAG_REVERSE))
+		return Cmp_Value((REBVAL*)v2+offset, (REBVAL*)v1+offset, GET_FLAG(flags, SORT_FLAG_CASE));
 	else
-		return Cmp_Value((REBVAL*)v1+sort_flags.offset, (REBVAL*)v2+sort_flags.offset, sort_flags.cased);
-
-/*
-	REBI64 n = VAL_INT64((REBVAL*)v1) - VAL_INT64((REBVAL*)v2);
-	if (n > 0) return 1;
-	if (n < 0) return -1;
-	return 0;
-*/
+		return Cmp_Value((REBVAL*)v1+offset, (REBVAL*)v2+offset, GET_FLAG(flags, SORT_FLAG_CASE));
 }
 
 
@@ -485,14 +473,19 @@ static struct {
 /*
 ***********************************************************************/
 {
-	REBVAL *v1 = (REBVAL*)p1;
-	REBVAL *v2 = (REBVAL*)p2;
+	REBVAL *v1 = (REBVAL*)p2;
+	REBVAL *v2 = (REBVAL*)p1;
 	REBVAL *val;
-	
 	REBVAL *tmp;
 	REBSER *args;
+	REBVAL *func;
+	REBU64 flags;
 
-	if (!sort_flags.reverse) {
+	func = DS_GET(DSP - 1);
+	if (!ANY_FUNC(func)) abort();
+	flags = VAL_UNT64(DS_TOP);
+
+	if (GET_FLAG(flags, SORT_FLAG_REVERSE)) {
 		tmp = v1;
 		v1 = v2;
 		v2 = tmp;
@@ -502,27 +495,24 @@ static struct {
 	// TODO: The below results in an error message such as "op! does not allow
 	// unset! for its value1 argument". A better message would be more like
 	// "compare handler does not allow error! for its value1 argument."
-	args = VAL_FUNC_ARGS(sort_flags.compare);
+	args = VAL_FUNC_ARGS(func);
 	if (BLK_LEN(args) > 1 && !TYPE_CHECK(BLK_SKIP(args, 1), VAL_TYPE(v1)))
-		Trap3(RE_EXPECT_ARG, Of_Type(sort_flags.compare), BLK_SKIP(args, 1), Of_Type(v1));
+		Trap3(RE_EXPECT_ARG, Of_Type(func), BLK_SKIP(args, 1), Of_Type(v1));
 	if (BLK_LEN(args) > 2 && !TYPE_CHECK(BLK_SKIP(args, 2), VAL_TYPE(v2)))
-		Trap3(RE_EXPECT_ARG, Of_Type(sort_flags.compare), BLK_SKIP(args, 2), Of_Type(v2));
+		Trap3(RE_EXPECT_ARG, Of_Type(func), BLK_SKIP(args, 2), Of_Type(v2));
 
-	val = Apply_Func(0, sort_flags.compare, v1, v2, 0);
+	val = Apply_Func(0, func, v1, v2, 0);
 
 	if (IS_LOGIC(val)) {
 		if (IS_TRUE(val)) return 1;
-		return -1;
 	}
-	if (IS_INTEGER(val)) {
+	else if (IS_INTEGER(val)) {
 		if (VAL_INT64(val) < 0) return 1;
 		if (VAL_INT64(val) == 0) return 0;
-		return -1;
 	}
-	if (IS_DECIMAL(val)) {
+	else if (IS_DECIMAL(val)) {
 		if (VAL_DECIMAL(val) < 0) return 1;
 		if (VAL_DECIMAL(val) == 0) return 0;
-		return -1;
 	}
 	return -1;
 }
@@ -550,13 +540,12 @@ static struct {
 	REBCNT size = sizeof(REBVAL);
 //	int (*sfunc)(const void *v1, const void *v2);
 
-	sort_flags.cased = ccase;
-	sort_flags.reverse = rev;
-	sort_flags.compare = 0;
-	sort_flags.offset = 0;
+	REBU64 flags = 0;
+	if (ccase) SET_FLAG(flags, SORT_FLAG_CASE);
+	if (rev)   SET_FLAG(flags, SORT_FLAG_REVERSE);
 
-	if (IS_INTEGER(compv)) sort_flags.offset = Int32(compv)-1; 
-	if (ANY_FUNC(compv)) sort_flags.compare = compv; 
+	DS_PUSH(compv);
+	DS_PUSH_INTEGER(flags);
 
 	// Determine length of sort:
 	len = Partial1(block, part);
@@ -572,11 +561,14 @@ static struct {
 	// Use fast quicksort library function:
 	if (skip > 1) len /= skip, size *= skip;
 
-	if (sort_flags.compare)
+	if (ANY_FUNC(compv))
 		reb_qsort((void *)VAL_BLK_DATA(block), len, size, Compare_Call);
 	else
 		reb_qsort((void *)VAL_BLK_DATA(block), len, size, Compare_Val);
 
+	// Stored comparator and flags are not needed anymore
+	DS_DROP;
+	DS_DROP;
 }
 
 
@@ -807,7 +799,8 @@ zero_blk:
 	case A_PUT:
 		arg2 = D_ARG(ARG_PUT_VALUE);
 		args = D_REF(ARG_PUT_CASE) ? AM_FIND_CASE : 0;
-		ret = Find_Block(ser, index, tail, arg, len, args, 1);
+		ret = IS_INTEGER(D_ARG(ARG_PUT_SIZE)) ? Int32s(D_ARG(ARG_PUT_SIZE), 1) : 1;
+		ret = Find_Block(ser, index, tail, arg, len, args, ret);
 		if(ret != NOT_FOUND) {
 			ret++;
 			if (ret >= tail) {

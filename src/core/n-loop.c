@@ -412,6 +412,9 @@ enum loop_each_mode {
 						if (!VAL_GET_OPT(BLK_SKIP(series, index), OPTS_HIDE)) {
 							if (j == 0) {
 								*vars = *BLK_SKIP(series, index & ~1);
+#ifndef DO_NOT_NORMALIZE_MAP_KEYS
+								if (IS_SET_WORD(vars)) SET_TYPE(vars, REB_WORD);
+#endif
 								if (IS_END(vars+1)) index++; // only words
 							}
 							else if (j == 1)

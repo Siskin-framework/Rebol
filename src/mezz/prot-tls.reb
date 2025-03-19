@@ -12,8 +12,8 @@ REBOL [
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
 	Author: ["Richard 'Cyphre' Smolak" "Oldes" "Brian Dickens (Hostilefork)"]
-	Version: 0.9.2
-	Date: 24-May-2022
+	Version: 0.9.3
+	Date: 24-Jan-2025
 	history: [
 		0.6.1 "Cyphre" "Initial implementation used in old R3-alpha"
 		0.7.0 "Oldes" {
@@ -36,6 +36,7 @@ REBOL [
 		0.9.0 "Oldes" "Added (limited) support for a `server` role"
 		0.9.1 "Oldes" "Improved initialization to be able reuse already opened TCP port"
 		0.9.2 "Oldes" "Added support for GCM and SHA384 crypt modes"
+		0.9.3 "Oldes" "FIX: Read and process all input data during handshake"
 	]
 	todo: {
 		* cached sessions
@@ -1513,10 +1514,8 @@ TLS-read-data: function [
 				either ctx/cipher-spec-set > 1 [
 					ctx/seq-read: 0
 					data: decrypt-msg ctx data :type
-					;ctx/protocol: 'APPLICATION
-					;change-state ctx 'APPLICATION
-					ctx/reading?: ctx/server?
-					;?? data
+					;; Don't stop reading if there is still content in the input buffer!
+					ctx/reading?: any [ctx/server? not empty? inp/buffer]
 				][
 					TLS-update-messages-hash ctx data len
 				]
@@ -1531,8 +1530,6 @@ TLS-read-data: function [
 					ctx/cipher-spec-set: 2
 					ctx/seq-read: 0
 					ctx/reading?: true ;ctx/server?
-					;ctx/protocol: 'APPLICATION
-					;change-state ctx 'APPLICATION
 				][
 					log-error ["*** CHANGE_CIPHER_SPEC value should be 1 but is:" value]
 				]

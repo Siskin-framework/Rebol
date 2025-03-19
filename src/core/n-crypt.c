@@ -34,6 +34,7 @@
 #include "sys-aes.h"
 #endif
 #include "mbedtls/cipher_wrap.h"
+#include "mbedtls/platform.h"
 
 #ifdef INCLUDE_CHACHA20POLY1305_DEPRECATED
 #include "sys-chacha20.h"
@@ -54,6 +55,8 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 	REBVAL *blk;
 	REBVAL  tmp;
 //	REBCNT  sym;
+
+	mbedtls_platform_set_calloc_free(Make_Managed_CMem, Free_Managed_CMem);
 
 	mbedtls_ctr_drbg_init(&ctr_drbg);
 	mbedtls_entropy_init(&entropy);

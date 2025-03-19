@@ -723,7 +723,10 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 **
 ***********************************************************************/
 {
-	Convert_Date((time_t *)&time->l, dat, 0);
+	time_t stime;
+	stime = time->l;
+	Convert_Date(&stime, dat, 0);
+	dat->nano  = time->h;
 }
 
 

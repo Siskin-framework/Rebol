@@ -520,6 +520,7 @@ const REBCNT Gob_Flag_Words[] = {
 
 #ifdef HAS_WIDGET_GOB
 	case SYM_WIDGET:
+		if (!GOB_CONTENT(gob)) goto is_none;
 		data = VAL_SERIES(GOB_WIDGET_SPEC(gob));
 		Init_Word(val, VAL_WORD_CANON(BLK_HEAD(data)));
 		VAL_SET(val, REB_LIT_WORD);

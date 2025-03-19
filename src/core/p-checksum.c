@@ -277,7 +277,7 @@
 	REBVAL *data;
 	REBVAL *ctx;
 
-	port = Validate_Port_Value(port_value);
+	port = Validate_Port_With_Request(port_value, RDI_CHECKSUM, &req);
 
 	spec = BLK_SKIP(port, STD_PORT_SPEC);
 	if (!IS_OBJECT(spec)) Trap1(RE_INVALID_SPEC, spec);
@@ -285,8 +285,6 @@
     if (!method || !IS_WORD(method)) {
         Trap1(RE_INVALID_SPEC, spec);
     }
-
-	req = Use_Port_State(port, RDI_CHECKSUM, sizeof(REBREQ));
 
 	data = BLK_SKIP(port, STD_PORT_DATA); //will hold result
 	ctx  = BLK_SKIP(port, STD_PORT_EXTRA);
@@ -511,7 +509,7 @@
 				VAL_TAIL(ctx) = 0;
 			}
 			SET_NONE(data);
-			SET_CLOSED(req);
+			Release_Port_State(port);
 		}
 		break;
 

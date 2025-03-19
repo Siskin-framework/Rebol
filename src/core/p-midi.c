@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Developers
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -67,9 +67,7 @@
 
 	//printf("MIDI_Actor action: %i\n", action);
 
-	port = Validate_Port_Value(port_value);
-
-	req = Use_Port_State(port, RDI_MIDI, sizeof(REBREQ));
+	port = Validate_Port_With_Request(port_value, RDI_MIDI, &req);
 
 	switch (action) {
 
@@ -129,6 +127,7 @@
 	case A_CLOSE:
 		if (!IS_OPEN(req)) Trap_Port(RE_NOT_OPEN, port, -12);
 		OS_DO_DEVICE(req, RDC_CLOSE);
+		Release_Port_State(port);
 		break;
 
 	case A_QUERY:

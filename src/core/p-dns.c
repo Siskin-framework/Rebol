@@ -47,12 +47,11 @@
 	REBOOL sync = FALSE; // act synchronously
 	REBVAL tmp;
 
-	port = Validate_Port_Value(port_value);
+	port = Validate_Port_With_Request(port_value, RDI_DNS, &sock);
 
 	arg = D_ARG(2);
 	*D_RET = *D_ARG(1);
 
-	sock = Use_Port_State(port, RDI_DNS, sizeof(*sock));
 	spec = OFV(port, STD_PORT_SPEC);
 
 	sock->timeout = 4000; // where does this go? !!!

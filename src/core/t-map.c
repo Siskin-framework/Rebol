@@ -144,6 +144,8 @@
 	REBSER *blk = Make_Block(size*2);
 	REBSER *ser = 0;
 
+	CLEAR_SERIES(blk);
+
 	// Use hashing only when there is more then MIN_DICT keys.
 	if (size > MIN_DICT) ser = Make_Hash_Array(size);
 
