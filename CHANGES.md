@@ -2,11 +2,154 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+## 2025 March
+
+### Features:
+
+* [`383c3a`](https://github.com/Oldes/Rebol3/commit/383c3ace4d968fc8b3d6e1035aff8bcc396e7104) Automatic HTTP cookies support
+* [`65b1ea`](https://github.com/Oldes/Rebol3/commit/65b1ea32d30a18f82f2ae89887ebf0c4638829f2) Decode X509Extension OID
+* [`840c6c`](https://github.com/Oldes/Rebol3/commit/840c6c63b329399883efbe20c1fcc3198de2c8bb) Decode OIDs for SECG curves
+* [`235c74`](https://github.com/Oldes/Rebol3/commit/235c7459414940d8466dc977dcab13d5d670437a) Optimize CSS codec with updates
+* [`b23365`](https://github.com/Oldes/Rebol3/commit/b23365fe56625e972fb16fc35003f38a26acb7af) Included Cascading Style Sheets (CSS) utility module
+* [`744ef5`](https://github.com/Oldes/Rebol3/commit/744ef579d922878d22d0ac55bfd512ebf250e940) Add links to online documentation
+* [`69ee04`](https://github.com/Oldes/Rebol3/commit/69ee0441e9644f6b0bc14ee2868b17d907eb1648) Add missing docstrings and optimize with `ajoin`
+
+### Changes:
+
+* [`9f5315`](https://github.com/Oldes/Rebol3/commit/9f5315d3182a8302e393b8628f68ec838ece8074) Allow `none` value as a parse rule
+* [`0fb5b1`](https://github.com/Oldes/Rebol3/commit/0fb5b140d3971453ae9a11076e3bf9edea95f251) Allow `paren!` in `attempt` function
+
+### Fixes:
+
+* [`e5ea76`](https://github.com/Oldes/Rebol3/commit/e5ea76727a08cd96b59da5c9066f8b87acaad4d1) Minor code cleanup
+* [`157ae5`](https://github.com/Oldes/Rebol3/commit/157ae53b9be956547761835665bcad7f3d56b0d6) Use 'identity' encoding in HEAD request
+* [`f2418f`](https://github.com/Oldes/Rebol3/commit/f2418f86daafaadba2e75f92b5e0e98f346292fa) Moved `bugs` and `changes` functions into the `help` module
+
+## 2025 February
+
+### Features:
+
+* [`9a33e7`](https://github.com/Oldes/Rebol3/commit/9a33e773af30dbbe75171c65226f071380be2b4b) Implemented PUT/SKIP as a counterpart of SELECT/SKIP
+* [`a3417e`](https://github.com/Oldes/Rebol3/commit/a3417e93e3d2985d31f7261349b37178852a8649) Accept any-word as an object key
+
+### Fixes:
+
+* [`d07050`](https://github.com/Oldes/Rebol3/commit/d070502caf5affa691cafed65056de84afcba344) Throw error when secure policy is set to `throw` instead of quitting
+
+## 2025 January
+
+### Features:
+
+* [`96b13b`](https://github.com/Oldes/Rebol3/commit/96b13b877805682b3eb9fefc7c870de355f85d8a) Optimize memory usage by avoiding power-of-2 rounding when resizing large series
+* [`ab7ba2`](https://github.com/Oldes/Rebol3/commit/ab7ba22fa08d465cfbb12c31c2e40dc799e9046a) SubRip Subtitle codec (loading/saving `*.srt` files)
+
+### Changes:
+
+* [`0b7c67`](https://github.com/Oldes/Rebol3/commit/0b7c672ce63ca463e663fd893d684e5ff86fc4c6) Allow `unset` condition in a `case` block of cases
+
+### Fixes:
+
+* [`7db98c`](https://github.com/Oldes/Rebol3/commit/7db98cdedf70dd2b4a9b3a608d69eb59a581f957) Skip bracketed paste mode initialization on POSIX when using `--cgi` flag
+* [`1470fd`](https://github.com/Oldes/Rebol3/commit/1470fdf19978861b37677b9cecef5efa8a6250e9) Read and process all input data during TLS handshake
+* [`fd2079`](https://github.com/Oldes/Rebol3/commit/fd20794ed567eabde753ef00a526ce9dcea03af3) Incompatible pointer type
+
+## 2024 December
+
+### Features:
+
+* [`20ee9f`](https://github.com/Oldes/Rebol3/commit/20ee9f6a3bf93c8596871c3a6a5e25ac43e20108) Upgrade WebDriver module to version 0.2.1
+* [`a24fd4`](https://github.com/Oldes/Rebol3/commit/a24fd408ab5ca2e8d0c0b8d4573bc9817e7a1b83) Upgrade WebSocket module to version 0.2.1
+* [`8171ed`](https://github.com/Oldes/Rebol3/commit/8171ed755d374cef2996dc41d89d98b62a2a75fc) `fraction` native which returns the fractional part of a decimal value
+* [`e11a14`](https://github.com/Oldes/Rebol3/commit/e11a14b0f206e2ceda39b17ca2f9679112d37b9b) Include minimum and maximum results when requested object in a query on a vector value
+* [`9457bd`](https://github.com/Oldes/Rebol3/commit/9457bdd231bd62d9e37ff860950f5e5bb573bfc3) Add functionality to find maximum and minimum values in a vector using `query`
+* [`219945`](https://github.com/Oldes/Rebol3/commit/2199450bfe7e3bc5b703bf5c0dbc7ded21888dba) Add functionality to find maximum and minimum values in a vector
+
+### Changes:
+
+* [`381bd5`](https://github.com/Oldes/Rebol3/commit/381bd5cd6834b3eea31466d3ddadfc135ba6b479) Convert decimal values to dates using Unix time with decimal precision
+
+## 2024 November
+
+### Features:
+
+* [`f784d2`](https://github.com/Oldes/Rebol3/commit/f784d22640f2e5b8c23b11f7285d4304bb649c23) Include optional module for GitHub API integration
+
+### Changes:
+
+* [`af420c`](https://github.com/Oldes/Rebol3/commit/af420cdbca2927d91fa78dadaecc08755cb18c64) Updated HTTPd module to version 0.9.4
+* [`df369a`](https://github.com/Oldes/Rebol3/commit/df369a51b3d18098de71c9f541cfadff2ad34967) Enhance map values help text for clarity
+
+### Fixes:
+
+* [`9ceedc`](https://github.com/Oldes/Rebol3/commit/9ceedc0ec82ca737312760d5b2dac2865cbd2f70) Display return value description in function help output
+
+## 2024 October
+
+### Features:
+
+* [`70027f`](https://github.com/Oldes/Rebol3/commit/70027f077088c58c8cb78e86b59c559a7ca3ce0a) Force external mbedtls code to use Rebol managed memory allocator (so it's memory usage is counted in stats)
+* [`f82cdd`](https://github.com/Oldes/Rebol3/commit/f82cddb291ce0b200f25c600e56ad9a4942d49e8) Force external compression code to use Rebol managed memory allocator (so it's memory usage is counted in stats)
+* [`3994af`](https://github.com/Oldes/Rebol3/commit/3994af81c212be3c5c8c6e2663b1fe79797b5a4a) Improved file-related time values precision on POSIX platforms and resolved correct creation time on macOS
+* [`5aa41b`](https://github.com/Oldes/Rebol3/commit/5aa41b0f12465e4278f0b36ee4ab5890d5c5de32) Improved file-related time values precision on POSIX platforms and resolved correct creation time on Linux (when possible)
+
+### Changes:
+
+* [`38f47f`](https://github.com/Oldes/Rebol3/commit/38f47f58bf2736d87fa7bbc50f0a7eda26f52d02) Refined the port state handle initialization
+* [`917fe8`](https://github.com/Oldes/Rebol3/commit/917fe8cec495a8206a88057ceead0ca2309c6513) Release port states early when possible to avoid waiting for garbage collection
+* [`93ff79`](https://github.com/Oldes/Rebol3/commit/93ff79cc3193703128983d0031a23891658c2af6) Use memory pools for allocating handle context data when possible
+* [`213ae4`](https://github.com/Oldes/Rebol3/commit/213ae43edd8d33b82113afcb97ffd9249f6c6bcb) Use a handle for the directory port state, similar to a file port
+* [`e91639`](https://github.com/Oldes/Rebol3/commit/e91639c1031df7573b0df8a3ab64440f72b975b6) Updated Mbed-TLS sources to version 3.6.2
+* [`0dded2`](https://github.com/Oldes/Rebol3/commit/0dded2d4dbb5627e58f579f0d3d4a35ce743b7a8) Updated QOI image codec source code
+* [`021402`](https://github.com/Oldes/Rebol3/commit/021402aaf1627c9e37ee872bcd43c9ccb2e0e0a4) Not using `MAKE_MEM` when allocating `Midi_Ports_Pool`
+* [`3b949e`](https://github.com/Oldes/Rebol3/commit/3b949edee94b056b87950beef9c3acaa81b0611e) Don't automatically clear newly allocated memory
+* [`666bc5`](https://github.com/Oldes/Rebol3/commit/666bc5147c83a7aa500bb100327e98de9ed65d02) Using `calloc` instead of `malloc`+`memset` when allocating a zeroed memory
+
+### Fixes:
+
+* [`25a05f`](https://github.com/Oldes/Rebol3/commit/25a05f4c4f624b1b08e5a35c7e790575639e7659) Use of the `return:` keyword in a function specification
+* [`672662`](https://github.com/Oldes/Rebol3/commit/672662f4a01e62e48b04afbf571dacb47988430e) Improved help output formatting
+* [`a0a5d4`](https://github.com/Oldes/Rebol3/commit/a0a5d48796e16b790baac872459fdcfe485bc86f) Missing definition for the new callback flag
+* [`061cee`](https://github.com/Oldes/Rebol3/commit/061cee34e039f2bf7325ebac9d11c70711b02a1e) Memory leak when using an async callback within an extension
+* [`79764f`](https://github.com/Oldes/Rebol3/commit/79764f046b04d0a4b7d243e6a23b592a8fc3a6ec) Crash when accessing a `widget` value from a `gob!` where it is not defined
+* [`7aacb1`](https://github.com/Oldes/Rebol3/commit/7aacb1cf9cc33f6b90501915eafc21aeb22e1f76) Missing MAKE_CLEAR_MEM define
+* [`9b9281`](https://github.com/Oldes/Rebol3/commit/9b928150cc2aff8dddfb164f455790d30885b038) Call to undeclared function 'Make_Clear_Mem'
+* [`a7636f`](https://github.com/Oldes/Rebol3/commit/a7636fbcb4c8ba070ba639c3253670430a3a4de6) Map must be initialized with cleared memory
+* [`1e3b0c`](https://github.com/Oldes/Rebol3/commit/1e3b0c77b2e2a79ed3e70e06a2f54e816ffbddcf) Handle data allocation was not using the main allocator
+* [`cccb20`](https://github.com/Oldes/Rebol3/commit/cccb20b8d9839e87933001b4de202de5528c52f4) Error: a label can only be part of a statement
+
+## 2024 September
+
+### Features:
+
+* [`1c1374`](https://github.com/Oldes/Rebol3/commit/1c1374b166bd38625ca26072598735331db3c353) Implemented date creation using numbers for the time parts
+
+### Changes:
+
+* [`81bd5a`](https://github.com/Oldes/Rebol3/commit/81bd5a4fdbda49652f6714071370385eb5eda4fd) `pickz` and `pick` now return the same results when used with a bitset
+* [`77da8e`](https://github.com/Oldes/Rebol3/commit/77da8e63e0f6d0d15243aa9758194227c66905fc) Optimize memory pools
+* [`2d9961`](https://github.com/Oldes/Rebol3/commit/2d9961e9ea356e0ccc45ed3fb377a67b5971107e) Use handles instead of binaries to hold native port states
+* [`03c894`](https://github.com/Oldes/Rebol3/commit/03c894e683b02fd65fcc76d713f28c8ddb2be05e) Console width requests no longer throw errors, allowing for code simplification
+* [`5fc91a`](https://github.com/Oldes/Rebol3/commit/5fc91acaba2271ff038d3a5b957bed81114dae0a) Made `foreach` consistent with `keys-of` in the `map!` context
+
+### Fixes:
+
+* [`ad2b58`](https://github.com/Oldes/Rebol3/commit/ad2b5871cfa6bb75c4e061d9d70573cb31a6999b) Allow manual recycling even when auto-recycling is disabled
+* [`85b141`](https://github.com/Oldes/Rebol3/commit/85b141c4525244da98a48cf585d4d1e1035cb7f3) Incorrect block comparison behavior with nested sort in compare function
+* [`59873f`](https://github.com/Oldes/Rebol3/commit/59873f6085b225f577518886fdb6dca94d3e0740) Missing defines
+* [`e6e743`](https://github.com/Oldes/Rebol3/commit/e6e7434962bb6d70fb8bbb7813216aeeb2e089f1) Incorrect string comparison behavior with nested sort in compare function
+* [`d0ce37`](https://github.com/Oldes/Rebol3/commit/d0ce370af6501f7ded837d17749a46de4da8f397) Windows compilation failure when using Clang
+
+## 2024 August
+
+### Changes:
+
+* [`f5b43c`](https://github.com/Oldes/Rebol3/commit/f5b43c50465869e25538be6fa7aee8d6cf804427) Enable JIT on macOS (required by Blend2D drawing extension)
 
 ## 2024 July
 
 ### Features:
 
+* [`e805db`](https://github.com/Oldes/Rebol3/commit/e805db4789226225403b297381a055c7612b3be8) Possibility to get info if there are any data available in the `stdin`
 * [`89b07d`](https://github.com/Oldes/Rebol3/commit/89b07d98bc6f43226d8d34b39450e57f4c3301cc) Included an `upgrade` module (currently just a placeholder)
 * [`f4b1a2`](https://github.com/Oldes/Rebol3/commit/f4b1a2dd435507860e8461d7d08cb711d7494f22) Allow to use `word!` as a name of scheme in some port actions
 * [`d9189e`](https://github.com/Oldes/Rebol3/commit/d9189e9499ee71d2cca0ce302148b8e68f3ecf28) Included `delete-thru` in the `thru-cache` module and storing content locally only when response code is 200 (OK)
