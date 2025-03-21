@@ -19,33 +19,32 @@ import (module [
 	Exports: [log-error log-warn log-info log-debug log-trace]
 ][
 	;; used ANSI decorations...
-	!<error!: " ^[[35m["
-	!<warn!:  " ^[[1;33m["
-	!<info!:  " ^[[1;33m["
-	!<debug!: 
-	!<trace!: " ^[[33m["
-	!error>!: "] ^[[1m"
-	!warn>!:  "] ^[[31m"
-	!info>!:  "] ^[[36m"
-	!debug>!: "] ^[[0;36m"
-	!trace!>: "] ^[[0;32m"
+	!=error!: " ^[[35m["
+	!=warn!:  " ^[[1;33m["
+	!=info!:  " ^[[1;33m["
+	!=debug!: 
+	!=trace!: " ^[[33m["
+	!error=!: "] ^[[1m"
+	!warn=!:  "] ^[[31m"
+	!info=!:  "] ^[[36m"
+	!debug=!: "] ^[[0;36m"
+	!trace=!: "] ^[[0;32m"
 	!reset!:   "^[[0m"
 
-	timestamp: none ;or e.g.: does[ajoin ["^[[90m" pad/with to decimal! now/precise 14 #"0"]]
+	timestamp: none ;or e.g.: does[ajoin ["^[[90m" pad/with to decimal! now/precise 15 #"0"]]
 	verbosity: 1 ;; default verbosity level
 	log-levels: system/options/log
 	emit: :print
 
 	log-error: function[
 		"Outputs critical issues and error messages (always visible)"
-		""
 		'id [any-word!]	message
 	][
 		message: trim/head/tail form either block? message [reduce message][message]
 		foreach line split-lines message [
 			emit ajoin [
 				timestamp
-				!<error! id !error>!
+				!=error! id !error=!
 				either line/1 = #"*" []["** Error: "]
 				copy/part line 200 ;@@ I am not sure with this line length limit
 				!reset!
@@ -58,7 +57,7 @@ import (module [
 	][
 		if system/options/quiet [exit]
 		emit ajoin [
-			!<warn! id !warn>!
+			!=warn! id !warn=!
 			either block? message [reduce :message][message]
 			!reset!
 		]
@@ -72,7 +71,7 @@ import (module [
 			1 > any [select log-levels id verbosity]
 		] [ exit ]
 		emit ajoin [
-			!<info! id !info>!
+			!=info! id !info=!
 			either block? message [reduce :message][message]
 			!reset!
 		]
@@ -86,7 +85,7 @@ import (module [
 			2 > any [select log-levels id verbosity]
 		] [ exit ]
 		emit ajoin [
-			!debug! id !debug>!
+			!=debug! id !debug=!
 			either block? message [reduce :message][message]
 			!reset!
 		]
@@ -100,7 +99,7 @@ import (module [
 			3 > any [select log-levels id verbosity]
 		] [ exit ]
 		emit ajoin [
-			!<trace! id !trace>!
+			!=trace! id !trace=!
 			either block? message [reduce :message][message]
 			!reset!
 		]
