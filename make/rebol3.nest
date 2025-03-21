@@ -357,6 +357,7 @@ mezz-lib-files: [
 	%mezz/mezz-types.reb
 	%mezz/mezz-func.reb
 	%mezz/mezz-debug.reb
+	%mezz/mezz-logger.reb
 	%mezz/mezz-control.reb
 	%mezz/mezz-save.reb
 	%mezz/mezz-series.reb
