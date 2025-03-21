@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -819,6 +819,8 @@ error:
 	ECDH_CTX *ctx_ecdh = NULL;
 	mbedtls_ecdh_context_mbed *mbed;
 	mbedtls_mpi r, s;
+
+	if (!ref_sign && !ref_verify) ref_sign = TRUE; //using SIGN as a default action
 
 	if (IS_BINARY(val_key)) {
 		if (!ref_curve) Trap0(RE_MISSING_ARG);
