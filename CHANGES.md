@@ -165,6 +165,7 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Changes:
 
+* [`babb36`](https://github.com/Oldes/Rebol3/commit/babb36691694fd0ccf88df0f061daccb429dbdcf) Don't throw an error when querying console info if the console is not available
 * [`b9932b`](https://github.com/Oldes/Rebol3/commit/b9932bfecac2b3cf0e200da5bc29bc72fad47e3c) Logic, none and datatype values are now always molded using construction syntax
 * [`e37c0e`](https://github.com/Oldes/Rebol3/commit/e37c0e21ff2342ee144c0022750149453d31bb4f) Updated `http` protocol to be compatible with the new `query` changes
 * [`4e052b`](https://github.com/Oldes/Rebol3/commit/4e052bc999b429e7828efd0886ae44e073d336f8) When using block as a `query` field, get-words are required to get just the value
@@ -175,6 +176,9 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`1b2507`](https://github.com/Oldes/Rebol3/commit/1b250778de21d50c291e9284d67d5938d5f35c3a) Crash when decompressing large data using gzip
+* [`37544e`](https://github.com/Oldes/Rebol3/commit/37544ea93bfece7d425139b88f387fa7b2ac6a2b) Compilation failure when using XCode
+* [`27a96f`](https://github.com/Oldes/Rebol3/commit/27a96f0fcb5c6eff141fd8935b4fad5b5e0bf69b) Raw `stdin` input missing the last character when using pipes
 * [`b4b165`](https://github.com/Oldes/Rebol3/commit/b4b165161877948d033af38afa81a8e0411355c6) Do not use construction syntax when displaying typeset value in help output
 * [`1a431d`](https://github.com/Oldes/Rebol3/commit/1a431d693b2e91b58b266317aa4f569237bede13) Fixed wrong definition name (regression)
 * [`d6c899`](https://github.com/Oldes/Rebol3/commit/d6c8994359ee3d17909b2deeb69717856e4d40b7) Retain setting the `date` value when querying file/dir ports as an object (for backwards compatibility)
