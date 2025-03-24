@@ -5,7 +5,7 @@ REBOL [
 	Type: module
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2024 Rebol Open Source Contributors
+		Copyright 2012-2025 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -13,7 +13,7 @@ REBOL [
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
 	Version: 0.7.0
-	Needs: 3.17.2
+	Needs: 3.18.5 ;; because using the new log-* functions
 	Date: 18-Mar-2025
 	File: %prot-http.r3
 	Purpose: {
@@ -110,12 +110,12 @@ sync-op: func [port body /local header state][
 
 	body: copy port
 
-	sys/log/info 'HTTP ["Done reading:^[[22m" length? body "bytes"]
+	log-info 'HTTP ["Done reading:^[[22m" length? body "bytes"]
 
 	header: copy port/state/info/headers
 
 	if all [state/close? open? port][
-		sys/log/more 'HTTP ["Closing port for:^[[m" port/spec/ref]
+		log-debug 'HTTP ["Closing port for:^[[m" port/spec/ref]
 		close port
 	]
 
@@ -123,7 +123,7 @@ sync-op: func [port body /local header state][
 ]
 
 read-sync-awake: func [event [event!] /local error state][
-	sys/log/debug 'HTTP ["Read-sync-awake:" event/type]
+	log-trace 'HTTP ["Read-sync-awake:" event/type]
 	state: event/port/state
 	switch/default event/type [
 		connect ready [
@@ -148,7 +148,7 @@ read-sync-awake: func [event [event!] /local error state][
 				state
 				state/state <> 'closing
 			][
-				sys/log/debug 'HTTP ["Closing (sync-awake):^[[1m" event/port/spec/ref]
+				log-trace 'HTTP ["Closing (sync-awake):^[[1m" event/port/spec/ref]
 				close event/port
 			]
 			if error? event/port/state [do event/port/state]
@@ -168,7 +168,7 @@ http-awake: func [event /local port http-port state awake res][
 
 	;? awake
 
-	sys/log/debug 'HTTP ["Awake:^[[1m" event/type "^[[22mstate:^[[1m" state/state]
+	log-trace 'HTTP ["Awake:^[[1m" event/type "^[[22mstate:^[[1m" state/state]
 
 	res: switch/default event/type [
 		read [
@@ -231,7 +231,7 @@ http-awake: func [event /local port http-port state awake res][
 				; check if there is some error from inner (connection) layer
 				state/error: state/connection/state/error
 			]
-			sys/log/debug 'HTTP ["Closing:^[[1m" http-port/spec/ref]
+			log-trace 'HTTP ["Closing:^[[1m" http-port/spec/ref]
 			close http-port
 			if error? state [ do state ]
 			res
@@ -245,7 +245,7 @@ throw-http-error: func [
 	http-port  [port!]
 	error [error! string! block!]
 ][
-	sys/log/debug 'HTTP ["Throwing error:^[[m" error]
+	log-trace 'HTTP ["Throwing error:^[[m" error]
 	unless error? error [
 		error: make error! [
 			type: 'Access
@@ -315,7 +315,7 @@ make-http-request: func [
 			"Content-Length: " length? content CRLF
 		]
 	]
-	sys/log/info 'HTTP ["Request:^[[22m" anonymize mold request]
+	log-info 'HTTP ["Request:^[[22m" anonymize mold request]
 
 	append request CRLF
 	request: to binary! request
@@ -429,20 +429,20 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 			all [
 				d1: find conn/data crlfbin
 				d2: find/tail d1 crlf2bin
-				;sys/log/debug 'HTML "server using standard content separator of #{0D0A0D0A}"
+				;log-trace 'HTML "server using standard content separator of #{0D0A0D0A}"
 			]
 			all [
 				d1: find conn/data #{0A}
 				d2: find/tail d1 #{0A0A}
-				sys/log/debug 'HTML "Server using malformed line separator of #{0A0A}"
+				log-trace 'HTML "Server using malformed line separator of #{0A0A}"
 			]
 		]
 	][
 		info/response-line: line: to string! copy/part conn/data d1
-		sys/log/info 'HTTP line
+		log-info 'HTTP line
 		;probe to-string copy/part d1 d2
 		info/headers: headers: construct/with d1 http-response-headers
-		sys/log/info 'HTTP ["Headers:^[[22m" mold body-of headers]
+		log-info 'HTTP ["Headers:^[[22m" mold body-of headers]
 		info/name: spec/ref
 		if state/error: try [
 			; make sure that values bellow are valid
@@ -479,7 +479,7 @@ check-response: func [port /local conn res headers d1 d2 line info state awake s
 	]
 	code: info/status-code
 
-	sys/log/debug 'HTTP ["Check-response code:" code "means:" select http-status-codes code]
+	log-trace 'HTTP ["Check-response code:" code "means:" select http-status-codes code]
 
 	case [
 		code < 200 [ ;= Information responses
@@ -546,7 +546,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 
 	;new-uri: as url! new-uri
 
-	sys/log/info 'HTTP ["Redirect to:^[[m" mold new-uri]
+	log-info 'HTTP ["Redirect to:^[[m" mold new-uri]
 
 	state/redirects: state/redirects + 1
 	if state/redirects > 10 [
@@ -606,14 +606,14 @@ check-data: func [port /local headers res data available out chunk-size pos trai
 	conn: state/connection
 	res: false
 
-	sys/log/more 'HTTP ["Check-data; bytes:^[[m" length? conn/data]
+	log-debug 'HTTP ["Check-data; bytes:^[[m" length? conn/data]
 
 	case [
 		headers/transfer-encoding = "chunked" [
 			data: conn/data ;- data from lower layer (TLS or TCP)
 			available: length? data
 
-			sys/log/more 'HTTP ["Chunked data: " state/chunk-size "av:" available]
+			log-debug 'HTTP ["Chunked data: " state/chunk-size "av:" available]
 
 			unless port/data [ port/data: make binary! 32000 ]
 			out: port/data 
@@ -642,7 +642,7 @@ check-data: func [port /local headers res data available out chunk-size pos trai
 						chunk-size: to integer! to issue! to string! :chunk-size
 						remove/part data pos
 						available: length? data
-						sys/log/more 'HTTP ["Chunk-size:^[[m" chunk-size " ^[[36mavailable:^[[m " available]
+						log-debug 'HTTP ["Chunk-size:^[[m" chunk-size " ^[[36mavailable:^[[m " available]
 						either chunk-size = 0 [
 							if parse data [
 								crlfbin (trailer: "") to end | copy trailer to crlf2bin to end
@@ -715,12 +715,12 @@ decode-result: func[
 			try/with [
 				result/3: decompress result/3 encoding
 			][
-				sys/log/info 'HTTP ["Failed to decode data using:^[[22m" encoding]
+				log-info 'HTTP ["Failed to decode data using:^[[22m" encoding]
 				return result
 			]
-			sys/log/info 'HTTP ["Extracted using:^[[22m" encoding "^[[1mto:^[[22m" length? result/3 "bytes"]
+			log-info 'HTTP ["Extracted using:^[[22m" encoding "^[[1mto:^[[22m" length? result/3 "bytes"]
 		][
-			sys/log/info 'HTTP ["Unknown Content-Encoding:^[[m" encoding]
+			log-info 'HTTP ["Unknown Content-Encoding:^[[m" encoding]
 		]
 	]
 	if all [
@@ -738,7 +738,7 @@ decode-result: func[
 		]
 	][
 		code-page: any [code-page "utf-8"]
-		sys/log/info 'HTTP ["Trying to decode from code-page:^[[m" code-page]
+		log-info 'HTTP ["Trying to decode from code-page:^[[m" code-page]
 		; using also deline to normalize possible CRLF to LF
 		try [result/3: deline iconv result/3 code-page]
 	]
@@ -792,7 +792,7 @@ sys/make-scheme [
 			/all    {Read may include additional information}
 			/local result
 		][
-			sys/log/debug 'HTTP "READ"
+			log-trace 'HTTP "READ"
 			if lines [
 				if binary [cause-error 'Script 'bad-refine /binary ]
 				seek: part: none
@@ -846,7 +846,7 @@ sys/make-scheme [
 			/all    {Response may include additional information (source relative)}
 			/local result
 		][
-			sys/log/debug 'HTTP "WRITE"
+			log-trace 'HTTP "WRITE"
 			;?? port
 			case [
 				binary? value [
@@ -884,7 +884,7 @@ sys/make-scheme [
 			port [port!]
 			/local conn spec
 		][
-			sys/log/debug 'HTTP ["OPEN, state:" port/state]
+			log-trace 'HTTP ["OPEN, state:" port/state]
 			if port/state [return port]
 			if none? port/spec/host [throw-http-error port "Missing host address"]
 			port/state: object [
@@ -909,7 +909,7 @@ sys/make-scheme [
 			
 			conn/awake: :http-awake
 			conn/parent: port
-			sys/log/info 'HTTP ["Opening connection:^[[22m" conn/spec/ref]
+			log-info 'HTTP ["Opening connection:^[[22m" conn/spec/ref]
 			open conn
 
 			port
@@ -922,7 +922,7 @@ sys/make-scheme [
 		close: func [
 			port [port!]
 		][
-			sys/log/debug 'HTTP "CLOSE"
+			log-trace 'HTTP "CLOSE"
 			if object? port/state [
 				port/state/state: 'closing
 				close port/state/connection
@@ -1091,26 +1091,26 @@ with cookies-rules: context [
 					either Expires <= timestamp [
 						;; cookie is expired, so remove it
 						remove/part dcooks 5
-						sys/log/info 'COOKIES ["DEL" domain path c-name]
+						log-info 'COOKIES ["DEL" domain path c-name]
 					][
 						;; update the cookie
 						dcooks/1: Expires
 						dcooks/4: c-value
 						dcooks/5: attr
 						;; and skip to the next one
-						sys/log/info 'COOKIES ["UPD" Expires Path c-name "=>" c-value]
+						log-info 'COOKIES ["UPD" Expires Path c-name "=>" c-value]
 					]
 					set?: true
 					break
 				]
 				either dcooks/1 <= timestamp [
-					sys/log/info 'COOKIES ["DEL" domain dcooks/2 dcooks/3]
+					log-info 'COOKIES ["DEL" domain dcooks/2 dcooks/3]
 					remove/part dcooks 5
 				][	dcooks: skip dcooks 5 ]
 			]
 			
 			unless set? [
-				sys/log/info 'COOKIES ["SET" domain Path c-name "=>" c-value]
+				log-info 'COOKIES ["SET" domain Path c-name "=>" c-value]
 				repend dcooks [Expires Path c-name c-value attr]
 				new-line skip dcooks -5 true
 			]
@@ -1153,7 +1153,7 @@ with cookies-rules: context [
 						values/:Name: Value
 						data: skip data 5
 					][
-						sys/log/info 'COOKIES ["DEL" domain path name]
+						log-info 'COOKIES ["DEL" domain path name]
 						remove/part data 5
 					]
 				]

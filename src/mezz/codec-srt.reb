@@ -46,7 +46,7 @@ register-codec [
 				]
 			]
 		][
-			sys/log/error 'SRT invalid-data
+			log-error 'SRT invalid-data
 			return none
 		]
 		new-line/skip result true 3
@@ -73,7 +73,7 @@ register-codec [
 				)
 			]
 		][
-			sys/log/error 'SRT invalid-data
+			log-error 'SRT invalid-data
 			return none
 		]
 		result

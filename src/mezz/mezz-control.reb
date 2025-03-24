@@ -25,7 +25,7 @@ launch: function/with [
 			append command escape-arg mold/flat arg
 		]
 	]
-	sys/log/info 'REBOL ["Launch:" as-green reform next command]
+	log-info 'REBOL ["Launch:" as-green reform next command]
 	call/:wait command
 ][
 	;-- just a simple argument escaping function

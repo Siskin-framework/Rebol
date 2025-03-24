@@ -123,4 +123,6 @@ import (module [
 			true  [ log-warn  (id) :message ]
 		]
 	]
+
+	protect/words/lock 'log-levels
 ])

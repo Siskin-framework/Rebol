@@ -576,7 +576,7 @@ import (module [
 ;]
 ;
 browse: func[url [url!]] [
-	sys/log/info 'REBOL ["Opening web browser:" as-green url]
+	log-info 'REBOL ["Opening web browser:" as-green url]
 	lib/browse url
 ]
 ;

@@ -76,19 +76,19 @@ su: set-user: func[
 		exit
 	]
 
-	sys/log/info 'REBOL ["Initialize user:" as-green :name]
+	log-info 'REBOL ["Initialize user:" as-green :name]
 
 	file: any [
 		all [file to-real-file file] ;@@ could to-real-file accept none?
 		rejoin [system/options/home #"." :name %.safe]
 	]
-	sys/log/more 'REBOL ["Checking if exists: " as-green file]
+	log-debug 'REBOL ["Checking if exists: " as-green file]
 	unless exists? file [
 		unless n [
-			sys/log/error 'REBOL "User's persistent storage file not found!"
+			log-error 'REBOL "User's persistent storage file not found!"
 			exit
 		]
-		sys/log/info 'REBOL ["Creating a new persistent storage file:" as-green file]
+		log-info 'REBOL ["Creating a new persistent storage file:" as-green file]
 	]
 	password: any [
 		password

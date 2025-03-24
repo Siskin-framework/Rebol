@@ -26,7 +26,7 @@ sys/make-scheme [
 	title: "WHOIS Protocol"
 	spec: make system/standard/port-spec-net [port: 43 timeout: 15 ]
 	awake: func [event /local port parent] [
-		sys/log/debug 'WHOIS ["Awake:^[[22m" event/type]
+		log-trace 'WHOIS ["Awake:^[[22m" event/type]
 		port: event/port
 		parent: port/extra
 		switch event/type [
@@ -124,7 +124,7 @@ sys/make-scheme [
 					]
 					target
 			]
-			sys/log/info 'WHOIS ["Query:^[[22m" target "^[[1mfrom:^[[22m" port/spec/host]
+			log-info 'WHOIS ["Query:^[[22m" target "^[[1mfrom:^[[22m" port/spec/host]
 			port/data: join target CRLF
 			open port
 			conn: port/state/connection
@@ -152,7 +152,7 @@ sys/make-scheme [
 			result: port/state/connection/data
 			if result [
 				try [ result: to string! result ]
-				sys/log/info 'WHOIS ajoin ["Result:^/^[[22m" result]
+				log-info 'WHOIS ajoin ["Result:^/^[[22m" result]
 				if all [
 					parse result [
 						[

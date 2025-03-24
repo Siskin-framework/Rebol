@@ -20,7 +20,7 @@ register-codec [
 		data  [binary! file! url!]
 	][
 		unless binary? data [ data: read data ]
-		sys/log/info 'ICO ["^[[1;32mDecode ICO data^[[m (^[[1m" length? data "^[[mbytes )"]
+		log-info 'ICO ["^[[1;32mDecode ICO data^[[m (^[[1m" length? data "^[[mbytes )"]
 		bin: binary data
 		;- ICONDIR:
 		binary/read bin [ tmp: UI16LE type: UI16LE num: UI16LE ]
@@ -45,7 +45,7 @@ register-codec [
 			]
 			if width  = 0 [width:  256]
 			if height = 0 [height: 256]
-			sys/log/more 'ICO ["Image^[[1;33m" n "^[[0;36mbpp:^[[33m" bpp "^[[36mcolors:^[[33m" colors "^[[36msize:^[[33m" as-pair width height]
+			log-debug 'ICO ["Image^[[1;33m" n "^[[0;36mbpp:^[[33m" bpp "^[[36mcolors:^[[33m" colors "^[[36msize:^[[33m" as-pair width height]
 			append/only icons reduce [width bpp data]
 		]
 		icons

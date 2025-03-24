@@ -36,7 +36,7 @@ register-codec [
 	] [
 		unless binary? zip-data [ zip-data: read zip-data ]
 		if verbose [
-			sys/log/info 'ZIP ["^[[1;32mDecode ZIP data^[[m (^[[1m" length? zip-data "^[[mbytes )"]
+			log-info 'ZIP ["^[[1;32mDecode ZIP data^[[m (^[[1m" length? zip-data "^[[mbytes )"]
 		]
 		bin: binary zip-data
 
@@ -49,7 +49,7 @@ register-codec [
 		unless pos: find/last/tail bin/buffer #{504B0506} [	return copy [] ]
 
 		bin/buffer: pos
-		if verbose [ sys/log/debug 'ZIP "End of central directory record" ]
+		if verbose [ log-trace 'ZIP "End of central directory record" ]
 		data: binary/read bin [
 			     UI16LE      ; number of this disk
 			     UI16LE      ; number of the disk with the start of the central directory
@@ -61,14 +61,14 @@ register-codec [
 			com: BYTES :len  ; .ZIP file comment
 		]
 		if verbose [
-			sys/log/debug 'ZIP mold data
+			log-trace 'ZIP mold data
 			unless empty? com [
-				sys/log/info 'ZIP ["Comment: ^[[33m" to-string com]
+				log-info 'ZIP ["Comment: ^[[33m" to-string com]
 			]
 		]
 		
 		unless all [zero? data/1 zero? data/2][
-			sys/log/error 'ZIP "Splitted zip files not supported!"
+			log-error 'ZIP "Splitted zip files not supported!"
 			return none
 		] 
 
@@ -102,12 +102,12 @@ register-codec [
 			]
 			cheader/16: name: to file! name
 			if verbose [
-				sys/log/debug 'ZIP "Central directory structure"
-				sys/log/debug 'ZIP mold cheader
+				log-trace 'ZIP "Central directory structure"
+				log-trace 'ZIP mold cheader
 				de-extra-fields extr
 			]
 			if all [only not find files name][
-				if verbose [ sys/log/more 'ZIP ["Not extracting: ^[[33m" name] ]
+				if verbose [ log-debug 'ZIP ["Not extracting: ^[[33m" name] ]
 				continue
 			]
 
@@ -116,11 +116,11 @@ register-codec [
 				repend result [name reduce [modified offset cmp-size unc-size method crc extr comm]]
 			][
 				if verbose [
-					sys/log/info 'ZIP [
+					log-info 'ZIP [
 						"Extracting: ^[[33m" name
 						" ^[[0mbytes:^[[33m" cmp-size "^[[0m->^[[33m" unc-size
 					]
-					unless empty? comm [sys/log/info 'ZIP ["Comment: ^[[33m" to-string comm "^[[0m" mold name]]
+					unless empty? comm [log-info 'ZIP ["Comment: ^[[33m" to-string comm "^[[0m" mold name]]
 				]
 
 				either zero? unc-size [
@@ -133,7 +133,7 @@ register-codec [
 						any [validate validate-crc?]
 						crc <> crc2: checksum data 'crc32
 					][
-						sys/log/error 'ZIP ["CRC check failed!" crc "<>" crc2]
+						log-error 'ZIP ["CRC check failed!" crc "<>" crc2]
 					]
 				]
 				data: reduce [modified data crc]
@@ -147,7 +147,7 @@ register-codec [
 			if only [
 				-- files-to-extract
 				if files-to-extract = 0 [
-					if verbose [ sys/log/more 'ZIP "All files extracted" ]
+					if verbose [ log-debug 'ZIP "All files extracted" ]
 					break
 				]
 			]
@@ -184,12 +184,12 @@ register-codec [
 					]
 				]
 			][
-				sys/log/error 'ZIP ["Failed to add file:" as-green file]
+				log-error 'ZIP ["Failed to add file:" as-green file]
 			]
 		]
 
 		add-data: func[file spec /local no-compress? extra extra-length comm comm-length][
-			if verbose [sys/log/info 'ZIP ["Adding:" as-green file]]
+			if verbose [log-info 'ZIP ["Adding:" as-green file]]
 
 			any [file? file cause-error 'user 'message reduce [reform ["found" type? file "where file! expected"]]]
 			data: date: none
@@ -219,7 +219,7 @@ register-codec [
 				spec = 'none
 				;else..
 				all [
-					sys/log/error 'ZIP ["Invalid zip file's data specification:" as-red mold/part spec 30]
+					log-error 'ZIP ["Invalid zip file's data specification:" as-red mold/part spec 30]
 					continue
 				]
 			]
@@ -338,11 +338,11 @@ register-codec [
 	][
 		bin: binary buffer
 		unless 67324752 = binary/read bin 'UI32LE [ ;#{504B0304}
-			sys/log/error 'ZIP {Offset is not pointing to the "Local file header"}
+			log-error 'ZIP {Offset is not pointing to the "Local file header"}
 			return none
 		]
 
-		if verbose [sys/log/debug 'ZIP "Local file header"]
+		if verbose [log-trace 'ZIP "Local file header"]
 		local: binary/read bin [
 			          UI16LE         ; version
 			          BITSET16       ; flags
@@ -365,7 +365,7 @@ register-codec [
 		cmp-size: header/2
 		unc-size: header/3
 
-		if verbose [sys/log/debug 'ZIP mold local]
+		if verbose [log-trace 'ZIP mold local]
 
 		data: at head buffer :data-pos
 
@@ -380,7 +380,7 @@ register-codec [
 				output: copy/part data cmp-size
 			]
 		][
-			sys/log/error 'ZIP ["Unsupported compression method:^[[0;35m" method]
+			log-error 'ZIP ["Unsupported compression method:^[[0;35m" method]
 		]
 
 		return output
@@ -390,14 +390,14 @@ register-codec [
 		"Decodes extra field data of the ZIP record"
 		extra [binary!] "Extra field data"
 	][
-		sys/log/debug 'ZIP ["Decode extra fields:" mold extra]
+		log-trace 'ZIP ["Decode extra fields:" mold extra]
 		bin: binary extra
 		fields: copy []
 		while [not tail? bin/buffer][
 			binary/read bin [id: UI16LE len: UI16LE data: BYTES :len]
 			repend fields [id data]
 		]
-		sys/log/more 'ZIP ["Extra fields:" mold fields]
+		log-debug 'ZIP ["Extra fields:" mold fields]
 		fields
 		
 		;- Extra field info:

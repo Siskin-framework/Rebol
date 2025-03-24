@@ -213,7 +213,7 @@ sys/make-scheme [
 						sync
 						true
 					][
-						sys/log/error 'REBOL "Password validation failed!"
+						log-error 'REBOL "Password validation failed!"
 						false
 					]
 				]

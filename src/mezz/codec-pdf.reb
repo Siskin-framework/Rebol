@@ -176,7 +176,7 @@ rl_dict: [
 			"endstream"
 			|
 			copy bytes to "^/endstream" 10 skip (
-				sys/log/more 'PDF ["Length of the object" obj-id "stream is incorrect!" len "<>" length? bytes]
+				log-warn 'PDF ["Length of the object" obj-id "stream is incorrect!" len "<>" length? bytes]
 			)
 		]
 		rl_newline
@@ -220,7 +220,7 @@ rl_xref: [
 	some [
 		rl_ref-id
 		rl_newline
-		(sys/log/debug 'PDF ["XREF" ref-id])
+		(log-trace 'PDF ["XREF" ref-id])
 		n2 [
 			copy o 10 ch_number #" "
 			copy g  5 ch_number #" "
@@ -292,7 +292,7 @@ rl_pdf_body: [
 	any rl_xref
 	any ch_spnl
 	opt rl_startxref (
-		sys/log/debug 'PDF ["startxref offset:" value]
+		log-trace 'PDF ["startxref offset:" value]
 	)
 	any ch_spnl
 ]
@@ -335,8 +335,8 @@ import-objstm: function[obj [object!]][
 			]
 		]
 	][
-		sys/log/error 'PDF "Failed to unpack ObjStm"
-		sys/log/error 'PDF system/state/last-error
+		log-error 'PDF "Failed to unpack ObjStm"
+		log-error 'PDF system/state/last-error
 	]
 ]
 
@@ -566,7 +566,7 @@ register-codec [
 				any ch_spnl
 				rl_obj 
 				(
-					;sys/log/debug 'PDF  ["=> obj " obj-id "==> " mold value]
+					;log-trace 'PDF  ["=> obj " obj-id "==> " mold value]
 					pdf/trailer: value
 					;?? value
 					decode-xref value
@@ -593,7 +593,7 @@ register-codec [
 			enc: pdf/trailer/Encrypt
 			enc: pdf/objects/:enc
 		][
-			sys/log/info 'PDF ["Encrypted using: ^[[m" enc/Filter "v:" enc/V "r:" enc/R]
+			log-info 'PDF ["Encrypted using: ^[[m" enc/Filter "v:" enc/V "r:" enc/R]
 			;@@ TODO...
 			;? enc
 			;if all [enc/Filter = 'Standard enc/V = 1][
@@ -617,12 +617,12 @@ register-codec [
 			system/options/log/pdf > 0
 			map? info: try [pdf/objects/(pdf/trailer/info)]
 		][
-			if info/Author       [sys/log/info 'PDF ["Author:  ^[[m" info/Author]]
-			if info/Title        [sys/log/info 'PDF ["Title:   ^[[m" info/Title]]
-			if info/CreationDate [sys/log/info 'PDF ["Created: ^[[m" info/CreationDate]]
-			if info/ModDate      [sys/log/info 'PDF ["Modified:^[[m" info/ModDate]]
-			if info/Producer     [sys/log/info 'PDF ["Producer:^[[m" info/Producer]]
-			if info/Creator      [sys/log/info 'PDF ["Creator: ^[[m" info/Creator]]
+			if info/Author       [log-info 'PDF ["Author:  ^[[m" info/Author]]
+			if info/Title        [log-info 'PDF ["Title:   ^[[m" info/Title]]
+			if info/CreationDate [log-info 'PDF ["Created: ^[[m" info/CreationDate]]
+			if info/ModDate      [log-info 'PDF ["Modified:^[[m" info/ModDate]]
+			if info/Producer     [log-info 'PDF ["Producer:^[[m" info/Producer]]
+			if info/Creator      [log-info 'PDF ["Creator: ^[[m" info/Creator]]
 		]
 		also pdf pdf: none ; return result and release the internal value
 	]
@@ -638,7 +638,7 @@ register-codec [
 		;- validate minimal requirements...
 		objects: select pdf 'objects
 		unless any [map? objects block? objects][
-			sys/log/error 'PDF "Missing valid objects list!"
+			log-error 'PDF "Missing valid objects list!"
 			return none
 		]
 		trailer: select pdf 'trailer
@@ -646,7 +646,7 @@ register-codec [
 			put pdf 'trailer trailer: #[Info: #(none) Root: #(none)]
 		]
 		unless root: trailer/Root [
-			sys/log/debug 'PDF "Trying to locate `Catalog` in PDF objects."
+			log-trace 'PDF "Trying to locate `Catalog` in PDF objects."
 			foreach [ref obj] pdf/objects [
 				if all [map? obj obj/Type = 'Catalog][
 					trailer/Root: ref
@@ -655,7 +655,7 @@ register-codec [
 			]
 		]
 		unless root: trailer/Root [
-			sys/log/error 'PDF "Missing required `Catalog` object!"
+			log-error 'PDF "Missing required `Catalog` object!"
 			return none
 		]
 		if info: pick pdf/objects trailer/Info [
@@ -670,7 +670,7 @@ register-codec [
 		unless version: select pdf 'version [ version: @1.3	]
 		if decimal?  version [version: form version]
 		unless parse version [some ch_number #"." some ch_number end][
-			sys/log/error 'PDF ["Invalid PDF version:" mold version]
+			log-error 'PDF ["Invalid PDF version:" mold version]
 			return none
 		]
 
