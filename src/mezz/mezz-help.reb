@@ -205,7 +205,7 @@ import (module [
 			word? :word
 			any-function? get :word
 		][
-			browse join https://rebol.tech/doc/functions.html# word
+			browse join https://rebol.tech/docs/functions.html# word
 		]
 		cols: query system/ports/output 'window-cols
 		max-desc-width: cols - 35
