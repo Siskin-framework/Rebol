@@ -1281,6 +1281,13 @@ eggs: [
 			:include-rebol-bulk
 			:make-x64-exe
 		]
+		"Rebol/Bulk windows-arm64" [
+			name:     %rebol3-bulk-windows-arm64
+			:target-windows
+			:include-rebol-bulk
+			:make-arm64-exe
+			upx:      off
+		]
 
 		"Rebol/Core windows-x86 shared library" [
 			name:     %lib-rebol3-core-windows-x86
