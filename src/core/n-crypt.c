@@ -150,6 +150,14 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 		#ifdef MBEDTLS_CHACHAPOLY_C
 			add_ec_word(SYM_CHACHA20_POLY1305)
 		#endif
+		#ifdef MBEDTLS_DES_C
+			add_ec_word(SYM_DES_ECB)
+			add_ec_word(SYM_DES3_ECB)
+			#ifdef MBEDTLS_CIPHER_MODE_CBC
+			add_ec_word(SYM_DES_CBC)
+			add_ec_word(SYM_DES3_CBC)
+			#endif
+		#endif
 	}
 
 	blk = Get_System(SYS_CATALOG, CAT_ELLIPTIC_CURVES);

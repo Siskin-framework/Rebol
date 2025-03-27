@@ -668,6 +668,10 @@ include-curves-x: [
 	config: MBEDTLS_ECP_DP_CURVE25519_ENABLED  ; costs 7.6kB
 	config: MBEDTLS_ECP_DP_CURVE448_ENABLED    ; costs 7.6kB; together with CURVE25519 8.1!
 ]
+include-des: [
+	config: MBEDTLS_DES_C        ; The DES block cipher.
+	core-files: %core/mbedtls/des.c
+]
 
 include-cryptography: [
 	; so far cca 183kB uncompressed (basic AES, all ellyptic curves, rsa, rc4, bignum, entropy )
@@ -726,6 +730,8 @@ include-cryptography: [
 ]
 
 include-cryptography-bulk: [
+	:include-des
+
 	:include-curves-koblitz
 	:include-curves-brainpool
 	:include-curves-x

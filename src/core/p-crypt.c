@@ -74,6 +74,14 @@ extern int mbedtls_ccm_compare_tags(const unsigned char *tag1, const unsigned ch
 	if (sym >= SYM_CHACHA20 && sym <= SYM_CHACHA20_POLY1305) {
 		return MBEDTLS_CIPHER_ID_CHACHA20;
 	}
+#ifdef MBEDTLS_DES_C
+	if (sym == SYM_DES_ECB || sym == SYM_DES_CBC) {
+		return MBEDTLS_CIPHER_ID_DES;
+	}
+	if (sym == SYM_DES3_ECB || sym == SYM_DES3_CBC) {
+		return MBEDTLS_CIPHER_ID_3DES;
+	}
+#endif
 	return MBEDTLS_CIPHER_ID_NULL;
 }
 
@@ -418,6 +426,25 @@ static void free_crypt_cipher_context(CRYPT_CTX *ctx);
 		ctx->cipher_block_size = 0;
 		break;
 #endif
+
+#ifdef MBEDTLS_DES_C
+	case SYM_DES_ECB:
+	case SYM_DES_CBC:
+		if (ctx->cipher_ctx == NULL)
+			ctx->cipher_ctx = malloc(sizeof(mbedtls_des_context));
+		mbedtls_des_init((mbedtls_des_context *)ctx->cipher_ctx);
+		ctx->cipher_block_size = 8;
+		break;
+	case SYM_DES3_ECB:
+	case SYM_DES3_CBC:
+		if (ctx->cipher_ctx == NULL)
+			ctx->cipher_ctx = malloc(sizeof(mbedtls_des3_context));
+		mbedtls_des3_init((mbedtls_des3_context *)ctx->cipher_ctx);
+		ctx->cipher_block_size = 8;
+		break;
+#endif
+	default:
+		return FALSE;
 	}
 	ctx->cipher_type = type;
 	return TRUE;
@@ -728,7 +755,45 @@ failed:
 		input += len;
 		break;
 #endif
+#ifdef MBEDTLS_DES_C
+	case SYM_DES_ECB:
+		for (ofs = 0; ofs <= len - blk; ofs += blk) {
+			err = mbedtls_des_crypt_ecb((mbedtls_des_context *)ctx->cipher_ctx, input, BIN_TAIL(bin));
+			if (err) return err;
+			SERIES_TAIL(bin) += blk;
+			ctx->state = CRYPT_PORT_HAS_DATA;
+			input += blk;
+		}
+		break;
+	case SYM_DES3_ECB:
+		for (ofs = 0; ofs <= len - blk; ofs += blk) {
+			err = mbedtls_des3_crypt_ecb((mbedtls_des3_context *)ctx->cipher_ctx, input, BIN_TAIL(bin));
+			if (err) return err;
+			SERIES_TAIL(bin) += blk;
+			ctx->state = CRYPT_PORT_HAS_DATA;
+			input += blk;
+		}
+		break;
+#ifdef MBEDTLS_CIPHER_MODE_CBC
+	case SYM_DES_CBC:
+		blk = len - (len % blk);
+		err = mbedtls_des_crypt_cbc((mbedtls_des_context *)ctx->cipher_ctx, ctx->operation, blk, ctx->IV, input, BIN_TAIL(bin));
+		if (err) return err;
+		SERIES_TAIL(bin) += blk;
+		ctx->state = CRYPT_PORT_HAS_DATA;
+		input += blk;
+		break;
+	case SYM_DES3_CBC:
+		blk = len - (len % blk);
+		err = mbedtls_des3_crypt_cbc((mbedtls_des3_context *)ctx->cipher_ctx, ctx->operation, blk, ctx->IV, input, BIN_TAIL(bin));
+		if (err) return err;
+		SERIES_TAIL(bin) += blk;
+		ctx->state = CRYPT_PORT_HAS_DATA;
+		input += blk;
+		break;
+#endif
 	}
+#endif
 
 	*olen = input - start;
 	return CRYPT_OK;
@@ -865,6 +930,27 @@ failed:
 		ret = mbedtls_chacha20_starts((mbedtls_chacha20_context *)ctx->cipher_ctx, ctx->IV, counter);
 		break;
 	#endif
+
+#ifdef MBEDTLS_DES_C
+	case SYM_DES_ECB:
+	case SYM_DES_CBC:
+		if (ctx->operation == MBEDTLS_ENCRYPT) {
+			ret = mbedtls_des_setkey_enc((mbedtls_des_context *)ctx->cipher_ctx, ctx->key);
+		}
+		else {
+			ret = mbedtls_des_setkey_dec((mbedtls_des_context *)ctx->cipher_ctx, ctx->key);
+		}
+		break;
+	case SYM_DES3_ECB:
+	case SYM_DES3_CBC:
+		if (ctx->operation == MBEDTLS_ENCRYPT) {
+			ret = mbedtls_des3_set3key_enc((mbedtls_des3_context *)ctx->cipher_ctx, ctx->key);
+		}
+		else {
+			ret = mbedtls_des3_set3key_dec((mbedtls_des3_context *)ctx->cipher_ctx, ctx->key);
+		}
+		break;
+#endif
 
 
 	#ifdef MBEDTLS_CHACHAPOLY_C
