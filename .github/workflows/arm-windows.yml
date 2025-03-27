@@ -17,6 +17,9 @@ jobs:
     - name: Install Siskin Builder
       uses: oldes/install-siskin@v0.18.5
 
+    - name: Install Windows SDK
+      run: winget install --source winget --exact --id Microsoft.WindowsSDK.10.0.26100
+
     - name: Build 64bit Rebol/Bulk using MSVC
       run: ./siskin make/rebol3.nest -o . --msvc rebol3-bulk-windows-arm64
 
