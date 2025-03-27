@@ -683,6 +683,7 @@ include-cryptography: [
 
 	config: MBEDTLS_CTR_DRBG_C   ; The CTR_DRBG AES-based random generator.
 	config: MBEDTLS_AES_C        ; The AES block cipher.
+	config: MBEDTLS_AESNI_C      ; Enable AES acceleration on some Intel processors
 	config: MBEDTLS_DHM_C        ; The Diffie-Hellman-Merkle module.
 	config: MBEDTLS_ECDSA_C      ; The elliptic curve DSA library.
 	config: MBEDTLS_ECP_C        ; The elliptic curve over GF(p) library.
@@ -697,6 +698,7 @@ include-cryptography: [
 		%core/p-crypt.c
 
 		%core/mbedtls/aes.c
+		%core/mbedtls/aesni.c
 		%core/mbedtls/asn1parse.c
 		%core/mbedtls/asn1write.c
 		%core/mbedtls/dhm.c
