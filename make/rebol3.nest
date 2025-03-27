@@ -709,7 +709,6 @@ include-cryptography: [
 		%core/mbedtls/ecdsa.c
 		%core/mbedtls/ecp.c
 		%core/mbedtls/ecp_curves.c
-		%core/mbedtls/hash_info.c
 	]
 
 	:include-curves-sec1
