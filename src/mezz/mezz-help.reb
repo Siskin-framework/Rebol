@@ -205,7 +205,7 @@ import (module [
 			word? :word
 			any-function? get :word
 		][
-			browse join https://rebol.tech/doc/functions.html# word
+			browse join https://rebol.tech/docs/functions.html# word
 		]
 		cols: query system/ports/output 'window-cols
 		max-desc-width: cols - 35
@@ -576,7 +576,7 @@ import (module [
 ;]
 ;
 browse: func[url [url!]] [
-	sys/log/info 'REBOL ["Opening web browser:" as-green url]
+	log-info 'REBOL ["Opening web browser:" as-green url]
 	lib/browse url
 ]
 ;

@@ -2,7 +2,7 @@ REBOL [
 	title: "Codec: DER/BER structures"
 	name: 'codec-der
 	author: "Oldes"
-	version: 0.3.0
+	version: 0.3.1
 	date:    18-Mar-2025
 	history: [
 		0.1.0 17-Oct-2018 "Oldes" {Initial version with DECODE and IDENTIFY functions.}
@@ -236,32 +236,48 @@ register-codec [
 		/local main name warn
 	][
 		parse oid [
-			#{2B0E0302} (main: "Oddball OIW OID") [
-				;http://oid-info.com/get/1.3.14.3.2
-				  #"^(01)" (name: 'rsa)
-				| #"^(02)" (name: 'md4WitRSA)
-				| #"^(03)" (name: 'md5WithRSA)
-				| #"^(04)" (name: 'md4WithRSAEncryption)
-				| #"^(06)" (name: 'desECB)
-				| #"^(07)" (name: 'desCBC)
-				| #"^(0B)" (name: 'rsaSignature)
-				| #"^(1A)" (name: 'sha1)
-				| #"^(1D)" (name: 'sha1WithRSAEncryption)
+			#{2B0E0302} (main: "Oddball OIW OID")
+			;; 1.3.14.3.2
+			;= OIW Security Special Interest Group defined algorithms
+			set n: skip (
+				name: select #[
+					0#01 rsa
+					0#02 md4WithRSA
+					0#03 md5WithRSA
+					0#04 md4WithRSAEncryption
+					0#06 desECB
+					0#07 desCBC
+					0#0B rsaSignature
+					0#0C dsaSignature
+					0#0D dsaWithSHA
+					0#1A sha1
+					0#1D sha1WithRSAEncryption
+				] n
+			) end
+			|
+			#{2B060105050701} (main: "PKIX private extension")
+			;; 1.3.6.1.5.5.7.1
+			;= Public-Key Infrastructure using X.509 (PKIX) certificate extensions
+			[
+				#"^(01)" (name: 'authorityInfoAccess) ;; Provides information about the issuer of the certificate
 			]
 			|
-			#{2B060105050701} (main: "PKIX private extension") [
-				#"^(01)" (name: 'authorityInfoAccess)
-			]
+			#{2B060105050730} (main: "PKIX")
+			;; 1.3.6.1.5.5.7.48
+			;= access descriptor definitions
+			set n: skip (
+				name: select #[
+					0#01 ocsp             ;; Online Certificate Status Protocol
+					0#02 caIssuers        ;; Certificate authority issuers
+					0#03 timeStamping     ;; Used for time-stamping services to ensure data integrity over time
+					0#05 caRepository     ;; Represents a repository for CA-related data
+				] n
+			) end
 			|
-			#{2B060105050730} (main: "PKIX") [
-				;- access descriptor definitions
-				  #"^(01)" (name: 'ocsp)         ; Online Certificate Status Protocol
-				| #"^(02)" (name: 'caIssuers)    ; Certificate authority issuers 
-				| #"^(03)" (name: 'timeStamping)
-				| #"^(05)" (name: 'caRepository)
-			]
-			|
-			#{2A8648CE3D} (main: "X9.62") [
+			#{2A8648CE3D} (main: "X9.62")
+			;; 1.2.840.10045
+			;; The Elliptic Curve Digital Signature Algorithm (ECDSA)
+			 [
 				  #{0201}   (name: 'ecPublicKey)
 				| #{0301} [
 					  #"^(07)"  (name: 'secp256r1)
@@ -277,140 +293,198 @@ register-codec [
 				]
 			]
 			|
-			#{2A864886F70D01} [
-				#"^(01)" (main: "PKCS #1") [
-					  #"^(01)" (name: 'rsaEncryption)
-					| #"^(02)" (name: 'md2WithRSAEncryption)
-					| #"^(03)" (name: 'md4withRSAEncryption)
-					| #"^(04)" (name: 'md5withRSAEncryption)
-					| #"^(05)" (name: 'sha1WithRSAEncrption)
-					| #"^(0B)" (name: 'sha256WithRSAEncryption)
-					| #"^(0C)" (name: 'sha384WithRSAEncryption)
-					| #"^(0D)" (name: 'sha512WithRSAEncryption)
-
-				] end
+			#{2A864886F70D01} ;= 1.2.840.113549.1 belongs to the RSA Data Security, Inc.
+			                  ;; PKCS (Public-Key Cryptography Standards) family
+			[
+				#"^(01)" (main: "PKCS #1")
+				;; 1.2.840.113549.1.1
+				;= RSA Cryptography Standard
+				set n: skip (
+					name: select #[
+						0#01 rsaEncryption
+						0#02 md2WithRSAEncryption
+						0#03 md4withRSAEncryption
+						0#04 md5withRSAEncryption
+						0#05 sha1WithRSAEncrption
+						0#0B sha256WithRSAEncryption
+						0#0C sha384WithRSAEncryption
+						0#0D sha512WithRSAEncryption
+						0#0E sha224WithRSAEncryption
+					] n
+				) end
 				|
-				#"^(07)" (main: "PKCS #7") [
-					  #"^(01)" (name: 'data)
-					| #"^(02)" (name: 'signedData)
-					| #"^(06)" (name: 'encryptedData)
-				] end
+				#"^(07)" (main: "PKCS #7")
+				;; 1.2.840.113549.1.7
+				;= Cryptographic Message Syntax, CMS
+				set n: skip (
+					name: select #[
+						0#01 data
+						0#02 signedData
+						0#03 envelopedData
+						0#04 signedAndEnvelopedData
+						0#05 digestedData
+						0#06 encryptedData
+					] n
+				) end
 				|
-				#"^(09)" (main: "PKCS #9") [
-				;http://oid-info.com/get/1.2.840.113549.1.9
-					  #"^(01)" (name: 'emailAddress warn: "Deprecated, use an altName extension instead")
-					| #"^(03)" (name: 'contentType)
-					| #"^(04)" (name: 'messageDigest)
-					| #"^(05)" (name: 'signingTime)
-					| #"^(0F)" (name: 'smimeCapabilities) 
-					| #"^(14)" (name: 'friendlyName)
-					| #"^(15)" (name: 'localKeyID)
-					| #"^(34)" (name: 'CMSAlgorithmProtect)
-				] end
+				#"^(09)" (main: "PKCS #9")
+				;; 1.2.840.113549.1.9
+				;= Attributes like email, signing time, etc.
+				set n: skip (
+					name: select #[
+						0#01 emailAddress         ;; Email address of the entity
+						0#02 unstructuredName     ;; Human-readable name
+						0#03 contentType          ;; Type of signed data
+						0#04 messageDigest        ;; Message hash used in signing
+						0#05 signingTime          ;; Timestamp when signing occurred
+						0#06 counterSignature     ;; Countersignature on a signed message
+						0#07 challengePassword    ;; Password for certificate request authentication
+						0#08 unstructuredAddress  ;; Unformatted address
+						0#0E extensionRequest     ;; Used in PKCS #10 for requesting X.509 extensions
+					] n
+				) end
 				|
-				#"^(0C)" (main: "PKCS #12") [
-					  #{0106}   (name: 'pbeWithSHAAnd40BitRC2-CBC)
+				#"^(0C)" (main: "PKCS #12")
+				;; 1.2.840.113549.1.12
+				;= Personal Information Exchange Syntax
+				[	  #{0106}   (name: 'pbeWithSHAAnd40BitRC2-CBC)
 					| #{0103}   (name: 'pbeWithSHAAnd3-KeyTripleDES-CBC)
 					| #{0A0102} (name: 'pkcs-12-pkcs-8ShroudedKeyBag)
 				] end
 			] end
 			|
-			#{2A864886F70D03} (main: "Encryption algorithm") [
+			#{2A864886F70D03} (main: "Encryption algorithm")
 			;http://oid-info.com/get/1.2.840.113549.3
-				  #"^(02)" (name: "rc2CBC")
-				| #"^(03)" (name: "rc2ECB")
-				| #"^(04)" (name: "rc4")
-				| #"^(07)" (name: "des-ede3-cbc")
-			] end
+			;= Symmetric encryption algorithms
+			set n: skip (
+				name: select #[
+					0#02 rc2CBC
+					0#03 rc2ECB
+					0#04 rc4
+					0#05 rc4WithMAC
+					0#06 DESx
+					0#07 tripleDES-CBC
+					0#08 rc5CBC
+					0#09 rc5ECB
+				] n
+			) end
 			|
-			#{2B810400} (main: "SECG curve") [
+			#{2B810400} (main: "SECG curve")
 			;; ANSI X9.62 standard, which defines elliptic curves for cryptographic use
 			;; https://oid-base.com/get/1.3.132.0
-				set n: skip (
-					name: select #[
-						0#01 secp192r1 ;(NIST P-192)
-						0#02 sect163k1
-						0#03 sect163r1
-						0#04 sect239k1
-						0#05 sect283k1
-						0#06 sect283r1
-						0#07 secp160k1
-						0#08 secp160r1
-						0#09 secp160r2
-						0#0A secp192k1
-						0#0F secp256k1
-						0#10 sect233k1
-						0#11 sect233r1
-						0#21 secp224r1 ;(NIST P-224)
-						0#22 secp384r1 ;(NIST P-384)
-						0#23 secp521r1 ;(NIST P-521)
-					] n
-				)
-			]
+			set n: skip (
+				name: select #[
+					0#01 secp192r1 ;(NIST P-192)
+					0#02 sect163k1
+					0#03 sect163r1
+					0#04 sect239k1
+					0#05 sect283k1
+					0#06 sect283r1
+					0#07 secp160k1
+					0#08 secp160r1
+					0#09 secp160r2
+					0#0A secp192k1
+					0#0F secp256k1
+					0#10 sect233k1
+					0#11 sect233r1
+					0#21 secp224r1 ;(NIST P-224)
+					0#22 secp384r1 ;(NIST P-384)
+					0#23 secp521r1 ;(NIST P-521)
+				] n
+			) end
 			|
-			#{5504} (main: "X.520 DN component") [
-				  #"^(03)" (name: 'commonName)
-				| #"^(06)" (name: 'countryName)
-				| #"^(07)" (name: 'localityName)
-				| #"^(08)" (name: 'stateOrProvinceName)
-				| #"^(0A)" (name: 'organizationName)
-				| #"^(0B)" (name: 'organizationalUnitName)
-				| #"^(0D)" (name: 'description)
-				| #"^(0F)" (name: 'businessCategory)
-			] end
+			#{5504} (main: "X.520 DN component")
+			;; 2.5.4
+			set n: skip (
+				name: select #[
+					0#03 commonName
+					0#06 countryName
+					0#07 localityName
+					0#08 stateOrProvinceName
+					0#09 streetAddress
+					0#0A organizationName
+					0#0B organizationalUnitName
+					0#0C title
+					0#0D description
+					0#0E searchGuide 
+					0#0F businessCategory
+					0#10 postalAddress
+					0#11 spostalCode
+					0#12 postOfficeBox
+					0#13 physicalDeliveryOfficeName
+					0#14 telephoneNumber
+				] n
+			) end
 			|
-			#{551D} (main: "X.509 extension") [
-				  #"^(01)" (name: 'authorityKeyIdentifier warn: "Deprecated, use 2 5 29 35 instead")
-				| #"^(04)" (name: 'keyUsageRestriction warn: "Obsolete, use keyUsage/extKeyUsage instead")
-				| #"^(0E)" (name: 'subjectKeyIdentifier)
-				| #"^(0F)" (name: 'keyUsage)
-				| #"^(11)" (name: 'subjectAltName)
-				| #"^(13)" (name: 'basicConstraints)
-				| #"^(1F)" (name: 'cRLDistributionPoints)
-				| #"^(20)" (name: 'certificatePolicies)
-				| #"^(23)" (name: 'authorityKeyIdentifier)
-				| #"^(25)" (name: 'extKeyUsage)
-			] end
+			#{551D} (main: "X.509 extension")
+			;; 2.5.29
+			;= Additional attributes for X.509 certificates used in PKI (Public Key Infrastructure). 
+			set n: skip (
+				name: select #[
+					0#01 authorityKeyIdentifier ;; Deprecated, use 2 5 29 35 instead
+					0#02 keyAttributes          ;; Obsolete!
+					0#03 certificatePolicies    ;; Old version  
+					0#04 keyUsageRestriction    ;; Obsolete, use keyUsage/extKeyUsage instead
+					0#0E subjectKeyIdentifier   ;; Unique ID of the public key 
+					0#0F keyUsage               ;; Defines permitted key operations, e.g., signing, encryption
+					0#11 subjectAlternativeName ;; Alternative names, such as multiple domains or emails
+					0#12 issuerAlternativeName  ;; Alternative names for the certificate issuer
+					0#13 basicConstraints       ;; Defines whether the certificate is a CA or end-entity
+					0#1E nameConstraints        ;; Defines allowed or disallowed name spaces
+					0#1F CRLDistributionPoints  ;; Defines where to check for revoked certificates
+					0#20 certificatePolicies    ;; Defines policies under which the certificate is issued
+					0#21 policyMappings         ;; Links different policy OIDs for compatibility
+					0#23 authorityKeyIdentifier ;; Identifies the CA’s public key
+					0#24 policyConstraints      ;; Defines restrictions on policy inheritance
+					0#25 extendedKeyUsage       ;; Defines additional usage, e.g., SSL, email protection, code signing
+					0#2E freshestCRL            ;; Defines the newest Certificate Revocation List
+				] n
+			) end
 			|
-			#{2B060105050703} (main: "PKIX key purpose") [
-				  #"^(01)" (name: 'serverAuth)
-				| #"^(02)" (name: 'clientAuth)
-				| #"^(03)" (name: 'codeSigning)
-				| #"^(04)" (name: 'emailProtection)
-				;| #"^(05)" (name: 'ipsecEndSystem)
-				;| #"^(06)" (name: 'ipsecTunnel)
-				;| #"^(07)" (name: 'ipsecUser)
-				| #"^(08)" (name: 'timeStamping)
-				;| #"^(09)" (name: 'OCSPSigning)
-				;| #"^(0A)" (name: 'dvcs)
-				;| #"^(0B)" (name: 'sbgpCertAAServerAuth)
-				;| #"^(0C)" (name: 'scvp)
-				;| #"^(0D)" (name: 'eapOverPPP)
-				;| #"^(0E)" (name: 'eapOverLAN)
-				;| #"^(0F)" (name: 'scvpServer)
-				;| #"^(10)" (name: 'scvpClient)
-				;| #"^(11)" (name: 'ipsecIKE)
-				;| #"^(12)" (name: 'capwapAC)
-				;| #"^(13)" (name: 'capwapWTP)
-				;| #"^(14)" (name: 'sipDomain)
-				;| #"^(15)" (name: 'secureShellClient)
-				;| #"^(16)" (name: 'secureShellServer)
-				;| #"^(17)" (name: 'sendRouter)
-				;| #"^(18)" (name: 'sendProxiedRouter)
-				;| #"^(19)" (name: 'sendOwner)
-				;| #"^(1A)" (name: 'sendProxiedOwner)
-				;| #"^(1B)" (name: 'cmcCA)
-				;| #"^(1C)" (name: 'cmcRA)
-				;| #"^(1D)" (name: 'cmcArchive)
-				;| #"^(1E)" (name: 'bgpsec-router)
-				;| #"^(1F)" (name: 'BrandIndicatorforMessageIdentification)
-				;| #"^(20)" (name: 'cmKGA)
-				;| #"^(21)" (name: 'rpcTLSClient)
-				;| #"^(22)" (name: 'rpcTLSServer)
-				;| #"^(23)" (name: 'bundleSecurity)
-			] end
+			#{2B060105050703} (main: "PKIX key purpose")
+			;; 1.3.6.1.5.5.7.3
+			;= The extended key usage (EKU) field in X.509 certificates
+			set n: skip (
+				name: select #[
+					0#01 serverAuth
+					0#02 clientAuth
+					0#03 codeSigning
+					0#04 emailProtection
+					;0#05 ipsecEndSystem
+					;0#06 ipsecTunnel
+					;0#07 ipsecUser
+					0#08 timeStamping
+					0#09 OCSPSigning
+					;0#0A dvcs
+					;0#0B sbgpCertAAServerAuth
+					;0#0C scvp
+					;0#0D eapOverPPP
+					;0#0E eapOverLAN
+					;0#0F scvpServer
+					;0#10 scvpClient
+					;0#11 ipsecIKE
+					;0#12 capwapAC
+					;0#13 capwapWTP
+					;0#14 sipDomain
+					;0#15 secureShellClient
+					;0#16 secureShellServer
+					;0#17 sendRouter
+					;0#18 sendProxiedRouter
+					;0#19 sendOwner
+					;0#1A sendProxiedOwner
+					;0#1B cmcCA
+					;0#1C cmcRA
+					;0#1D cmcArchive
+					;0#1E bgpsec-router
+					;0#1F BrandIndicatorforMessageIdentification
+					;0#20 cmKGA
+					;0#21 rpcTLSClient
+					;0#22 rpcTLSServer
+					;0#23 bundleSecurity
+				] n
+			) end
 			|
-			#{2B06010401} [
+			#{2B06010401} [;= 1.3.6.1.4.1 -> Private Enterprise Numbers
 				#{82370201} (main: "Microsoft") [
 					#"^(15)" (name: 'individualCodeSigning)
 				]
@@ -434,7 +508,7 @@ register-codec [
 				rejoin [ any [name "<?name>"] " (" any [main "<?main>"] ")"]
 			][	name ]
 		][
-			sys/log/debug 'DER ["Failed to decode OID" oid "->" form-oid oid]
+			log-trace 'DER ["Failed to decode OID" oid "->" form-oid oid]
 			form-oid oid
 		]
 	]

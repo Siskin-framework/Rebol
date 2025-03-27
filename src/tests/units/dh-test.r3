@@ -107,10 +107,6 @@ foreach ecurve system/catalog/elliptic-curves [
 		--assert true? release k-Alice
 		--assert true? release k-Boban
 
-	if find [curve25519 curve448] ecurve [
-		; these curves are not for signing
-		continue
-	]
 	--test-- rejoin ["ECDSA (" ecurve ") signing"]
 
 		;- Alice generates her key-pair
@@ -121,6 +117,11 @@ foreach ecurve system/catalog/elliptic-curves [
 		hash: checksum data 'sha256
 		;- and use ECDSA to sign it using her private key
 		signature: ecdsa/sign k-Alice hash
+		if find [curve25519 curve448] ecurve [
+			; these curves are not for signing
+			--assert none? signature
+			continue
+		]
 		--assert binary? signature
 		; signature is encoded as ASN1
 		--assert block? try [decode 'der signature]
@@ -131,6 +132,13 @@ foreach ecurve system/catalog/elliptic-curves [
 		pub-Alice: ecdh/public k-Alice
 		;- Boban can verify, that the data are really from Alice
 		--assert ecdsa/verify/curve pub-Alice hash signature ecurve
+
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2642
+		--assert all [
+			binary? sig: ecdsa k-Alice hash ;; /sign refine is mandatory...
+			signature != sig                ;; signatures are unique!
+			ecdsa/verify k-Alice hash sig
+		]
 
 ]
 

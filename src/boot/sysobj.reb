@@ -266,6 +266,7 @@ modules: object [
 	daytime:          https://src.rebol.tech/mezz/prot-daytime.reb
 	mail:             https://src.rebol.tech/mezz/prot-mail.reb
 	mysql:            https://src.rebol.tech/mezz/prot-mysql.reb
+	rdap:             https://src.rebol.tech/mezz/prot-rdap.reb
 	css:              https://src.rebol.tech/mezz/codec-css.reb
 	csv:              https://src.rebol.tech/mezz/codec-csv.reb
 	ico:              https://src.rebol.tech/mezz/codec-ico.reb

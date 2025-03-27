@@ -47,6 +47,7 @@ It is possible to extend Rebol functionality using external modules (native or w
 * [Rebol/MiniAudio](https://github.com/Oldes/Rebol-MiniAudio) - An audio playback extension
 * [Rebol/Mobi](https://github.com/Oldes/Rebol-Mobi) - MobiPocket/Kindle eBook `mobi` file codec
 * [Rebol/Names](https://github.com/Oldes/Rebol-Names) - Random names generator scheme
+* [Rebol/RDAP](https://github.com/Oldes/Rebol-RDAP) - Registration Data Access Protocol (RDAP) scheme
 * [Rebol/Scheduler](https://github.com/Oldes/Rebol-Scheduler) - Task scheduling library with dialect
 * [Rebol/Spotify](https://github.com/Oldes/Rebol-Spotify) - Spotify Web API
 * [Rebol/OpenCV](https://github.com/Oldes/Rebol-OpenCV) - Computer Vision Library

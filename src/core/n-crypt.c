@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -149,6 +149,14 @@ static mbedtls_ctr_drbg_context ctr_drbg;
 		#endif
 		#ifdef MBEDTLS_CHACHAPOLY_C
 			add_ec_word(SYM_CHACHA20_POLY1305)
+		#endif
+		#ifdef MBEDTLS_DES_C
+			add_ec_word(SYM_DES_ECB)
+			add_ec_word(SYM_DES3_ECB)
+			#ifdef MBEDTLS_CIPHER_MODE_CBC
+			add_ec_word(SYM_DES_CBC)
+			add_ec_word(SYM_DES3_CBC)
+			#endif
 		#endif
 	}
 
@@ -819,6 +827,8 @@ error:
 	ECDH_CTX *ctx_ecdh = NULL;
 	mbedtls_ecdh_context_mbed *mbed;
 	mbedtls_mpi r, s;
+
+	if (!ref_sign && !ref_verify) ref_sign = TRUE; //using SIGN as a default action
 
 	if (IS_BINARY(val_key)) {
 		if (!ref_curve) Trap0(RE_MISSING_ARG);

@@ -21,7 +21,7 @@ register-codec [
 		return: [block!] "Result is in format: [NAME [DATE UID GID MODE DATA] ...]"
 	] [
 		unless binary? data [data: read data]
-		sys/log/info 'AR ["^[[1;32mDecode AR/LIB data^[[m (^[[1m" length? data "^[[mbytes )"]
+		log-info 'AR ["^[[1;32mDecode AR/LIB data^[[m (^[[1m" length? data "^[[mbytes )"]
 		unless parse data ["!<arch>^/" data: to end][return none]
 		bin: binary data
 		out: make block! 32
@@ -39,7 +39,7 @@ register-codec [
 				STRING-BYTES 10 ; File size in bytes
 			]
 			if 2656 <> binary/read bin 'UI16LE [ ;= #{600A}
-				sys/log/error 'AR "Invalid file header!"
+				log-error 'AR "Invalid file header!"
 				return none
 			]
 			file: trim/tail take info
@@ -54,7 +54,7 @@ register-codec [
 			data: binary/read bin size
 			if odd? size [
 				if 10 <> binary/read bin 'UI8 [
-					sys/log/error 'AR "Invalid padding!"
+					log-error 'AR "Invalid padding!"
 				]
 			]
 			if parse file [opt ["#1" (bsd?: true)] #"/" copy len some numbers to end ][
@@ -72,7 +72,7 @@ register-codec [
 				]
 				if real [append info as file! real]
 			]
-			sys/log/info 'AR ["File:^[[33m" pad copy file 20 mold info]
+			log-info 'AR ["File:^[[33m" pad copy file 20 mold info]
 			append info data
 			append/only append out as file! file info
 

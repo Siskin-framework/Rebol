@@ -294,19 +294,19 @@ mysql-driver: make object! [
 		rows [block!] 
 		/local row i convert-body action cols col conv-func tmp
 	][
-		;;sys/log/more 'MySQL["converting types"]
+		;;log-debug 'MySQL["converting types"]
 		cols: p/extra/current-result/columns
 		convert-body: make block! 1
 		action: [if tmp: pick row (i)]
 		foreach col cols [
 			i: index? find cols col
 			if 'none <> conv-func: select p/extra/conv-list col/type [
-				;;sys/log/more 'MySQL["conv-func:" mold conv-func "for" col/type]
+				;;log-debug 'MySQL["conv-func:" mold conv-func "for" col/type]
 				append convert-body append/only compose action head
 					insert* at compose [change at row (i) :tmp] 5 conv-func
 			]
 		]
-		;;sys/log/more 'MySQL["convert-body:" mold convert-body]
+		;;log-debug 'MySQL["convert-body:" mold convert-body]
 		if not empty? convert-body [
 			either p/extra/result-options/flat? [
 				while [not tail? rows][
@@ -411,12 +411,12 @@ mysql-driver: make object! [
 			mark: insert* remove mark either tail? args ["NULL"][to-sql args/1]
 			if not tail? args [args: next args]
 		]
-		;sys/log/more 'MySQL sql
+		;log-debug 'MySQL sql
 		sql
 	]
 	
 	show-server: func [obj [object!]][
-		sys/log/more 'MySQL[														newline
+		log-debug 'MySQL[														newline
 			"----- Server ------" 									newline
 			"Version:"					obj/version					newline
 			"Protocol version:"			obj/protocol 				newline
@@ -629,7 +629,7 @@ mysql-driver: make object! [
 
 	write-string: func [value [string! none! binary!] /local t][
 		if none? value [return make binary! 0]
-		;sys/log/more 'MySQL["writing a string:" mold value]
+		;log-debug 'MySQL["writing a string:" mold value]
 		to-binary join value to char! 0
 	]
 	
@@ -642,9 +642,9 @@ mysql-driver: make object! [
 			insert data header
 			data: skip data 16777215 + length? header
 		]
-		;;sys/log/more 'MySQL["write function port state " open? tcp-port]
+		;;log-debug 'MySQL["write function port state " open? tcp-port]
 		;if not open? tcp-port [open tcp-port]
-		;sys/log/more 'MySQL["state:" tcp-port/extra/state]
+		;log-debug 'MySQL["state:" tcp-port/extra/state]
 		header: join
 			write-int24 length? data
 			write-byte port/extra/seq-num: port/extra/seq-num + 1
@@ -660,7 +660,7 @@ mysql-driver: make object! [
 	send-cmd: func [port [port!] cmd [integer!] cmd-data] compose/deep [
 		port/extra/seq-num: -1
 		port/extra/current-cmd: cmd
-		;sys/log/more 'MySQL["sending cmd:" cmd]
+		;log-debug 'MySQL["sending cmd:" cmd]
 		send-packet port rejoin [
 			write-byte cmd
 			port/extra/current-cmd-data: 
@@ -682,12 +682,12 @@ mysql-driver: make object! [
 				]
 			][either string? cmd-data [cmd-data][pick cmd-data 1]]
 		]
-		;sys/log/more 'MySQL["sent a command"]
+		;log-debug 'MySQL["sent a command"]
 		port/extra/state: 'sending-cmd
 	]
 	
 	insert-query: func [port [port!] data [string! block!]][
-		sys/log/more 'MySQL["insert-query:" data]
+		log-debug 'MySQL["insert-query:" data]
 		send-cmd port defs/cmd/query data
 		none
 	]
@@ -714,7 +714,7 @@ mysql-driver: make object! [
 	]
 
 	insert-cmd: func [port [port!] data [block!] /local type][
-		;sys/log/more 'MySQL["inserting cmd:" mold data]
+		;log-debug 'MySQL["inserting cmd:" mold data]
 		type: select defs/cmd data/1
 		either type [
 			send-cmd port type next data
@@ -756,7 +756,7 @@ mysql-driver: make object! [
 	][
 		pl: port/extra
 
-		sys/log/debug 'MySQL["parsing a packet:" mold port/data]
+		log-trace 'MySQL["parsing a packet:" mold port/data]
 		pl/last-status: status: to integer! port/data/1
 		pl/error-code: pl/error-msg: none
 
@@ -822,10 +822,10 @@ mysql-driver: make object! [
 	][
 		pl: port/extra
 		mysql-port: pl/mysql-port
-		sys/log/more 'MySQL ["Event:^[[22m" evt-type]
+		log-debug 'MySQL ["Event:^[[22m" evt-type]
 		case compose [
 			(evt-type = 'read) [
-				sys/log/more 'MySQL["emitting result (" length? pl/results ")"]
+				log-debug 'MySQL["emitting result (" length? pl/results ")"]
 				mysql-port/data: convert-results port pl/results pl/result-options
 				append system/ports/system make event! [type: evt-type port: mysql-port]
 			]
@@ -856,14 +856,14 @@ mysql-driver: make object! [
 	][
 		pl: port/extra
 		mysql-port: pl/mysql-port
-		sys/log/more 'MySQL["processing a packet in state:" pl/state]
-		sys/log/debug 'MySQL["buf:" mold buf]
+		log-debug 'MySQL["processing a packet in state:" pl/state]
+		log-trace 'MySQL["buf:" mold buf]
 		switch pl/state [
 			reading-greeting [
 				process-greeting-packet port buf
 				send-packet port pack-auth-packet port
 				pl/state: 'sending-auth-pack
-				sys/log/more 'MySQL["state changed to sending-auth-pack"]
+				log-debug 'MySQL["state changed to sending-auth-pack"]
 				pl/stream-end?: true ;wait for a WROTE event
 			]
 
@@ -872,16 +872,16 @@ mysql-driver: make object! [
 					;switch to old password mode
 					send-packet port write-string scramble/v10 port/pass port
 					pl/state: 'sending-old-auth-pack
-					sys/log/more 'MySQL["state changed to sending-old-auth-pack"]
+					log-debug 'MySQL["state changed to sending-old-auth-pack"]
 				][
 					if buf/1 = 255 [;error packet
 						pl/state: 'init
 						on-error-packet port
 					]
-					sys/log/more 'MySQL "handshaked"
+					log-debug 'MySQL "handshaked"
 					;OK?
 					emit-event port 'connect
-					;sys/log/more 'MySQL["o-buf after auth resp:" mold port/extra/o-buf]
+					;log-debug 'MySQL["o-buf after auth resp:" mold port/extra/o-buf]
 					start-next-cmd port
 				]
 				pl/stream-end?: true ;done or wait for a WROTE event
@@ -891,7 +891,7 @@ mysql-driver: make object! [
 				if buf/1 = #"^(00)"[
 					emit-event port 'connect
 
-					;sys/log/more 'MySQL["o-buf after old auth resp:" mold port/extra/o-buf]
+					;log-debug 'MySQL["o-buf after old auth resp:" mold port/extra/o-buf]
 					start-next-cmd port
 				]
 				pl/stream-end?: true ;done or wait for a WROTE event
@@ -899,7 +899,7 @@ mysql-driver: make object! [
 
 			reading-cmd-resp [;reading a response
 				;check if we've got enough data
-				sys/log/more 'MySQL["read a cmd response for" pl/current-cmd]
+				log-debug 'MySQL["read a cmd response for" pl/current-cmd]
 				switch/default parse-a-packet port [
 					OTHER [
 						case [
@@ -908,9 +908,9 @@ mysql-driver: make object! [
 								parse/case buf [
 									read-length (if zero? pl/current-result/n-columns: len [
 											pl/stream-end?: true 
-											sys/log/more 'MySQL["stream ended because of 0 columns"]
+											log-debug 'MySQL["stream ended because of 0 columns"]
 										]
-										sys/log/more 'MySQL["Read number of columns:" len]
+										log-debug 'MySQL["Read number of columns:" len]
 									)
 								]
 								pl/state: 'reading-fields
@@ -926,7 +926,7 @@ mysql-driver: make object! [
 						append pl/results pl/current-result
 						either pl/stream-end? [
 							emit-event port 'read
-							sys/log/more 'MySQL["Stream ended by an OK packet"]
+							log-debug 'MySQL["Stream ended by an OK packet"]
 							start-next-cmd port
 							exit
 						][
@@ -958,7 +958,7 @@ mysql-driver: make object! [
 				][
 					cause-error 'user 'message reduce ["Unexpected number of fields" pl]
 				]
-				sys/log/more 'MySQL["stream-end? after reading-cmd-resp:" pl/stream-end?]
+				log-debug 'MySQL["stream-end? after reading-cmd-resp:" pl/stream-end?]
 			]
 
 			reading-fields [
@@ -1005,7 +1005,7 @@ mysql-driver: make object! [
 						if none? pl/current-result/columns [
 							pl/current-result/columns: make block! pl/current-result/n-columns
 						]
-						;sys/log/more 'MySQL["read a column: " col/name]
+						;log-debug 'MySQL["read a column: " col/name]
 						append pl/current-result/columns :col
 						pl/state: 'reading-fields
 					]
@@ -1015,7 +1015,7 @@ mysql-driver: make object! [
 								pl/state: 'reading-rows
 							]
 							(pl/current-cmd = defs/cmd/field-list) [
-								sys/log/more 'MySQL["result ended for field-list"]
+								log-debug 'MySQL["result ended for field-list"]
 								pl/current-result/query-finish-time: now/precise
 								append pl/results pl/current-result
 								pl/stream-end?: not pl/more-results?
@@ -1048,9 +1048,9 @@ mysql-driver: make object! [
 				switch/default pkt-type [
 					OTHER FB[
 						row: make block! pl/current-result/n-columns
-						;sys/log/more 'MySQL["row buf:" copy/part buf pl/next-packet-length]
+						;log-debug 'MySQL["row buf:" copy/part buf pl/next-packet-length]
 						parse/case buf [pl/current-result/n-columns [read-field (append row field)]]
-						;sys/log/more 'MySQL["row:" mold row]
+						;log-debug 'MySQL["row:" mold row]
 						if none? pl/current-result/rows [
 							pl/current-result/rows: make block! 10
 						]
@@ -1072,31 +1072,31 @@ mysql-driver: make object! [
 							]
 						]
 						pl/current-result/query-finish-time: now/precise
-						sys/log/more 'MySQL["Length of rows in current result:" length? pl/current-result/rows]
+						log-debug 'MySQL["Length of rows in current result:" length? pl/current-result/rows]
 						append pl/results pl/current-result
-						;sys/log/more 'MySQL["results length: " length? pl/results]
+						;log-debug 'MySQL["results length: " length? pl/results]
 						either pl/more-results? [
 							pl/stream-end?: false
 							pl/state: 'reading-cmd-resp
 							pl/current-result: make result-class [query-start-time: pl/query-start-time] ;get ready for next result set
 						][
 							pl/stream-end?: true
-							sys/log/more 'MySQL["Emitting read event because of no more results"]
+							log-debug 'MySQL["Emitting read event because of no more results"]
 							emit-event port 'read
-							;sys/log/more 'MySQL["o-buf after reading query resp:" mold port/extra/o-buf]
+							;log-debug 'MySQL["o-buf after reading query resp:" mold port/extra/o-buf]
 							start-next-cmd port
 							exit
 						]
 					]
 				][
-					;sys/log/more 'MySQL["unexpected row" mold pl]
+					;log-debug 'MySQL["unexpected row" mold pl]
 					cause-error 'user 'message reduce ["Unexpected row" pl]
 				]
-				;sys/log/more 'MySQL["stream-end? after reading-rows:" pl/stream-end?]
+				;log-debug 'MySQL["stream-end? after reading-rows:" pl/stream-end?]
 			]
 
 			idle [
-				sys/log/more 'MySQL["unprocessed message from server" tcp-port/data]
+				log-debug 'MySQL["unprocessed message from server" tcp-port/data]
 				break
 			]
 		][
@@ -1110,7 +1110,7 @@ mysql-driver: make object! [
 		data [binary!]
 		/local pl tcp-port feature-supported?
 	][
-		sys/log/more 'MySQL["processing a greeting packet"]
+		log-debug 'MySQL["processing a greeting packet"]
 		tcp-port: port
 		pl: port/extra
 		if data/1 = 255 [;error packet
@@ -1196,7 +1196,7 @@ mysql-driver: make object! [
 			]
 		]
 
-		;sys/log/more 'MySQL["auth-pack:" mold auth-pack]
+		;log-debug 'MySQL["auth-pack:" mold auth-pack]
 		auth-pack
 	]
 	
@@ -1218,9 +1218,9 @@ mysql-driver: make object! [
 		pl: tcp-port/extra
 		pl/last-activity: now/precise
 
-		sys/log/more 'MySQL["tcp event:" event/type]
-		;sys/log/more 'MySQL["o-buf:" mold tcp-port/extra/o-buf]
-		;;sys/log/more 'MySQL["locals:" mold tcp-port/extra]
+		log-debug 'MySQL["tcp event:" event/type]
+		;log-debug 'MySQL["o-buf:" mold tcp-port/extra/o-buf]
+		;;log-debug 'MySQL["locals:" mold tcp-port/extra]
 		;pl/exit-wait?: false
 		switch event/type [
 			error [
@@ -1228,11 +1228,11 @@ mysql-driver: make object! [
 				return true
 			]
 			lookup [
-				;;sys/log/more 'MySQL"loop up"
+				;;log-debug 'MySQL"loop up"
 				open tcp-port
 			]
 			connect [
-				;;sys/log/more 'MySQL"connect"
+				;;log-debug 'MySQL"connect"
 				read tcp-port ;greeting from server
 				pl/packet-state: 'reading-packet-head
 				pl/next-packet-length: std-header-length
@@ -1240,34 +1240,34 @@ mysql-driver: make object! [
 				pl/stream-end?: false
 			]
 			read [
-				;;sys/log/more 'MySQL"read event"
-				sys/log/debug 'MySQL["buffer:" mold tcp-port/data]
-				sys/log/more 'MySQL["current buffer length:" length? tcp-port/data]
-				;sys/log/more 'MySQL["buffer with data:" mold tcp-port/data]
+				;;log-debug 'MySQL"read event"
+				log-trace 'MySQL["buffer:" mold tcp-port/data]
+				log-debug 'MySQL["current buffer length:" length? tcp-port/data]
+				;log-debug 'MySQL["buffer with data:" mold tcp-port/data]
 				while [true] [
-					sys/log/more 'MySQL["next-len:" pl/next-packet-length ", buf: " length? tcp-port/data]
+					log-debug 'MySQL["next-len:" pl/next-packet-length ", buf: " length? tcp-port/data]
 					either pl/next-packet-length > length? tcp-port/data [; not enough data
 						read tcp-port
-						;sys/log/more 'MySQL["keep reading"]
+						;log-debug 'MySQL["keep reading"]
 						break
 					][
-						;sys/log/more 'MySQL["current state:" pl/state]
+						;log-debug 'MySQL["current state:" pl/state]
 						switch/default pl/packet-state [
 							reading-packet-head [
-								;sys/log/more 'MySQL["read a packet head" mold copy/part tcp-port/data std-header-length]
+								;log-debug 'MySQL["read a packet head" mold copy/part tcp-port/data std-header-length]
 								parse tcp-port/data [
 									read-int24  (pl/packet-len: int24)
 									read-byte	(pl/seq-num: byte)
 								]
 								pl/packet-state: 'reading-packet
 								pl/next-packet-length: pl/packet-len
-								;sys/log/more 'MySQL["expected length of next packet:" pl/next-packet-length]
+								;log-debug 'MySQL["expected length of next packet:" pl/next-packet-length]
 								remove/part tcp-port/data std-header-length
 							]
 							reading-packet [
-								;sys/log/more 'MySQL["read a packet"]
+								;log-debug 'MySQL["read a packet"]
 								either pl/packet-len < 16777215 [; a complete packet is read
-									sys/log/more 'MySQL["a COMPLETE packet is received"]
+									log-debug 'MySQL["a COMPLETE packet is received"]
 									either pl/data-in-buf? [
 										append/part pl/buf tcp-port/data pl/packet-len
 										process-a-packet tcp-port pl/buf
@@ -1277,7 +1277,7 @@ mysql-driver: make object! [
 										process-a-packet tcp-port tcp-port/data ;adjust `state' for next step
 									]
 								][  ; part of a big packet
-									sys/log/more 'MySQL["a CHUNK of a packet is received"]
+									log-debug 'MySQL["a CHUNK of a packet is received"]
 									pl/data-in-buf?: true
 									append/part pl/buf tcp-port/data pl/packet-len
 								]
@@ -1285,7 +1285,7 @@ mysql-driver: make object! [
 								pl/next-packet-length: std-header-length
 								remove/part tcp-port/data pl/packet-len
 								if pl/stream-end? [
-									sys/log/more 'MySQL["stream ended, exiting"]
+									log-debug 'MySQL["stream ended, exiting"]
 									break
 								]
 							]
@@ -1311,7 +1311,7 @@ mysql-driver: make object! [
 						][
 							cause-error 'user 'message ["rows is not properly initialized"]
 						]
-						;sys/log/more 'MySQL["result is properly initialized"]
+						;log-debug 'MySQL["result is properly initialized"]
 					]
 					sending-auth-pack [
 						pl/state: 'reading-auth-resp
@@ -1330,13 +1330,13 @@ mysql-driver: make object! [
 				read tcp-port
 				pl/packet-state: 'reading-packet-head
 				pl/next-packet-length: std-header-length
-				;;sys/log/more 'MySQL"write event"
+				;;log-debug 'MySQL"write event"
 				;send more request
 				;return true
 			]
 			close [
 				;close mysql-port
-				sys/log/more 'MySQL["TCP port closed"]
+				log-debug 'MySQL["TCP port closed"]
 				close tcp-port
 				emit-event tcp-port 'close
 				return true
@@ -1351,14 +1351,14 @@ mysql-driver: make object! [
 		data [string! block!]
 		options [object!]
 	][
-		;;sys/log/more 'MySQL["inserting to " mold port]
-		;sys/log/more 'MySQL["state:" port/extra/state]
+		;;log-debug 'MySQL["inserting to " mold port]
+		;log-debug 'MySQL["state:" port/extra/state]
 		either 'idle = port/extra/state [
 			do-tcp-insert port data options
 		][
 			append/only port/extra/o-buf reduce [data options]
 		]
-		;sys/log/more 'MySQL[port/spec/scheme "o-buf:" mold port/extra/o-buf]
+		;log-debug 'MySQL[port/spec/scheme "o-buf:" mold port/extra/o-buf]
 	]
 
 	do-tcp-insert: func [
@@ -1369,7 +1369,7 @@ mysql-driver: make object! [
 		/local pl res
 	][
 		pl: port/extra
-		;sys/log/more 'MySQL["do-tcp-insert" mold data]
+		;log-debug 'MySQL["do-tcp-insert" mold data]
 		
 		pl/result-options: options
 		pl/query-start-time: now/precise
@@ -1429,7 +1429,7 @@ mysql-driver: make object! [
 		opts [object!]
 		/local ret tmp name-fields r
 	][
-		;sys/log/more 'MySQL["converting results:" mold results]
+		;log-debug 'MySQL["converting results:" mold results]
 		either any [
 			port/extra/current-cmd != defs/cmd/query
 		][;results from multiple queries
@@ -1501,7 +1501,7 @@ sys/make-scheme [
 		event [event!]
 		/local pl cb mode spec
 	][
-		sys/log/more 'MySQL["mysql port event:" event/type]
+		log-debug 'MySQL["mysql port event:" event/type]
 		pl: event/port/extra
 		pl/last-activity: now/precise
 		switch/default event/type [
@@ -1513,31 +1513,31 @@ sys/make-scheme [
 				spec/ref: rejoin [
 					mysql:// spec/user #"@" spec/host #":" spec/port spec/path
 				]
-				sys/log/info 'MySQL ["Connected:^[[22m" spec/ref]
+				log-info 'MySQL ["Connected:^[[22m" spec/ref]
 				pl/handshaked?: true
 				if pl/exit-wait-after-handshaked? [return true]
 			]
 			read [
-				sys/log/more 'MySQL["pending requests:" mold pl/pending-requests "block size:" pl/pending-block-size]
+				log-debug 'MySQL["pending requests:" mold pl/pending-requests "block size:" pl/pending-block-size]
 				mode: first pl/pending-requests
 				switch/default mode [
 					async [
 						cb: second pl/pending-requests
 						case [
 							function? :cb [
-								;sys/log/more 'MySQL["a function callback:" mold :cb]
+								;log-debug 'MySQL["a function callback:" mold :cb]
 								cb event/port/data
 							]
 							any [word? cb path? cb][
-								sys/log/more 'MySQL["a word/path callback:" mold cb]
+								log-debug 'MySQL["a word/path callback:" mold cb]
 								set cb event/port/data
 							]
 							block? cb [
-								;sys/log/more 'MySQL["a block callback:" mold cb]
+								;log-debug 'MySQL["a block callback:" mold cb]
 								do cb
 							]
 							none? cb [
-								sys/log/more 'MySQL["a none callback, ignored"]
+								log-debug 'MySQL["a none callback, ignored"]
 								;ignored
 							]
 							'else [
@@ -1547,8 +1547,8 @@ sys/make-scheme [
 						remove/part pl/pending-requests pl/pending-block-size
 					]
 					sync [
-						sys/log/more 'MySQL["got response (" length? event/port/data ")"]
-						;sys/log/more 'MySQL["sync mode should exit"]
+						log-debug 'MySQL["got response (" length? event/port/data ")"]
+						;log-debug 'MySQL["sync mode should exit"]
 						remove/part pl/pending-requests pl/pending-block-size
 						return true
 					]
@@ -1557,10 +1557,10 @@ sys/make-scheme [
 				]
 			]
 			wrote [
-				;sys/log/more 'MySQL["mysql port query sent"]
+				;log-debug 'MySQL["mysql port query sent"]
 			]
 			close [
-				sys/log/more 'MySQL["port closed"]
+				log-debug 'MySQL["port closed"]
 				cause-error 'Access 'not-connected reduce [event/port none none]
 			]
 		][
@@ -1574,7 +1574,7 @@ sys/make-scheme [
 		open: func [
 			port[port! url!]
 		][	
-			;;sys/log/more 'MySQL" new open function "
+			;;log-debug 'MySQL" new open function "
 			if none? port/spec/host [http-error "Missing host address"]
 			port/extra: make object! [
 				handshaked?: false
@@ -1606,7 +1606,7 @@ sys/make-scheme [
 				]
 			]
 			close tcp-port
-			sys/log/info 'MySQL ["Closed:^[[22m" port/spec/ref]
+			log-info 'MySQL ["Closed:^[[22m" port/spec/ref]
 			tcp-port/awake: none
 			port/state: none
 			port
@@ -1634,9 +1634,9 @@ sys/make-scheme [
 				append pl/pending-requests reduce ['sync none]
 				query: data
 			]
-			sys/log/debug 'MySQL["inserting a query:" mold data mold pl/pending-requests]
+			log-trace 'MySQL["inserting a query:" mold data mold pl/pending-requests]
 			mysql-driver/tcp-insert tcp-port query options
-			;sys/log/debug 'MySQL["tcp-port locals after insert" mold tcp-port/extra]
+			;log-trace 'MySQL["tcp-port locals after insert" mold tcp-port/extra]
 		]
 		
 		copy: func [
@@ -1682,27 +1682,27 @@ send-sql: func [
 	]
 
 	insert port data
-	;sys/log/more 'MySQL["send-sql: " mold data]
-	;sys/log/more 'MySQL["in send-sql, current pending requests:" mold pl/pending-requests]
+	;log-debug 'MySQL["send-sql: " mold data]
+	;log-debug 'MySQL["in send-sql, current pending requests:" mold pl/pending-requests]
 	unless async [
-		;sys/log/more 'MySQL["handshaked?:" pl/handshaked?]
+		;log-debug 'MySQL["handshaked?:" pl/handshaked?]
 		old-handshaked?: pl/handshaked?
 		while [pl/last-activity + port/spec/timeout >= now/precise][
 			;will not return unless: 1) handshaked, 2) sync request processed, or 3) error
 			ret-from-wait: wait/only [port port/extra/tcp-port port/spec/timeout]
 			either port = ret-from-wait [
 				;assert [empty? pl/pending-requests]
-				;sys/log/more 'MySQL["port/data:" mold port/data]
+				;log-debug 'MySQL["port/data:" mold port/data]
 				return port/data
 			][
 				if port? ret-from-wait [
 					assert [ret-from-wait = port/extra/tcp-port]
 					print ["******* Unexpected wakeup from tcp-port *********"]
 				]
-				;sys/log/more 'MySQL"wait returned none"
+				;log-debug 'MySQL"wait returned none"
 				throw-timeout port
 			]
-			;sys/log/more 'MySQL["trying again..."]
+			;log-debug 'MySQL["trying again..."]
 		]
 		throw-timeout port
 	]

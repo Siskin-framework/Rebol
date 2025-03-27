@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.18.4
+version: 3.18.5
 
 #if Linux?   [ defines: TO_LINUX   ]
 #if macOS?   [ defines: TO_MACOS   ]
@@ -357,6 +357,7 @@ mezz-lib-files: [
 	%mezz/mezz-types.reb
 	%mezz/mezz-func.reb
 	%mezz/mezz-debug.reb
+	%mezz/mezz-logger.reb
 	%mezz/mezz-control.reb
 	%mezz/mezz-save.reb
 	%mezz/mezz-series.reb
@@ -667,6 +668,10 @@ include-curves-x: [
 	config: MBEDTLS_ECP_DP_CURVE25519_ENABLED  ; costs 7.6kB
 	config: MBEDTLS_ECP_DP_CURVE448_ENABLED    ; costs 7.6kB; together with CURVE25519 8.1!
 ]
+include-des: [
+	config: MBEDTLS_DES_C        ; The DES block cipher.
+	core-files: %core/mbedtls/des.c
+]
 
 include-cryptography: [
 	; so far cca 183kB uncompressed (basic AES, all ellyptic curves, rsa, rc4, bignum, entropy )
@@ -678,6 +683,7 @@ include-cryptography: [
 
 	config: MBEDTLS_CTR_DRBG_C   ; The CTR_DRBG AES-based random generator.
 	config: MBEDTLS_AES_C        ; The AES block cipher.
+	config: MBEDTLS_AESNI_C      ; Enable AES acceleration on some Intel processors
 	config: MBEDTLS_DHM_C        ; The Diffie-Hellman-Merkle module.
 	config: MBEDTLS_ECDSA_C      ; The elliptic curve DSA library.
 	config: MBEDTLS_ECP_C        ; The elliptic curve over GF(p) library.
@@ -692,6 +698,7 @@ include-cryptography: [
 		%core/p-crypt.c
 
 		%core/mbedtls/aes.c
+		%core/mbedtls/aesni.c
 		%core/mbedtls/asn1parse.c
 		%core/mbedtls/asn1write.c
 		%core/mbedtls/dhm.c
@@ -708,7 +715,6 @@ include-cryptography: [
 		%core/mbedtls/ecdsa.c
 		%core/mbedtls/ecp.c
 		%core/mbedtls/ecp_curves.c
-		%core/mbedtls/hash_info.c
 	]
 
 	:include-curves-sec1
@@ -726,6 +732,8 @@ include-cryptography: [
 ]
 
 include-cryptography-bulk: [
+	:include-des
+
 	:include-curves-koblitz
 	:include-curves-brainpool
 	:include-curves-x

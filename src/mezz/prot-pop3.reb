@@ -64,10 +64,10 @@ net-log: func[data /C /S /E /local msg][
 	case [
 		C [append msg "Client: "]
 		S [append msg "Server: "]
-		E [sys/log/error 'POP3 :data return :data]
+		E [log-error 'POP3 :data return :data]
 	]
 	append msg data
-	sys/log/more 'POP3 trim/tail msg
+	log-debug 'POP3 trim/tail msg
 	data
 ]
 
@@ -102,13 +102,13 @@ pop3-conn-awake: function [event][
 	conn:  event/port
 	pop3:  conn/parent
 	ctx:   pop3/extra
-	sys/log/debug 'POP3 ["Command:" ctx/command "state:" pop3/state "event:" event/type "ref:" event/port/spec/ref]
+	log-trace 'POP3 ["Command:" ctx/command "state:" pop3/state "event:" event/type "ref:" event/port/spec/ref]
 
 	info?: system/options/log/pop3 > 0
 
 	wake?: switch event/type [
 		error [
-			sys/log/error 'POP3 "Network error"
+			log-error 'POP3 "Network error"
 			close conn
 			return true
 		]
@@ -118,11 +118,11 @@ pop3-conn-awake: function [event][
 		]
 		connect [
 			either ctx/command = 'STLS [
-				sys/log/more 'POP3 "TLS connection established..."
+				log-debug 'POP3 "TLS connection established..."
 				do-cmd/with ctx 'AUTH 'PLAIN
 				return false
 			][
-				sys/log/more 'POP3 "Reading server's invitation..."
+				log-debug 'POP3 "Reading server's invitation..."
 				ctx/command: 'CONNECT
 				read conn
 			]
@@ -136,7 +136,7 @@ pop3-conn-awake: function [event][
 
 			if system/options/log/pop3 > 1 [
 				foreach line split-lines response [
-					sys/log/more 'POP3 ["Server:^[[32m" line]
+					log-debug 'POP3 ["Server:^[[32m" line]
 				]
 			]
 
@@ -171,26 +171,26 @@ pop3-conn-awake: function [event][
 							RETR [
 								if pop3/state <> 'READING [
 									stat: load ok-msg
-									sys/log/info 'POP3 ["Receiving message" ctx/argument "having" stat/1 "bytes."]
+									log-info 'POP3 ["Receiving message" ctx/argument "having" stat/1 "bytes."]
 								]
 							]
 							TOP [
 								if pop3/state <> 'READING [
-									sys/log/info 'POP3 ["Receiving headers of message" first ctx/argument]
+									log-info 'POP3 ["Receiving headers of message" first ctx/argument]
 								]
 							]
 							STAT [
 								stat: load ok-msg
-								sys/log/info 'POP3 ["Mailbox has" stat/1 "messages having" stat/2 "bytes."]
+								log-info 'POP3 ["Mailbox has" stat/1 "messages having" stat/2 "bytes."]
 							]
 							DELE [
-								sys/log/info 'POP3 ["Message" ctx/argument response]
+								log-info 'POP3 ["Message" ctx/argument response]
 							]
 							RSET [
-								sys/log/info 'POP3 ["Session reset." response]
+								log-info 'POP3 ["Session reset." response]
 							]
 							QUIT [
-								sys/log/info 'POP3 ["Server quits:^[[32m" response]
+								log-info 'POP3 ["Server quits:^[[32m" response]
 							]
 						]
 					]
@@ -200,7 +200,7 @@ pop3-conn-awake: function [event][
 						none? end: find/match skip tail pop3/data -5 "^M^/.^M^/"
 					][
 						pop3/state: 'READING
-						sys/log/more 'POP3 "Data are not complete yet..."
+						log-debug 'POP3 "Data are not complete yet..."
 						read conn
 						false
 					][
@@ -212,15 +212,15 @@ pop3-conn-awake: function [event][
 				INIT [
 					switch/default ctx/command [
 						CONNECT [
-							sys/log/info 'POP3 ["Connected to server:^[[32m" response]
-							sys/log/more 'POP3 "Requesting server's capabilities..."
+							log-info 'POP3 ["Connected to server:^[[32m" response]
+							log-debug 'POP3 "Requesting server's capabilities..."
 							do-cmd ctx 'CAPA
 							false
 						]
 						CAPA [
 							ctx/capabilities: split-lines copy response
 							take/last ctx/capabilities ;= removes the trailing dot
-							sys/log/info 'POP3 ["Server accepts: ^[[32m" mold/flat ctx/capabilities]
+							log-info 'POP3 ["Server accepts: ^[[32m" mold/flat ctx/capabilities]
 							case [
 								all [ctx/start-tls? find response "STLS"] [
 									do-cmd ctx 'STLS
@@ -239,7 +239,7 @@ pop3-conn-awake: function [event][
 							false
 						]
 						STLS [
-							sys/log/more 'POP3 "Upgrading client's connection to TLS port"
+							log-debug 'POP3 "Upgrading client's connection to TLS port"
 							;; tls-port will be a new layer between existing pop3 and client (tcp) connections
 							tls-port: open compose [scheme: 'tls conn: (conn)]
 							tls-port/parent: pop3
@@ -307,7 +307,7 @@ sys/make-scheme [
 	awake: func[event /local port type][
 		port: event/port
 		type: event/type
-		sys/log/debug 'POP3 ["POP3-Awake event:" type]
+		log-trace 'POP3 ["POP3-Awake event:" type]
 		switch/default type [
 			error [
 				port/state: 'ERROR
@@ -456,7 +456,7 @@ sys/make-scheme [
 		remove: func[port [port!] /key index [integer!]][
 			unless index [
 				while [not integer? try [index: to integer! ask "Enter mail index: "]][
-					sys/log/error 'POP3 "Index must be an integer!"
+					log-error 'POP3 "Index must be an integer!"
 				]
 			]
 			assert-ready port

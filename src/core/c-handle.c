@@ -85,7 +85,7 @@
 
 	if (!sym) return NOT_FOUND;
 
-	//printf("Register_Handle: %s with size %u\n", SYMBOL_TO_NAME(sym),  size);
+	//printf("Register_Handle: %s with size %u\n", SYMBOL_TO_NAME(sym),  spec->size);
 
 	idx = Find_Handle_Index(sym);
 	if (idx != NOT_FOUND) {
@@ -133,8 +133,11 @@
 
 	//printf("Requested HOB for %s (%u) of size %u\n", SYMBOL_TO_NAME(sym), sym, size);
 	hob = (REBHOB*)Make_Node(HOB_POOL);
-	hob->data  = Make_Managed_CMem(1, size);
-	if (!hob->data) Trap0(RE_NO_MEMORY);
+	// Allocate new memory only if the requested size is greater than the pointer size.
+	if (size > sizeof(void *)) {
+		hob->data = Make_Managed_CMem(1, size);
+		if (!hob->data) Trap0(RE_NO_MEMORY);
+	}
 	hob->index = idx;
 	hob->flags = HANDLE_CONTEXT;
 	hob->sym   = sym;

@@ -23,7 +23,7 @@ wrap [
 				return rsa-init n e
 			]
 		]
-		sys/log/error 'REBOL ["Not RSA key! (" v ")"]
+		log-error 'REBOL ["Not RSA key! (" v ")"]
 		none
 	]
 	init-rsa-public-key: function [data [block!]][
@@ -94,7 +94,7 @@ wrap [
 					pkix/binary: aes/stream d pkix/binary
 				][	return none ]
 			]
-			sys/log/info 'REBOL ["Importing:" pkix/label]
+			log-info 'REBOL ["Importing:" pkix/label]
 
 			switch pkix/label [
 				"SSH2 PUBLIC KEY" [
@@ -105,8 +105,8 @@ wrap [
 			try/with [
 				data: codecs/der/decode pkix/binary
 			][
-				sys/log/error 'REBOL "Failed to decode DER day for RSA key!"
-				sys/log/error 'REBOL system/state/last-error
+				log-error 'REBOL "Failed to decode DER day for RSA key!"
+				log-error 'REBOL system/state/last-error
 				return none
 			]
 			
@@ -140,7 +140,7 @@ wrap [
 								][  init-rsa-private-key data ]
 							]
 						][
-							sys/log/error 'REBOL ["Unknown key type:" codecs/der/decode-OID oid]
+							log-error 'REBOL ["Unknown key type:" codecs/der/decode-OID oid]
 							none
 						]
 					]
