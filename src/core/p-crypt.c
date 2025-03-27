@@ -792,8 +792,9 @@ failed:
 		input += blk;
 		break;
 #endif
-	}
 #endif
+	}
+
 
 	*olen = input - start;
 	return CRYPT_OK;
