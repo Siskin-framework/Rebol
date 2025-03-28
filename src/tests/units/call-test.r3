@@ -144,31 +144,34 @@ rebol-cmd: func[cmd][
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2613
 		--assert all [
 			0 = rebol-cmd rejoin [
-				{--do "print 123" | }
+				{--do "print 123 flush system/ports/output" | }
 				to-local-file system/options/boot 
-				{ --do "probe read system/ports/input"} 
+				{ --cgi --do "probe read/binary system/ports/input"} 
 			]
 			out-buffer == "#{3132330A}^/"
 			err-buffer == ""
 		]
+		? out-buffer
 		--assert all [
 			0 = rebol-cmd rejoin [
-				{--do "prin 123" | }
+				{--do "prin 123 flush system/ports/output" | }
 				to-local-file system/options/boot 
-				{ --do "probe read system/ports/input"} 
+				{ --cgi --do "probe read/binary system/ports/input"} 
 			]
 			out-buffer == "#{313233}^/"
 			err-buffer == ""
 		]
 		--assert all [
 			0 = rebol-cmd rejoin [
-				{--do "prin {}" | }
+				{--do "prin {} flush system/ports/output" | }
 				to-local-file system/options/boot 
-				{ --do "probe read system/ports/input"} 
+				{ --cgi --do "probe read/binary system/ports/input"} 
 			]
 			out-buffer == "#{}^/"
 			err-buffer == ""
 		]
+		? out-buffer
+		? err-buffer
 	--test-- "Resolve length of bytes available on stdin"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2614
 		--assert all [
@@ -189,6 +192,8 @@ rebol-cmd: func[cmd][
 			out-buffer == "1"
 			err-buffer == ""
 		]
+		? out-buffer
+		? err-buffer
 ===end-group===
 
 ~~~end-file~~~
