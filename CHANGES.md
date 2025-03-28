@@ -6,6 +6,10 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Features:
 
+* [`9299d4`](https://github.com/Oldes/Rebol3/commit/9299d440f89754c3d9baa5c4a6a2f0c5c551aa51) Enable AES-NI for hardware AES acceleration on some Intel processors
+* [`db8d5f`](https://github.com/Oldes/Rebol3/commit/db8d5f2731e0f4a1e8536dbecfc9414fea825654) Add support for DES and Triple-DES ciphers
+* [`36c652`](https://github.com/Oldes/Rebol3/commit/36c6529377b870ced25e2f6bf02504c4cda0c937) Registration Data Access Protocol (RDAP) scheme
+* [`5e629e`](https://github.com/Oldes/Rebol3/commit/5e629e25c46812d4af1cb811c3d97bc8212976e1) Add new 'logger' mezzanine-level module
 * [`383c3a`](https://github.com/Oldes/Rebol3/commit/383c3ace4d968fc8b3d6e1035aff8bcc396e7104) Automatic HTTP cookies support
 * [`65b1ea`](https://github.com/Oldes/Rebol3/commit/65b1ea32d30a18f82f2ae89887ebf0c4638829f2) Decode X509Extension OID
 * [`840c6c`](https://github.com/Oldes/Rebol3/commit/840c6c63b329399883efbe20c1fcc3198de2c8bb) Decode OIDs for SECG curves
@@ -16,11 +20,18 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Changes:
 
+* [`8b4ba0`](https://github.com/Oldes/Rebol3/commit/8b4ba0582df6af0f717d01f9da36673db2115631) Updated Mbed-TLS sources to version 3.6.3
+* [`39abe4`](https://github.com/Oldes/Rebol3/commit/39abe4579b3c9619bcb012adeb9e7be5c442fa94) Replace `sys/log/*` function calls with `log-*`
+* [`fdf5d6`](https://github.com/Oldes/Rebol3/commit/fdf5d600fa49c7fd975705c1ac4514b820e851da) Use more efficient OID decoding method
+* [`bb3547`](https://github.com/Oldes/Rebol3/commit/bb3547aa20dbd9578120a34f28f6b9fc658ab334) Replace `sys/log/*` function calls with `log-*`
 * [`9f5315`](https://github.com/Oldes/Rebol3/commit/9f5315d3182a8302e393b8628f68ec838ece8074) Allow `none` value as a parse rule
 * [`0fb5b1`](https://github.com/Oldes/Rebol3/commit/0fb5b140d3971453ae9a11076e3bf9edea95f251) Allow `paren!` in `attempt` function
 
 ### Fixes:
 
+* [`c1fad5`](https://github.com/Oldes/Rebol3/commit/c1fad57c27dcb8cbf4dfb0b4c473f0ca9bbae9a0) Used valid words for ANSI decoration variables in the `logger` module
+* [`2d945d`](https://github.com/Oldes/Rebol3/commit/2d945dbaa2220c46b1e2355f7db8af4ef3bb8060) Crash when using `ecdsa` function without any refine
+* [`2ccaa7`](https://github.com/Oldes/Rebol3/commit/2ccaa749975f99f0314d4846e9b12381b4616ebd) Allocate handle memory only if size exceeds pointer size
 * [`e5ea76`](https://github.com/Oldes/Rebol3/commit/e5ea76727a08cd96b59da5c9066f8b87acaad4d1) Minor code cleanup
 * [`157ae5`](https://github.com/Oldes/Rebol3/commit/157ae53b9be956547761835665bcad7f3d56b0d6) Use 'identity' encoding in HEAD request
 * [`f2418f`](https://github.com/Oldes/Rebol3/commit/f2418f86daafaadba2e75f92b5e0e98f346292fa) Moved `bugs` and `changes` functions into the `help` module
