@@ -1,9 +1,9 @@
 REBOL [
+	title:   "Codec: PLIST"
 	name:    plist
 	type:    module
 	options: [delay]
 	version: 1.0.0
-	title:   "Codec: PLIST"
 	file:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-plist.reb
 	author:  "Oldes"
 	history: [

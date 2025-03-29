@@ -1,12 +1,12 @@
 Rebol [
+	Title:   "Codec: HTML entities"
 	Name:    html-entities
 	Type:    module
-	Options: [delay]
 	Version: 1.0.0
-	Title:   "Codec: HTML entities"
+	Date:    12-May-2020
+	Options: [delay]	
 	Purpose: "To decode HTML entities in a text"
 	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-html-entities.reb
-	Date:    12-May-2020
 	Author:  "Oldes"
 	Rights: http://opensource.org/licenses/Apache-2.0
 	Usage: [

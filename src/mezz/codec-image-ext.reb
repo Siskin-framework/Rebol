@@ -1,9 +1,10 @@
 REBOL [
-	title:  "REBOL 3 image codecs extensions"
-	name:   'codec-image-ext
-	author: "Oldes"
+	title:  "Image codec extensions"
+	name:    image-ext
+	type:    module
 	version: 0.3.0
 	date:    30-Aug-2021
+	author: "Oldes"
 	history: [
 		0.1.0 10-Nov-2020 "Oldes" {Extend native PNG codec with `size?` function}
 		0.2.0 08-Mar-2021 "Oldes" {Extend native PNG with `chunks` function}

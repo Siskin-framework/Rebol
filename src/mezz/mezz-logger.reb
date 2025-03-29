@@ -1,6 +1,5 @@
 REBOL [
 	System: "REBOL [R3] Language Interpreter and Run-time Environment"
-	Title: "REBOL 3 Mezzanine: Logger"
 	Rights: {
 		Copyright 2012 REBOL Technologies
 		Copyright 2012-2025 Rebol Open Source Contributors
@@ -10,14 +9,13 @@ REBOL [
 		Licensed under the Apache License, Version 2.0
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-]
-
-import (module [
 	Title:  "Log-related functions"
 	Name:    logger
 	Version: 1.0.0
 	Exports: [log-error log-warn log-info log-debug log-trace]
-][
+	type: module
+]
+
 	;; used ANSI decorations...
 	!=error!: " ^[[35m["
 	!=warn!:  " ^[[1;33m["
@@ -125,4 +123,4 @@ import (module [
 	]
 
 	protect/words/lock 'log-levels
-])
+

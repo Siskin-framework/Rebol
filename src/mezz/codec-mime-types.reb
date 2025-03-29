@@ -1,11 +1,11 @@
 REBOL [
+	Title:   "Codec: MIME (media) types"
 	Name:    mime-types
 	Type:    module
 	Options: [delay]
 	Version: 1.0.0
 	Date:    13-Jul-2022
-	File:    %mezz-mime-types.reb
-	Title:   "Codec: MIME (media) types"
+	File:    %codec-mime-types.reb
 	Author:  @Oldes
 	Rights:  "Copyright (C) 2022 Oldes. All rights reserved."
 	License: MIT

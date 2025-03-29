@@ -1,10 +1,10 @@
 REBOL [
-	Name:   'ico
+	Title:  "Codec: ICO (Windows icon or cursor file)"
+	Name:    ico
 	Type:    module
-	Options: [delay]
 	Version: 0.0.1
-	Title: "Codec: ICO"
-	Author: Rights: "Oldes"
+	Options: [delay]
+	Author: "Oldes"
 	History: [6-Mar-2021 "Oldes" {Initial version}]
 ]
 

@@ -1,9 +1,9 @@
 REBOL [
+	title:  "Codec: SWF"
 	name:    swf
 	type:    module
 	options: [delay]
 	version: 0.2.0
-	title:  "Codec: SWF"
 	file:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-swf.reb
 	author: "Oldes"
 	date:    25-Feb-2019

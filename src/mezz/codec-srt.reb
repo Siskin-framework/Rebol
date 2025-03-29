@@ -1,10 +1,10 @@
 REBOL [
+	Title:  "Codec: SRT (SubRip Subtitle)"
 	Name:    srt
 	Type:    module
 	Options: [delay]
 	Version: 0.0.1
-	Title: "Codec: SRT"
-	Author: Rights: "Oldes"
+	Author: "Oldes"
 	History: [23-Jan-2025 "Oldes" {Initial version}]
 	Usage: [
 		;- Example how to modify subtitle timestamps

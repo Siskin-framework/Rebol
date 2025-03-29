@@ -1,8 +1,9 @@
 REBOL [
 	title: "Codec: ZIP"
-	name: 'codec-zip
-	author: rights: "Oldes"
+	name:  zip
+	type:  module
 	version: 0.0.4
+	author: "Oldes"
 	specification: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
 	history: [
 		30-Nov-2021 "Oldes" {

@@ -1,8 +1,10 @@
 REBOL [
-	title: "Codec: AR"
-	name: 'codec-ar
-	author: rights: "Oldes"
+	title: "Codec: AR (Unix archive file)"
+	name: ar
+	type: module
 	version: 0.0.2
+	date: 7-Oct-2021
+	author: "Oldes"
 	specification: https://en.wikipedia.org/wiki/Ar_(Unix)
 	history: [7-Oct-2021 "Oldes" {Initial version of the AR decoder}]
 	todo: {AR encoder}
