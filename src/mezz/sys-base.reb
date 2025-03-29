@@ -125,8 +125,8 @@ make-module*: func [
 		spec object!
 		body block!
 		mixins [object! none!]
-		spec/name [word! none!]
-		spec/type [word! none!]
+		spec/name [any-word! none!]
+		spec/type [any-word! none!]
 		spec/version [tuple! none!]
 		spec/options [block! none!]
 	]
@@ -144,7 +144,7 @@ make-module*: func [
 	][
 		append obj 'lib-local ; local import library for the module
 	]
-
+	if spec/name [spec/name: to word! spec/name]
 	unless spec/type [spec/type: 'module] ; in case not set earlier
 
 	; Collect 'export keyword exports, removing the keywords
