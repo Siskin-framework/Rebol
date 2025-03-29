@@ -929,8 +929,6 @@ static void reverse_vector(REBVAL *value, REBCNT len)
 			Query_Vector_Field(vect, SYM_TYPE, Append_Value(blk));
 			Query_Vector_Field(vect, SYM_SIZE, Append_Value(blk));
 			Query_Vector_Field(vect, SYM_LENGTH, Append_Value(blk));
-			Query_Vector_Field(vect, SYM_MINIMUM, Append_Value(blk));
-			Query_Vector_Field(vect, SYM_MAXIMUM, Append_Value(blk));
 			Set_Series(REB_BLOCK, value, blk);
 		} else {
 			if(!Query_Vector_Field(vect, VAL_WORD_SYM(D_ARG(2)), value))
