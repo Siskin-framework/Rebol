@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Developers
+**  Copyright 2021-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -65,7 +65,8 @@
 
 	len = (len + 7) / 8;
 	ser = Make_Binary(len);
-	Clear_Series(ser);
+	//No need to clear the series, because Make_Binary guarantees completely cleared memory.
+	//Clear_Series(ser);
 	SERIES_TAIL(ser) = len;
 	BITS_NOT(ser) = 0;
 

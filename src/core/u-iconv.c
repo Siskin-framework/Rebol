@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -642,9 +642,10 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 		bp = VAL_BIN_AT(data);
 		dst_len = src_len / 2;
 		dst_wide = Make_Series(dst_len + 1, 2, FALSE);
-		memcpy(BIN_HEAD(dst_wide), bp, src_len);
+		COPY_MEM(BIN_HEAD(dst_wide), bp, src_len);
 		dst_wide->tail = dst_len;
-		TERM_SERIES(dst_wide);
+		//No need to terminate the series, because Make_Series guarantees completely cleared memory.
+		//TERM_SERIES(dst_wide); 
 		if (ref_to) {
 			goto convert_to;
 		}

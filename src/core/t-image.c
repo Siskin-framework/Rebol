@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -556,7 +557,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 	img = Make_Series(w * h + 1, sizeof(u32), FALSE);
 	LABEL_SERIES(img, "make image");
 	img->tail = w * h;
-	CLEAR_IMAGE(img->data, w, h);
+	CLEAR_IMAGE(img->data, w, h); // Makes the default image white
 	IMG_WIDE(img) = w;
 	IMG_HIGH(img) = h;
 	return img;

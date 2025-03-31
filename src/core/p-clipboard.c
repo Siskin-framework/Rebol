@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -150,7 +150,7 @@
 			ser = Make_Unicode(len);
 			len = Decode_UTF8(UNI_HEAD(ser), VAL_BIN_DATA(arg), len, FALSE);
 			SERIES_TAIL(ser) = len = abs(len);
-			UNI_TERM(ser);
+			//UNI_TERM(ser); // No need to set a null terminator, as the series is fully cleared.
 			Set_String(arg, ser);
 			req->data = (REBYTE*) UNI_HEAD(ser);
 			SET_FLAG(req->flags, RRF_WIDE);

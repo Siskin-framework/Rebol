@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -551,7 +551,7 @@ void Find_Maximum_Of_Vector(REBSER *vect, REBVAL *ret) {
 	if (len > 0x7fffffff) return 0;
 	ser = Make_Series(len+1, bits/8, TRUE); // !!! can width help extend the len?
 	LABEL_SERIES(ser, "make vector");
-	CLEAR(ser->data, len*bits/8);
+	//No need to clear the series, because Make_Series guarantees completely cleared memory.
 	ser->tail = len;  // !!! another way to do it?
 
 	// Store info about the vector (could be moved to flags if necessary):
