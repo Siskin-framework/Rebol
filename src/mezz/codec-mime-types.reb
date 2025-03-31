@@ -147,7 +147,7 @@ mime-type?: func[/local types type files][
 			)
 		]
 	]
-	system/options/mime-types: :types
+	system/catalog/mime-types: :types
 ]
 ; initialize...
 mime-type?
