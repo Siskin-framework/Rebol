@@ -209,7 +209,6 @@ catalog: object [
 		pause
 		capital	
 	]
-	mime-types: none
 ]
 
 contexts: construct [
