@@ -3,21 +3,21 @@ REBOL [
 	Name:    mime-types
 	Type:    module
 	Options: [delay]
-	Version: 1.0.0
-	Date:    13-Jul-2022
+	Version: 1.1.0
+	Date:    31-Mar-2025
 	File:    %codec-mime-types.reb
 	Author:  @Oldes
-	Rights:  "Copyright (C) 2022 Oldes. All rights reserved."
+	Rights:  "Copyright (C) 2022-2025 Oldes. All rights reserved."
 	License: MIT
 	Exports: [mime-type?]
 ]
 
 ; temporary function used just for the initialization...
 mime-type?: func[/local types type files][
-	unless find system/options 'mime-types [
-		put system/options 'mime-types #(none)
+	unless find system/catalog 'mime-types [
+		put system/catalog 'mime-types #(none)
 	]
-	types: any [system/options/mime-types make map! 110]
+	types: any [system/catalog/mime-types make map! 111]
 	parse [
 		;- collected from https://github.com/nginx/nginx/blob/master/conf/mime.types
 		;; full list: https://www.iana.org/assignments/media-types/media-types.xhtml
@@ -31,17 +31,29 @@ mime-type?: func[/local types type files][
 		"text/x-component"                                 %.htc
 		"image/gif"                                        %.gif
 		"image/jpeg"                                       %.jpeg %.jpg
+		"image/jxl"                                        %.jxl
+		"image/jpx"                                        %.jpx
 		"image/avif"                                       %.avif
+		"image/dds"                                        %.dds
+		"image/heic"                                       %.heic
+		"image/vnd.dwg"                                    %.dwg
 		"image/png"                                        %.png
+		"image/apng"                                       %.apng
+		"image/qoi"                                        %.qoi
 		"image/svg+xml"                                    %.svg %.svgz
 		"image/tiff"                                       %.tif %.tiff
 		"image/vnd.wap.wbmp"                               %.wbmp
+		"image/vnd.adobe.photoshop"                        %.psd
+		"image/vnd.ms-photo"                               %.jxd
 		"image/webp"                                       %.webp
 		"image/x-icon"                                     %.ico
 		"image/x-jng"                                      %.jng
 		"image/x-ms-bmp"                                   %.bmp
+		"image/x-xcf"                                      %.xcf
+		"image/x-canon-cr2"                                %.cr2
 		"font/woff"                                        %.woff
 		"font/woff2"                                       %.woff2
+		"application/gzip"                                 %.gz
 		"application/javascript"                           %.js
 		"application/atom+xml"                             %.atom
 		"application/rss+xml"                              %.rss
@@ -49,12 +61,14 @@ mime-type?: func[/local types type files][
 		"application/json"                                 %.json
 		"application/mac-binhex40"                         %.hqx
 		"application/msword"                               %.doc
+		"application/dicom"                                %.dcm
 		"application/pdf"                                  %.pdf
 		"application/postscript"                           %.ps %.eps %.ai
 		"application/rtf"                                  %.rtf
 		"application/vnd.apple.mpegurl"                    %.m3u8
 		"application/vnd.google-earth.kml+xml"             %.kml
 		"application/vnd.google-earth.kmz"                 %.kmz
+		"application/vnd.ms-cab-compressed"                %.cab
 		"application/vnd.ms-excel"                         %.xls
 		"application/vnd.ms-fontobject"                    %.eot
 		"application/vnd.ms-powerpoint"                    %.ppt
@@ -67,21 +81,38 @@ mime-type?: func[/local types type files][
 		"application/vnd.openxmlformats-officedocument.wordprocessingml.document"    %.docx
 		"application/vnd.wap.wmlc"                         %.wmlc
 		"application/wasm"                                 %.wasm
+		"application/zstd"                                 %.zst %.zstd
 		"application/x-7z-compressed"                      %.7z
+		"application/x-brotli"                             %.br
+		"application/x-bzip2"                              %.bz2
 		"application/x-cocoa"                              %.cco
+		"application/x-deb"                                %.deb
+		"application/x-executable"                         %.elf
+		"application/x-google-chrome-extension"            %.crx
 		"application/x-java-archive-diff"                  %.jardiff
 		"application/x-java-jnlp-file"                     %.jnlp
+		"application/x-lz4"                                %.lz4
+		"application/x-lzip"                               %.lz
+		"application/x-lzop"                               %.lzop
 		"application/x-makeself"                           %.run
+		"application/x-msdownload"                         %.exe
+		"application/x-nintendo-nes-rom"                   %.nes
 		"application/x-perl"                               %.pl %.pm
 		"application/x-pilot"                              %.prc %.pdb
 		"application/x-rar-compressed"                     %.rar
+		"application/x-rpm"                                %.rpm
+		"application/x-tar"                                %.tar
 		"application/x-redhat-package-manager"             %.rpm
 		"application/x-sea"                                %.sea
 		"application/x-shockwave-flash"                    %.swf
+		"application/x-sqlite3"                            %.sqlite
 		"application/x-stuffit"                            %.sit
 		"application/x-tcl"                                %.tcl %.tk
+		"application/x-unix-archive"                       %.ar
 		"application/x-x509-ca-cert"                       %.der %.pem %.crt
 		"application/x-xpinstall"                          %.xpi
+		"application/x-xz"                                 %.xz
+		"application/x-compress"                           %.Z
 		"application/xhtml+xml"                            %.xhtml
 		"application/xspf+xml"                             %.xspf
 		"application/zip"                                  %.zip
@@ -90,6 +121,7 @@ mime-type?: func[/local types type files][
 		"application/octet-stream"                         %.dmg
 		"application/octet-stream"                         %.iso %.img
 		"application/octet-stream"                         %.msi %.msp %.msm
+		"application/epub+zip"                             %.epub
 		"audio/midi"                                       %.mid %.midi %.kar
 		"audio/mpeg"                                       %.mp3
 		"audio/ogg"                                        %.ogg
@@ -124,5 +156,5 @@ mime-type?: func[
 	"Returns file's MIME's content-type"
 	file [file!]
 ][
-	select system/options/mime-types find/last file #"."
+	select system/catalog/mime-types find/last file #"."
 ]

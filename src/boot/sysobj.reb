@@ -56,7 +56,6 @@ options: object [  ; Options supplied to REBOL during startup
 	module-paths: none ;@@ DEPRECATED!
 	default-suffix: %.reb ; Used by IMPORT if no suffix is provided
 	file-types: []
-	mime-types: none
 	result-types: none
 
 	; verbosity of logs per service (codecs, schemes)
@@ -210,6 +209,7 @@ catalog: object [
 		pause
 		capital	
 	]
+	mime-types: none
 ]
 
 contexts: construct [
