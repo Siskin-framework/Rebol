@@ -272,7 +272,7 @@ read-decode: function [
 		data: load-extension source ; returns an object or throws an error
 	][
 		data: read source ; can be string, binary, block
-		if find system/options/file-types type [data: decode type :data] ; e.g. not 'unbound
+		if find system/catalog/file-types type [data: decode type :data] ; e.g. not 'unbound
 	]
 	data
 ]

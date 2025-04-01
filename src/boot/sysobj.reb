@@ -55,7 +55,6 @@ options: object [  ; Options supplied to REBOL during startup
 	probe-limit: 16000 ; Max probed output size
 	module-paths: none ;@@ DEPRECATED!
 	default-suffix: %.reb ; Used by IMPORT if no suffix is provided
-	file-types: []
 	result-types: none
 
 	; verbosity of logs per service (codecs, schemes)
@@ -209,6 +208,7 @@ catalog: object [
 		pause
 		capital	
 	]
+	file-types: []
 ]
 
 contexts: construct [

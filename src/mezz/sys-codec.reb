@@ -19,7 +19,7 @@ REBOL [
 ]
 
 register-codec: function [
-	{Registers non-native codec to system/codecs and it's suffixes into system/options/file-types}
+	{Registers non-native codec to system/codecs and it's suffixes into system/catalog/file-types}
 	codec [block! object!] "Codec to register (should be based on system/standard/codec template)"
 	/local name suffixes
 ][
@@ -31,7 +31,7 @@ register-codec: function [
 	append system/codecs reduce [to set-word! name codec]
 
 	if block? suffixes: try [codec/suffixes][
-		append append system/options/file-types suffixes name
+		append append system/catalog/file-types suffixes name
 	]
 	codec
 ]

@@ -3844,7 +3844,7 @@ This is just generated output from commits in [this repository](https://github.c
   	if find system/codecs 'wav [
   		system/codecs/wav/suffixes: [%.wav %.wave]
   		system/codecs/wav/type: 'binary!
-  		append append system/options/file-types system/codecs/wav/suffixes 'wav
+  		append append system/catalog/file-types system/codecs/wav/suffixes 'wav
   	]
   
   ***********************************************************************/

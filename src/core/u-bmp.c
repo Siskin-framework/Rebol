@@ -31,7 +31,7 @@
 
 	if find system/codecs 'bmp [
 		system/codecs/bmp/suffixes: [%.bmp]
-		append append system/options/file-types system/codecs/bmp/suffixes 'bmp
+		append append system/catalog/file-types system/codecs/bmp/suffixes 'bmp
 	]
 
 ***********************************************************************/
