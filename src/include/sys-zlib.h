@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////
 // File: sys-zlib.h
 // Home: https://github.com/Siskin-framework/Rebol-Zlib
-// Date: 4-Jan-2024
+// Date: 1-Apr-2025
 // Note: This file is amalgamated from these sources:
 //
 //       zconf.h
@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 /* zconf.h -- configuration of the zlib compression library
- * Copyright (C) 1995-2016 Jean-loup Gailly, Mark Adler
+ * Copyright (C) 1995-2024 Jean-loup Gailly, Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -77,6 +77,7 @@
 #  define deflateSetDictionary  z_deflateSetDictionary
 #  define deflateSetHeader      z_deflateSetHeader
 #  define deflateTune           z_deflateTune
+#  define deflateUsed           z_deflateUsed
 #  define deflate_copyright     z_deflate_copyright
 #  define get_crc_table         z_get_crc_table
 #  ifndef Z_SOLO
@@ -252,10 +253,12 @@
 #  endif
 #endif
 
-#if defined(ZLIB_CONST) && !defined(z_const)
-#  define z_const const
-#else
-#  define z_const
+#ifndef z_const
+#  ifdef ZLIB_CONST
+#    define z_const const
+#  else
+#    define z_const
+#  endif
 #endif
 
 #ifdef Z_SOLO
@@ -315,14 +318,6 @@
 #    define OF(args)  args
 #  else
 #    define OF(args)  ()
-#  endif
-#endif
-
-#ifndef Z_ARG /* function prototypes for stdarg */
-#  if defined(STDC) || defined(Z_HAVE_STDARG_H)
-#    define Z_ARG(args)  args
-#  else
-#    define Z_ARG(args)  ()
 #  endif
 #endif
 
@@ -459,11 +454,11 @@ typedef uLong FAR uLongf;
    typedef unsigned long z_crc_t;
 #endif
 
-#ifdef HAVE_UNISTD_H    /* may be set to #if 1 by ./configure */
+#if HAVE_UNISTD_H-0     /* may be set to #if 1 by ./configure */
 #  define Z_HAVE_UNISTD_H
 #endif
 
-#ifdef HAVE_STDARG_H    /* may be set to #if 1 by ./configure */
+#if HAVE_STDARG_H-0     /* may be set to #if 1 by ./configure */
 #  define Z_HAVE_STDARG_H
 #endif
 
@@ -496,12 +491,8 @@ typedef uLong FAR uLongf;
 #endif
 
 #ifndef Z_HAVE_UNISTD_H
-#  ifdef __WATCOMC__
-#    define Z_HAVE_UNISTD_H
-#  endif
-#endif
-#ifndef Z_HAVE_UNISTD_H
-#  if defined(_LARGEFILE64_SOURCE) && !defined(_WIN32)
+#  if defined(__WATCOMC__) || defined(__GO32__) || \
+      (defined(_LARGEFILE64_SOURCE) && !defined(_WIN32))
 #    define Z_HAVE_UNISTD_H
 #  endif
 #endif
@@ -536,17 +527,19 @@ typedef uLong FAR uLongf;
 #endif
 
 #ifndef z_off_t
-#  define z_off_t long
+#  define z_off_t long long
 #endif
 
 #if !defined(_WIN32) && defined(Z_LARGE64)
 #  define z_off64_t off64_t
+#elif defined(__MINGW32__)
+#  define z_off64_t long long
+#elif defined(_WIN32) && !defined(__GNUC__)
+#  define z_off64_t __int64
+#elif defined(__GO32__)
+#  define z_off64_t offset_t
 #else
-#  if defined(_WIN32) && !defined(__GNUC__)
-#    define z_off64_t __int64
-#  else
-#    define z_off64_t z_off_t
-#  endif
+#  define z_off64_t z_off_t
 #endif
 
 /* MVS linker does not support external names larger than 8 bytes */
@@ -568,7 +561,7 @@ typedef uLong FAR uLongf;
 
 #endif /* ZCONF_H */
 /* zutil.h -- internal interface and configuration of the compression library
- * Copyright (C) 1995-2022 Jean-loup Gailly, Mark Adler
+ * Copyright (C) 1995-2024 Jean-loup Gailly, Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -617,6 +610,8 @@ typedef unsigned long  ulg;
 #    define Z_U8 unsigned long
 #  elif (ULLONG_MAX == 0xffffffffffffffff)
 #    define Z_U8 unsigned long long
+#  elif (ULONG_LONG_MAX == 0xffffffffffffffff)
+#    define Z_U8 unsigned long long
 #  elif (UINT_MAX == 0xffffffffffffffff)
 #    define Z_U8 unsigned
 #  endif
@@ -625,14 +620,16 @@ typedef unsigned long  ulg;
 extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 /* (size given to avoid silly warnings with Visual C++) */
 
-#define ERR_MSG(err) z_errmsg[Z_NEED_DICT-(err)]
+#define ERR_MSG(err) z_errmsg[(err) < -6 || (err) > 2 ? 9 : 2 - (err)]
 
 #define ERR_RETURN(strm,err) \
   return (strm->msg = ERR_MSG(err), (err))
 /* To be used only when the state is known to be valid */
 
         /* common constants */
-
+#if MAX_WBITS < 9 || MAX_WBITS > 15
+#  error MAX_WBITS must be in 9..15
+#endif
 #ifndef DEF_WBITS
 #  define DEF_WBITS MAX_WBITS
 #endif
@@ -706,20 +703,11 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #  endif
 #endif
 
-#if defined(MACOS) || defined(TARGET_OS_MAC)
+#if defined(MACOS)
 #  define OS_CODE  7
-#  ifndef Z_SOLO
-#    if defined(__MWERKS__) && __dest_os != __be_os && __dest_os != __win32_os
-#      include <unix.h> /* for fdopen */
-#    else
-#      ifndef fdopen
-#        define fdopen(fd,mode) NULL /* No fdopen() */
-#      endif
-#    endif
-#  endif
 #endif
 
-#ifdef __acorn
+#if defined(__acorn) || defined(__riscos)
 #  define OS_CODE 13
 #endif
 
@@ -739,18 +727,6 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #  define OS_CODE 19
 #endif
 
-#if defined(_BEOS_) || defined(RISCOS)
-#  define fdopen(fd,mode) NULL /* No fdopen() */
-#endif
-
-#if (defined(_MSC_VER) && (_MSC_VER > 600)) && !defined __INTERIX
-#  if defined(_WIN32_WCE)
-#    define fdopen(fd,mode) NULL /* No fdopen() */
-#  else
-#    define fdopen(fd,type)  _fdopen(fd,type)
-#  endif
-#endif
-
 #if defined(__BORLANDC__) && !defined(MSDOS)
   #pragma warn -8004
   #pragma warn -8008
@@ -758,11 +734,10 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #endif
 
 /* provide prototypes for these when building zlib without LFS */
-#if !defined(_WIN32) && \
-    (!defined(_LARGEFILE64_SOURCE) || _LFS64_LARGEFILE-0 == 0)
-    ZEXTERN uLong ZEXPORT adler32_combine64(uLong, uLong, z_off_t);
-    ZEXTERN uLong ZEXPORT crc32_combine64(uLong, uLong, z_off_t);
-    ZEXTERN uLong ZEXPORT crc32_combine_gen64(z_off_t);
+#ifndef Z_LARGE64
+   ZEXTERN uLong ZEXPORT adler32_combine64(uLong, uLong, z_off64_t);
+   ZEXTERN uLong ZEXPORT crc32_combine64(uLong, uLong, z_off64_t);
+   ZEXTERN uLong ZEXPORT crc32_combine_gen64(z_off64_t);
 #endif
 
         /* common defaults */
@@ -843,9 +818,9 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 
 #endif /* ZUTIL_H */
 /* zlib.h -- interface of the 'zlib' general purpose compression library
-  version 1.3.0.1, August xxth, 2023
+  version 1.3.1.1, January xxth, 2024
 
-  Copyright (C) 1995-2023 Jean-loup Gailly and Mark Adler
+  Copyright (C) 1995-2024 Jean-loup Gailly and Mark Adler
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -875,17 +850,21 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #ifndef ZLIB_H
 #define ZLIB_H
 
-//REBOL: #include "zconf.h"
+#ifdef ZLIB_BUILD
+#  include <zconf.h>
+#else
+//REBOL: # include "zconf.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define ZLIB_VERSION "1.3.0.1-motley"
-#define ZLIB_VERNUM 0x1301
+#define ZLIB_VERSION "1.3.1.1-motley"
+#define ZLIB_VERNUM 0x1311
 #define ZLIB_VER_MAJOR 1
 #define ZLIB_VER_MINOR 3
-#define ZLIB_VER_REVISION 0
+#define ZLIB_VER_REVISION 1
 #define ZLIB_VER_SUBREVISION 1
 
 /*
@@ -1431,18 +1410,21 @@ ZEXTERN int ZEXPORT deflateInit2(z_streamp strm,
 
      The strategy parameter is used to tune the compression algorithm.  Use the
    value Z_DEFAULT_STRATEGY for normal data, Z_FILTERED for data produced by a
-   filter (or predictor), Z_HUFFMAN_ONLY to force Huffman encoding only (no
-   string match), or Z_RLE to limit match distances to one (run-length
-   encoding).  Filtered data consists mostly of small values with a somewhat
-   random distribution.  In this case, the compression algorithm is tuned to
-   compress them better.  The effect of Z_FILTERED is to force more Huffman
-   coding and less string matching; it is somewhat intermediate between
-   Z_DEFAULT_STRATEGY and Z_HUFFMAN_ONLY.  Z_RLE is designed to be almost as
-   fast as Z_HUFFMAN_ONLY, but give better compression for PNG image data.  The
-   strategy parameter only affects the compression ratio but not the
-   correctness of the compressed output even if it is not set appropriately.
-   Z_FIXED prevents the use of dynamic Huffman codes, allowing for a simpler
-   decoder for special applications.
+   filter (or predictor), Z_RLE to limit match distances to one (run-length
+   encoding), or Z_HUFFMAN_ONLY to force Huffman encoding only (no string
+   matching).  Filtered data consists mostly of small values with a somewhat
+   random distribution, as produced by the PNG filters.  In this case, the
+   compression algorithm is tuned to compress them better.  The effect of
+   Z_FILTERED is to force more Huffman coding and less string matching than the
+   default; it is intermediate between Z_DEFAULT_STRATEGY and Z_HUFFMAN_ONLY.
+   Z_RLE is almost as fast as Z_HUFFMAN_ONLY, but should give better
+   compression for PNG image data than Huffman only.  The degree of string
+   matching from most to none is: Z_DEFAULT_STRATEGY, Z_FILTERED, Z_RLE, then
+   Z_HUFFMAN_ONLY. The strategy parameter affects the compression ratio but
+   never the correctness of the compressed output, even if it is not set
+   optimally for the given data.  Z_FIXED uses the default string matching, but
+   prevents the use of dynamic Huffman codes, allowing for a simpler decoder
+   for special applications.
 
      deflateInit2 returns Z_OK if success, Z_MEM_ERROR if there was not enough
    memory, Z_STREAM_ERROR if any parameter is invalid (such as an invalid
@@ -1629,6 +1611,18 @@ ZEXTERN int ZEXPORT deflatePending(z_streamp strm,
    or bits are Z_NULL, then those values are not set.
 
      deflatePending returns Z_OK if success, or Z_STREAM_ERROR if the source
+   stream state was inconsistent.
+ */
+
+ZEXTERN int ZEXPORT deflateUsed(z_streamp strm,
+                                int *bits);
+/*
+     deflateUsed() returns in *bits the most recent number of deflate bits used
+   in the last byte when flushing to a byte boundary. The result is in 1..8, or
+   0 if there has not yet been a flush. This helps determine the location of
+   the last bit of a deflate stream.
+
+     deflateUsed returns Z_OK if success, or Z_STREAM_ERROR if the source
    stream state was inconsistent.
  */
 
@@ -2602,14 +2596,14 @@ ZEXTERN uLong ZEXPORT crc32_combine(uLong crc1, uLong crc2, z_off_t len2);
    seq1 and seq2 with lengths len1 and len2, CRC-32 check values were
    calculated for each, crc1 and crc2.  crc32_combine() returns the CRC-32
    check value of seq1 and seq2 concatenated, requiring only crc1, crc2, and
-   len2.
+   len2. len2 must be non-negative.
 */
 
 /*
 ZEXTERN uLong ZEXPORT crc32_combine_gen(z_off_t len2);
 
      Return the operator corresponding to length len2, to be used with
-   crc32_combine_op().
+   crc32_combine_op(). len2 must be non-negative.
 */
 
 ZEXTERN uLong ZEXPORT crc32_combine_op(uLong crc1, uLong crc2, uLong op);
@@ -2732,9 +2726,9 @@ ZEXTERN int ZEXPORT gzgetc_(gzFile file);       /* backward compatibility */
      ZEXTERN z_off_t ZEXPORT gzseek64(gzFile, z_off_t, int);
      ZEXTERN z_off_t ZEXPORT gztell64(gzFile);
      ZEXTERN z_off_t ZEXPORT gzoffset64(gzFile);
-     ZEXTERN uLong ZEXPORT adler32_combine64(uLong, uLong, z_off_t);
-     ZEXTERN uLong ZEXPORT crc32_combine64(uLong, uLong, z_off_t);
-     ZEXTERN uLong ZEXPORT crc32_combine_gen64(z_off_t);
+     ZEXTERN uLong ZEXPORT adler32_combine64(uLong, uLong, z_off64_t);
+     ZEXTERN uLong ZEXPORT crc32_combine64(uLong, uLong, z_off64_t);
+     ZEXTERN uLong ZEXPORT crc32_combine_gen64(z_off64_t);
 #  endif
 #else
    ZEXTERN gzFile ZEXPORT gzopen(const char *, const char *);
@@ -2781,7 +2775,7 @@ ZEXTERN int            ZEXPORTVA gzvprintf(gzFile file,
 
 #endif /* ZLIB_H */
 /* deflate.h -- internal compression state
- * Copyright (C) 1995-2018 Jean-loup Gailly
+ * Copyright (C) 1995-2024 Jean-loup Gailly
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -3004,9 +2998,11 @@ typedef struct internal_state {
      */
 
 #ifdef LIT_MEM
+#   define LIT_BUFS 5
     ushf *d_buf;          /* buffer for distances */
     uchf *l_buf;          /* buffer for literals/lengths */
 #else
+#   define LIT_BUFS 4
     uchf *sym_buf;        /* buffer for distances and literals/lengths */
 #endif
 
@@ -3050,6 +3046,9 @@ typedef struct internal_state {
     int bi_valid;
     /* Number of valid bits in bi_buf.  All bits above the last valid bit
      * are always zero.
+     */
+    int bi_used;
+    /* Last number of used bits when going to a byte boundary.
      */
 
     ulg high_water;
