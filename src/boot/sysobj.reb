@@ -253,6 +253,7 @@ modules: object [
 	webp:          https://github.com/Oldes/Rebol-WebP/releases/download/1.4.0.0/
 	;; optional modules, protocol and codecs
 	github:           https://src.rebol.tech/modules/github.reb
+	identify:         https://src.rebol.tech/modules/identify.reb
 	httpd:            https://src.rebol.tech/modules/httpd.reb
 	prebol:           https://src.rebol.tech/modules/prebol.reb
 	scheduler:        https://src.rebol.tech/modules/scheduler.reb
