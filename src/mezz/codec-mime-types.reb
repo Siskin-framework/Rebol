@@ -117,10 +117,10 @@ mime-type?: func[/local types type files][
 		"application/xspf+xml"                             %xspf
 		"application/zip"                                  %zip
 		"application/octet-stream"                         %bin %exe %dll
-		"application/octet-stream"                         %deb
-		"application/octet-stream"                         %dmg
-		"application/octet-stream"                         %iso %img
-		"application/octet-stream"                         %msi %msp %msm
+		                                                   %deb
+		                                                   %dmg
+		                                                   %iso %img
+		                                                   %msi %msp %msm
 		"application/epub+zip"                             %epub
 		"audio/midi"                                       %mid %midi %kar
 		"audio/mpeg"                                       %mp3
@@ -144,6 +144,7 @@ mime-type?: func[/local types type files][
 	][
 		some [
 			set type string! copy files some file! (
+				protect type
 				foreach file files [ types/:file: type ]
 			)
 		]
@@ -154,8 +155,10 @@ mime-type?
 ; redefine the function into something useful...
 mime-type?: func[
 	"Returns file's MIME's content-type"
-	file [file! word!]
+	file [file! word! none!]
+	return: [string! none!]
 ][
+	unless file [return none]
 	file: either word? file [
 		to file! file
 	][	any [find/last/tail file #"." file]]
