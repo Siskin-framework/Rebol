@@ -38,7 +38,7 @@ Syntax: [
 	type: "syntax error"
 	invalid:            [{invalid} :arg1 {--} :arg2]
 	missing:            [{missing} :arg2 {at} :arg1]
-	no-header:          [{missing or invalid REBOL header:} :arg1]
+	no-header:          [{script is missing a REBOL header:} :arg1]
 	bad-header:         [{script header is not valid:} :arg1]
 	bad-checksum:       [{script checksum failed:} :arg1]
 	malconstruct:       [{invalid construction spec:} :arg1]
