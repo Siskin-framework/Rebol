@@ -2354,6 +2354,7 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 					//Debug_Fmt("Quit(init)");
 					OS_EXIT(VAL_INT32(VAL_ERR_VALUE(val))); // console quit
 				}
+				if (VAL_ERR_NUM(val) == RE_HALT) return -ROF_HALT;
 				if (VAL_ERR_NUM(val) >= RE_THROW_MAX)
 					Print_Value(val, 1000, FALSE, TRUE);
 			}
