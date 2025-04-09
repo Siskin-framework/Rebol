@@ -243,7 +243,7 @@ state: object [
 modules: object [
 	help:    none
 	;; external native extensions
-	blend2d:       https://github.com/Siskin-framework/Rebol-Blend2D/releases/download/0.0.18.1/
+	blend2d:       https://github.com/Siskin-framework/Rebol-Blend2D/releases/download/0.12.0/
 	blurhash:      https://github.com/Siskin-framework/Rebol-BlurHash/releases/download/1.0.0/
 	easing:        https://github.com/Siskin-framework/Rebol-Easing/releases/download/1.0.0/
 	mathpresso:    https://github.com/Siskin-framework/Rebol-MathPresso/releases/download/0.1.0/
