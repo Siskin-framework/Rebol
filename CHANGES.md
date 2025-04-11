@@ -2,10 +2,29 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+## 2025 April
+
+### Features:
+
+* [`42a79c`](https://github.com/Oldes/Rebol3/commit/42a79cae193fa67d89e3b20edd5705b0d69b5651) Add 'identify' module for file type detection
+
+### Changes:
+
+* [`4359a8`](https://github.com/Oldes/Rebol3/commit/4359a8a37d5bd4afd52fc77118028251890118c8) `halt` now stops evaluation and returns to REPL prompt
+* [`0c4125`](https://github.com/Oldes/Rebol3/commit/0c4125d6242d98b2155ec18be7478b80603b46c0) Updated Blend2D module version
+* [`5e9180`](https://github.com/Oldes/Rebol3/commit/5e9180bfa42963df5e0b05d1007531f6de9872d7) Better error message when header is not valid
+* [`fa1a51`](https://github.com/Oldes/Rebol3/commit/fa1a51d9d4a535bc9976616269e097824e564594) Modified `no-header` error message
+* [`75bd4f`](https://github.com/Oldes/Rebol3/commit/75bd4f430e5b4ee0770908fa90a38a16c06161ad) Allow `mime-type?` to accept `none` and protect its values
+* [`da57db`](https://github.com/Oldes/Rebol3/commit/da57db5fe1cb71254f2e628286f03ae8f584bdcd) Zlib source updated to version 1.3.1.1
+* [`a00220`](https://github.com/Oldes/Rebol3/commit/a002205eb5dfeda3a958374240b3faf2ab6d4eaa) Update `mime-type?` to accept words as input
+* [`64b9d8`](https://github.com/Oldes/Rebol3/commit/64b9d8992efd6b77ff290416e48c798c607179e7) Moved `file-types` from `system/options` to `system/catalog`
+
+
 ## 2025 March
 
 ### Features:
 
+* [`436154`](https://github.com/Oldes/Rebol3/commit/436154a64e76a16adba9da691341e87409fbbbf3) Expand mime-types codec to recognize more common types
 * [`9299d4`](https://github.com/Oldes/Rebol3/commit/9299d440f89754c3d9baa5c4a6a2f0c5c551aa51) Enable AES-NI for hardware AES acceleration on some Intel processors
 * [`db8d5f`](https://github.com/Oldes/Rebol3/commit/db8d5f2731e0f4a1e8536dbecfc9414fea825654) Add support for DES and Triple-DES ciphers
 * [`36c652`](https://github.com/Oldes/Rebol3/commit/36c6529377b870ced25e2f6bf02504c4cda0c937) Registration Data Access Protocol (RDAP) scheme
@@ -20,6 +39,8 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Changes:
 
+* [`53e65d`](https://github.com/Oldes/Rebol3/commit/53e65ddd4697e8cee80f1f206c519127a4f55005) Ensure all made series are cleared
+* [`4a73cb`](https://github.com/Oldes/Rebol3/commit/4a73cbb5fc26c183ce1754497519c6f8738c6d80) Encapsulate all codecs as modules
 * [`8b4ba0`](https://github.com/Oldes/Rebol3/commit/8b4ba0582df6af0f717d01f9da36673db2115631) Updated Mbed-TLS sources to version 3.6.3
 * [`39abe4`](https://github.com/Oldes/Rebol3/commit/39abe4579b3c9619bcb012adeb9e7be5c442fa94) Replace `sys/log/*` function calls with `log-*`
 * [`fdf5d6`](https://github.com/Oldes/Rebol3/commit/fdf5d600fa49c7fd975705c1ac4514b820e851da) Use more efficient OID decoding method
@@ -29,6 +50,9 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`76ee1e`](https://github.com/Oldes/Rebol3/commit/76ee1e3f82fd34543aba0558f871802ea3b8c62a) Allow lit-word as module name in header
+* [`32eb23`](https://github.com/Oldes/Rebol3/commit/32eb23a1396620e3ed9f7c4c31db4e3e92ac284b) `spec-of` on vector should not return minimum and maximum values
+* [`496871`](https://github.com/Oldes/Rebol3/commit/496871d99394a4cfc6b63eb6f17e139eab3bd0cc) Handle empty pipe input on Windows
 * [`c1fad5`](https://github.com/Oldes/Rebol3/commit/c1fad57c27dcb8cbf4dfb0b4c473f0ca9bbae9a0) Used valid words for ANSI decoration variables in the `logger` module
 * [`2d945d`](https://github.com/Oldes/Rebol3/commit/2d945dbaa2220c46b1e2355f7db8af4ef3bb8060) Crash when using `ecdsa` function without any refine
 * [`2ccaa7`](https://github.com/Oldes/Rebol3/commit/2ccaa749975f99f0314d4846e9b12381b4616ebd) Allocate handle memory only if size exceeds pointer size
