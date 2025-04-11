@@ -1,5 +1,4 @@
-[![rebol](https://github.com/user-attachments/assets/a51b0c99-660e-49b2-a859-eed156ab1a61)](https://rebol.tech)
-
+[![rebol-3](https://github.com/user-attachments/assets/8b71fff1-b421-4254-a1c0-eea4f4791cc5)](https://rebol.tech)
 
 [![Rebol CI](https://github.com/Oldes/Rebol3/actions/workflows/main.yml/badge.svg)](https://github.com/Oldes/Rebol3/actions/workflows/main.yml)
 [![Build Rebol](https://github.com/Oldes/Rebol3/actions/workflows/build-all.yml/badge.svg)](https://github.com/Oldes/Rebol3/actions/workflows/build-all.yml)
