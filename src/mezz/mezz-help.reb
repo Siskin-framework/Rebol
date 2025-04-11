@@ -99,7 +99,8 @@ import (module [
 			object?       :val [ words-of val ]
 			module?       :val [
 				hdr: spec-of :val
-				either val: select hdr 'title [ if #"." <> last val [append val #"."] ][ val: copy "" ]
+				val: copy any [select hdr 'title ""]
+				if all [tmp: last val tmp <> #"."] [append val #"."]
 				if tmp: select hdr 'version [ append val ajoin [SP "Version: " tmp] ]
 				if tmp: select hdr 'exports [ append append val SP mold/flat tmp ]
 				val

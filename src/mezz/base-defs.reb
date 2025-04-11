@@ -68,13 +68,13 @@ foreach [codec handler] system/codecs [
 		]
 		; Media-types block format: [.abc .def type ...]
 		if codec/suffixes [ ;append to file-types only if there is any suffix
-			append append system/options/file-types codec/suffixes codec/name
+			append append system/catalog/file-types codec/suffixes codec/name
 		]
 	]
 ]
 
 ; Special import case for extensions:
-append system/options/file-types switch/default fourth system/version [
+append system/catalog/file-types switch/default fourth system/version [
 	3 [[%.rebx %.dll extension]]  ; Windows
 	2 [[%.rebx %.dylib %.so extension]]  ; OS X
 	4 7 [[%.rebx %.so extension]]  ; Other Posix

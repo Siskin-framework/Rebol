@@ -303,6 +303,11 @@ Rebol [
 		clear m
 		--assert none? select m 'a
 
+	--test-- "map expansion"
+		m: make map! []
+		;; Appending many values requires multiple expansions and rehashing
+		repeat i 100 [k: join "a" i m/:k: i] ;; no crash
+		--assert 100 == m/("a100")
 
 ===end-group===
 

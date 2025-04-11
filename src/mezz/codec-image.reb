@@ -1,9 +1,10 @@
 REBOL [
 	title:  "Codec: image file formats"
-	name:   'codec-image
-	author: "Oldes"
+	name:    image-codecs
+	type:    module
 	version: 0.2.0
 	date:    10-Sep-2021
+	author: "Oldes"
 	history: [
 		0.1.0 31-Jul-2019 "Oldes" {Initial version}
 		0.2.0 10-Sep-2021 "Oldes" {Merged with macOS codecs}

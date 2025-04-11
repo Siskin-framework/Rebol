@@ -1676,7 +1676,7 @@ static REBCNT EncodedVINT_Size(REBU64 value) {
 							// Extract the VINT value
 							ASSERT_READ_SIZE(value, cp, ep, n);
 							u = (u64)(cp[0] & (0xFF >> n));
-    						for (int i = 1; i < n; i++) {
+    						for (REBCNT i = 1; i < n; i++) {
 								u = (u << 8) | cp[i];
 							}
 							VAL_SET(temp, REB_INTEGER);

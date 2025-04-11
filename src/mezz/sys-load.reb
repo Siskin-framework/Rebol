@@ -131,8 +131,10 @@ load-header: function/with [
 		]
 		set/any [key: rest: line:] transcode/only/line data 1           none ; get 'rebol keyword
 		set/any [hdr: rest: line:] transcode/next/error/line rest :line none ; get header block
-		not block? :hdr [return 'no-header] ; header block is incomplete
-		not attempt [hdr: construct/with :hdr system/standard/header][return 'bad-header]
+		any [
+			not block? :hdr ; header block is incomplete
+			not attempt [hdr: construct/with :hdr system/standard/header]
+		][	return 'bad-header]
 		word? :hdr/options [hdr/options: to block! :hdr/options]
 		not any [block? :hdr/options none? :hdr/options][return 'bad-header]
 		not any [binary? :hdr/checksum none? :hdr/checksum][return 'bad-checksum]
@@ -272,7 +274,7 @@ read-decode: function [
 		data: load-extension source ; returns an object or throws an error
 	][
 		data: read source ; can be string, binary, block
-		if find system/options/file-types type [data: decode type :data] ; e.g. not 'unbound
+		if find system/catalog/file-types type [data: decode type :data] ; e.g. not 'unbound
 	]
 	data
 ]

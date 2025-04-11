@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,12 +38,12 @@
 /*
 **		Make a binary string series. For byte, C, and UTF8 strings.
 **		Add 1 extra for terminator.
+**		Memory is cleared.
 **
 ***********************************************************************/
 {
 	REBSER *series = Make_Series(length + 1, sizeof(REBYTE), FALSE);
 	LABEL_SERIES(series, "make binary");
-	BIN_DATA(series)[length] = 0;
 	return series;
 }
 
@@ -54,12 +54,12 @@
 /*
 **		Make a unicode string series. Used for internal strings.
 **		Add 1 extra for terminator.
+**		Memory is cleared.
 **
 ***********************************************************************/
 {
 	REBSER *series = Make_Series(length + 1, sizeof(REBUNI), FALSE);
 	LABEL_SERIES(series, "make unicode");
-	UNI_HEAD(series)[length] = 0;
 	return series;
 }
 
@@ -78,7 +78,7 @@
 	if (len < 0) len = (REBINT)LEN_BYTES(src);
 
 	dst = Make_Binary(len);
-	memcpy(STR_DATA(dst), src, len);
+	COPY_MEM(STR_DATA(dst), src, len);
 	SERIES_TAIL(dst) = len;
 	STR_TERM(dst);
 
@@ -338,7 +338,8 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 	dst = Make_Series(length + 1, wide, FALSE);
 	Insert_String(dst, 0, src, index, length, TRUE);
 	SERIES_TAIL(dst) = length;
-	TERM_SERIES(dst);
+	//No need to terminate the series, because Make_Series guarantees completely cleared memory.
+	//TERM_SERIES(dst);
 
 	return dst;
 }

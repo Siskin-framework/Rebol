@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -268,7 +268,7 @@ FORCE_INLINE
 /*
 ***********************************************************************/
 {
-	return Free_Managed_Mem(0, address);
+	Free_Managed_Mem(0, address);
 }
 
 /***********************************************************************
@@ -504,9 +504,10 @@ FORCE_INLINE
 */	REBSER *Make_Series(REBCNT length, REBCNT wide, REBOOL powerof2)
 /*
 **		Make a series of a given length and width (unit size).
-**		Small series will be allocated from a REBOL pool.
-**		Large series will be allocated from system memory.
-**		A width of zero is not allowed.
+**		- Small series will be allocated from a REBOL pool.
+**		- Large series will be allocated from system memory.
+**		- A width of zero is not allowed.
+**		- Memory is always zeroed out.
 **
 ***********************************************************************/
 {
@@ -550,10 +551,9 @@ FORCE_INLINE
 			Debug_Num("Alloc2:", length);
 #endif
 #ifdef MUNGWALL
-		node = (REBNOD *) Make_Mem(length+2*MUNG_SIZE);
+		node = (REBNOD *) Make_CMem(length+2*MUNG_SIZE);
 #else
-		node = (REBNOD *) Make_Mem(length);
-		// NOTE: allocated node's memory is not cleared!
+		node = (REBNOD *) Make_CMem(length);
 #endif
 		if (!node) {
 			Free_Node(SERIES_POOL, (REBNOD *)series);

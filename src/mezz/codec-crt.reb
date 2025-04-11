@@ -1,9 +1,10 @@
 REBOL [
 	title:   "Codec: CRT"
-	Purpose: "Codec for X.509 Public Key Infrastructure Certificate"
-	name: 'codec-crt
-	author: rights: "Oldes"
+	name:    crt
+	type:    module
 	version: 0.0.1
+	Purpose: "Codec for X.509 Public Key Infrastructure Certificate"
+	author:  "Oldes"
 ]
 
 register-codec [

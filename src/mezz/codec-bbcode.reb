@@ -1,12 +1,12 @@
 REBOL [
+	Title:   "Codec: BBcode"
 	Name:    bbcode
 	Type:    module
-	Options: [delay]
 	Version: 0.3.4
-	Title:   "Codec: BBcode"
+	Date:    13-Dec-2023
+	Options: [delay]	
 	Purpose: {Basic BBCode implementation. For more info about BBCode check http://en.wikipedia.org/wiki/BBCode}
 	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-bbcode.reb
-	Date:    13-Dec-2023
 	Author:  "Oldes"
 	History: [
 		0.1.0  5-Jan-2009 "initial version"

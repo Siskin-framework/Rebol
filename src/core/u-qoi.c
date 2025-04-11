@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,7 @@
 		system/codecs/qoi/title: "Quite OK Image"
 		system/codecs/qoi/type: 'image
 		system/codecs/qoi/suffixes: [%.qoi]
-		append append system/options/file-types system/codecs/qoi/suffixes 'qoi
+		append append system/catalog/file-types system/codecs/qoi/suffixes 'qoi
 	]
 
 ***********************************************************************/

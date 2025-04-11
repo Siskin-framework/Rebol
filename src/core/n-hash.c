@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -316,7 +316,8 @@ FORCE_INLINE
 
 	ser = Make_Series(n + 1, sizeof(REBCNT), FALSE);
 	LABEL_SERIES(ser, "make hash array");
-	Clear_Series(ser);
+	//No need to clear the series, because Make_Series guarantees completely cleared memory.
+	//Clear_Series(ser);
 	ser->tail = n;
 
 	return ser;

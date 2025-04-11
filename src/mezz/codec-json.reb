@@ -1,9 +1,9 @@
 Rebol [
+	Title:   "Codec: JSON"
 	Name:    json
 	Type:    module
-	Exports: [to-json load-json]
 	Version: 0.1.2
-	Title:   "Codec: JSON"
+	Exports: [to-json load-json]
 	Purpose: "Convert Rebol value into JSON format and back."
 	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-json.reb
 	Author: [

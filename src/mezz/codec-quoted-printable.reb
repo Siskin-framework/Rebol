@@ -1,12 +1,12 @@
 REBOL [
+	Title:   "Codec: quoted-printable encoding"
 	Name:    quoted-printable
 	Type:    module
 	Options: [delay]
 	Version: 1.0.0
-	Title:   "Codec: quoted-printable encoding"
 	Author:  "Oldes"
 	Rights:  "Copyright (C) 2022 Oldes. All rights reserved."
-	License: "BSD-3"
+	License: MIT
 	Test:    %tests/units/codec-test.r3
 	Specification: https://en.wikipedia.org/wiki/Quoted-printable
 ]

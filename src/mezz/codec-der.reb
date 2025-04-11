@@ -1,9 +1,10 @@
 REBOL [
 	title: "Codec: DER/BER structures"
-	name: 'codec-der
-	author: "Oldes"
+	name: der
+	type: module
 	version: 0.3.1
 	date:    18-Mar-2025
+	author: "Oldes"	
 	history: [
 		0.1.0 17-Oct-2018 "Oldes" {Initial version with DECODE and IDENTIFY functions.}
 		0.2.0 17-Feb-2022 "Oldes" {Including `form-id`}
@@ -427,7 +428,7 @@ register-codec [
 					0#04 keyUsageRestriction    ;; Obsolete, use keyUsage/extKeyUsage instead
 					0#0E subjectKeyIdentifier   ;; Unique ID of the public key 
 					0#0F keyUsage               ;; Defines permitted key operations, e.g., signing, encryption
-					0#11 subjectAlternativeName ;; Alternative names, such as multiple domains or emails
+					0#11 subjectAltName         ;; Alternative names, such as multiple domains or emails
 					0#12 issuerAlternativeName  ;; Alternative names for the certificate issuer
 					0#13 basicConstraints       ;; Defines whether the certificate is a CA or end-entity
 					0#1E nameConstraints        ;; Defines allowed or disallowed name spaces

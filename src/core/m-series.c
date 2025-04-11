@@ -3,6 +3,7 @@
 **  REBOL Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -131,11 +132,11 @@
 		//ENABLE_GC;
 
 		// Copy the series up to the expansion point:
-		memcpy(newser->data, series->data, start);
+		COPY_MEM(newser->data, series->data, start);
 
 		// Copy the series after the expansion point:
 		// In AT_TAIL cases, this just moves the terminator to the new tail.
-		memcpy(newser->data + start + extra, series->data + start, size - start);
+		COPY_MEM(newser->data + start + extra, series->data + start, size - start);
 
 		newser->tail = series->tail + delta;
 
@@ -260,7 +261,7 @@
 	REBCNT len = source->tail + 1;
 	REBSER *series = Make_Series(len, SERIES_WIDE(source), FALSE);
 
-	memcpy(series->data, source->data, len * SERIES_WIDE(source));
+	COPY_MEM(series->data, source->data, len * SERIES_WIDE(source));
 	series->tail = source->tail;
 	return series;
 }
@@ -276,7 +277,7 @@
 {
 	REBSER *series = Make_Series(length+1, SERIES_WIDE(source), FALSE);
 
-	memcpy(series->data, source->data + index * SERIES_WIDE(source), (length+1) * SERIES_WIDE(source));
+	COPY_MEM(series->data, source->data + index * SERIES_WIDE(source), (length+1) * SERIES_WIDE(source));
 	series->tail = length;
 	return series;
 }
@@ -548,7 +549,7 @@
 
 	ser = Make_Series(len+1, SERIES_WIDE(buf), FALSE);
 
-	memcpy(ser->data, buf->data, SERIES_WIDE(buf) * len);
+	COPY_MEM(ser->data, buf->data, SERIES_WIDE(buf) * len);
 	ser->tail = len;
 	TERM_SERIES(ser);
 

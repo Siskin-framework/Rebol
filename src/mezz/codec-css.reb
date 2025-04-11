@@ -1,14 +1,14 @@
 Rebol [
-	title: "CSS utilities"
-	type: module
-	name: css
-	Date:    14-Mar-2025
-	Version: 0.1.1
-	Author:  @Oldes
-	Home:    https://github.com/Oldes/Rebol-CSS
-	Rights:  MIT
-	Purpose: {Tokenize CSS content and minify it}
-	Exports: [css-tokenize css-minify]
+	title:   "CSS utilities"
+	name:    css
+	type:    module
+	version: 0.1.1
+	date:    14-Mar-2025
+	author:  @Oldes
+	home:    https://github.com/Oldes/Rebol-CSS
+	rights:  MIT
+	purpose: {Tokenize CSS content and minify it}
+	exports: [css-tokenize css-minify]
 ]
 
 rules: context [

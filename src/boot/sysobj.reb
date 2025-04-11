@@ -55,8 +55,6 @@ options: object [  ; Options supplied to REBOL during startup
 	probe-limit: 16000 ; Max probed output size
 	module-paths: none ;@@ DEPRECATED!
 	default-suffix: %.reb ; Used by IMPORT if no suffix is provided
-	file-types: []
-	mime-types: none
 	result-types: none
 
 	; verbosity of logs per service (codecs, schemes)
@@ -210,6 +208,7 @@ catalog: object [
 		pause
 		capital	
 	]
+	file-types: []
 ]
 
 contexts: construct [
@@ -244,7 +243,7 @@ state: object [
 modules: object [
 	help:    none
 	;; external native extensions
-	blend2d:       https://github.com/Siskin-framework/Rebol-Blend2D/releases/download/0.0.18.1/
+	blend2d:       https://github.com/Siskin-framework/Rebol-Blend2D/releases/download/0.12.0/
 	blurhash:      https://github.com/Siskin-framework/Rebol-BlurHash/releases/download/1.0.0/
 	easing:        https://github.com/Siskin-framework/Rebol-Easing/releases/download/1.0.0/
 	mathpresso:    https://github.com/Siskin-framework/Rebol-MathPresso/releases/download/0.1.0/
@@ -254,6 +253,7 @@ modules: object [
 	webp:          https://github.com/Oldes/Rebol-WebP/releases/download/1.4.0.0/
 	;; optional modules, protocol and codecs
 	github:           https://src.rebol.tech/modules/github.reb
+	identify:         https://src.rebol.tech/modules/identify.reb
 	httpd:            https://src.rebol.tech/modules/httpd.reb
 	prebol:           https://src.rebol.tech/modules/prebol.reb
 	scheduler:        https://src.rebol.tech/modules/scheduler.reb

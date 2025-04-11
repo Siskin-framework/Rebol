@@ -205,6 +205,7 @@ protect-system-object: func [
 
 	unprotect/values [
 		system/options ; some are modified by scripts
+		system/catalog/file-types
 	]
 	unprotect/words [
 		system/script

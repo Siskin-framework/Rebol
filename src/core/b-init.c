@@ -1005,6 +1005,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 {
 	REBVAL *blk;
 	REBVAL  tmp;
+	(void)tmp; // to silence unreferenced local variable warning in case there is no compression included
 	#define add_compression(sym) Init_Word(&tmp, sym); VAL_SET_LINE(&tmp); Append_Val(VAL_SERIES(blk), &tmp);
 	blk = Get_System(SYS_CATALOG, CAT_COMPRESSIONS);
 	if (blk && IS_BLOCK(blk)) {

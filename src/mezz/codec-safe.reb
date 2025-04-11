@@ -1,7 +1,8 @@
 REBOL [
-	Name:    safe
-	Version: 1.0.0
 	Title:   "Codec: SAFE"
+	Name:    safe
+	type:    module
+	Version: 1.0.0
 	Author:  "Oldes"
 	History: [
 		10-Jul-2022 "Oldes" "Initial version"
@@ -213,7 +214,7 @@ sys/make-scheme [
 						sync
 						true
 					][
-						log-error 'REBOL "Password validation failed!"
+						sys/log/error 'REBOL "Password validation failed!"
 						false
 					]
 				]

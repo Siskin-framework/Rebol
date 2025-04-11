@@ -620,7 +620,10 @@ static void Close_StdIO_Local(void)
 
 		if (!ok) {
 			req->error = GetLastError();
-			return DR_ERROR;
+			if (req->error != 109) { // Empty input!
+				return DR_ERROR;
+			}
+			total = 0;
 		}
 
 		req->actual = total;

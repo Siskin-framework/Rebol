@@ -21,13 +21,13 @@ dt [ ;- delta time
 ;		%units/codecs-test.r3
 ;		%units/codecs-test-pdf.r3
 ;		%units/compare-test.r3
-;		%units/compress-test.r3
+		%units/compress-test.r3
 ;		%units/conditional-test.r3
 ;		%units/copy-test.r3
 ;		%units/crash-test.r3
 ;		%units/csv-test.r3
 ;		%units/datatype-test.r3
-		%units/date-test.r3
+;		%units/date-test.r3
 ;		%units/decimal-test.r3
 ;		%units/delect-test.r3
 ;		%units/enbase-test.r3
@@ -45,7 +45,7 @@ dt [ ;- delta time
 ;		%units/issue-test.r3
 ;		%units/lexer-test.r3
 ;		%units/load-test.r3
-		%units/make-test.r3
+;		%units/make-test.r3
 ;		%units/map-test.r3
 ;		%units/module-test.r3
 ;		%units/mold-test.r3
