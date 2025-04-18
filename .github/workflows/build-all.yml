@@ -120,7 +120,7 @@ jobs:
         path: ./host-*-x64.exe
 
   linux:
-    runs-on: linux-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
