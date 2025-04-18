@@ -248,6 +248,7 @@ modules: object [
 	easing:        https://github.com/Siskin-framework/Rebol-Easing/releases/download/1.0.0/
 	mathpresso:    https://github.com/Siskin-framework/Rebol-MathPresso/releases/download/0.1.0/
 	miniaudio:     https://github.com/Oldes/Rebol-MiniAudio/releases/download/0.11.18.0/
+	speak:         https://github.com/Oldes/Rebol-Speak/releases/download/0.0.1/
 	sqlite:        https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.46.0.0/
 	triangulate:   https://github.com/Siskin-framework/Rebol-Triangulate/releases/download/1.6.0.0/
 	webp:          https://github.com/Oldes/Rebol-WebP/releases/download/1.4.0.0/
