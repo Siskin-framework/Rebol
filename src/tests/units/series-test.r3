@@ -2282,7 +2282,11 @@ Rebol [
 	--assert "^-^-A^/^-^-B" = entab/size {    A^/    B} 2
 	--assert "^-^-A^/^-^-Š" = entab/size {    A^/    Š} 2
 	--assert "^-^-^- A"     = entab      {    ^-     A}
-
+--test-- "ENTAB/DETAB binary"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2643
+	--assert #{09410A0942} == entab to binary! {    A^/    B}
+	--assert #{20202020410A2020202042} == detab #{09410A0942}
+	
 ===end-group===
 
 

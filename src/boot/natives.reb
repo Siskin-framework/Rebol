@@ -445,14 +445,14 @@ enline: native [
 
 detab: native [
 	"Converts tabs to spaces (default tab size is 4)."
-	string [any-string!] {(modified)}
+	string [any-string! binary!] {(modified)}
 	/size  "Specifies the number of spaces per tab"
 	number [integer!]
 ]
 
 entab: native [
 	"Converts spaces to tabs (default tab size is 4)."
-	string [any-string!] {(modified)}
+	string [any-string! binary!] {(modified)}
 	/size "Specifies the number of spaces per tab"
 	number [integer!]
 ]
