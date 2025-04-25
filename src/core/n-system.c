@@ -537,3 +537,41 @@ err:
 
 	return IS_SELFLESS(frm) ? R_TRUE : R_FALSE;
 }
+
+/***********************************************************************
+**
+*/	REBNATIVE(register)
+/*
+//  register: native [
+//		"Register value in a system/catalog"
+//		'name [word! set-word! lit-word!]  "Unique ID for the value in the catalog"
+//		value [struct!] "Value to be registered (so far only structs)"
+//  ]
+***********************************************************************/
+{
+	REBVAL *name = D_ARG(1);
+	REBVAL *val  = D_ARG(2);
+	REBCNT n;
+	if (IS_SET_WORD(name)) {
+		Set_Var(name, val);
+	}
+	if (IS_STRUCT(val)) {
+		SET_TYPE(name, REB_WORD);
+		REBVAL *struct_specs = Get_System(SYS_CATALOG, CAT_STRUCTS);
+		n = Find_Entry(VAL_SERIES(struct_specs), name, 0, TRUE);
+		if (n != NOT_FOUND) {
+			// Struct already registered... check if it is same spec...
+			D_RET = VAL_BLK_SKIP(struct_specs, n);
+			if (VAL_STRUCT_SPEC(D_RET) == VAL_STRUCT_SPEC(val)) {
+				return R_ARG2;
+			}
+			Trap1(RE_ALREADY_USED, name);
+		}
+		Set_Block(D_RET, VAL_STRUCT_SPEC(val));
+		REBSTI *inf = (REBSTI*)BIN_HEAD(VAL_SERIES(D_RET)->series);
+		inf->name = VAL_SYM_CANON(name);
+		n = Find_Entry(VAL_SERIES(struct_specs), name, D_RET, TRUE);
+		return R_ARG2;
+	}
+	return R_RET;
+}

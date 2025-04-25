@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -232,6 +232,16 @@ enum {
 	LOAD_NEXT,			// Load next value
 	LOAD_NORMAL,		// Convert header, load script
 	LOAD_REQUIRE		// Header is required, else error
+};
+
+// Protect function flags:
+enum {
+	PROT_SET,
+	PROT_DEEP,
+	PROT_HIDE,
+	PROT_WORD,
+	PROT_WORDS,
+	PROT_LOCK
 };
 
 // General constants:

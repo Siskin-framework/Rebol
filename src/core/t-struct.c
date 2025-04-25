@@ -35,6 +35,7 @@
 #define IS_NUMERIC_TYPE(t) (IS_INTEGER_TYPE(t) || IS_DECIMAL_TYPE(t))
 
 REBFLG MT_Struct(REBVAL *out, REBVAL *data, REBCNT type);
+static void init_fields(REBVAL *ret, REBVAL *spec);
 
 static const REBINT type_to_sym [STRUCT_TYPE_MAX] = {
 	SYM_UINT8X,
@@ -59,12 +60,11 @@ static const REBINT type_to_sym [STRUCT_TYPE_MAX] = {
 };
 
 static REBFLG get_scalar(REBSTU *stu,
-				  struct Struct_Field *field,
+				  REBSTF *field,
 				  REBCNT n, /* element index, starting from 0 */
 				  REBVAL *val)
 {
-	REBYTE *data = SERIES_SKIP(STRUCT_DATA_BIN(stu),
-							 STRUCT_OFFSET(stu) + field->offset + n * field->size);
+	REBYTE *data = STRUCT_DATA_BIN(stu) + field->offset + n * field->size;
 	switch (field->type) {
 		case STRUCT_TYPE_UINT8:
 			SET_INTEGER(val, *(u8*)data);
@@ -76,7 +76,7 @@ static REBFLG get_scalar(REBSTU *stu,
 			SET_INTEGER(val, *(u16*)data);
 			break;
 		case STRUCT_TYPE_INT16:
-			SET_INTEGER(val, *(i8*)data);
+			SET_INTEGER(val, *(i16*)data);
 			break;
 		case STRUCT_TYPE_UINT32:
 			SET_INTEGER(val, *(u32*)data);
@@ -99,10 +99,12 @@ static REBFLG get_scalar(REBSTU *stu,
 		case STRUCT_TYPE_POINTER:
 			SET_INTEGER(val, (u64)*(void**)data);
 			break;
+#ifdef TODO
 		case STRUCT_TYPE_STRUCT:
 			{
 				SET_TYPE(val, REB_STRUCT);
-				VAL_STRUCT_FIELDS(val) = field->fields;
+				VAL_STRUCT_SPEC(val) = field->spec;
+				//VAL_STRUCT_FIELDS(val) = field->fields;
 				VAL_STRUCT_SPEC(val) = field->spec;
 				VAL_STRUCT_DATA(val) = Make_Series(1, sizeof(struct Struct_Data), FALSE);
 				VAL_STRUCT_DATA_BIN(val) = STRUCT_DATA_BIN(stu);
@@ -110,6 +112,7 @@ static REBFLG get_scalar(REBSTU *stu,
 				VAL_STRUCT_LEN(val) = field->size;
 			}
 			break;
+#endif
 		case STRUCT_TYPE_WORD:
 			Set_Word(val, *(REBINT *)data, NULL, 0);
 			break;
@@ -131,10 +134,10 @@ static REBFLG get_scalar(REBSTU *stu,
 /*
 ***********************************************************************/
 {
-	struct Struct_Field *field = NULL;
+	REBSTF *field = NULL;
 	REBCNT i = 0;
-	field = (struct Struct_Field *)SERIES_DATA(stu->fields);
-	for (i = 0; i < SERIES_TAIL(stu->fields); i ++, field ++) {
+	field = STRUCT_FIELDS(stu);
+	for (i = 0; i < STRUCT_FIELDS_NUM(stu); i ++, field ++) {
 		if (VAL_WORD_CANON(word) == VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, field->sym))) {
 			if (field->array) {
 				REBSER *ser = Make_Block(field->dimension);
@@ -156,101 +159,19 @@ static REBFLG get_scalar(REBSTU *stu,
 	return FALSE;
 }
 
-#ifdef unused
 /***********************************************************************
 **
-*/	static void Set_Struct_Vars(REBSTU *strut, REBVAL *blk)
+*/	void Get_Struct_Reflect(REBVAL *ret, REBSTU *stu, REBCNT type)
 /*
 ***********************************************************************/
 {
-}
-#endif
-
-/***********************************************************************
-**
-*/	REBSER *Struct_To_Block(REBSTU *stu)
-/*
-**		Used by MOLD to create a block.
-**
-***********************************************************************/
-{
-	REBSER *ser = Make_Block(10);
-	struct Struct_Field *field = (struct Struct_Field*) SERIES_DATA(stu->fields);
-	REBCNT i;
-
-	for(i = 0; i < SERIES_TAIL(stu->fields); i ++, field ++) {
-		REBVAL *val = NULL;
-		REBVAL *type_blk = NULL;
-
-		/* required field name */
-		val = Append_Value(ser);
-		Init_Word(val, field->sym);
-		SET_TYPE(val, REB_SET_WORD);
-		VAL_SET_LINE(val);
-
-		/* required type */
-		type_blk = Append_Value(ser);
-		VAL_SERIES(type_blk) = Make_Block(1);
-		SET_TYPE(type_blk, REB_BLOCK);
-		val = Append_Value(VAL_SERIES(type_blk));
-		if (field->type == STRUCT_TYPE_STRUCT) {
-			REBVAL *nested = NULL;
-			DS_PUSH_NONE;
-			nested = DS_TOP;
-
-			Init_Word(val, SYM_STRUCT_TYPE);
-			get_scalar(stu, field, 0, nested);
-			val = Append_Value(VAL_SERIES(type_blk));
-			SET_TYPE(val, REB_BLOCK);
-			VAL_SERIES(val) = Struct_To_Block(&VAL_STRUCT(nested));
-
-			DS_POP;
-		} else {
-			REBINT sym = type_to_sym[field->type];
-			Init_Word(val, sym);
-		}
-
-		/* optional dimension */
-		if (field->dimension > 1) {
-			REBSER *dim = Make_Block(1);
-			REBVAL *dv = NULL;
-			val = Append_Value(VAL_SERIES(type_blk));
-			SET_TYPE(val, REB_BLOCK);
-			VAL_SERIES(val) = dim;
-
-			dv = Append_Value(dim);
-			SET_INTEGER(dv, field->dimension);
-		}
-
-		/* optional initialization */
-		val = Append_Value(ser);
-		if (field->dimension > 1) {
-			REBSER *dim = Make_Block(1);
-			REBCNT n = 0;
-			SET_TYPE(val, REB_BLOCK);
-			VAL_SERIES(val) = dim;
-			for (n = 0; n < field->dimension; n ++) {
-				REBVAL *dv = Append_Value(dim);
-				get_scalar(stu, field, n, dv);
-			}
-		} else {
-			get_scalar(stu, field, 0, val);
-#ifdef ALLOW_CODE_EVALUATION_INSIDE_STRUCT_CONSTRUCTION_SPEC 
-			if (IS_WORD(val)) SET_TYPE(val, REB_LIT_WORD);
-#endif
-		}
-	}
-	return ser;
-}
-
-static void Get_Struct_Reflect(REBVAL* ret, REBSTU* stu, REBCNT type) {
 	REBVAL* val = NULL;
 	REBVAL* type_blk = NULL;
 	REBSER* out, * dim;
-	struct Struct_Field* field = (struct Struct_Field*)SERIES_DATA(stu->fields);
+	REBSTF* field = STRUCT_FIELDS(stu);
 	REBCNT i, n, cnt;
 
-	cnt = SERIES_TAIL(stu->fields);
+	cnt = STRUCT_FIELDS_NUM(stu);
 	out = Make_Block(cnt * (type==SYM_BODY?2:1));
 	Set_Block(ret, out);
 
@@ -285,15 +206,19 @@ static void Get_Struct_Reflect(REBVAL* ret, REBSTU* stu, REBCNT type) {
 
 static REBOOL same_fields(REBSER *tgt, REBSER *src)
 {
-	struct Struct_Field *tgt_fields = (struct Struct_Field *) SERIES_DATA(tgt);
-	struct Struct_Field *src_fields = (struct Struct_Field *) SERIES_DATA(src);
-	REBCNT n;
-
 	if (SERIES_TAIL(tgt) != SERIES_TAIL(src)) {
 		return FALSE;
 	}
+	REBSTF *tgt_fields = (REBSTF*) SERIES_DATA(tgt);
+	REBSTF *src_fields = (REBSTF*) SERIES_DATA(src);
+	REBSTI *tgt_info = (REBSTI*)tgt_fields;
+	REBSTI *src_info = (REBSTI*)src_fields;
+	REBCNT n;
 
-	for(n = 0; n < SERIES_TAIL(src); n ++) {
+	if (src_info->id && tgt_info->id == src_info->id && tgt_info->len == src_info->len)
+		return TRUE;
+
+	for(n = 1; n < SERIES_TAIL(src); n ++) {
 		if (tgt_fields[n].type != src_fields[n].type) {
 			return FALSE;
 		}
@@ -305,7 +230,7 @@ static REBOOL same_fields(REBSER *tgt, REBSER *src)
 			return FALSE;
 		}
 		if (tgt_fields[n].type == STRUCT_TYPE_STRUCT
-			&& ! same_fields(tgt_fields[n].fields, src_fields[n].fields)) {
+			&& ! same_fields(tgt_fields[n].spec->series, src_fields[n].spec->series)) {
 			return FALSE;
 		}
 	}
@@ -314,14 +239,13 @@ static REBOOL same_fields(REBSER *tgt, REBSER *src)
 }
 
 static REBOOL assign_scalar(REBSTU *stu,
-							struct Struct_Field *field,
+							REBSTF *field,
 							REBCNT n, /* element index, starting from 0 */
 							REBVAL *val)
 {
 	u64 i = 0;
 	double d = 0;
-	void *data = SERIES_SKIP(STRUCT_DATA_BIN(stu),
-							 STRUCT_OFFSET(stu) + field->offset + n * field->size);
+	void *data = STRUCT_DATA_BIN(stu) + field->offset + n * field->size;
 
 	if (field->type == STRUCT_TYPE_REBVAL) {
 		memcpy(data, val, sizeof(REBVAL));
@@ -395,14 +319,18 @@ static REBOOL assign_scalar(REBSTU *stu,
 			*(double*)data = (double)d;
 			break;
 		case STRUCT_TYPE_STRUCT:
+			Trap0(RE_NOT_DONE);
 			if (field->size != VAL_STRUCT_LEN(val)) {
 				Trap_Arg(val);
 			}
-			if (same_fields(field->fields, VAL_STRUCT_FIELDS(val))) {
+#ifdef TODO
+			if (same_fields(field->spec->series, VAL_STRUCT_FIELDS(val))) {
 				memcpy(data, SERIES_SKIP(VAL_STRUCT_DATA_BIN(val), VAL_STRUCT_OFFSET(val)), field->size);
-			} else {
+			}
+			else {
 				Trap_Arg(val);
 			}
+#endif
 			break;
 		default:
 			/* should never be here */
@@ -417,10 +345,9 @@ static REBOOL assign_scalar(REBSTU *stu,
 /*
 ***********************************************************************/
 {
-	struct Struct_Field *field = NULL;
+	REBSTF *field = STRUCT_FIELDS(stu);
 	REBCNT i = 0;
-	field = (struct Struct_Field *)SERIES_DATA(stu->fields);
-	for (i = 0; i < SERIES_TAIL(stu->fields); i ++, field ++) {
+	for (i = 0; i < STRUCT_FIELDS_NUM(stu); i ++, field ++) {
 		if (VAL_WORD_CANON(word) == VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, field->sym))) {
 			if (field->array) {
 				if (elem == NULL) { //set the whole array
@@ -453,6 +380,7 @@ static REBOOL assign_scalar(REBSTU *stu,
 	return FALSE;
 }
 
+#ifdef unused_struct
 /* parse struct attribute */
 static void parse_attr (REBVAL *blk, REBINT *raw_size, REBUPT *raw_addr)
 {
@@ -562,8 +490,9 @@ static void set_ext_storage (REBVAL *out, REBINT raw_size, REBUPT raw_addr)
 
 	VAL_STRUCT_DATA_BIN(out) = ser;
 }
+#endif
 
-static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL *inner, REBVAL **init)
+static void parse_field_type(REBSTF *field, REBVAL *spec, REBVAL *inner, REBVAL **init)
 {
 	REBVAL *val = VAL_BLK_DATA(spec);
 
@@ -613,6 +542,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 				field->type = STRUCT_TYPE_POINTER;
 				field->size = sizeof(void*);
 				break;
+#ifdef TODO
 			case SYM_STRUCT_TYPE:
 				++ val;
 				if (IS_BLOCK(val)) {
@@ -634,6 +564,7 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 					Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(val));
 				}
 				break;
+#endif
 			case SYM_WORD_TYPE:
 				field->type = STRUCT_TYPE_WORD;
 				field->size = 4;
@@ -647,13 +578,17 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 			default:
 				Trap_Type(val);
 		}
-	} else if (IS_STRUCT(val)) { //[b: [struct-a] val-a]
+	}
+#ifdef TODO
+	else if (IS_STRUCT(val)) { //[b: [struct-a] val-a]
 		field->size = SERIES_TAIL(VAL_STRUCT_DATA_BIN(val));
 		field->type = STRUCT_TYPE_STRUCT;
 		field->fields = VAL_STRUCT_FIELDS(val);
 		field->spec = VAL_STRUCT_SPEC(val);
 		*init = val;
-	} else {
+	}
+#endif
+	else {
 		Trap_Type(val);
 	}
 	++ val;
@@ -676,8 +611,6 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 	if (NOT_END(val)) {
 		Trap_Type(val);
 	}
-
-	return TRUE;
 }
 
 /***********************************************************************
@@ -686,219 +619,176 @@ static REBOOL parse_field_type(struct Struct_Field *field, REBVAL *spec, REBVAL 
 /*
  * Format:
  * make struct! [
- *     field1  [type1]
- *     field2: [type2] field2-init-value
- * 	   field3: [struct [field1 [type1]]] field3-init-struct-value
- * 	   field4: [type1[3]] field4-init-block-value
+ *     field1  [type]    "Single value"
+ * 	   field2  [type[3]] "Array with 3 values"
  * 	   ...
  * ]
 ***********************************************************************/
 {
 	//RL_Print("%s\n", __func__);
-	
-	if (!IS_BLOCK(data)) return FALSE; // validate early!
-	
-	/* Using spec block length as a prediction of fields number
-	   (each field requires at least 2 spec values)	*/
-	REBCNT num_spec_values = VAL_TAIL(data) - VAL_INDEX(data);
-	REBCNT min_fileds = num_spec_values >> 1;
-	/* Don't allow empty struct! */
-	if (min_fileds == 0) Trap_Arg(data);
-	
-	VAL_STRUCT_FIELDS(out) = Make_Series(min_fileds, sizeof(struct Struct_Field), FALSE);
-	BARE_SERIES(VAL_STRUCT_FIELDS(out));
+	REBVAL key;
+	REBVAL spec;
+	REBVAL *struct_specs = Get_System(SYS_CATALOG, CAT_STRUCTS);
+	REBCNT hash = 0, n = NOT_FOUND;
+	REBVAL *values = data + 1;
+	REBOOL new_spec = FALSE;
 
-	//Reduce_Block_No_Set(VAL_SERIES(data), 0, NULL);
-	//data = DS_POP;
-	REBVAL *blk = VAL_BLK_DATA(data);
-	REBINT field_idx = 0; /* for field index */
-	u64 offset = 0; /* offset in data */
-//	REBCNT eval_idx = 0; /* for spec block evaluation */
-	REBVAL *init = NULL; /* for result to save in data */
-	REBOOL expect_init = FALSE;
-	REBINT raw_size = -1;
-	REBUPT raw_addr = 0;
-//	REBCNT alignment = 0;
+	if (IS_INTEGER(data)) {
+		// Struct spec id used like:
+		// #(struct! 111111 [a: 1 b: 2])
+		hash = VAL_INT64(data);
+	}
+	else if (IS_WORD(data)) {
+		// Struct spec as a registered struct name
+		// #(struct! some-struct [a: 1 b: 2])
+		n = Find_Entry(VAL_SERIES(struct_specs), data, 0, TRUE);
+	}
+	else if (!IS_BLOCK(data)) return FALSE; // validate early!
+	else hash = Hash_Block_Value(data);
 
-	VAL_STRUCT_SPEC(out) = Copy_Series(VAL_SERIES(data));
-	VAL_STRUCT_DATA(out) = Make_Series(1, sizeof(struct Struct_Data), FALSE);
-	EXPAND_SERIES_TAIL(VAL_STRUCT_DATA(out), 1);
-	BARE_SERIES(VAL_STRUCT_DATA(out));
+	if (hash) {
+		SET_INTEGER(&key, hash);
+		n = Find_Entry(VAL_SERIES(struct_specs), &key, 0, TRUE);
+	}
+	if (n == NOT_FOUND) {
+		if (!IS_BLOCK(data)) {
+			Trap_Arg(data);
+		}
+		Set_Block(&spec, Clone_Block(VAL_SERIES(data)));
+		// make sure that user cannot modify it
+		Protect_Series(&spec, FLAGIT(PROT_SET) | FLAGIT(PROT_LOCK) | FLAGIT(PROT_DEEP));
+		new_spec = TRUE;
+	}
+	else {
+		spec = *VAL_BLK_SKIP(struct_specs, n);
+	}
 
-	/* one byte per field as a minimum (expands when needed) */
-	VAL_STRUCT_DATA_BIN(out) = Make_Series(min_fileds, 1, FALSE);
-	BARE_SERIES(VAL_STRUCT_DATA_BIN(out));
+	REBSTU *stu = &VAL_STRUCT(out);
+	VAL_STRUCT_SPEC(out) = VAL_SERIES(&spec);
+	VAL_STRUCT_DATA(out) = NULL;
 	VAL_STRUCT_OFFSET(out) = 0;
-
 	/* set type early such that GC will handle it correctly, i.e, not collect series in the struct */
 	SET_TYPE(out, REB_STRUCT);
 
-	if (IS_BLOCK(blk)) {
-		parse_attr(blk, &raw_size, &raw_addr);
-		++ blk;
-	}
+	if (VAL_STRUCT_FIELDS(out) == NULL) {
+		/* Using spec block length as a prediction of fields number
+		   (each field requires at least 2 spec values)	*/
+		REBCNT num_spec_values = VAL_TAIL(data) - VAL_INDEX(data);
+		REBCNT min_fileds = num_spec_values >> 1;
+		/* Don't allow empty struct! */
+		if (min_fileds == 0) Trap_Arg(data);
 
-	while (NOT_END(blk)) {
-		REBVAL *inner;
-		struct Struct_Field *field = NULL;
-		u64 step = 0;
-
+		VAL_STRUCT_FIELDS(out) = Make_Series(min_fileds, sizeof(REBSTF), FALSE); // keeps info at its head
+		BARE_SERIES(VAL_STRUCT_FIELDS(out));
 		EXPAND_SERIES_TAIL(VAL_STRUCT_FIELDS(out), 1);
-			
-		DS_PUSH_NONE;
-		inner = DS_TOP; /* save in stack so that it won't be GC'ed when MT_Struct is recursively called */
 
-		field = (struct Struct_Field *)SERIES_SKIP(VAL_STRUCT_FIELDS(out), field_idx);
-		field->offset = (REBCNT)offset;
-		if (IS_SET_WORD(blk)) {
-			field->sym = VAL_WORD_SYM(blk); 
-			expect_init = TRUE;
-			if (raw_addr) {
-				/* initialization is not allowed for raw memory struct */
+		VAL_STRUCT_ID(out) = hash;
+
+		REBVAL *blk = VAL_BLK_DATA(data);
+		REBINT field_idx = 1; /* for field index */
+		REBU64 offset = 0;    /* offset in data */
+//TODO: init is unused now (and also inner defined later!)
+		REBVAL *init = NULL;  /* for result to save in data */
+//		REBOOL expect_init = FALSE;
+		//	REBINT raw_size = -1;
+		//	REBUPT raw_addr = 0;
+		//	REBCNT alignment = 0;
+
+		// skip optional doc strings
+		while (IS_STRING(blk)) ++blk;
+
+		// optional attributes
+		//if (IS_BLOCK(blk)) {
+		//	parse_attr(blk, &raw_size, &raw_addr);
+		//	++blk;
+		//}
+
+		while (NOT_END(blk)) {
+			REBVAL *inner;
+			REBSTF *field = NULL;
+			REBU64 step = 0;
+
+			EXPAND_SERIES_TAIL(VAL_STRUCT_FIELDS(out), 1);
+
+			DS_PUSH_NONE;
+			inner = DS_TOP; /* save in stack so that it won't be GC'ed when MT_Struct is recursively called */
+
+			field = (REBSTF *)SERIES_SKIP(VAL_STRUCT_FIELDS(out), field_idx);
+			field->offset = (REBCNT)offset;
+
+			if (!IS_WORD(blk)) {
+				Trap_Type(blk);
+			}
+			field->sym = VAL_WORD_SYM(blk);
+			++blk;
+
+			if (!IS_BLOCK(blk)) {
 				Trap_Arg(blk);
 			}
-		} else if (IS_WORD(blk)) {
-			field->sym = VAL_WORD_SYM(blk); 
-			expect_init = FALSE;
-		} else {
-			Trap_Type(blk);
-		}
-		++ blk;
 
-		if (!IS_BLOCK(blk)) {
-			Trap_Arg(blk);
-		}
+			parse_field_type(field, blk, inner, &init); // may throw an error!
+			++blk;
 
-		if (!parse_field_type(field, blk, inner, &init)) { return FALSE; }
-		++ blk;
+			// skip optional doc strings
+			while (IS_STRING(blk)) ++blk; 
 
-		STATIC_ASSERT(sizeof(field->size) <= 4);
-		STATIC_ASSERT(sizeof(field->dimension) <= 4);
+			STATIC_ASSERT(sizeof(field->size) <= 4);
+			STATIC_ASSERT(sizeof(field->dimension) <= 4);
 
-		step = (u64)field->size * (u64)field->dimension;
-		if (step > VAL_STRUCT_LIMIT) {
-			Trap1(RE_SIZE_LIMIT, out);
-		}
-
-		EXPAND_SERIES_TAIL(VAL_STRUCT_DATA_BIN(out), step);
-
-		if (expect_init) {
-			if (IS_END(blk)) {
-				Trap_Types(RE_EXPECT_VAL, REB_STRUCT, REB_END);
+			step = (REBU64)field->size * (REBU64)field->dimension;
+			if (step > VAL_STRUCT_LIMIT) {
+				Trap1(RE_SIZE_LIMIT, out);
 			}
-#ifdef ALLOW_CODE_EVALUATION_INSIDE_STRUCT_CONSTRUCTION_SPEC 
-			else if (IS_BLOCK(blk)) {
-				Reduce_Block(VAL_SERIES(blk), 0, NULL); //result is on stack
-				init = DS_POP;
-				++ blk;
-			} else {
-				eval_idx = blk - VAL_BLK_DATA(data);
 
-				eval_idx = Do_Next(VAL_SERIES(data), eval_idx, 0);
+			offset += step;
+			/*
+			if (alignment != 0) {
+				//offset = ((offset + alignment - 1) / alignment) * alignment;
+				// if alignement is power of 2:
+				offset = (offset + alignment - 1) & ~(alignment - 1);
+			}
+			*/
+			if (offset > VAL_STRUCT_LIMIT) {
+				Trap1(RE_SIZE_LIMIT, out);
+			}
 
-				blk = VAL_BLK_SKIP(data, eval_idx);
-				init = DS_POP; //Do_Next saves result on stack
-			}
-#else
-			init = blk++;
-#endif
-			if (field->array) {
-// O: It is probably not a good idea to let access to C pointers!
-//    https://github.com/Oldes/Rebol-issues/issues/2567
-//				if (IS_INTEGER(init)) { /* interpreted as a C pointer */
-//					void *ptr = (void *)VAL_INT64(init);
-//
-//					/* assuming it's an valid pointer and holding enough space */
-//					memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), (REBCNT)offset), ptr, field->size * field->dimension);
-//				} else 
-				if (IS_BLOCK(init)) {
-					REBCNT n = 0;
+			field->done = TRUE;
 
-					if (VAL_LEN(init) != field->dimension) {
-						Trap_Arg(init);
-					}
-					/* assign */
-					for (n = 0; n < field->dimension; n ++) {
-						if (!assign_scalar(&VAL_STRUCT(out), field, n, VAL_BLK_SKIP(init, n))) {
-							//RL_Print("Failed to assign element value\n");
-							goto failed;
-						}
-					}
-				} else {
-					Trap_Types(RE_EXPECT_VAL, REB_BLOCK, VAL_TYPE(blk));
-				}
-			} else {
-				/* scalar */
-				if (!assign_scalar(&VAL_STRUCT(out), field, 0, init)) {
-					//RL_Print("Failed to assign scalar value\n");
-					goto failed;
-				}
-			}
-		} else if (raw_addr == 0) {
-			if (field->type == STRUCT_TYPE_STRUCT) {
-				REBCNT n = 0;
-				for (n = 0; n < field->dimension; n ++) {
-					memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), ((REBCNT)offset) + n * field->size), SERIES_DATA(VAL_STRUCT_DATA_BIN(init)), field->size);
-				}
-			}
-			else if (field->type == STRUCT_TYPE_WORD) {
-				// use word `none` as a default value
-				REBCNT n = 0;
-				REBCNT sym = SYM_NONE;
-				for (n = 0; n < field->dimension; n++) {
-					memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), ((REBCNT)offset) + n * field->size), &sym, field->size);
-				}
-			}
-			else if (field->type == STRUCT_TYPE_REBVAL) {
-#ifdef unused
-				REBVAL unset;
-				REBCNT n = 0;
-				SET_UNSET(&unset);
-				for (n = 0; n < field->dimension; n ++) {
-					if (!assign_scalar(&VAL_STRUCT(out), field, n, &unset)) {
-						//RL_Print("Failed to assign element value\n");
-						goto failed;
-					}
-				}
-#endif
-			} else {
-				memset(SERIES_SKIP(VAL_STRUCT_DATA_BIN(out), (REBCNT)offset), 0, field->size * field->dimension);
-			}
+			++field_idx;
+
+			DS_POP; /* pop up the inner struct*/
 		}
 
-		offset +=  step;
-		/* 
-		if (alignment != 0) {
-			offset = ((offset + alignment - 1) / alignment) * alignment;
+		// Store complete length of the struct
+		STRUCT_LEN(stu) = (REBCNT)offset;
+
+		// Append value to system/catalog/structs
+		n = Find_Entry(VAL_SERIES(struct_specs), &key, &spec, TRUE);
+		if (n == NOT_FOUND) {
+			return FALSE; // should not happen
 		}
-		*/
-		if (offset > VAL_STRUCT_LIMIT) {
-			Trap1(RE_SIZE_LIMIT, out);
-		}
-
-		field->done = TRUE;
-
-		++ field_idx;
-
-		DS_POP; /* pop up the inner struct*/
 	}
 
-	VAL_STRUCT_LEN(out) = (REBCNT)offset;
+	// At this point, the struct specification should be ready.
 
-	if (raw_addr) {
-		set_ext_storage(out, raw_size, raw_addr);
+	if (IS_BINARY(values)) {
+		if (VAL_BIN_LEN(values) < STRUCT_LEN(stu)) Trap_Arg(values);
+		if (STRUCT_DATA(stu)) {
+			COPY_MEM(STRUCT_DATA_BIN(stu), VAL_BIN_DATA(values), STRUCT_LEN(stu));
+		}
+		else {
+			STRUCT_DATA(stu) = VAL_SERIES(values);
+		}
+		return TRUE;
 	}
-
+	
+	STRUCT_DATA(stu) = Make_Binary(STRUCT_LEN(stu));
+	SERIES_TAIL(STRUCT_DATA(stu)) = STRUCT_LEN(stu);
+	
+	if (IS_BLOCK(values)) {
+		init_fields(out, values);
+	}
 	return TRUE;
-
-
-failed:
-	Free_Series(VAL_STRUCT_FIELDS(out));
-	Free_Series(VAL_STRUCT_SPEC(out));
-	Free_Series(VAL_STRUCT_DATA_BIN(out));
-	Free_Series(VAL_STRUCT_DATA(out));
-
-	return FALSE;
 }
 
 
@@ -908,8 +798,6 @@ failed:
 /*
 ***********************************************************************/
 {
-//	struct Struct_Field *field = NULL;
-//	REBCNT i = 0;
 	REBSTU *stu = &VAL_STRUCT(pvs->value);
 	if (!IS_WORD(pvs->select)) {
 		return PE_BAD_SELECT;
@@ -976,26 +864,25 @@ failed:
 			return IS_STRUCT(a) && IS_STRUCT(b)
 				 && same_fields(VAL_STRUCT_FIELDS(a), VAL_STRUCT_FIELDS(b))
 				 && VAL_STRUCT_LEN(a) == VAL_STRUCT_LEN(b)
-				 && !memcmp(SERIES_DATA(VAL_STRUCT_DATA_BIN(a)), SERIES_DATA(VAL_STRUCT_DATA_BIN(b)), VAL_STRUCT_LEN(a));
+				 && !memcmp(VAL_STRUCT_DATA_BIN(a), VAL_STRUCT_DATA_BIN(b), VAL_STRUCT_LEN(a));
 		default:
 			return -1;
 	}
 	return -1;
 }
 
-void Copy_Struct(REBSTU *src, REBSTU *dst)
+static void Copy_Struct(REBSTU *src, REBSTU *dst)
 {
-	/* Read only fields */
+	/* Read only field */
 	dst->spec = src->spec;
-	dst->fields = src->fields;
 
-	/* writable field */
-	dst->data = Copy_Series(src->data);
-	BARE_SERIES(dst->data);
-	STRUCT_DATA_BIN(dst) = Copy_Series(STRUCT_DATA_BIN(src));
+	/* Writable field */
+	STRUCT_DATA(dst) = Make_Binary(STRUCT_LEN(src));
+	BARE_SERIES(STRUCT_DATA(dst));
+	COPY_MEM(STRUCT_DATA_BIN(dst), STRUCT_DATA_BIN(src), STRUCT_LEN(src));
 }
 
-void Copy_Struct_Val(REBVAL *src, REBVAL *dst)
+static void Copy_Struct_Val(REBVAL *src, REBVAL *dst)
 {
 	SET_TYPE(dst, REB_STRUCT);
 	Copy_Struct(&VAL_STRUCT(src), &VAL_STRUCT(dst));
@@ -1009,23 +896,23 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 	REBVAL *blk = NULL;
 
 	for (blk = VAL_BLK_DATA(spec); NOT_END(blk); blk += 2) {
-		struct Struct_Field *fld = NULL;
+		REBSTF *fld = NULL;
 		REBSER *fields = VAL_STRUCT_FIELDS(ret);
 		REBCNT i = 0;
 		REBVAL *word = blk;
 		REBVAL *fld_val = blk + 1;
 
 		if (IS_BLOCK(word)) { /* options: raw-memory, etc */
-			REBINT raw_size = -1;
-			REBUPT raw_addr = 0;
-
+			Trap_Arg(word); // not supported!
 			if (VAL_TAIL(spec) != 1) { /* make sure no other field initialization */
 				Trap_Arg(spec);
 			}
-
+#ifdef unused_struct
+			REBINT raw_size = -1;
+			REBUPT raw_addr = 0;
 			parse_attr(word, &raw_size, &raw_addr);
 			set_ext_storage(ret, raw_size, raw_addr);
-
+#endif
 			break;
 		} else if (! IS_SET_WORD(word)) {
 			Trap_Arg(word);
@@ -1034,9 +921,9 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 		if (IS_END(fld_val)) {
 			Trap1(RE_NEED_VALUE, fld_val);
 		}
-
-		for (i = 0; i < SERIES_TAIL(fields); i ++) {
-			fld = (struct Struct_Field*)SERIES_SKIP(fields, i);
+		// first value is used for info!
+		for (i = 1; i < SERIES_TAIL(fields); i ++) {
+			fld = (REBSTF*)SERIES_SKIP(fields, i);
 			if (fld->sym == VAL_WORD_CANON(word)) {
 				if (fld->dimension > 1) {
 					REBCNT n = 0;
@@ -1049,12 +936,16 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 								Trap_Arg(fld_val);
 							}
 						}
-					} else if (IS_INTEGER(fld_val)) {
+					}
+#ifdef unused_struct
+					else if (IS_INTEGER(fld_val)) {
 						void *ptr = (void *)VAL_INT64(fld_val);
 
 						/* assuming it's an valid pointer and holding enough space */
 						memcpy(SERIES_SKIP(VAL_STRUCT_DATA_BIN(ret), fld->offset), ptr, fld->size * fld->dimension);
-					} else {
+					}
+#endif
+					else {
 						Trap_Arg(fld_val);
 					}
 				} else {
@@ -1091,23 +982,28 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 	// unary actions
 	switch(action) {
 		case A_MAKE:
-			//RL_Print("%s, %d, Make struct action\n", __func__, __LINE__);
 		case A_TO:
-			//RL_Print("%s, %d, To struct action\n", __func__, __LINE__);
-
 			// Clone an existing STRUCT:
 			if (IS_STRUCT(val)) {
 				Copy_Struct_Val(val, ret);
-
 				/* only accept value initialization */
-				init_fields(ret, arg);
+				if (IS_BLOCK(arg)) {
+					init_fields(ret, arg);
+				}
+				else if (IS_BINARY(arg) && VAL_BIN_LEN(arg) >= VAL_STRUCT_LEN(val)) {
+					//TODO: special error when data are not large enough?
+					COPY_MEM(VAL_STRUCT_DATA_BIN(ret), VAL_BIN_DATA(arg), VAL_STRUCT_LEN(val));
+				}
+				else {
+					Trap_Arg(arg);
+				}
 			} else if (!IS_DATATYPE(val)) {
 				goto is_arg_error;
 			} else {
 				// Initialize STRUCT from block:
-				// make struct! [float a: 0]
-				// make struct! [double a: 0]
+				// make struct! [a [uint16!]]
 				if (IS_BLOCK(arg)) {
+					DS_PUSH_END;
 					if (!MT_Struct(ret, arg, REB_STRUCT)) {
 						goto is_arg_error;
 					}
@@ -1123,13 +1019,11 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 				if (!IS_BINARY(arg)) {
 					Trap_Types(RE_EXPECT_VAL, REB_BINARY, VAL_TYPE(arg));
 				}
-
-				if (VAL_LEN(arg) != SERIES_TAIL(VAL_STRUCT_DATA_BIN(val))) {
+				if (VAL_BIN_LEN(arg) < VAL_STRUCT_LEN(val)) {
 					Trap_Arg(arg);
 				}
-				memcpy(SERIES_DATA(VAL_STRUCT_DATA_BIN(val)),
-					   SERIES_DATA(VAL_SERIES(arg)),
-					   SERIES_TAIL(VAL_STRUCT_DATA_BIN(val)));
+				COPY_MEM(VAL_STRUCT_DATA_BIN(val), VAL_BIN_DATA(arg), VAL_STRUCT_LEN(val));
+				return R_ARG1;
 			}
 			break;
 		case A_REFLECT:
@@ -1142,20 +1036,24 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 						Get_Struct_Reflect(ret, &VAL_STRUCT(val), n);
 						break;
 					case SYM_SPEC:
-						Set_Block(ret, Clone_Block(VAL_STRUCT_SPEC(val)));
-						break;
-					case SYM_ADDR:
-						SET_INTEGER(ret, (REBUPT)SERIES_SKIP(VAL_STRUCT_DATA_BIN(val), VAL_STRUCT_OFFSET(val)));
+						// no need to copy as it is protected value
+						Set_Block(ret, VAL_STRUCT_SPEC(val));
 						break;
 					default:
 						Trap_Reflect(REB_STRUCT, arg);
 				}
 			}
 			break;
+		//TODO: A_QUERY to access struct's name and id?
 
 		case A_LENGTHQ:
-			SET_INTEGER(ret, SERIES_TAIL(VAL_STRUCT_DATA_BIN(val)));
+			SET_INTEGER(ret, VAL_STRUCT_LEN(val));
 			break;
+
+		case A_CLEAR:
+			CLEAR(VAL_STRUCT_DATA_BIN(val), VAL_STRUCT_LEN(val))
+			return R_ARG1;
+
 		default:
 			Trap_Action(REB_STRUCT, action);
 	}

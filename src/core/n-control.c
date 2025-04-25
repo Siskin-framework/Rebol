@@ -31,17 +31,6 @@
 #include "sys-core.h"
 
 
-// Local flags used for Protect functions below:
-enum {
-	PROT_SET,
-	PROT_DEEP,
-	PROT_HIDE,
-	PROT_WORD,
-	PROT_WORDS,
-	PROT_LOCK
-};
-
-
 /***********************************************************************
 **
 */	void Protected(REBVAL *word)

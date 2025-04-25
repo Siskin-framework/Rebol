@@ -1236,16 +1236,53 @@ typedef struct Reb_Typeset {
 ***********************************************************************/
 
 typedef struct Reb_Struct {
-	REBSER	*spec;
-	REBSER  *fields;	// fields definition
-	REBSER	*data;
+	REBSER *spec;
+	REBSER *data;
+	REBCNT offset;
+	//REBCNT flags;
 } REBSTU;
 
-#define VAL_STRUCT(v)       (v->data.structure)
-#define VAL_STRUCT_SPEC(v)  (v->data.structure.spec)
-#define VAL_STRUCT_FIELDS(v) ((v)->data.structure.fields)
-#define VAL_STRUCT_DATA(v)  (v->data.structure.data)
-#define VAL_STRUCT_DP(v)    (STR_HEAD(VAL_STRUCT_DATA(v)))
+typedef struct Reb_Struct_Field {
+	REBCNT sym;
+	REBINT type;      /* rebol type */
+	REBCNT offset;
+	REBCNT dimension; /* for arrays */
+	REBCNT size;      /* size of element, in bytes */
+
+	REBSER *spec;     /* for nested struct */
+
+	unsigned int array : 1;
+	unsigned int done : 1; /* field is initialized?, used by GC to decide if the value needs to be marked */
+} REBSTF;
+
+typedef struct Reb_Struct_Info {
+	REBCNT id;
+	REBCNT len;
+	REBCNT name;
+} REBSTI;
+
+#define STRUCT_OFFSET(s)     ((s)->offset)
+#define STRUCT_SPEC(s)       ((s)->spec)
+#define STRUCT_FIELDS_SER(s) (STRUCT_SPEC(s)->series)
+#define STRUCT_FIELDS(s)     ((REBSTF *)BLK_HEAD(STRUCT_FIELDS_SER(s)) + 1)
+#define STRUCT_FIELDS_NUM(s) (SERIES_TAIL(STRUCT_FIELDS_SER(s)) - 1)
+#define STRUCT_INFO(s)       ((REBSTI *)BLK_HEAD(STRUCT_FIELDS_SER(s)))
+#define STRUCT_DATA(s)       ((s)->data)
+#define STRUCT_DATA_BIN(s)   (BIN_SKIP(STRUCT_DATA(s), STRUCT_OFFSET(s)))
+//#define STRUCT_FLAGS(s)  ((s)->flags)
+#define STRUCT_ID(s)         (STRUCT_INFO(s)->id)
+#define STRUCT_LEN(s)        (STRUCT_INFO(s)->len)
+#define STRUCT_NAME(s)       (STRUCT_INFO(s)->name)
+
+#define VAL_STRUCT(v)        (v->data.structure)
+#define VAL_STRUCT_SPEC(v)   (v->data.structure.spec)
+#define VAL_STRUCT_OFFSET(v) (v->data.structure.offset)
+#define VAL_STRUCT_FIELDS(v) (VAL_STRUCT_SPEC(v)->series)
+#define VAL_STRUCT_DATA(v)   (v->data.structure.data)
+#define VAL_STRUCT_DATA_BIN(v) (BIN_SKIP(VAL_STRUCT_DATA(v), v->data.structure.offset))
+#define VAL_STRUCT_LEN(v)    (((REBSTI *)BLK_HEAD(VAL_STRUCT_FIELDS(v)))->len)
+#define VAL_STRUCT_ID(v)     (((REBSTI *)BLK_HEAD(VAL_STRUCT_FIELDS(v)))->id)
+#define VAL_STRUCT_NAME(v)   (((REBSTI *)BLK_HEAD(VAL_STRUCT_FIELDS(v)))->name)
 
 /***********************************************************************
 **

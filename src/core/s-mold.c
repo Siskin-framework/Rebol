@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -1432,13 +1432,19 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_STRUCT:
 	{
-		REBSER *blk;
-		Pre_Mold(value, mold);
-		blk = Struct_To_Block(&VAL_STRUCT(value));
-		Mold_Block_Series(mold, blk, 0, 0);
-		End_Mold(mold);
-	}
+		REBVAL blk;
+		Get_Struct_Reflect(&blk, &VAL_STRUCT(value), SYM_BODY);
+		Emit(mold, "#(T ", value);
+		if (VAL_STRUCT_NAME(value)) {
+			Append_UTF8(ser, Get_Sym_Name(VAL_STRUCT_NAME(value)), -1);
+		}
+		else {
+			Form_Integer(buf, VAL_STRUCT_ID(value));
+			Append_UTF8(ser, buf, -1);
+		}
+		Emit(mold, " V)", &blk);
 		break;
+	}
 
 	case REB_HANDLE:
 		Mold_Handle(value, mold);

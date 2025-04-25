@@ -150,6 +150,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 	}
 }
 
+#ifdef TODO
 /***********************************************************************
 **
 */	static void Mark_Struct_Field(REBSTU *stu, struct Struct_Field *field, REBCNT depth)
@@ -183,6 +184,7 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 #endif
 	/* ignore primitive datatypes */
 }
+#endif
 
 /***********************************************************************
 **
@@ -192,26 +194,21 @@ static void Mark_Series(REBSER *series, REBCNT depth);
 {
 	REBCNT len = 0;
 	REBSER *series = NULL;
-	if (IS_MARK_SERIES(STRUCT_DATA_BIN(stu))) return;
+//	if (IS_MARK_SERIES(STRUCT_DATA_BIN(stu))) return;
 
-	CHECK_MARK(stu->spec, depth);
-	CHECK_MARK(stu->fields, depth);
-	CHECK_MARK(STRUCT_DATA_BIN(stu), depth);
-
-	//Debug_Num("mark spec:  ", (int)stu->spec);
-	//Debug_Num("mark fields:", (int)stu->fields);
-	//Debug_Num("mark bin:   ", (int)STRUCT_DATA_BIN(stu));
-
+	CHECK_MARK(STRUCT_SPEC(stu), depth);
+	CHECK_MARK(STRUCT_FIELDS_SER(stu), depth);
+	CHECK_MARK(STRUCT_DATA(stu), depth);
 	ASSERT2(IS_BARE_SERIES(stu->data), RP_BAD_SERIES);
 	ASSERT2(!IS_EXT_SERIES(stu->data), RP_BAD_SERIES);
 	ASSERT2(SERIES_TAIL(stu->data) == 1, RP_BAD_SERIES);
-	CHECK_MARK(stu->data, depth);
-
+#ifdef TODO
 	series = stu->fields;
 	for (len = 0; len < series->tail; len++) {
 		struct Struct_Field *field = (struct Struct_Field *)SERIES_SKIP(series, len);
 		Mark_Struct_Field(stu, field, depth + 1);
 	}
+#endif
 }
 
 

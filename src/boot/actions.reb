@@ -344,7 +344,7 @@ poke: action [
 
 clear: action [
 	{Removes elements from current position to tail; returns at new tail.}
-	series [series! port! map! gob! bitset! none!] {At position, if ordered collection (modified)}
+	series [series! port! map! gob! bitset! struct! none!] {At position, if ordered collection (modified)}
 ]
 
 trim: action [

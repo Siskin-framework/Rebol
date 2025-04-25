@@ -284,7 +284,7 @@
 
 /***********************************************************************
 **
-*/	static REBCNT Find_Entry(REBSER *series, REBVAL *key, REBVAL *val, REBOOL cased)
+*/	REBCNT Find_Entry(REBSER *series, REBVAL *key, REBVAL *val, REBOOL cased)
 /*
 **		Try to find the entry in the map. If not found
 **		and val is SET, create the entry and store the key and
