@@ -67,8 +67,8 @@ REBU64 get_vect(REBCNT bits, REBYTE *data, REBCNT n)
 	case VTUI64:
 		return (REBU64) ((i64*)data)[n];
 
-	case VTSF08:
-	case VTSF16:
+//	case VTSF08:
+//	case VTSF16:
 	case VTSF32:
 		return f_to_u64(((float*)data)[n]);
 	
@@ -114,8 +114,8 @@ void set_vect(REBCNT bits, REBYTE *data, REBCNT n, REBI64 i, REBDEC f) {
 		((i64*)data)[n] = (u64)i;
 		break;
 
-	case VTSF08:
-	case VTSF16:
+//	case VTSF08:
+//	case VTSF16:
 	case VTSF32:
 		((float*)data)[n] = (float)f;
 		break;
@@ -391,8 +391,8 @@ void Find_Maximum_Of_Vector(REBSER *vect, REBVAL *ret) {
 			case VTUI16: for (; n<len; n++)	((u16*)data)[n] += (u16)i; break;
 			case VTUI32: for (; n<len; n++) ((u32*)data)[n] += (u32)i; break;
 			case VTUI64: for (; n<len; n++)	((i64*)data)[n] += (u64)i; break;
-			case VTSF08:
-			case VTSF16:
+//			case VTSF08:
+//			case VTSF16:
 			case VTSF32: for (; n<len; n++) (( float*)data)[n] += (float)f; break;
 			case VTSF64: for (; n<len; n++) ((double*)data)[n] += f; break;
 			}
@@ -407,8 +407,8 @@ void Find_Maximum_Of_Vector(REBSER *vect, REBVAL *ret) {
 			case VTUI16: for (; n<len; n++)	((u16*)data)[n] -= (u16)i; break;
 			case VTUI32: for (; n<len; n++) ((u32*)data)[n] -= (u32)i; break;
 			case VTUI64: for (; n<len; n++)	((i64*)data)[n] -= (u64)i; break;
-			case VTSF08:
-			case VTSF16:
+//			case VTSF08:
+//			case VTSF16:
 			case VTSF32: for (; n<len; n++) (( float*)data)[n] -= (float)f; break;
 			case VTSF64: for (; n<len; n++) ((double*)data)[n] -= f; break;
 			}
@@ -423,8 +423,8 @@ void Find_Maximum_Of_Vector(REBSER *vect, REBVAL *ret) {
 			case VTUI16: for (; n<len; n++)	((u16*)data)[n] *= (u16)i; break;
 			case VTUI32: for (; n<len; n++) ((u32*)data)[n] *= (u32)i; break;
 			case VTUI64: for (; n<len; n++)	((i64*)data)[n] *= (u64)i; break;
-			case VTSF08:
-			case VTSF16:
+//			case VTSF08:
+//			case VTSF16:
 			case VTSF32: for (; n<len; n++) (( float*)data)[n] *= (float)f; break;
 			case VTSF64: for (; n<len; n++) ((double*)data)[n] *= f; break;
 			}
@@ -440,8 +440,8 @@ void Find_Maximum_Of_Vector(REBSER *vect, REBVAL *ret) {
 			case VTUI16: for (; n<len; n++)	((u16*)data)[n] /= (u16)i; break;
 			case VTUI32: for (; n<len; n++) ((u32*)data)[n] /= (u32)i; break;
 			case VTUI64: for (; n<len; n++)	((i64*)data)[n] /= (u64)i; break;
-			case VTSF08:
-			case VTSF16:
+//			case VTSF08:
+//			case VTSF16:
 			case VTSF32: for (; n<len; n++) (( float*)data)[n] /= (float)f; break;
 			case VTSF64: for (; n<len; n++) ((double*)data)[n] /= f; break;
 			}
@@ -560,6 +560,49 @@ void Find_Maximum_Of_Vector(REBSER *vect, REBVAL *ret) {
 	return ser;
 }
 
+REBOOL Get_Vector_Spec_From_Symbol(REBCNT sym, REBINT *type, REBINT *sign, REBINT *bits) {
+	switch (sym) {
+	case SYM_I8X:
+	case SYM_INT8X:   *type = 0; *sign = 0; *bits = 8; break;
+	case SYM_U8X:
+	case SYM_BYTEX:
+	case SYM_UINT8X:  *type = 0; *sign = 1; *bits = 8; break;
+	case SYM_I16X:
+	case SYM_INT16X:  *type = 0; *sign = 0; *bits = 16; break;
+	case SYM_U16X:
+	case SYM_UINT16X: *type = 0; *sign = 1; *bits = 16; break;
+	case SYM_I32X:
+	case SYM_INT32X:  *type = 0; *sign = 0; *bits = 32; break;
+	case SYM_U32X:
+	case SYM_UINT32X: *type = 0; *sign = 1; *bits = 32; break;
+	case SYM_I64X:
+	case SYM_INT64X:  *type = 0; *sign = 0; *bits = 64; break;
+	case SYM_U64X:
+	case SYM_UINT64X: *type = 0; *sign = 1; *bits = 64; break;
+	case SYM_F32X:
+	case SYM_FLOATX:  *type = 1; *sign = 0; *bits = 32; break;
+	case SYM_F64X:
+	case SYM_DOUBLEX: *type = 1; *sign = 0; *bits = 64; break;
+	default: return FALSE;
+	}
+	return TRUE;
+}
+
+/***********************************************************************
+**
+*/	REBSER *Make_Vector_From_Word(REBCNT sym, REBINT size)
+/*
+**	Make a vector from a type name.
+**
+***********************************************************************/
+{
+	REBINT type, sign, bits;
+	if (Get_Vector_Spec_From_Symbol(sym, &type, &sign, &bits)) {
+		return Make_Vector(type, sign, 1, bits, size);
+	}
+	return NULL;	
+}
+
 /***********************************************************************
 **
 */	REBVAL *Make_Vector_Spec(REBVAL *bp, REBVAL *value)
@@ -589,29 +632,11 @@ void Find_Maximum_Of_Vector(REBSER *vect, REBVAL *ret) {
 
 	// SIGNED / UNSIGNED
 	if (IS_WORD(bp)) {
+		if (Get_Vector_Spec_From_Symbol(VAL_WORD_CANON(bp), &type, &sign, &bits)) {
+			bp++;
+			goto size_spec;
+		}
 		switch (VAL_WORD_CANON(bp)) {
-		case SYM_I8X:
-		case SYM_INT8X:   type = 0; sign = 0; bits =  8; bp++; goto size_spec;
-		case SYM_U8X:
-		case SYM_BYTEX:
-		case SYM_UINT8X:  type = 0; sign = 1; bits =  8; bp++; goto size_spec;
-		case SYM_I16X:
-		case SYM_INT16X:  type = 0; sign = 0; bits = 16; bp++; goto size_spec;
-		case SYM_U16X:
-		case SYM_UINT16X: type = 0; sign = 1; bits = 16; bp++; goto size_spec;
-		case SYM_I32X:
-		case SYM_INT32X:  type = 0; sign = 0; bits = 32; bp++; goto size_spec;
-		case SYM_U32X:
-		case SYM_UINT32X: type = 0; sign = 1; bits = 32; bp++; goto size_spec;
-		case SYM_I64X:
-		case SYM_INT64X:  type = 0; sign = 0; bits = 64; bp++; goto size_spec;
-		case SYM_U64X:
-		case SYM_UINT64X: type = 0; sign = 1; bits = 64; bp++; goto size_spec;
-		case SYM_F32X:
-		case SYM_FLOATX:  type = 1; sign = 0; bits = 32; bp++; goto size_spec;
-		case SYM_F64X:
-		case SYM_DOUBLEX: type = 1; sign = 0; bits = 64; bp++; goto size_spec;
-
 		case SYM_UNSIGNED: sign = 1; bp++; break;
 		case SYM_SIGNED:   sign = 0; bp++; break;
 		}
@@ -756,7 +781,7 @@ size_spec:
 
 		// Get element value:
 		pvs->store->data.integer = get_vect(bits, vp, n-1); // 64 bits
-		if (bits < VTSF08) {
+		if (bits < VTSF32) {
 			SET_TYPE(pvs->store, REB_INTEGER);
 		} else {
 			SET_TYPE(pvs->store, REB_DECIMAL);
@@ -1020,11 +1045,15 @@ bad_make:
 	}
 
 	if (molded) {
-		REBCNT type = (bits >= VTSF08) ? REB_DECIMAL : REB_INTEGER;
-		Pre_Mold(value, mold);
-		if (!GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Byte(mold->series, '[');
-		if (bits >= VTUI08 && bits <= VTUI64) Append_Bytes(mold->series, "unsigned ");
-		Emit(mold, "N I I [", type+1, VECT_BIT_SIZE(bits), len);
+		REBCNT type = (bits >= VTSF32) ? REB_DECIMAL : REB_INTEGER;
+		if (GET_MOPT(mold, MOPT_MOLD_ALL)) {
+			Emit(mold, "#(T ", value);
+			if (bits >= VTUI08 && bits <= VTUI64) Append_Bytes(mold->series, "unsigned ");
+			Emit(mold, "N I I [", type + 1, VECT_BIT_SIZE(bits), len);
+		}
+		else {
+			Emit(mold, "#(S [", Get_Sym_Name(SYM_I8X + bits));
+		}
 		if (indented && len > 10) {
 			mold->indent++;
 			New_Indented_Line(mold);
@@ -1058,11 +1087,10 @@ bad_make:
 			New_Indented_Line(mold);
 		}
 		Append_Byte(mold->series, ']');
-		if (!GET_MOPT(mold, MOPT_MOLD_ALL)) {
-			Append_Byte(mold->series, ']');
+		if (GET_MOPT(mold, MOPT_MOLD_ALL) && VAL_INDEX(value)) {
+			Append_Byte(mold->series, ' ');
+			Append_Int(mold->series, VAL_INDEX(value) + 1);
 		}
-		else {
-			Post_Mold(value, mold);
-		}
+		Append_Byte(mold->series, ')');
 	}
 }
