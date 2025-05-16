@@ -1062,7 +1062,7 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 				if (!IS_BINARY(arg)) {
 					Trap_Types(RE_EXPECT_VAL, REB_BINARY, VAL_TYPE(arg));
 				}
-				COPY_MEM(VAL_STRUCT_DATA_BIN(val), VAL_BIN_DATA(arg), min(VAL_BIN_LEN(arg),VAL_STRUCT_SIZE(val)));
+				COPY_MEM(VAL_STRUCT_DATA_BIN(val), VAL_BIN_DATA(arg), MIN(VAL_BIN_LEN(arg),VAL_STRUCT_SIZE(val)));
 				return R_ARG1;
 			}
 			break;
