@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -80,6 +80,7 @@ enum reb_panics {
 	RP_MAX_SCHEMES,			// Too many native schemes
 	RP_BIND_BOUNDS,			// Bind is out of bounds for the frame
 	RP_SERIES_OVERFLOW,		// Tail has gone past end of series
+	RP_NO_STRUCT_REGISTER,  // Failed to append struct spec to system/catalog/structs
 
 //  Datatype Errors (300 + N --indicates location)
 	RP_DATATYPE = 1300,

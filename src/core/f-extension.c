@@ -124,8 +124,9 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 		COPY_MEM(arg.tuple_bytes, VAL_TUPLE(val), MAX_TUPLE);
 		break;
 	case RXE_STRUCT:
-		arg.structure.data = VAL_STRUCT_DATA(val);
-		arg.structure.fields = VAL_STRUCT_FIELDS(val);
+		arg.structure.series = VAL_STRUCT_DATA(val);
+		arg.structure.id     = VAL_STRUCT_ID(val);
+		arg.structure.offset = VAL_STRUCT_OFFSET(val);
 		break;
 	case RXE_NULL:
 	default:
@@ -183,11 +184,21 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 		COPY_MEM(VAL_TUPLE(val), arg.tuple_bytes, MAX_TUPLE);
 		break;
 	case RXE_STRUCT:
-		//TODO: review!
-		// There is no room in RXIARG to pass the spec part of the struct!
-		VAL_STRUCT_DATA(val) = arg.structure.data;
-		VAL_STRUCT_FIELDS(val) = arg.structure.fields;
+	{
+		// RXIARG is too small to hold all neccessary values...
+		// so we must use central struct spec container when creating a struct value from external source
+		// Avoid returning structs from the extension unless they are newly created, to prevent this lookup.
+		REBSER *spec = RL_STRUCT_SPEC(arg.structure.id);
+		if (!spec) {
+			SET_NONE(val); // or error instead?!
+		}
+		else {
+			VAL_STRUCT_SPEC(val) = spec;
+			VAL_STRUCT_DATA(val) = arg.structure.series;
+			VAL_STRUCT_OFFSET(val) = arg.structure.offset;
+		}
 		break;
+	}
 	case RXE_NULL:
 		VAL_INT64(val) = 0;
 		break;

@@ -1432,13 +1432,25 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_STRUCT:
 	{
-		REBSER *blk;
-		Pre_Mold(value, mold);
-		blk = Struct_To_Block(&VAL_STRUCT(value));
-		Mold_Block_Series(mold, blk, 0, 0);
-		End_Mold(mold);
-	}
+		REBVAL blk;
+		
+		Emit(mold, "#(T ", value);
+		if (GET_MOPT(mold, MOPT_MOLD_ALL)) {
+			Set_Block(&blk, VAL_STRUCT_SPEC(value));
+			Emit(mold, "V", &blk);
+		}
+		else if (VAL_STRUCT_NAME(value)) {
+			Append_UTF8(ser, Get_Sym_Name(VAL_STRUCT_NAME(value)), -1);
+		}
+		else {
+			Form_Integer(buf, VAL_STRUCT_ID(value));
+			Append_UTF8(ser, buf, -1);
+		}
+		Get_Struct_Reflect(&blk, &VAL_STRUCT(value), SYM_BODY);
+		Emit(mold, " V)", &blk);
+		Free_Series(VAL_SERIES(&blk));
 		break;
+	}
 
 	case REB_HANDLE:
 		Mold_Handle(value, mold);

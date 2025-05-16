@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -284,7 +284,7 @@
 
 /***********************************************************************
 **
-*/	static REBCNT Find_Entry(REBSER *series, REBVAL *key, REBVAL *val, REBOOL cased)
+*/	REBCNT Find_Entry(REBSER *series, REBVAL *key, REBVAL *val, REBOOL cased)
 /*
 **		Try to find the entry in the map. If not found
 **		and val is SET, create the entry and store the key and

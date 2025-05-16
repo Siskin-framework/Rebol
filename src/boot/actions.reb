@@ -265,7 +265,7 @@ to: action [
 
 copy: action [
 	{Copies a series, object, or other value.}
-	value [series! port! map! object! bitset! any-function! error!] {At position}
+	value [series! port! map! object! bitset! any-function! error! struct!] {At position}
 	/part {Limits to a given length or end position}
 	range [number! series! pair!]
 	/deep {Also copies series values within the block}
@@ -344,7 +344,7 @@ poke: action [
 
 clear: action [
 	{Removes elements from current position to tail; returns at new tail.}
-	series [series! port! map! gob! bitset! none!] {At position, if ordered collection (modified)}
+	series [series! port! map! gob! bitset! struct! none!] {At position, if ordered collection (modified)}
 ]
 
 trim: action [
