@@ -29,6 +29,7 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include "sys-hash.h"
 
 #define IS_INTEGER_TYPE(t) ((t) < STRUCT_TYPE_INTEGER)
 #define IS_DECIMAL_TYPE(t) ((t) > STRUCT_TYPE_INTEGER && (t) < STRUCT_TYPE_DECIMAL)
@@ -36,8 +37,7 @@
 
 REBFLG MT_Struct(REBVAL *out, REBVAL *data, REBCNT type);
 static void init_fields(REBVAL *ret, REBVAL *spec);
-FORCE_INLINE void bmix(REBCNT *h1, REBCNT *k1);
-FORCE_INLINE REBCNT fmix32(REBCNT h);
+
 
 static const REBCNT type_to_sym [STRUCT_TYPE_MAX] = {
 	SYM_UINT8X,
