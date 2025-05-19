@@ -15,7 +15,6 @@ REBOL [
 		word values in order to be correctly identified.
 	}
 ]
-
 any-type!
 any-word!
 any-path!
@@ -31,6 +30,22 @@ any-block!
 ;- like: #(u8! 4) which is same like: make vector! [unsigned integer! 8 4]
 ;  these numeric files are used in l-types.c and t-vector.c sources
 ;  and can be used for future struct! and routine! implementations
+
+int8!
+int16!
+int32!
+int64!
+
+uint8!
+uint16!
+uint32!
+uint64!
+
+float8!
+float16!
+float32!
+float64!
+
 i8!
 i16!
 i32!
@@ -46,20 +61,13 @@ f16!
 f32!
 f64!
 
-int8!
-int16!
-int32!
-int64!
-
-uint8!
-uint16!
-uint32!
-uint64!
-
-float!
-double!
 byte!
-; end of numeric types (code in l-types.c expects, that next word is `rebval!`)
+half!
+float!
+single!
+double!
+
+; end of numeric types (code in l-types.c expects, that next word is `datatypes`)
 rebval!
 
 datatypes 

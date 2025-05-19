@@ -44,8 +44,8 @@ if system/version >= 3.19.1 [
 	--assert (mold/all/flat u16) = "#(struct! [a [uint16!]] [a: 0])"
 	--assert (mold/all/flat u32) = "#(struct! [a [uint32!]] [a: 0])"
 	--assert (mold/all/flat u64) = "#(struct! [a [uint64!]] [a: 0])"
-	--assert (mold/all/flat f32) = "#(struct! [a [float!]] [a: 0.0])"
-	--assert (mold/all/flat f64) = "#(struct! [a [double!]] [a: 0.0])"
+	--assert (mold/all/flat f32) = "#(struct! [a [float32!]] [a: 0.0])"
+	--assert (mold/all/flat f64) = "#(struct! [a [float64!]] [a: 0.0])"
 	--assert (mold/all/flat w)   = "#(struct! [a [word!]] [a: #(none)])"
 
 --test-- "Struct single value (dimensional) construction"
@@ -70,8 +70,8 @@ if system/version >= 3.19.1 [
 	--assert [a [uint16! [2]]] = spec-of u16x2
 	--assert [a [uint32! [2]]] = spec-of u32x2
 	--assert [a [uint64! [2]]] = spec-of u64x2
-	--assert [a [float!  [2]]] = spec-of f32x2
-	--assert [a [double! [2]]] = spec-of f64x2
+	--assert [a [float32! [2]]] = spec-of f32x2
+	--assert [a [float64! [2]]] = spec-of f64x2
 	--assert [a [word!   [2]]] = spec-of wx2
 
 	--assert 2  = length? i8x2
@@ -93,8 +93,8 @@ if system/version >= 3.19.1 [
 	--assert (mold/all/flat u16x2) = "#(struct! [a [uint16! [2]]] [a: [0 0]])"
 	--assert (mold/all/flat u32x2) = "#(struct! [a [uint32! [2]]] [a: [0 0]])"
 	--assert (mold/all/flat u64x2) = "#(struct! [a [uint64! [2]]] [a: [0 0]])"
-	--assert (mold/all/flat f32x2) = "#(struct! [a [float! [2]]] [a: [0.0 0.0]])"
-	--assert (mold/all/flat f64x2) = "#(struct! [a [double! [2]]] [a: [0.0 0.0]])"
+	--assert (mold/all/flat f32x2) = "#(struct! [a [float32! [2]]] [a: [0.0 0.0]])"
+	--assert (mold/all/flat f64x2) = "#(struct! [a [float64! [2]]] [a: [0.0 0.0]])"
 	--assert (mold/all/flat wx2)   = "#(struct! [a [word! [2]]] [a: [#(none) #(none)]])"
 
 --test-- "Resolving multi-dimensional value"
@@ -145,8 +145,8 @@ if system/version >= 3.19.1 [
 	--assert (mold/all/flat u16) = "#(struct! [a [uint16!] b [int8!]] [a: 23 b: 0])"
 	--assert (mold/all/flat u32) = "#(struct! [a [uint32!] b [int8!]] [a: 23 b: 0])"
 	--assert (mold/all/flat u64) = "#(struct! [a [uint64!] b [int8!]] [a: 23 b: 0])"
-	--assert (mold/all/flat f32) = "#(struct! [a [float!] b [int8!]] [a: 23.0 b: 0])"
-	--assert (mold/all/flat f64) = "#(struct! [a [double!] b [int8!]] [a: 23.0 b: 0])"
+	--assert (mold/all/flat f32) = "#(struct! [a [float32!] b [int8!]] [a: 23.0 b: 0])"
+	--assert (mold/all/flat f64) = "#(struct! [a [float64!] b [int8!]] [a: 23.0 b: 0])"
 	--assert (mold/all/flat w)   = "#(struct! [a [word!] b [int8!]] [a: foo b: 0])"
 
 --test-- "Struct construction with initial value (using values only)"
@@ -170,8 +170,8 @@ if system/version >= 3.19.1 [
 	--assert (mold/all/flat u16) = "#(struct! [a [uint16!] b [int8!]] [a: 23 b: 0])"
 	--assert (mold/all/flat u32) = "#(struct! [a [uint32!] b [int8!]] [a: 23 b: 0])"
 	--assert (mold/all/flat u64) = "#(struct! [a [uint64!] b [int8!]] [a: 23 b: 0])"
-	--assert (mold/all/flat f32) = "#(struct! [a [float!] b [int8!]] [a: 23.0 b: 0])"
-	--assert (mold/all/flat f64) = "#(struct! [a [double!] b [int8!]] [a: 23.0 b: 0])"
+	--assert (mold/all/flat f32) = "#(struct! [a [float32!] b [int8!]] [a: 23.0 b: 0])"
+	--assert (mold/all/flat f64) = "#(struct! [a [float64!] b [int8!]] [a: 23.0 b: 0])"
 	--assert (mold/all/flat w)   = "#(struct! [a [word!] b [int8!]] [a: foo b: 0])"
 
 --test-- "Construction from struct prototype (using named fields)"

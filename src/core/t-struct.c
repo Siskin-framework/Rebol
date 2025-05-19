@@ -36,8 +36,10 @@
 
 REBFLG MT_Struct(REBVAL *out, REBVAL *data, REBCNT type);
 static void init_fields(REBVAL *ret, REBVAL *spec);
+FORCE_INLINE void bmix(REBCNT *h1, REBCNT *k1);
+FORCE_INLINE REBCNT fmix32(REBCNT h);
 
-static const REBINT type_to_sym [STRUCT_TYPE_MAX] = {
+static const REBCNT type_to_sym [STRUCT_TYPE_MAX] = {
 	SYM_UINT8X,
 	SYM_INT8X,
 	SYM_UINT16X,
@@ -46,14 +48,14 @@ static const REBINT type_to_sym [STRUCT_TYPE_MAX] = {
 	SYM_INT32X,
 	SYM_UINT64X,
 	SYM_INT64X,
-	-1, //SYM_INTEGER,
+	NOT_FOUND, //SYM_INTEGER,
 
-	SYM_FLOATX,
-	SYM_DOUBLEX,
-	-1, //SYM_DECIMAL,
+	SYM_FLOAT32X,
+	SYM_FLOAT64X,
+	NOT_FOUND, //SYM_DECIMAL,
 
 	SYM_POINTER,
-	-1, //SYM_STRUCT
+	NOT_FOUND, //SYM_STRUCT
 	SYM_WORD_TYPE,
 	SYM_REBVALX
 };
@@ -222,33 +224,9 @@ static REBOOL same_fields(REBSER *tgt, REBSER *src)
 	if (SERIES_TAIL(tgt) != SERIES_TAIL(src)) {
 		return FALSE;
 	}
-	REBSTF *tgt_fields = (REBSTF*) SERIES_DATA(tgt);
-	REBSTF *src_fields = (REBSTF*) SERIES_DATA(src);
-	REBSTI *tgt_info = (REBSTI*)tgt_fields;
-	REBSTI *src_info = (REBSTI*)src_fields;
-	REBCNT n;
-
-	if (src_info->id && tgt_info->id == src_info->id && tgt_info->size == src_info->size)
-		return TRUE;
-
-	for(n = 1; n < SERIES_TAIL(src); n ++) {
-		if (tgt_fields[n].type != src_fields[n].type) {
-			return FALSE;
-		}
-		if (VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, tgt_fields[n].sym))
-			!= VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, src_fields[n].sym))
-			|| tgt_fields[n].offset != src_fields[n].offset
-			|| tgt_fields[n].dimension != src_fields[n].dimension
-			|| tgt_fields[n].size != src_fields[n].size) {
-			return FALSE;
-		}
-		if (tgt_fields[n].type == STRUCT_TYPE_STRUCT
-			&& ! same_fields(tgt_fields[n].spec->series, src_fields[n].spec->series)) {
-			return FALSE;
-		}
-	}
-
-	return TRUE;
+	REBSTI *tgt_info = (REBSTI*) SERIES_DATA(tgt);
+	REBSTI *src_info = (REBSTI*) SERIES_DATA(src);
+	return (src_info->hash == tgt_info->hash);
 }
 
 static REBOOL assign_scalar(REBSTU *stu,
@@ -528,7 +506,8 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 	REBVAL *val = VAL_BLK_DATA(spec);
 
 	if (IS_WORD(val)){
-		switch (VAL_WORD_CANON(val)) {
+		REBCNT sym = VAL_WORD_SYM(val) = Normalize_Vector_Type_Symbol(VAL_WORD_CANON(val));
+		switch (sym) {
 			case SYM_UINT8X:
 				field->type = STRUCT_TYPE_UINT8;
 				field->size = 1;
@@ -561,11 +540,11 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 				field->type = STRUCT_TYPE_INT64;
 				field->size = 8;
 				break;
-			case SYM_FLOATX:
+			case SYM_FLOAT32X:
 				field->type = STRUCT_TYPE_FLOAT;
 				field->size = 4;
 				break;
-			case SYM_DOUBLEX:
+			case SYM_FLOAT64X:
 				field->type = STRUCT_TYPE_DOUBLE;
 				field->size = 8;
 				break;
@@ -696,6 +675,7 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 		REBINT field_num = 0; /* for field index */
 		REBU64 offset = 0;    /* offset in data */
 		REBCNT error = 0;
+		REBCNT k1, h1 = 0;    /* hash computation */
 
 		// Count fields and validate spec to optimize series preallocation
 		while (IS_STRING(blk)) ++blk;
@@ -752,6 +732,19 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 				error = FIELD_ERROR_INVALID_SPEC;
 				break;
 			}
+			// Compute a hash of the field's type and dimensions (used for fast struct comparison).
+			k1 = field->type;
+			bmix(&h1, &k1);
+			k1 = field->dimension;
+			bmix(&h1, &k1);
+			if (field->spec) {
+				// Inner struct...
+				if (field->spec->series) {
+					REBSTI *inf = (REBSTI *)SERIES_DATA(field->spec->series);
+					k1 = inf->hash;
+					bmix(&h1, &k1);
+				}
+			}
 			VAL_CLR_LINE(blk);
 			++blk;
 
@@ -804,6 +797,10 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 
 		// Store complete length of the struct
 		STRUCT_SIZE(stu) = (REBCNT)offset;
+
+		// Finalize and store the fields hash
+		h1 ^= STRUCT_SIZE(stu);
+		STRUCT_HASH(stu) = fmix32(h1);
 
 		// Append value to system/catalog/structs
 		n = Find_Entry(VAL_SERIES(struct_specs), &key, &spec, TRUE);
@@ -904,8 +901,8 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 				return 1;
 			}
 			return IS_STRUCT(a) && IS_STRUCT(b)
-				 && same_fields(VAL_STRUCT_FIELDS(a), VAL_STRUCT_FIELDS(b))
 				 && VAL_STRUCT_SIZE(a) == VAL_STRUCT_SIZE(b)
+				 && same_fields(VAL_STRUCT_FIELDS(a), VAL_STRUCT_FIELDS(b))
 				 && !memcmp(VAL_STRUCT_DATA_BIN(a), VAL_STRUCT_DATA_BIN(b), VAL_STRUCT_SIZE(a));
 		default:
 			return -1;

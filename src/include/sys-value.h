@@ -1257,11 +1257,12 @@ typedef struct Reb_Struct_Field {
 } REBSTF;
 
 typedef struct Reb_Struct_Info {
-	REBCNT id;
+	REBCNT id;    // hash of the specification block
 	REBCNT size;  // length of the complete struct in bytes
 	REBCNT count; // number of struct fields
-	REBCNT name;
+	REBCNT name;  // optionaly registered name
 	REBCNT flags;
+	REBCNT hash;  // hash of field types
 } REBSTI;
 
 #define	SET_STRUCT(v) VAL_SET(v, REB_STRUCT), VAL_STRUCT_OFFSET(v) = 0
@@ -1279,6 +1280,7 @@ typedef struct Reb_Struct_Info {
 #define STRUCT_COUNT(s)      (STRUCT_INFO(s)->count)  // number of fields
 #define STRUCT_NAME(s)       (STRUCT_INFO(s)->name)
 #define STRUCT_FLAGS(s)      (STRUCT_INFO(s)->flags)
+#define STRUCT_HASH(s)       (STRUCT_INFO(s)->hash)
 #define STRUCT_NEEDS_MARK(s) ((STRUCT_FLAGS(s) & 1) != 0)
 #define STRUCT_PROTECTED(s)  ((STRUCT_FLAGS(s) & 2) != 0)
 
@@ -1294,6 +1296,7 @@ typedef struct Reb_Struct_Info {
 #define VAL_STRUCT_ID(v)     (((REBSTI *)BLK_HEAD(VAL_STRUCT_FIELDS(v)))->id)
 #define VAL_STRUCT_NAME(v)   (((REBSTI *)BLK_HEAD(VAL_STRUCT_FIELDS(v)))->name)
 #define VAL_STRUCT_FLAGS(v)  (((REBSTI *)BLK_HEAD(VAL_STRUCT_FIELDS(v)))->flags)
+#define VAL_STRUCT_HASH(v)  (((REBSTI *)BLK_HEAD(VAL_STRUCT_FIELDS(v)))->hash)
 #define VAL_STRUCT_NEEDS_MARK(v) ((((REBSTI *)BLK_HEAD(VAL_STRUCT_FIELDS(v)))->flags & 1) != 0)
 #define VAL_STRUCT_PROTECTED(v) ((((REBSTI *)BLK_HEAD(VAL_STRUCT_FIELDS(v)))->flags & 2) != 0)
 

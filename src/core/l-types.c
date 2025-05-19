@@ -1163,7 +1163,7 @@ base16:
 			return TRUE;
 				
 		default:
-			if (type >= SYM_I8X && type < SYM_REBVALX) {
+			if (type >= SYM_INT8X && type < SYM_REBVALX) {
 				if (MT_Vector(value, val, REB_VECTOR)) return TRUE;
 			}
 			return FALSE;

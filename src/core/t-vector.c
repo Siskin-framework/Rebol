@@ -30,6 +30,51 @@
 
 #include "sys-core.h"
 
+static const REBCNT normalized_vect_sym[29] = {
+	SYM_INT8X,     //SYM_INT8X
+	SYM_INT16X,    //SYM_INT16X
+	SYM_INT32X,    //SYM_INT32X
+	SYM_INT64X,    //SYM_INT64X
+	SYM_UINT8X,    //SYM_UINT8X
+	SYM_UINT16X,   //SYM_UINT16X
+	SYM_UINT32X,   //SYM_UINT32X
+	SYM_UINT64X,   //SYM_UINT64X
+	SYM_FLOAT8X,   //SYM_FLOAT8X
+	SYM_FLOAT16X,  //SYM_FLOAT16X
+	SYM_FLOAT32X,  //SYM_FLOAT32X
+	SYM_FLOAT64X,  //SYM_FLOAT64X
+	SYM_INT8X,     //SYM_I8X
+	SYM_INT16X,    //SYM_I16X
+	SYM_INT32X,    //SYM_I32X
+	SYM_INT64X,    //SYM_I64X
+	SYM_UINT8X,    //SYM_U8X
+	SYM_UINT16X,   //SYM_U16X
+	SYM_UINT32X,   //SYM_U32X
+	SYM_UINT64X,   //SYM_U64X
+	SYM_FLOAT8X,   //SYM_F8X
+	SYM_FLOAT16X,  //SYM_F16X
+	SYM_FLOAT32X,  //SYM_F32X
+	SYM_FLOAT64X,  //SYM_F64X
+	SYM_UINT8X,    //SYM_BYTEX
+	SYM_FLOAT16X,  //SYM_HALFX
+	SYM_FLOAT32X,  //SYM_FLOATX
+	SYM_FLOAT32X,  //SYM_SINGLEX
+	SYM_FLOAT64X,  //SYM_DOUBLEX
+
+};
+
+/***********************************************************************
+**
+*/	REBCNT Normalize_Vector_Type_Symbol(REBCNT sym)
+/*
+**		Return normalized symbol from an numeric vector type alias.
+**
+***********************************************************************/
+{
+	if (sym < SYM_INT8X || sym > SYM_DOUBLEX) return sym;
+	return normalized_vect_sym[sym - SYM_INT8X];
+}
+
 REBU64 f_to_u64(float n) {
 	union {
 		REBU64 u;
@@ -38,6 +83,9 @@ REBU64 f_to_u64(float n) {
 	t.d = n;
 	return t.u;
 }
+
+
+
 		
 
 REBU64 get_vect(REBCNT bits, REBYTE *data, REBCNT n)
@@ -561,28 +609,17 @@ void Find_Maximum_Of_Vector(REBSER *vect, REBVAL *ret) {
 }
 
 REBOOL Get_Vector_Spec_From_Symbol(REBCNT sym, REBINT *type, REBINT *sign, REBINT *bits) {
-	switch (sym) {
-	case SYM_I8X:
-	case SYM_INT8X:   *type = 0; *sign = 0; *bits = 8; break;
-	case SYM_U8X:
-	case SYM_BYTEX:
-	case SYM_UINT8X:  *type = 0; *sign = 1; *bits = 8; break;
-	case SYM_I16X:
-	case SYM_INT16X:  *type = 0; *sign = 0; *bits = 16; break;
-	case SYM_U16X:
-	case SYM_UINT16X: *type = 0; *sign = 1; *bits = 16; break;
-	case SYM_I32X:
-	case SYM_INT32X:  *type = 0; *sign = 0; *bits = 32; break;
-	case SYM_U32X:
-	case SYM_UINT32X: *type = 0; *sign = 1; *bits = 32; break;
-	case SYM_I64X:
-	case SYM_INT64X:  *type = 0; *sign = 0; *bits = 64; break;
-	case SYM_U64X:
-	case SYM_UINT64X: *type = 0; *sign = 1; *bits = 64; break;
-	case SYM_F32X:
-	case SYM_FLOATX:  *type = 1; *sign = 0; *bits = 32; break;
-	case SYM_F64X:
-	case SYM_DOUBLEX: *type = 1; *sign = 0; *bits = 64; break;
+	switch (Normalize_Vector_Type_Symbol(sym)) {
+	case SYM_INT8X:    *type = 0; *sign = 0; *bits =  8; break;
+	case SYM_UINT8X:   *type = 0; *sign = 1; *bits =  8; break;
+	case SYM_INT16X:   *type = 0; *sign = 0; *bits = 16; break;
+	case SYM_UINT16X:  *type = 0; *sign = 1; *bits = 16; break;
+	case SYM_INT32X:   *type = 0; *sign = 0; *bits = 32; break;
+	case SYM_UINT32X:  *type = 0; *sign = 1; *bits = 32; break;
+	case SYM_INT64X:   *type = 0; *sign = 0; *bits = 64; break;
+	case SYM_UINT64X:  *type = 0; *sign = 1; *bits = 64; break;
+	case SYM_FLOAT32X: *type = 1; *sign = 0; *bits = 32; break;
+	case SYM_FLOAT64X: *type = 1; *sign = 0; *bits = 64; break;
 	default: return FALSE;
 	}
 	return TRUE;
@@ -1052,7 +1089,7 @@ bad_make:
 			Emit(mold, "N I I [", type + 1, VECT_BIT_SIZE(bits), len);
 		}
 		else {
-			Emit(mold, "#(S [", Get_Sym_Name(SYM_I8X + bits));
+			Emit(mold, "#(S [", Get_Sym_Name(SYM_INT8X + bits));
 		}
 		if (indented && len > 10) {
 			mold->indent++;
