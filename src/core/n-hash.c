@@ -202,7 +202,7 @@ FORCE_INLINE
 **
 */	REBCNT Hash_Block_Value(REBVAL *block)
 /*
-**		Return a case sensitive hash value for the block.
+**		Return a case insensitive hash value for the block.
 **
 ***********************************************************************/
 {
