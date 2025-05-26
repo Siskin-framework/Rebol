@@ -105,7 +105,7 @@ static REBFLG get_scalar(REBSTU *stu,
 				SET_TYPE(val, REB_STRUCT);
 				VAL_STRUCT_SPEC(val) = field->spec;
 				VAL_STRUCT_DATA(val) = stu->data;
-				VAL_STRUCT_OFFSET(val) = field->offset + n * field->size;
+				VAL_STRUCT_OFFSET(val) = stu->offset + field->offset + n * field->size;
 				VAL_STRUCT_SIZE(val) = field->size;
 			}
 			break;
@@ -556,7 +556,7 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 					REBFLG res;
 					DS_PUSH_END;
 					REBVAL *inner = DS_TOP;
-					res = MT_Struct(inner, val, REB_STRUCT);
+					res = Prepare_Struct(inner, val);
 					if (!res) {
 						//RL_Print("Failed to make nested struct!\n");
 						return FALSE;
@@ -615,6 +615,41 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 /***********************************************************************
 **
 */	REBFLG MT_Struct(REBVAL *out, REBVAL *data, REBCNT type)
+/*
+***********************************************************************/
+{
+	REBVAL *values = data + 1;
+
+	if (!Prepare_Struct(out, data))
+		return FALSE;
+
+	// At this point, the struct specification should be ready.
+	REBSTU *stu = &VAL_STRUCT(out);
+
+	if (IS_BINARY(values)) {
+		if (VAL_BIN_LEN(values) < STRUCT_SIZE(stu)) Trap_Arg(values);
+		if (STRUCT_DATA(stu)) {
+			COPY_MEM(STRUCT_DATA_BIN(stu), VAL_BIN_DATA(values), STRUCT_SIZE(stu));
+		}
+		else {
+			STRUCT_DATA(stu) = VAL_SERIES(values);
+		}
+		return TRUE;
+	}
+
+	STRUCT_DATA(stu) = Make_Binary(STRUCT_SIZE(stu));
+	LABEL_SERIES(VAL_STRUCT_FIELDS(out), "struct_data");
+	SERIES_TAIL(STRUCT_DATA(stu)) = STRUCT_SIZE(stu);
+
+	if (IS_BLOCK(values)) {
+		init_fields(out, values);
+	}
+	return TRUE;
+}
+
+/***********************************************************************
+**
+*/	REBFLG Prepare_Struct(REBVAL *out, REBVAL *data)
 /*
  * Format:
  * make struct! [
@@ -807,26 +842,7 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 		ASSERT1(n != NOT_FOUND, RP_NO_STRUCT_REGISTER);
 	}
 
-	// At this point, the struct specification should be ready.
 
-	if (IS_BINARY(values)) {
-		if (VAL_BIN_LEN(values) < STRUCT_SIZE(stu)) Trap_Arg(values);
-		if (STRUCT_DATA(stu)) {
-			COPY_MEM(STRUCT_DATA_BIN(stu), VAL_BIN_DATA(values), STRUCT_SIZE(stu));
-		}
-		else {
-			STRUCT_DATA(stu) = VAL_SERIES(values);
-		}
-		return TRUE;
-	}
-	
-	STRUCT_DATA(stu) = Make_Binary(STRUCT_SIZE(stu));
-	LABEL_SERIES(VAL_STRUCT_FIELDS(out), "struct_data");
-	SERIES_TAIL(STRUCT_DATA(stu)) = STRUCT_SIZE(stu);
-	
-	if (IS_BLOCK(values)) {
-		init_fields(out, values);
-	}
 	return TRUE;
 }
 

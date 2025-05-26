@@ -300,6 +300,14 @@ if system/version >= 3.19.1 [
 		#{0500 0506} == to binary! s3
 	]
 
+--test-- "Nested structs (deep)"
+	s: make struct! [a [uint32!] b [struct! [x [uint32!] y [struct! [yy [uint32!]]]]]]
+	s/b/x: 1
+	s/b/y/yy: 2
+	--assert (to binary! s/b/y) == #{02000000}
+	--assert (to binary! s/b  ) == #{0100000002000000}
+	--assert (to binary! s    ) == #{000000000100000002000000}
+
 --test-- "Nested structs with Rebol values"
 	--assert all [
 		attempt [s: make struct! [val [rebval!] pos [struct! pair8!]]]
@@ -347,6 +355,13 @@ if system/version >= 3.19.1 [
 		s/pos/y == 4
 	]
 
+--test-- "Compare structs"
+	s1: make struct! [a [u8!] b [u8!]]
+	s2: make struct! [a [uint8!] b [uint8!]]
+	--assert s1 = s2        ;; compares only field types
+	--assert not (s1 == s2) ;; compares alse field names
+	s1/a: 1
+	
 
 ===end-group===
 
