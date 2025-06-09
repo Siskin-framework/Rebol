@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -540,8 +540,7 @@ skip_hidden: ;
 	// values must not be absolute.
 
 	if (IS_INTEGER(start) && IS_INTEGER(end) && IS_INTEGER(incr)) {
-		Loop_Integer(var, body, VAL_INT64(start), 
-			IS_DECIMAL(end) ? (REBI64)VAL_DECIMAL(end) : VAL_INT64(end), VAL_INT64(incr));
+		Loop_Integer(var, body, VAL_INT64(start), VAL_INT64(end), VAL_INT64(incr));
 	}
 	else if (ANY_SERIES(start)) {
 		// Check that start and end are same type and series:
