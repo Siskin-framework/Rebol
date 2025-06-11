@@ -262,3 +262,20 @@ log: func [
 		true  [ if level > 0 [print ajoin [" ^[[33m[" id "] " msg "^[[0m"]]]
 	]
 ]
+
+remove-ansi: function/with [
+	"Removes ANSI color escape codes from a string or binary"
+	string [any-string! binary!] "(modified)"
+][
+	parse string [ 
+		any [
+			to escape ;; Move to the next escape sequence
+			remove [  ;; Remove the sequence matching this pattern
+				escape #"["
+				any [1 3 numeric opt #";"]
+				#"m"  ;; End of ANSI code
+			]
+		]
+	]
+	string
+] system/catalog/bitsets ;; for the `numeric` bitset

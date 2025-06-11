@@ -60,6 +60,7 @@ const struct {const char *word; const int flag;} arg_words[] = {
 	{"halt",		RO_HALT},
 	{"help",		RO_HELP},
 	{"import",		RO_IMPORT | RO_EXT},
+	{"no-color",    RO_NO_COLOR},
 	{"quiet",		RO_QUIET},
 	{"script",		RO_SCRIPT | RO_EXT},
 	{"secure",		RO_SECURE | RO_EXT},

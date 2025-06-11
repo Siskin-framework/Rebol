@@ -68,6 +68,7 @@ enum arg_opts {
 	ROF_CGI,
 	ROF_BOOT,
 	ROF_NO_WINDOW,
+	ROF_NO_COLOR,
 
 	ROF_IGNORE, // not an option
 };
@@ -91,6 +92,7 @@ enum arg_opts {
 #define RO_HALT        (1<<ROF_HALT)
 #define RO_BOOT        (1<<ROF_BOOT)
 #define RO_NO_WINDOW   (1<<ROF_NO_WINDOW)
+#define RO_NO_COLOR    (1<<ROF_NO_COLOR)
 
 #define RO_IGNORE      (1<<ROF_IGNORE)
 

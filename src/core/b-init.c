@@ -864,7 +864,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	val = Get_System(SYS_CATALOG, CAT_BOOT_FLAGS);
 	for (val = VAL_BLK(val); NOT_END(val); val++) {
 		VAL_CLR_LINE(val);
-		if (rargs->options & n) Append_Val(ser, val); 
+		if (rargs->options & n) Append_Val(ser, val);
 		n <<= 1;
 	}
 	// last value is always TRUE, so it's possible to use just *path* instead of `find`
@@ -878,6 +878,10 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	// For compatibility:
 	if (rargs->options & RO_QUIET) {
 		val = Get_System(SYS_OPTIONS, OPTIONS_QUIET);
+		SET_TRUE(val);
+	}
+	if (rargs->options & RO_NO_COLOR) {
+		val = Get_System(SYS_OPTIONS, OPTIONS_NO_COLOR);
 		SET_TRUE(val);
 	}
 

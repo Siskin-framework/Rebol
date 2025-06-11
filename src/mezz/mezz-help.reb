@@ -68,6 +68,49 @@ import (module [
       ^[[1;32musage^[[m   - program cmd line options
 }
 
+	help-usage: {
+  ^[[4;1;36mCommand line usage^[[m:
+  
+      ^[[1;32mREBOL |options| |script| |arguments|^[[m
+  
+  ^[[4;1;36mStandard options^[[m:
+  
+      ^[[1;32m--args data^[[m      Explicit arguments to script (quoted)
+      ^[[1;32m--do expr^[[m        Evaluate expression (quoted)
+      ^[[1;32m--help (-?)^[[m      Display this usage information (then quit)
+      ^[[1;32m--script file^[[m    Explicit script filename
+      ^[[1;32m--version tuple^[[m  Script must be this version or greater
+  
+  ^[[4;1;36mSpecial options^[[m:
+  
+      ^[[1;32m--boot level^[[m     Valid levels: base sys mods
+      ^[[1;32m--debug flags^[[m    For user scripts (system/options/debug)
+      ^[[1;32m--halt (-h)^[[m      Leave console open when script is done
+      ^[[1;32m--import file^[[m    Import a module prior to script
+      ^[[1;32m--quiet (-q)^[[m     No startup banners or information
+      ^[[1;32m--secure policy^[[m  Can be: none allow ask throw quit
+      ^[[1;32m--trace (-t)^[[m     Enable trace mode during boot
+      ^[[1;32m--verbose^[[m        Show detailed startup information
+      ^[[1;32m--cgi (-c)^[[m       Starts in a CGI mode
+  
+  ^[[4;1;36mOther quick options^[[m:
+  
+      ^[[1;32m-s^[[m               No security
+      ^[[1;32m+s^[[m               Full security
+      ^[[1;32m-v^[[m               Display version only (then quit)
+  
+  ^[[4;1;36mExamples^[[m:
+  
+      REBOL script.r
+      REBOL -s script.r
+      REBOL script.r 10:30 test@example.com
+      REBOL --do "watch: on" script.r}
+
+	if system/options/no-color [
+		sys/remove-ansi help-text
+		sys/remove-ansi help-usage
+	]
+
 	output: func[value][
 		buffer: insert buffer form reduce value
 	]
@@ -182,6 +225,7 @@ import (module [
 				]
 			]
 		]
+		if system/options/no-color [sys/remove-ansi result]
 		copy result
 	]
 
@@ -429,6 +473,7 @@ import (module [
 				]
 			]
 		]
+		if system/options/no-color [sys/remove-ansi head buffer]
 		either into [buffer][print head buffer]
 	]
 
@@ -472,6 +517,7 @@ import (module [
 		output ajoin [
 			"^[[1mTIP:^[[m use for example ^[[1;32mhelp system/codecs/" codec/name "^[[m to see more info.^/"
 		]
+		if system/options/no-color [sys/remove-ansi head buffer]
 	]
 
 	about: func [
@@ -483,43 +529,7 @@ import (module [
 	usage: func [
 		"Prints command-line arguments"
 	][
-		print {
-  ^[[4;1;36mCommand line usage^[[m:
-  
-      ^[[1;32mREBOL |options| |script| |arguments|^[[m
-  
-  ^[[4;1;36mStandard options^[[m:
-  
-      ^[[1;32m--args data^[[m      Explicit arguments to script (quoted)
-      ^[[1;32m--do expr^[[m        Evaluate expression (quoted)
-      ^[[1;32m--help (-?)^[[m      Display this usage information (then quit)
-      ^[[1;32m--script file^[[m    Explicit script filename
-      ^[[1;32m--version tuple^[[m  Script must be this version or greater
-  
-  ^[[4;1;36mSpecial options^[[m:
-  
-      ^[[1;32m--boot level^[[m     Valid levels: base sys mods
-      ^[[1;32m--debug flags^[[m    For user scripts (system/options/debug)
-      ^[[1;32m--halt (-h)^[[m      Leave console open when script is done
-      ^[[1;32m--import file^[[m    Import a module prior to script
-      ^[[1;32m--quiet (-q)^[[m     No startup banners or information
-      ^[[1;32m--secure policy^[[m  Can be: none allow ask throw quit
-      ^[[1;32m--trace (-t)^[[m     Enable trace mode during boot
-      ^[[1;32m--verbose^[[m        Show detailed startup information
-      ^[[1;32m--cgi (-c)^[[m       Starts in a CGI mode
-  
-  ^[[4;1;36mOther quick options^[[m:
-  
-      ^[[1;32m-s^[[m               No security
-      ^[[1;32m+s^[[m               Full security
-      ^[[1;32m-v^[[m               Display version only (then quit)
-  
-  ^[[4;1;36mExamples^[[m:
-  
-      REBOL script.r
-      REBOL -s script.r
-      REBOL script.r 10:30 test@example.com
-      REBOL --do "watch: on" script.r}
+		print help-usage
 	]
 
 
@@ -542,12 +552,13 @@ import (module [
 		{Prints a list of known functions}
 		'name [word! lit-word! unset!] "Optional module name"
 		/args "Show arguments not titles"
-		/local ctx vals arg list size
+		/local ctx vals arg list size a
 	][
 		list: make block! 400
 		size: 10 ; defines minimal function name padding
 
 		ctx: any [select system/modules :name lib]
+		a: system/options/ansi
 
 		foreach [word val] ctx [
 			if any-function? :val [
@@ -566,7 +577,7 @@ import (module [
 		vals: make string! size
 		foreach [word arg] sort/skip list 2 [
 			append/dup clear vals #" " size
-			print rejoin ["^[[1;32m" head change vals word "^[[0m " any [arg ""]]
+			print rejoin [a/green head change vals word a/reset SP any [arg ""]]
 		]
 		exit
 	]

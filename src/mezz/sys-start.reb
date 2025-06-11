@@ -25,6 +25,14 @@ start: func [
 
 	;** Note ** We need to make this work for lower boot levels too!
 
+	if any [
+		no-color
+		no-color: get-env 'NO_COLOR ;; https://no-color.org/
+	][
+		;; remove ANSI escape color sequences
+		foreach [k v] ansi [clear v]
+	]
+
 	;-- DEBUG: enable these lines for debug or related testing
 	sys/log/debug 'REBOL ["Starting... boot level:" boot-level]
 	;trace 1

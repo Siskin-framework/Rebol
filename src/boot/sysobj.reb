@@ -67,6 +67,18 @@ options: object [  ; Options supplied to REBOL during startup
 		tar:  1
 	]
 	domain-name: none ; Specifies system's domain name (used in SMTP scheme so far)
+	no-color: false
+	ansi: #[
+		gray:   "^[[1;30m"
+		red:    "^[[1;31m"
+		green:  "^[[1;32m"
+		yellow: "^[[1;33m"
+		blue:   "^[[1;34m"
+		purple: "^[[1;35m"
+		cyan:   "^[[1;36m"
+		white:	"^[[1;37m"
+		reset:  "^[[0m"
+	]
 ]
 
 catalog: object [
@@ -90,7 +102,7 @@ catalog: object [
 	boot-flags: [
 		script args do import version debug secure
 		help vers quiet verbose
-		secure-min secure-max trace halt cgi boot-level no-window
+		secure-min secure-max trace halt cgi boot-level no-window no-color
 	]
 	bitsets: object [
 		crlf:          #(bitset! #{0024})                             ;charset "^/^M"

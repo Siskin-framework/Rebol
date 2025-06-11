@@ -98,5 +98,10 @@ append sys/boot-banner
   ^[[1;32mHelp^[[0m  - show built-in help information
 }
 
+if system/options/no-color [
+	sys/remove-ansi sys/boot-banner
+	sys/remove-ansi system/license
+]
+
 ;print make-banner boot-banner halt
 ;print boot-help

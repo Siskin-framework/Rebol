@@ -12,9 +12,9 @@ REBOL [
 		Licensed under the Apache License, Version 2.0
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-	Version: 0.7.0
+	Version: 0.7.1
 	Needs: 3.18.5 ;; because using the new log-* functions
-	Date: 18-Mar-2025
+	Date: 11-Jun-2025
 	File: %prot-http.r3
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -962,10 +962,11 @@ sys/make-scheme [
 				state
 				state/info/status-code
 			][
-				either field [
-					either word? field [
+				case [
+					word? field [
 						select state/info field
-					][
+					]
+					block? field [
 						result: make block! length? field
 						foreach word field [
 							if any-word? word [
@@ -975,7 +976,10 @@ sys/make-scheme [
 						]
 						result
 					]
-				][	state/info ]
+					field = #(object!) [ state/info ]
+					field = #(map!)   [to map! state/info ]
+					field = #(block!) [to block! state/info ]
+				]
 			][	none ]
 		]
 		length?: func [
