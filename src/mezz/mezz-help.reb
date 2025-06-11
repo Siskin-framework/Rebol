@@ -92,7 +92,8 @@ import (module [
       ^[[1;32m--trace (-t)^[[m     Enable trace mode during boot
       ^[[1;32m--verbose^[[m        Show detailed startup information
       ^[[1;32m--cgi (-c)^[[m       Starts in a CGI mode
-  
+      ^[[1;32m--no-color^[[m       Reduce the use of ANSI color escape sequences
+
   ^[[4;1;36mOther quick options^[[m:
   
       ^[[1;32m-s^[[m               No security
