@@ -513,10 +513,12 @@ const REBCNT Gob_Flag_Words[] = {
 
 	case SYM_IMAGE:
 		if (GOB_TYPE(gob) == GOBT_IMAGE) {
-			// image
+			SET_IMAGE(val, GOB_CONTENT(gob));
+			VAL_IMAGE_WIDE(val) = GOB_W(gob);
+			VAL_IMAGE_HIGH(val) = GOB_H(gob);
+			break;
 		}
-		else goto is_none;
-		break;
+		goto is_none;
 
 #ifdef HAS_WIDGET_GOB
 	case SYM_WIDGET:
