@@ -138,6 +138,11 @@ system/schemes/http/spec/timeout: 30
 			data/args/q == "Some query"
 			data/args/v == "[]"
 		]
+
+	--test-- "GET request with Unicode character in query"
+		--assert "hergé at DuckDuckGo" = parse read https://duckduckgo.com/?q=hergé [thru "<title>" return copy title to "<"]
+		--assert "hergé at DuckDuckGo" = parse read https://duckduckgo.com/?q=herg%25C3%25A9 [thru "<title>" return copy title to "<"]
+		
 ===end-group===
 
 ===start-group=== "HTTP scheme - Redirection messages"

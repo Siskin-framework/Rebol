@@ -12,9 +12,9 @@ REBOL [
 		Licensed under the Apache License, Version 2.0
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-	Version: 0.7.1
+	Version: 0.7.2
 	Needs: 3.18.5 ;; because using the new log-* functions
-	Date: 11-Jun-2025
+	Date: 14-Jun-2025
 	File: %prot-http.r3
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -267,7 +267,11 @@ escape-query: function/with [
 		some allowed
 		| #"%" 2 hex-digits ;; already escaped
 		| change #" " #"+" 
-		| change set c: skip (ajoin [#"%" enbase to binary! c 16])
+		| change set c: skip (
+			c: enbase to binary! c 16
+			while [not tail? c][c: skip insert c #"%" 2]
+			head c
+		)
 	]]
 	query
 ][
