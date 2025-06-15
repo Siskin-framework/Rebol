@@ -762,21 +762,12 @@ end_date:
 **
 ***********************************************************************/
 {
+#ifdef auto_resolving_percent_encoded_characters
 	REBUNI n;
 	REBYTE *str = Reset_Buffer(BUF_FORM, len);
 	REBCNT cnt = len;
 
-//  !!! Need to check for any possible scheme followed by ':'
-
-//	for (n = 0; n < URL_MAX; n++) {
-//		if (str = Match_Bytes(cp, (REBYTE *)(URL_Schemes[n]))) break;
-//	}
-//	if (n >= URL_MAX) return 0;
-//	if (*str != ':') return 0;
-
-	
 	for (; len > 0; len--) {
-		//if (*cp == '%' && len > 2 && Scan_Hex2(cp+1, &n, FALSE)) {
 		if (*cp == '%') {
 			if (len <= 2 || !Scan_Hex2(cp+1, &n, FALSE)) return 0;
 			*str++ = (REBYTE)n;
@@ -791,6 +782,13 @@ end_date:
 	VAL_SERIES(value) = Decode_UTF_String(BIN_DATA(BUF_FORM), cnt, 8, FALSE, FALSE);
 	VAL_INDEX(value) = 0;
 	VAL_SET(value, REB_URL);
+#else
+	// URLs are dumb strings that round-trip input-to-output and should only be resolved when passed to a scheme
+	// https://github.com/Oldes/Rebol3/discussions/109
+	VAL_SERIES(value) = Decode_UTF_String(cp, len, 8, FALSE, FALSE);
+	VAL_INDEX(value) = 0;
+	VAL_SET(value, REB_URL);
+#endif
 	return cp;
 }
 

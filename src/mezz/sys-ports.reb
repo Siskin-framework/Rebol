@@ -189,7 +189,8 @@ url-parser: make object! [
 	segment-nz:    [some pchar]
 	segment-nz-nc: [some [unreserved | pct-encoded | sub-delims | #"@"]]	; non-zero-length segment with no colon
 	any-segments:  [any [#"/" segment]]
-	query:         [#"?" copy value any [pchar | slash | #"?"] (emit query    to string! dehex :value)]
+	;; not using dehex for the query value, because there may be escaped important chars like & and =
+	query:         [#"?" copy value any [pchar | slash | #"?"] (emit query    to string! :value)]
 	fragment:      [#"#" copy value any [pchar | slash | #"?"] (emit fragment to string! dehex :value)]
 
 	; Helper function

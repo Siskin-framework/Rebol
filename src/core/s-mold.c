@@ -436,6 +436,44 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 	*dp = 0;
 }
 
+STOID Mold_All_String(REBVAL *value, REB_MOLD *mold)
+{
+	// The string that is molded for /all option:
+	REBVAL val;
+
+	//// ???? move to above Mold_String_Series function????
+
+	Pre_Mold(value, mold); // #(file! part
+	val = *value;
+	VAL_INDEX(&val) = 0;
+	if (IS_BINARY(value)) Mold_Binary(&val, mold);
+	else {
+		VAL_SET(&val, REB_STRING);
+		Mold_String_Series(&val, mold);
+	}
+	Post_Mold(value, mold);
+}
+
+// Same as Mold_All_String, but forcing contruction syntax like #[file ...]
+STOID Mold_All_Constr_String(REBVAL *value, REB_MOLD *mold)
+{
+	// The string that is molded for /all option:
+	REBVAL val;
+	// prep...
+	Emit(mold, "#(T ", value); // #(file! part
+	// string...
+	val = *value;
+	VAL_INDEX(&val) = 0;
+	VAL_SET(&val, REB_STRING);
+	Mold_String_Series(&val, mold);
+	// post...
+	if (VAL_INDEX(value)) {
+		Append_Byte(mold->series, ' ');
+		Append_Int(mold->series, VAL_INDEX(value) + 1);
+	}
+	Append_Byte(mold->series, ')');
+}
+
 #ifdef not_used
 STOID Mold_Issue(REBVAL *value, REB_MOLD *mold)
 {
@@ -475,6 +513,25 @@ STOID Mold_Url(REBVAL *value, REB_MOLD *mold)
 	REBSER *ser = VAL_SERIES(value);
 	REBYTE buf[10];
 	REBCNT ulen;
+/*
+	REBUNI required = (REBUNI)(VAL_TYPE(value) == REB_EMAIL ? '@' : ':');
+	REBOOL found = FALSE;
+
+	if (len == 0) {
+mold_all_url:
+		Mold_All_Constr_String(value, mold);
+		return;
+	}
+
+	for (n = VAL_INDEX(value); n < VAL_TAIL(value); n++) {
+		c = GET_ANY_CHAR(ser, n);
+		if (IS_LEX_DELIMIT(c) && c != '/') goto mold_all_url;
+		if (c == required) found = TRUE;
+	}
+	if (!found) goto mold_all_url;
+	Insert_String(mold->series, AT_TAIL, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
+	return;
+*/
 
 	// Compute extra space needed for hex encoded characters:
 	for (n = VAL_INDEX(value); n < VAL_TAIL(value); n++) {
@@ -601,44 +658,6 @@ STOID Mold_Handle(REBVAL *value, REB_MOLD *mold)
 	}
 
 	Emit(mold, "#{E}", out);
-}
-
-STOID Mold_All_String(REBVAL *value, REB_MOLD *mold)
-{
-	// The string that is molded for /all option:
-	REBVAL val;
-
-	//// ???? move to above Mold_String_Series function????
-
-	Pre_Mold(value, mold); // #[file! part
-	val = *value;
-	VAL_INDEX(&val) = 0;
-	if (IS_BINARY(value)) Mold_Binary(&val, mold);
-	else {
-		VAL_SET(&val, REB_STRING);
-		Mold_String_Series(&val, mold);
-	}
-	Post_Mold(value, mold);
-}
-
-// Same as Mold_All_String, but forcing contruction syntax like #[file ...]
-STOID Mold_All_Constr_String(REBVAL *value, REB_MOLD *mold)
-{
-	// The string that is molded for /all option:
-	REBVAL val;
-	// prep...
-	Emit(mold, "#(T ", value); // #(file! part
-	// string...
-	val = *value;
-	VAL_INDEX(&val) = 0;
-	VAL_SET(&val, REB_STRING);
-	Mold_String_Series(&val, mold);
-	// post...
-	if (VAL_INDEX(value)) {
-		Append_Byte(mold->series, ' ');
-		Append_Int(mold->series, VAL_INDEX(value)+1);
-	}
-	Append_Byte(mold->series, ')');
 }
 
 STOID Mold_Ref(REBVAL *value, REB_MOLD *mold)
@@ -1666,7 +1685,7 @@ append:
 	// escape all chars from #"^(00)" to #"^(20)"
 	for (c = 0; c <= ' '; c++) cp[c] = ESC_URL | ESC_FILE;
 	// and also all chars which are a lexer delimiters + 3 common extra chars
-	dc = b_cast(";%\"()[]{}<>\x5C\x5E\x7F");
+	dc = b_cast(";\"()[]{}<>\x5C\x5E\x7F");
 	for (c = (REBYTE)LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
 	// RFC3986 allows unescaped only: ALPHA, DIGIT and "-._~:/?#[]@!$&'()*+,;="
 	// so include also folowing chars for url escaping...
@@ -1675,6 +1694,8 @@ append:
 	// required file escaping... https://github.com/Oldes/Rebol-issues/issues/2491
 	URL_Escapes['\x3A'] |= ESC_FILE;
 	URL_Escapes['\x40'] |= ESC_FILE;
+	// % is not being escaped in URLs (it is expected that user already used it for escaping the input)
+	URL_Escapes['%'] |= ESC_FILE;
 }
 
 

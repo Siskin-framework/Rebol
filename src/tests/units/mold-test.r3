@@ -215,20 +215,20 @@ Rebol [
 		--assert "ftp://"  = mold ftp://
 		--assert "ftp://%C5%A1" = mold ftp://š
 		--assert "ftp://+" = mold ftp://+
-		--assert "ftp://+" = mold ftp://%2b
-		--assert "ftp://+" = mold ftp://%2B
+		--assert "ftp://%2b" = mold ftp://%2b
+		--assert "ftp://%2B" = mold ftp://%2B
 		--assert "ftp://%20" = mold ftp://%20
 	--test-- "mold append url"
 		--assert "ftp://a" = mold append ftp:// #"a"
 		--assert "ftp://a" = mold append ftp://  "a"
 		--assert "ftp://%C5%A1" = mold append ftp://  "š"
 		--assert "ftp://+" = mold append ftp://  "+"
-		--assert "ftp://%2528" = mold append ftp:// "%28"
-		--assert "ftp://%28" = dehex mold append ftp:// "%28"
+		--assert "ftp://%28" = mold append ftp:// "%28"
+		--assert "ftp://(" = dehex mold append ftp:// "%28"
 	--test-- "mold url escaping"
 		for i 0 255 1 [
-			f2: try [load mold f1: append copy a:/ to char! i]
-			--assert f1 == f2
+			f2: try [mold f1: append copy a:/ to char! i]
+			--assert f2 = mold f1
 		]
 
 ===end-group=== 

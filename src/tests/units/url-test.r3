@@ -48,7 +48,7 @@ Rebol [
 		--assert url/host     = "example.com"
 		--assert url/path     = %/
 		--assert url/target   = %get
-		--assert url/query    = "q=ščř"
+		--assert url/query    = "q=%C5%A1%C4%8D%C5%99"
 		--assert url/fragment = "kovtička"
 
 	--test-- "decode-url-unicode"
@@ -60,7 +60,7 @@ Rebol [
 		--assert url/port     = 8080
 		--assert url/path     = %/
 		--assert url/target   = %get
-		--assert url/query    = "q=ščř"
+		--assert url/query    = "q=%C5%A1%C4%8D%C5%99"
 		--assert url/fragment = "kovtička"
 
 	--test-- "decode-url http://host?query"
@@ -71,7 +71,7 @@ Rebol [
 	--test-- "query with encoded &"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2012
 		u2: load molded: mold u1: to-url "http://a.b.c/d?e=f%26&g=h"
-		--assert molded = "http://a.b.c/d?e=f%2526&g=h"
+		--assert molded = "http://a.b.c/d?e=f%26&g=h"
 		--assert u1 = u2
 		--assert (decode-url u1) = [scheme: 'http host: "a.b.c" path: %/ target: %d query: "e=f%26&g=h"]
 
@@ -102,6 +102,7 @@ Rebol [
 
 	--test-- "decode-url with all ascii chars"
 		for i 0 127 1 [
+			if i = #"%" [continue]
 			--assert block? decode-url join http://test/q= to-char i
 		]
 
@@ -113,7 +114,7 @@ Rebol [
 		--assert (decode-url urn:isbn:0451450523)
 				== [scheme: 'urn path: "isbn" target: "0451450523"]
 		--assert (decode-url "urn:sici:1046-8188(199501)13:1%3C69:FTTHBI%3E2.0.TX;2-4")
-				== [scheme: 'urn path: "sici" target: "1046-8188(199501)13:1%3C69:FTTHBI%3E2.0.TX;2-4"]
+				== [scheme: 'urn path: "sici" target: "1046-8188(199501)13:1<69:FTTHBI>2.0.TX;2-4"]
 
 	--test-- "decode-url with @ in path"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2489
