@@ -294,7 +294,7 @@ make-http-request: func [
 		uppercase form :method SP
 		enhex/uri :path
 	]
-	if :target [append request mold as url! :target]
+	if :target [append request enhex/uri :target]
 	if :query  [append append request #"?" escape-query :query]
 
 	if cookies-to-send: get-cookies spec/host path [

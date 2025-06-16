@@ -113,17 +113,17 @@ Rebol [
 
 	--test-- "decode-url #2645"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2645
-		--assert mold/flat decode-url http://user%40rebol.com:blah@www.rebol.com/
+		--assert (mold/flat decode-url http://user%40rebol.com:blah@www.rebol.com/)
 			== {[scheme: 'http user: "user@rebol.com" pass: "blah" host: "www.rebol.com" path: %/]}
-		--assert mold/flat decode-url http://müsic.example/motörhead
+		--assert (mold/flat decode-url http://müsic.example/motörhead)
 			== {[scheme: 'http host: "müsic.example" path: %/ target: %motörhead]}
-		--assert mold/flat decode-url http://xn--msic-0ra.example/mot%C3%B6rhead
+		--assert (mold/flat decode-url http://xn--msic-0ra.example/mot%C3%B6rhead)
 			== {[scheme: 'http host: "xn--msic-0ra.example" path: %/ target: %motörhead]}
-		--assert mold/flat decode-url https://duckduckgo.com/?q=herg%C3%A9+%26+tintin
+		--assert (mold/flat decode-url https://duckduckgo.com/?q=herg%C3%A9+%26+tintin)
 			== {[scheme: 'https host: "duckduckgo.com" path: %/ query: "q=herg%C3%A9+%26+tintin"]}
-		--assert mold/flat decode-url https://duckduckgo.com/?q=hergé+%26+tintin
+		--assert (mold/flat decode-url https://duckduckgo.com/?q=hergé+%26+tintin)
 			== {[scheme: 'https host: "duckduckgo.com" path: %/ query: "q=herg%C3%A9+%26+tintin"]}
-		--assert mold/flat decode-url https://duckduckgo.com/?q=herg%E9+%26+tintin
+		--assert (mold/flat decode-url https://duckduckgo.com/?q=herg%E9+%26+tintin)
 			== {[scheme: 'https host: "duckduckgo.com" path: %/ query: "q=herg%E9+%26+tintin"]}
 
 	--test-- "decode-url urn"
