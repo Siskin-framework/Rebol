@@ -48,7 +48,7 @@ Rebol [
 		--assert url/host     = "example.com"
 		--assert url/path     = %/
 		--assert url/target   = %get
-		--assert url/query    = "q=ščř"
+		--assert url/query    = "q=%C5%A1%C4%8D%C5%99"
 		--assert url/fragment = "kovtička"
 
 	--test-- "decode-url-unicode"
@@ -60,7 +60,7 @@ Rebol [
 		--assert url/port     = 8080
 		--assert url/path     = %/
 		--assert url/target   = %get
-		--assert url/query    = "q=ščř"
+		--assert url/query    = "q=%C5%A1%C4%8D%C5%99"
 		--assert url/fragment = "kovtička"
 
 	--test-- "decode-url http://host?query"
@@ -68,10 +68,15 @@ Rebol [
 		--assert url/host  = "host"
 		--assert url/query = "query"
 
+	--test-- "decode-url with not escaping %"
+		--assert (mold/flat decode-url meta:thing=100%) == "[scheme: 'meta target: %thing=100%25]"
+		--assert (mold/flat decode-url file:name/100%) == "[scheme: 'file path: %name/ target: %100%25]"
+		--assert (mold/flat decode-url url://name/?100%x) == {[scheme: 'url host: "name" path: %/ query: "100%x"]}
+
 	--test-- "query with encoded &"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2012
 		u2: load molded: mold u1: to-url "http://a.b.c/d?e=f%26&g=h"
-		--assert molded = "http://a.b.c/d?e=f%2526&g=h"
+		--assert molded = "http://a.b.c/d?e=f%26&g=h"
 		--assert u1 = u2
 		--assert (decode-url u1) = [scheme: 'http host: "a.b.c" path: %/ target: %d query: "e=f%26&g=h"]
 
@@ -102,8 +107,24 @@ Rebol [
 
 	--test-- "decode-url with all ascii chars"
 		for i 0 127 1 [
+			if i = #"%" [continue]
 			--assert block? decode-url join http://test/q= to-char i
 		]
+
+	--test-- "decode-url #2645"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2645
+		--assert mold/flat decode-url http://user%40rebol.com:blah@www.rebol.com/
+			== {[scheme: 'http user: "user@rebol.com" pass: "blah" host: "www.rebol.com" path: %/]}
+		--assert mold/flat decode-url http://müsic.example/motörhead
+			== {[scheme: 'http host: "müsic.example" path: %/ target: %motörhead]}
+		--assert mold/flat decode-url http://xn--msic-0ra.example/mot%C3%B6rhead
+			== {[scheme: 'http host: "xn--msic-0ra.example" path: %/ target: %motörhead]}
+		--assert mold/flat decode-url https://duckduckgo.com/?q=herg%C3%A9+%26+tintin
+			== {[scheme: 'https host: "duckduckgo.com" path: %/ query: "q=herg%C3%A9+%26+tintin"]}
+		--assert mold/flat decode-url https://duckduckgo.com/?q=hergé+%26+tintin
+			== {[scheme: 'https host: "duckduckgo.com" path: %/ query: "q=herg%C3%A9+%26+tintin"]}
+		--assert mold/flat decode-url https://duckduckgo.com/?q=herg%E9+%26+tintin
+			== {[scheme: 'https host: "duckduckgo.com" path: %/ query: "q=herg%E9+%26+tintin"]}
 
 	--test-- "decode-url urn"
 		--assert (decode-url urn:example:animal:ferret:nose)
@@ -113,7 +134,7 @@ Rebol [
 		--assert (decode-url urn:isbn:0451450523)
 				== [scheme: 'urn path: "isbn" target: "0451450523"]
 		--assert (decode-url "urn:sici:1046-8188(199501)13:1%3C69:FTTHBI%3E2.0.TX;2-4")
-				== [scheme: 'urn path: "sici" target: "1046-8188(199501)13:1%3C69:FTTHBI%3E2.0.TX;2-4"]
+				== [scheme: 'urn path: "sici" target: "1046-8188(199501)13:1<69:FTTHBI>2.0.TX;2-4"]
 
 	--test-- "decode-url with @ in path"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2489

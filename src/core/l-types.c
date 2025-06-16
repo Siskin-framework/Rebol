@@ -762,33 +762,10 @@ end_date:
 **
 ***********************************************************************/
 {
-	REBUNI n;
-	REBYTE *str = Reset_Buffer(BUF_FORM, len);
-	REBCNT cnt = len;
-
-//  !!! Need to check for any possible scheme followed by ':'
-
-//	for (n = 0; n < URL_MAX; n++) {
-//		if (str = Match_Bytes(cp, (REBYTE *)(URL_Schemes[n]))) break;
-//	}
-//	if (n >= URL_MAX) return 0;
-//	if (*str != ':') return 0;
-
-	
-	for (; len > 0; len--) {
-		//if (*cp == '%' && len > 2 && Scan_Hex2(cp+1, &n, FALSE)) {
-		if (*cp == '%') {
-			if (len <= 2 || !Scan_Hex2(cp+1, &n, FALSE)) return 0;
-			*str++ = (REBYTE)n;
-			cp  += 3;
-			len -= 2;
-			cnt -= 2;
-		}
-		else *str++ = *cp++;
-	}
-	*str = 0;
-
-	VAL_SERIES(value) = Decode_UTF_String(BIN_DATA(BUF_FORM), cnt, 8, FALSE, FALSE);
+	// URLs are dumb strings that round-trip input-to-output
+	// and should only be resolved when passed to a scheme
+	// https://github.com/Oldes/Rebol3/discussions/109
+	VAL_SERIES(value) = Decode_UTF_String(cp, len, 8, FALSE, FALSE);
 	VAL_INDEX(value) = 0;
 	VAL_SET(value, REB_URL);
 	return cp;

@@ -436,6 +436,44 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 	*dp = 0;
 }
 
+STOID Mold_All_String(REBVAL *value, REB_MOLD *mold)
+{
+	// The string that is molded for /all option:
+	REBVAL val;
+
+	//// ???? move to above Mold_String_Series function????
+
+	Pre_Mold(value, mold); // #(file! part
+	val = *value;
+	VAL_INDEX(&val) = 0;
+	if (IS_BINARY(value)) Mold_Binary(&val, mold);
+	else {
+		VAL_SET(&val, REB_STRING);
+		Mold_String_Series(&val, mold);
+	}
+	Post_Mold(value, mold);
+}
+
+// Same as Mold_All_String, but forcing contruction syntax like #[file ...]
+STOID Mold_All_Constr_String(REBVAL *value, REB_MOLD *mold)
+{
+	// The string that is molded for /all option:
+	REBVAL val;
+	// prep...
+	Emit(mold, "#(T ", value); // #(file! part
+	// string...
+	val = *value;
+	VAL_INDEX(&val) = 0;
+	VAL_SET(&val, REB_STRING);
+	Mold_String_Series(&val, mold);
+	// post...
+	if (VAL_INDEX(value)) {
+		Append_Byte(mold->series, ' ');
+		Append_Int(mold->series, VAL_INDEX(value) + 1);
+	}
+	Append_Byte(mold->series, ')');
+}
+
 #ifdef not_used
 STOID Mold_Issue(REBVAL *value, REB_MOLD *mold)
 {
@@ -458,53 +496,49 @@ STOID Mold_Issue(REBVAL *value, REB_MOLD *mold)
 }
 #endif
 
-/*
-	http://www.blooberry.com/indexdot/html/topics/urlencoding.htm
-
-	Only alphanumerics [0-9a-zA-Z], the special characters $-_.+!*'(),
-	and reserved characters used for their reserved purposes may be used
-	unencoded within a URL.
-*/
-
+/* Used also for emails at this moment! */
 STOID Mold_Url(REBVAL *value, REB_MOLD *mold)
 {
-	REBUNI *dp;
-	REBCNT n, i;
+	REBCNT n;
 	REBUNI c;
 	REBCNT len = VAL_LEN(value);
+	REBCNT idx = VAL_INDEX(value);
 	REBSER *ser = VAL_SERIES(value);
-	REBYTE buf[10];
-	REBCNT ulen;
+	REBUNI required = (REBUNI)(VAL_TYPE(value) == REB_EMAIL ? '@' : ':');
+	REBCNT found = 0;
+	
 
-	// Compute extra space needed for hex encoded characters:
-	for (n = VAL_INDEX(value); n < VAL_TAIL(value); n++) {
-		c = GET_ANY_CHAR(ser, n);
-		if (IS_URL_ESC(c)) len += 2;
-		// unicode chars must be also encoded...
-		else if (c <  (REBCNT)0x80) continue;
-		//else if (c >= (REBCNT)0x0010FFFF) len += 14; // REBUNI is just 16bit, so this is useless now!
-		//else if (c >= (REBCNT)0x10000) len += 11;
-		else if (c >= (REBCNT)0x800) len += 8;
-		else if (c >= (REBCNT)0x80) len += 5;
+	// check if construction syntax is needed...
+	// 1. empty content
+	if (len == 0) {
+mold_constr:
+		Mold_All_Constr_String(value, mold);
+		return;
 	}
-
-	dp = Prep_Uni_Series(mold, len);
-
-	for (n = VAL_INDEX(value); n < VAL_TAIL(value); n++) {
+	// 2. contains a delimiter or invalid required chars
+	for (n = idx; n < VAL_TAIL(value); n++) {
 		c = GET_ANY_CHAR(ser, n);
-		if (IS_URL_ESC(c)) dp = Form_Hex_Esc_Uni(dp, c);  // c => %xx
-		else if (c >= 0x80) {
-			// to avoid need to first convert whole url to utf8,
-			// use the temp buffer for any unicode char...
-			ulen = Encode_UTF8_Char((REBYTE*)&buf, c);
-			for (i = 0; i < ulen; i++) {
-				dp = Form_Hex_Esc_Uni(dp, (REBUNI)buf[i]);
-			}
+		if (IS_LEX_DELIMIT(c)) {
+			// allow / inside urls...
+			if (c == '/' && required == ':') continue;
+			goto mold_constr;
 		}
-		else *dp++ = c;
+		if (c == required) {
+			if (found) {
+				if (
+					required == '@' || // invalid email.. (only one @ allowed)
+					n == idx+1         // invalid word.. (starts with ::)
+				) goto mold_constr;
+				continue; // only first position is stored!
+			}
+			if (n == idx) goto mold_constr; // at head
+			found = n;
+		}
 	}
-
-	*dp = 0;
+	// 3. required char (@ or :) found on head or tail!
+	if (!found || found == n-1) goto mold_constr;
+	// else output as it is...
+	Insert_String(mold->series, AT_TAIL, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
 }
 
 STOID Mold_File(REBVAL *value, REB_MOLD *mold)
@@ -601,44 +635,6 @@ STOID Mold_Handle(REBVAL *value, REB_MOLD *mold)
 	}
 
 	Emit(mold, "#{E}", out);
-}
-
-STOID Mold_All_String(REBVAL *value, REB_MOLD *mold)
-{
-	// The string that is molded for /all option:
-	REBVAL val;
-
-	//// ???? move to above Mold_String_Series function????
-
-	Pre_Mold(value, mold); // #[file! part
-	val = *value;
-	VAL_INDEX(&val) = 0;
-	if (IS_BINARY(value)) Mold_Binary(&val, mold);
-	else {
-		VAL_SET(&val, REB_STRING);
-		Mold_String_Series(&val, mold);
-	}
-	Post_Mold(value, mold);
-}
-
-// Same as Mold_All_String, but forcing contruction syntax like #[file ...]
-STOID Mold_All_Constr_String(REBVAL *value, REB_MOLD *mold)
-{
-	// The string that is molded for /all option:
-	REBVAL val;
-	// prep...
-	Emit(mold, "#(T ", value); // #(file! part
-	// string...
-	val = *value;
-	VAL_INDEX(&val) = 0;
-	VAL_SET(&val, REB_STRING);
-	Mold_String_Series(&val, mold);
-	// post...
-	if (VAL_INDEX(value)) {
-		Append_Byte(mold->series, ' ');
-		Append_Int(mold->series, VAL_INDEX(value)+1);
-	}
-	Append_Byte(mold->series, ')');
 }
 
 STOID Mold_Ref(REBVAL *value, REB_MOLD *mold)
@@ -1666,8 +1662,10 @@ append:
 	// escape all chars from #"^(00)" to #"^(20)"
 	for (c = 0; c <= ' '; c++) cp[c] = ESC_URL | ESC_FILE;
 	// and also all chars which are a lexer delimiters + 3 common extra chars
-	dc = b_cast(";%\"()[]{}<>\x5C\x5E\x7F");
+	dc = b_cast(";\"()[]{}<>\x5C\x5E\x7F");
 	for (c = (REBYTE)LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
+	// % is not being escaped in URLs (it is expected that user already used it for escaping the input)
+	URL_Escapes['%'] |= ESC_FILE;
 	// RFC3986 allows unescaped only: ALPHA, DIGIT and "-._~:/?#[]@!$&'()*+,;="
 	// so include also folowing chars for url escaping...
 	URL_Escapes['\x60'] |= ESC_URL;
@@ -1675,6 +1673,7 @@ append:
 	// required file escaping... https://github.com/Oldes/Rebol-issues/issues/2491
 	URL_Escapes['\x3A'] |= ESC_FILE;
 	URL_Escapes['\x40'] |= ESC_FILE;
+	
 }
 
 
