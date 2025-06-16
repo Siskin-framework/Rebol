@@ -179,7 +179,7 @@ dir-tree: func [
 				on-value directory/:value depth
 			][	join either dir? value [" ^[[32;1m"][" ^[[33;1m"][value "^[[m"] ]
 			formed: ajoin [indent prefix "[^[[m" formed ]
-			if system/options/no-color [formed: remove-ansi formed]
+			any [if system/options/no-color [formed: sys/remove-ansi formed] true]
 			print formed
 		]
 		all [
