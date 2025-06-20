@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -458,12 +458,12 @@ done:
 	REBVAL *val = DS_GET(DSP - 1);
 	REBU64 flags = VAL_UNT64(DS_TOP);
 	REBINT offset = 0;
+	REBINT result;
 	if (IS_INTEGER(val)) offset = VAL_INT64(val) - 1;
 
-	if (GET_FLAG(flags, SORT_FLAG_REVERSE))
-		return Cmp_Value((REBVAL*)v2+offset, (REBVAL*)v1+offset, GET_FLAG(flags, SORT_FLAG_CASE));
-	else
-		return Cmp_Value((REBVAL*)v1+offset, (REBVAL*)v2+offset, GET_FLAG(flags, SORT_FLAG_CASE));
+	result = Cmp_Value((REBVAL*)v1+offset, (REBVAL*)v2+offset, GET_FLAG(flags, SORT_FLAG_CASE));
+	if (GET_FLAG(flags, SORT_FLAG_REVERSE)) result = -result;
+	return result;
 }
 
 /***********************************************************************
@@ -475,17 +475,13 @@ done:
 	REBCNT size = VAL_UNT32(DS_GET(DSP - 1));
 	REBU64 flags = VAL_UNT64(DS_TOP);
 	REBINT offset = 0;
-	REBVAL *tmp;
 	REBINT result = 0;
 
-	if (GET_FLAG(flags, SORT_FLAG_REVERSE)) {
-		tmp = v1; v1 = v2; v2 = tmp;
-	}
-	
 	while (size-- > 0 && result == 0) {
 		result = Cmp_Value((REBVAL *)v1 + offset, (REBVAL *)v2 + offset, GET_FLAG(flags, SORT_FLAG_CASE));
 		offset++;
 	}
+	if (GET_FLAG(flags, SORT_FLAG_REVERSE)) result = -result;
 	return result;
 }
 
