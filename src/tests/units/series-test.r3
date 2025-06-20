@@ -1754,6 +1754,22 @@ Rebol [
 		e/id = 'out-of-range
 	]
 
+--test-- "SORT/skip/all"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2646
+	--assert [1 2 3 4] == sort/skip/all [1 2 3 4] 2
+	--assert [3 4 1 2] == sort/skip/all/reverse [1 2 3 4] 2
+	--assert [4 1 4 3] == sort/skip/all [4 3 4 1] 2
+	--assert [4 3 4 1] == sort/skip/all/reverse [4 3 4 1] 2
+	--assert [3 2 4 1] == sort/skip/all [4 1 3 2] 2
+	--assert [4 1 3 2] == sort/skip/all/reverse [4 1 3 2] 2
+	--assert [2 1 4 3] == sort/skip/all [4 3 2 1] 2
+	--assert [1 2 3 4] == sort/skip/all [4 3 2 1] 1
+	--assert [4 3 2 1] == sort/skip/all/reverse [4 3 2 1] 1
+	--assert all [
+		error? e: try [sort/skip/all/compare [4 3 4 1] 2 2]
+		e/id = 'bad-refines
+	]
+
 --test-- "SORT with invalid compare function"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1766
 	--assert error? try [sort/compare [1 2 3]  func [/local loc-1 loc-2][local < loc-1] ]
