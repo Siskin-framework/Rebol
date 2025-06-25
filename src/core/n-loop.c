@@ -405,7 +405,7 @@ enum loop_each_mode {
 					}
 
 					else if (IS_VECTOR(value)) {
-						Set_Vector_Value(vars, series, index);
+						Get_Vector_Value(vars, series, index);
 					}
 
 					else if (IS_MAP(value)) {

@@ -85,93 +85,81 @@ REBU64 f_to_u64(float n) {
 }
 
 
+typedef void (*SetterFunc)(void *data, REBCNT n, REBI64 i, REBDEC f);
+typedef REBU64(*GetterFunc)(REBYTE *data, REBCNT n);
 
-		
+static void set_i8(void *data, REBCNT n, REBI64 i, REBDEC f) { ((i8 *)data)[n] = (i8)i; }
+static void set_i16(void *data, REBCNT n, REBI64 i, REBDEC f) { ((i16 *)data)[n] = (i16)i; }
+static void set_i32(void *data, REBCNT n, REBI64 i, REBDEC f) { ((i32 *)data)[n] = (i32)i; }
+static void set_i64(void *data, REBCNT n, REBI64 i, REBDEC f) { ((i64 *)data)[n] = (i64)i; }
+static void set_u8(void *data, REBCNT n, REBI64 i, REBDEC f) { ((u8 *)data)[n] = (u8)i; }
+static void set_u16(void *data, REBCNT n, REBI64 i, REBDEC f) { ((u16 *)data)[n] = (u16)i; }
+static void set_u32(void *data, REBCNT n, REBI64 i, REBDEC f) { ((u32 *)data)[n] = (u32)i; }
+static void set_u64(void *data, REBCNT n, REBI64 i, REBDEC f) { ((u64 *)data)[n] = (u64)i; }
+static void set_float(void *data, REBCNT n, REBI64 i, REBDEC f) { ((float *)data)[n] = (float)f; }
+static void set_double(void *data, REBCNT n, REBI64 i, REBDEC f) { ((double *)data)[n] = (double)f; }
+
+static REBU64 get_i8(void *data, REBCNT n) { return (REBU64)((i8 *)data)[n]; }
+static REBU64 get_i16(void *data, REBCNT n) { return (REBU64)((i16 *)data)[n]; }
+static REBU64 get_i32(void *data, REBCNT n) { return (REBU64)((i32 *)data)[n]; }
+static REBU64 get_i64(void *data, REBCNT n) { return (REBU64)((i64 *)data)[n]; }
+static REBU64 get_u8(void *data, REBCNT n) { return (REBU64)((u8 *)data)[n]; }
+static REBU64 get_u16(void *data, REBCNT n) { return (REBU64)((u16 *)data)[n]; }
+static REBU64 get_u32(void *data, REBCNT n) { return (REBU64)((u32 *)data)[n]; }
+static REBU64 get_u64(void *data, REBCNT n) { return (REBU64)((u64 *)data)[n]; }
+static REBU64 get_float(void *data, REBCNT n) { return f_to_u64(((float *)data)[n]); }
+static REBU64 get_double(void *data, REBCNT n) { return ((REBU64 *)data)[n]; }
+
+// Jump table initialization
+static SetterFunc setters[VTSF64+1] = {
+	[VTSI08] = set_i8,
+	[VTSI16] = set_i16,
+	[VTSI32] = set_i32,
+	[VTSI64] = set_i64,
+	[VTUI08] = set_u8,
+	[VTUI16] = set_u16,
+	[VTUI32] = set_u32,
+	[VTUI64] = set_u64,
+	[VTSF32] = set_float,
+	[VTSF64] = set_double
+};
+static GetterFunc getters[VTSF64 + 1] = {
+	[VTSI08] = get_i8,
+	[VTSI16] = get_i16,
+	[VTSI32] = get_i32,
+	[VTSI64] = get_i64,
+	[VTUI08] = get_u8,
+	[VTUI16] = get_u16,
+	[VTUI32] = get_u32,
+	[VTUI64] = get_u64,
+	[VTSF32] = get_float,
+	[VTSF64] = get_double
+};
 
 REBU64 get_vect(REBCNT bits, REBYTE *data, REBCNT n)
 {
-	switch (bits) {
-	case VTSI08:
-		return (REBI64) ((i8*)data)[n];
-
-	case VTSI16:
-		return (REBI64) ((i16*)data)[n];
-
-	case VTSI32:
-		return (REBI64) ((i32*)data)[n];
-
-	case VTSI64:
-		return (REBI64) ((i64*)data)[n];
-
-	case VTUI08:
-		return (REBU64) ((u8*)data)[n];
-
-	case VTUI16:
-		return (REBU64) ((u16*)data)[n];
-
-	case VTUI32:
-		return (REBU64) ((u32*)data)[n];
-
-	case VTUI64:
-		return (REBU64) ((i64*)data)[n];
-
-//	case VTSF08:
-//	case VTSF16:
-	case VTSF32:
-		return f_to_u64(((float*)data)[n]);
-	
-	case VTSF64:
-		return ((REBU64*)data)[n];
-	}
-
-	return 0;
+	ASSERT1(bits > 0 && bits <= VTSF64, RP_BAD_SIZE);
+	return getters[bits](data, n);
 }
 
 void set_vect(REBCNT bits, REBYTE *data, REBCNT n, REBI64 i, REBDEC f) {
-	switch (bits) {
+	ASSERT1(bits > 0 && bits <= VTSF64, RP_BAD_SIZE);
+	setters[bits](data, n, i, f);
+}
 
-	case VTSI08:
-		((i8*)data)[n] = (i8)i;
-		break;
-
-	case VTSI16:
-		((i16*)data)[n] = (i16)i;
-		break;
-
-	case VTSI32:
-		((i32*)data)[n] = (i32)i;
-		break;
-
-	case VTSI64:
-		((i64*)data)[n] = (i64)i;
-		break;
-
-	case VTUI08:
-		((u8*)data)[n] = (u8)i;
-		break;
-
-	case VTUI16:
-		((u16*)data)[n] = (u16)i;
-		break;
-
-	case VTUI32:
-		((u32*)data)[n] = (u32)i;
-		break;
-
-	case VTUI64:
-		((i64*)data)[n] = (u64)i;
-		break;
-
-//	case VTSF08:
-//	case VTSF16:
-	case VTSF32:
-		((float*)data)[n] = (float)f;
-		break;
-
-	case VTSF64:
-		((double*)data)[n] = f;
-		break;
+void Set_Vector_Value(REBCNT bits, REBYTE *data, REBCNT n, REBVAL *val) {
+	REBI64 i = 0;
+	REBDEC f = 0.0;
+	ASSERT1(bits > 0 && bits <= VTSF64, RP_BAD_SIZE);
+	if (IS_INTEGER(val) || IS_CHAR(val)) {
+		i = VAL_INT64(val);
+		if (bits > VTUI64) f = (REBDEC)(i);
 	}
+	else if (IS_DECIMAL(val)) {
+		f = VAL_DECIMAL(val);
+		if (bits <= VTUI64) i = (REBINT)(f);
+	}
+	setters[bits](data, n, i, f);
 }
 
 
@@ -198,7 +186,6 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 				if (bits <= VTUI64) i = (REBINT)(f);
 			}
 			else Trap_Arg(val);
-			//if (n >= ser->tail) Expand_Vector(ser);
 			set_vect(bits, ser->data, n++, i, f);
 		}
 	}
@@ -565,7 +552,7 @@ void Find_Maximum_Of_Vector(REBSER *vect, REBVAL *ret) {
 
 /***********************************************************************
 **
-*/	void Set_Vector_Value(REBVAL *var, REBSER *series, REBCNT index)
+*/	void Get_Vector_Value(REBVAL *var, REBSER *series, REBCNT index)
 /*
 ***********************************************************************/
 {
@@ -831,19 +818,7 @@ size_spec:
 	TRAP_PROTECT(vect);
 
 	if (n <= 0 || (REBCNT)n > vect->tail) return PE_BAD_RANGE;
-
-	if (IS_INTEGER(set)) {
-		i = VAL_INT64(set);
-		if (bits > VTUI64) f = (REBDEC)(i);
-	}
-	else if (IS_DECIMAL(set)) {
-		f = VAL_DECIMAL(set);
-		if (bits <= VTUI64) i = (REBINT)(f);
-	}
-	else return PE_BAD_SET;
-
-	set_vect(bits, vp, n-1, i, f);
-
+	Set_Vector_Value(bits, vp, n-1, set);
 	return PE_OK;
 }
 
