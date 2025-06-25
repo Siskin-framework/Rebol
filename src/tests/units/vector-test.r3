@@ -649,4 +649,74 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "SORT"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1101
+	--test-- "SORT vector!"
+		--assert  #(i8!  [1 2 3 4]) == sort #(i8!  [2 4 1 3])
+		--assert  #(i16! [1 2 3 4]) == sort #(i16! [2 4 1 3])
+		--assert  #(i32! [1 2 3 4]) == sort #(i32! [2 4 1 3])
+		--assert  #(i64! [1 2 3 4]) == sort #(i64! [2 4 1 3])
+		--assert  #(f32! [1 2 3 4]) == sort #(f32! [2 4 1 3])
+		--assert  #(f64! [1 2 3 4]) == sort #(f64! [2 4 1 3])
+	--test-- "SORT/reverse vector!"
+		--assert  #(i8!  [4 3 2 1]) == sort/reverse #(i8!  [2 4 1 3])
+		--assert  #(i16! [4 3 2 1]) == sort/reverse #(i16! [2 4 1 3])
+		--assert  #(i32! [4 3 2 1]) == sort/reverse #(i32! [2 4 1 3])
+		--assert  #(i64! [4 3 2 1]) == sort/reverse #(i64! [2 4 1 3])
+		--assert  #(f32! [4 3 2 1]) == sort/reverse #(f32! [2 4 1 3])
+		--assert  #(f64! [4 3 2 1]) == sort/reverse #(f64! [2 4 1 3])
+	--test-- "SORT/part vector!"
+		--assert  #(i8!  [1 2 4 3]) == sort/part #(i8!  [2 4 1 3]) 3
+		--assert  #(i16! [1 2 4 3]) == sort/part #(i16! [2 4 1 3]) 3
+		--assert  #(i32! [1 2 4 3]) == sort/part #(i32! [2 4 1 3]) 3
+		--assert  #(i64! [1 2 4 3]) == sort/part #(i64! [2 4 1 3]) 3
+		--assert  #(f32! [1 2 4 3]) == sort/part #(f32! [2 4 1 3]) 3
+		--assert  #(f64! [1 2 4 3]) == sort/part #(f64! [2 4 1 3]) 3
+	--test-- "SORT/part/reverse vector!"
+		--assert  #(i8!  [4 2 1 3]) == sort/part/reverse #(i8!  [2 4 1 3]) 3
+		--assert  #(i16! [4 2 1 3]) == sort/part/reverse #(i16! [2 4 1 3]) 3
+		--assert  #(i32! [4 2 1 3]) == sort/part/reverse #(i32! [2 4 1 3]) 3
+		--assert  #(i64! [4 2 1 3]) == sort/part/reverse #(i64! [2 4 1 3]) 3
+		--assert  #(f32! [4 2 1 3]) == sort/part/reverse #(f32! [2 4 1 3]) 3
+		--assert  #(f64! [4 2 1 3]) == sort/part/reverse #(f64! [2 4 1 3]) 3
+	--test-- "SORT next vector!"
+		--assert  #(i8!  [2 1 3 4]) == head sort next #(i8!  [2 4 1 3])
+		--assert  #(i16! [2 1 3 4]) == head sort next #(i16! [2 4 1 3])
+		--assert  #(i32! [2 1 3 4]) == head sort next #(i32! [2 4 1 3])
+		--assert  #(i64! [2 1 3 4]) == head sort next #(i64! [2 4 1 3])
+		--assert  #(f32! [2 1 3 4]) == head sort next #(f32! [2 4 1 3])
+		--assert  #(f64! [2 1 3 4]) == head sort next #(f64! [2 4 1 3])
+	--test-- "SORT/reverse next vector!"
+		--assert  #(i8!  [2 4 3 1]) == head sort/reverse next #(i8!  [2 4 1 3])
+		--assert  #(i16! [2 4 3 1]) == head sort/reverse next #(i16! [2 4 1 3])
+		--assert  #(i32! [2 4 3 1]) == head sort/reverse next #(i32! [2 4 1 3])
+		--assert  #(i64! [2 4 3 1]) == head sort/reverse next #(i64! [2 4 1 3])
+		--assert  #(f32! [2 4 3 1]) == head sort/reverse next #(f32! [2 4 1 3])
+		--assert  #(f64! [2 4 3 1]) == head sort/reverse next #(f64! [2 4 1 3])
+	--test-- "SORT/part next vector!"
+		--assert  #(i8!  [2 1 4 3]) == head sort/part next #(i8!  [2 4 1 3]) 2
+		--assert  #(i16! [2 1 4 3]) == head sort/part next #(i16! [2 4 1 3]) 2
+		--assert  #(i32! [2 1 4 3]) == head sort/part next #(i32! [2 4 1 3]) 2
+		--assert  #(i64! [2 1 4 3]) == head sort/part next #(i64! [2 4 1 3]) 2
+		--assert  #(f32! [2 1 4 3]) == head sort/part next #(f32! [2 4 1 3]) 2
+		--assert  #(f64! [2 1 4 3]) == head sort/part next #(f64! [2 4 1 3]) 2
+	--test-- "SORT/part/reverse next vector!"
+		--assert  #(i8!  [2 4 1 3]) == head sort/part/reverse next #(i8!  [2 4 1 3]) 2
+		--assert  #(i16! [2 4 1 3]) == head sort/part/reverse next #(i16! [2 4 1 3]) 2
+		--assert  #(i32! [2 4 1 3]) == head sort/part/reverse next #(i32! [2 4 1 3]) 2
+		--assert  #(i64! [2 4 1 3]) == head sort/part/reverse next #(i64! [2 4 1 3]) 2
+		--assert  #(f32! [2 4 1 3]) == head sort/part/reverse next #(f32! [2 4 1 3]) 2
+		--assert  #(f64! [2 4 1 3]) == head sort/part/reverse next #(f64! [2 4 1 3]) 2
+	--test-- "SORT/skip vector!"
+		--assert  all [
+			error? e: try [sort/skip #(i8!  [2 4 1 3]) 2]
+			e/id = 'feature-na
+		]
+	--test-- "SORT/compare vector!"
+		--assert  all [
+			error? e: try [sort/compare #(i8!  [2 4 1 3]) func[a b][a < b]]
+			e/id = 'feature-na
+		]
+===end-group===
+
 ~~~end-file~~~

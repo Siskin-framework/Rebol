@@ -99,16 +99,48 @@ static void set_u64(void *data, REBCNT n, REBI64 i, REBDEC f) { ((u64 *)data)[n]
 static void set_float(void *data, REBCNT n, REBI64 i, REBDEC f) { ((float *)data)[n] = (float)f; }
 static void set_double(void *data, REBCNT n, REBI64 i, REBDEC f) { ((double *)data)[n] = (double)f; }
 
-static REBU64 get_i8(void *data, REBCNT n) { return (REBU64)((i8 *)data)[n]; }
-static REBU64 get_i16(void *data, REBCNT n) { return (REBU64)((i16 *)data)[n]; }
-static REBU64 get_i32(void *data, REBCNT n) { return (REBU64)((i32 *)data)[n]; }
-static REBU64 get_i64(void *data, REBCNT n) { return (REBU64)((i64 *)data)[n]; }
-static REBU64 get_u8(void *data, REBCNT n) { return (REBU64)((u8 *)data)[n]; }
-static REBU64 get_u16(void *data, REBCNT n) { return (REBU64)((u16 *)data)[n]; }
-static REBU64 get_u32(void *data, REBCNT n) { return (REBU64)((u32 *)data)[n]; }
-static REBU64 get_u64(void *data, REBCNT n) { return (REBU64)((u64 *)data)[n]; }
-static REBU64 get_float(void *data, REBCNT n) { return f_to_u64(((float *)data)[n]); }
-static REBU64 get_double(void *data, REBCNT n) { return ((REBU64 *)data)[n]; }
+static REBU64 get_i8(REBYTE *data, REBCNT n) { return (REBU64)((i8 *)data)[n]; }
+static REBU64 get_i16(REBYTE *data, REBCNT n) { return (REBU64)((i16 *)data)[n]; }
+static REBU64 get_i32(REBYTE *data, REBCNT n) { return (REBU64)((i32 *)data)[n]; }
+static REBU64 get_i64(REBYTE *data, REBCNT n) { return (REBU64)((i64 *)data)[n]; }
+static REBU64 get_u8(REBYTE *data, REBCNT n) { return (REBU64)((u8 *)data)[n]; }
+static REBU64 get_u16(REBYTE *data, REBCNT n) { return (REBU64)((u16 *)data)[n]; }
+static REBU64 get_u32(REBYTE *data, REBCNT n) { return (REBU64)((u32 *)data)[n]; }
+static REBU64 get_u64(REBYTE *data, REBCNT n) { return (REBU64)((u64 *)data)[n]; }
+static REBU64 get_float(REBYTE *data, REBCNT n) { return f_to_u64(((float *)data)[n]); }
+static REBU64 get_double(REBYTE *data, REBCNT n) { return ((REBU64 *)data)[n]; }
+
+// Comparison functions for qsort
+typedef int(*CompareFunc)(const void *a, const void *b);
+#define COMP_FUNC_BODY(type) {             \
+    type fa = *(const type *)a;   \
+	type fb = *(const type *)b;   \
+    return (fa > fb) - (fa < fb); \
+}
+// (ascending order)
+static int cmp_i8(const void *a, const void *b) { COMP_FUNC_BODY(i8) }
+static int cmp_i16(const void *a, const void *b) { COMP_FUNC_BODY(i16) }
+static int cmp_i32(const void *a, const void *b) { COMP_FUNC_BODY(i32) }
+static int cmp_i64(const void *a, const void *b) { COMP_FUNC_BODY(i64) }
+static int cmp_u8(const void *a, const void *b) { COMP_FUNC_BODY(u8) }
+static int cmp_u16(const void *a, const void *b) { COMP_FUNC_BODY(u16) }
+static int cmp_u32(const void *a, const void *b) { COMP_FUNC_BODY(u32) }
+static int cmp_u64(const void *a, const void *b) { COMP_FUNC_BODY(u64) }
+static int cmp_float(const void *a, const void *b) { COMP_FUNC_BODY(float) }
+static int cmp_double(const void *a, const void *b) { COMP_FUNC_BODY(double) }
+// reversed...
+static int cmp_i8_rev(const void *b, const void *a) { COMP_FUNC_BODY(i8) }
+static int cmp_i16_rev(const void *b, const void *a) { COMP_FUNC_BODY(i16) }
+static int cmp_i32_rev(const void *b, const void *a) { COMP_FUNC_BODY(i32) }
+static int cmp_i64_rev(const void *b, const void *a) { COMP_FUNC_BODY(i64) }
+static int cmp_u8_rev(const void *b, const void *a) { COMP_FUNC_BODY(u8) }
+static int cmp_u16_rev(const void *b, const void *a) { COMP_FUNC_BODY(u16) }
+static int cmp_u32_rev(const void *b, const void *a) { COMP_FUNC_BODY(u32) }
+static int cmp_u64_rev(const void *b, const void *a) { COMP_FUNC_BODY(u64) }
+static int cmp_float_rev(const void *b, const void *a) { COMP_FUNC_BODY(float) }
+static int cmp_double_rev(const void *b, const void *a) { COMP_FUNC_BODY(double) }
+
+#undef COMP_FUNC_BODY;
 
 // Jump table initialization
 static SetterFunc setters[VTSF64+1] = {
@@ -136,21 +168,46 @@ static GetterFunc getters[VTSF64 + 1] = {
 	[VTSF64] = get_double
 };
 
+static CompareFunc compares[VTSF64 + 1] = {
+	[VTSI08] = cmp_i8,
+	[VTSI16] = cmp_i16,
+	[VTSI32] = cmp_i32,
+	[VTSI64] = cmp_i64,
+	[VTUI08] = cmp_u8,
+	[VTUI16] = cmp_u16,
+	[VTUI32] = cmp_u32,
+	[VTUI64] = cmp_u64,
+	[VTSF32] = cmp_float,
+	[VTSF64] = cmp_double
+};
+static CompareFunc compares_rev[VTSF64 + 1] = {
+	[VTSI08] = cmp_i8_rev,
+	[VTSI16] = cmp_i16_rev,
+	[VTSI32] = cmp_i32_rev,
+	[VTSI64] = cmp_i64_rev,
+	[VTUI08] = cmp_u8_rev,
+	[VTUI16] = cmp_u16_rev,
+	[VTUI32] = cmp_u32_rev,
+	[VTUI64] = cmp_u64_rev,
+	[VTSF32] = cmp_float_rev,
+	[VTSF64] = cmp_double_rev
+};
+
 REBU64 get_vect(REBCNT bits, REBYTE *data, REBCNT n)
 {
-	ASSERT1(bits > 0 && bits <= VTSF64, RP_BAD_SIZE);
+	ASSERT1(bits >= 0 && bits <= VTSF64, RP_BAD_SIZE);
 	return getters[bits](data, n);
 }
 
 void set_vect(REBCNT bits, REBYTE *data, REBCNT n, REBI64 i, REBDEC f) {
-	ASSERT1(bits > 0 && bits <= VTSF64, RP_BAD_SIZE);
+	ASSERT1(bits >= 0 && bits <= VTSF64, RP_BAD_SIZE);
 	setters[bits](data, n, i, f);
 }
 
 void Set_Vector_Value(REBCNT bits, REBYTE *data, REBCNT n, REBVAL *val) {
 	REBI64 i = 0;
 	REBDEC f = 0.0;
-	ASSERT1(bits > 0 && bits <= VTSF64, RP_BAD_SIZE);
+	ASSERT1(bits >= 0 && bits <= VTSF64, RP_BAD_SIZE);
 	if (IS_INTEGER(val) || IS_CHAR(val)) {
 		i = VAL_INT64(val);
 		if (bits > VTUI64) f = (REBDEC)(i);
@@ -549,6 +606,19 @@ void Find_Maximum_Of_Vector(REBSER *vect, REBVAL *ret) {
 	}
 }
 
+/***********************************************************************
+**
+*/	void Sort_Vector(REBVAL *vect, REBLEN len, REBFLG reversed)
+/*
+***********************************************************************/
+{
+	REBCNT type = VECT_TYPE(VAL_SERIES(vect));
+	REBCNT idx = VAL_INDEX(vect);
+	REBCNT skp = VECT_BYTE_SIZE(type);
+	REBYTE *data = VAL_SERIES(vect)->data + (idx * skp);
+
+	reb_qsort(data, len, skp, reversed ? compares_rev[type] : compares[type]);
+}
 
 /***********************************************************************
 **
@@ -951,6 +1021,17 @@ static void reverse_vector(REBVAL *value, REBCNT len)
 	case A_REVERSE:
 		len = Partial(value, 0, D_ARG(3), 0);
 		if (len > 0) reverse_vector(value, len);
+		break;
+
+	case A_SORT:
+		len = Partial(value, 0, D_ARG(8), 0);
+		Sort_Vector(value, len, D_REF(10));
+		if (
+		//	D_REF(2) ||	// case sensitive
+			D_REF(3) ||	// skip
+			D_REF(5) 	// comparator
+		//	D_REF(9) 	// all fields
+			) Trap0(RE_FEATURE_NA);
 		break;
 			
 	case A_RANDOM:
