@@ -85,93 +85,138 @@ REBU64 f_to_u64(float n) {
 }
 
 
+typedef void (*SetterFunc)(void *data, REBCNT n, REBI64 i, REBDEC f);
+typedef REBU64(*GetterFunc)(REBYTE *data, REBCNT n);
 
-		
+static void set_i8(void *data, REBCNT n, REBI64 i, REBDEC f) { ((i8 *)data)[n] = (i8)i; }
+static void set_i16(void *data, REBCNT n, REBI64 i, REBDEC f) { ((i16 *)data)[n] = (i16)i; }
+static void set_i32(void *data, REBCNT n, REBI64 i, REBDEC f) { ((i32 *)data)[n] = (i32)i; }
+static void set_i64(void *data, REBCNT n, REBI64 i, REBDEC f) { ((i64 *)data)[n] = (i64)i; }
+static void set_u8(void *data, REBCNT n, REBI64 i, REBDEC f) { ((u8 *)data)[n] = (u8)i; }
+static void set_u16(void *data, REBCNT n, REBI64 i, REBDEC f) { ((u16 *)data)[n] = (u16)i; }
+static void set_u32(void *data, REBCNT n, REBI64 i, REBDEC f) { ((u32 *)data)[n] = (u32)i; }
+static void set_u64(void *data, REBCNT n, REBI64 i, REBDEC f) { ((u64 *)data)[n] = (u64)i; }
+static void set_float(void *data, REBCNT n, REBI64 i, REBDEC f) { ((float *)data)[n] = (float)f; }
+static void set_double(void *data, REBCNT n, REBI64 i, REBDEC f) { ((double *)data)[n] = (double)f; }
+
+static REBU64 get_i8(REBYTE *data, REBCNT n) { return (REBU64)((i8 *)data)[n]; }
+static REBU64 get_i16(REBYTE *data, REBCNT n) { return (REBU64)((i16 *)data)[n]; }
+static REBU64 get_i32(REBYTE *data, REBCNT n) { return (REBU64)((i32 *)data)[n]; }
+static REBU64 get_i64(REBYTE *data, REBCNT n) { return (REBU64)((i64 *)data)[n]; }
+static REBU64 get_u8(REBYTE *data, REBCNT n) { return (REBU64)((u8 *)data)[n]; }
+static REBU64 get_u16(REBYTE *data, REBCNT n) { return (REBU64)((u16 *)data)[n]; }
+static REBU64 get_u32(REBYTE *data, REBCNT n) { return (REBU64)((u32 *)data)[n]; }
+static REBU64 get_u64(REBYTE *data, REBCNT n) { return (REBU64)((u64 *)data)[n]; }
+static REBU64 get_float(REBYTE *data, REBCNT n) { return f_to_u64(((float *)data)[n]); }
+static REBU64 get_double(REBYTE *data, REBCNT n) { return ((REBU64 *)data)[n]; }
+
+// Comparison functions for qsort
+typedef int(*CompareFunc)(const void *a, const void *b);
+#define COMP_FUNC_BODY(type) {             \
+    type fa = *(const type *)a;   \
+	type fb = *(const type *)b;   \
+    return (fa > fb) - (fa < fb); \
+}
+// (ascending order)
+static int cmp_i8(const void *a, const void *b) { COMP_FUNC_BODY(i8) }
+static int cmp_i16(const void *a, const void *b) { COMP_FUNC_BODY(i16) }
+static int cmp_i32(const void *a, const void *b) { COMP_FUNC_BODY(i32) }
+static int cmp_i64(const void *a, const void *b) { COMP_FUNC_BODY(i64) }
+static int cmp_u8(const void *a, const void *b) { COMP_FUNC_BODY(u8) }
+static int cmp_u16(const void *a, const void *b) { COMP_FUNC_BODY(u16) }
+static int cmp_u32(const void *a, const void *b) { COMP_FUNC_BODY(u32) }
+static int cmp_u64(const void *a, const void *b) { COMP_FUNC_BODY(u64) }
+static int cmp_float(const void *a, const void *b) { COMP_FUNC_BODY(float) }
+static int cmp_double(const void *a, const void *b) { COMP_FUNC_BODY(double) }
+// reversed...
+static int cmp_i8_rev(const void *b, const void *a) { COMP_FUNC_BODY(i8) }
+static int cmp_i16_rev(const void *b, const void *a) { COMP_FUNC_BODY(i16) }
+static int cmp_i32_rev(const void *b, const void *a) { COMP_FUNC_BODY(i32) }
+static int cmp_i64_rev(const void *b, const void *a) { COMP_FUNC_BODY(i64) }
+static int cmp_u8_rev(const void *b, const void *a) { COMP_FUNC_BODY(u8) }
+static int cmp_u16_rev(const void *b, const void *a) { COMP_FUNC_BODY(u16) }
+static int cmp_u32_rev(const void *b, const void *a) { COMP_FUNC_BODY(u32) }
+static int cmp_u64_rev(const void *b, const void *a) { COMP_FUNC_BODY(u64) }
+static int cmp_float_rev(const void *b, const void *a) { COMP_FUNC_BODY(float) }
+static int cmp_double_rev(const void *b, const void *a) { COMP_FUNC_BODY(double) }
+
+#undef COMP_FUNC_BODY
+
+// Jump table initialization
+static SetterFunc setters[VTSF64+1] = {
+	[VTSI08] = set_i8,
+	[VTSI16] = set_i16,
+	[VTSI32] = set_i32,
+	[VTSI64] = set_i64,
+	[VTUI08] = set_u8,
+	[VTUI16] = set_u16,
+	[VTUI32] = set_u32,
+	[VTUI64] = set_u64,
+	[VTSF32] = set_float,
+	[VTSF64] = set_double
+};
+static GetterFunc getters[VTSF64 + 1] = {
+	[VTSI08] = get_i8,
+	[VTSI16] = get_i16,
+	[VTSI32] = get_i32,
+	[VTSI64] = get_i64,
+	[VTUI08] = get_u8,
+	[VTUI16] = get_u16,
+	[VTUI32] = get_u32,
+	[VTUI64] = get_u64,
+	[VTSF32] = get_float,
+	[VTSF64] = get_double
+};
+
+static CompareFunc compares[VTSF64 + 1] = {
+	[VTSI08] = cmp_i8,
+	[VTSI16] = cmp_i16,
+	[VTSI32] = cmp_i32,
+	[VTSI64] = cmp_i64,
+	[VTUI08] = cmp_u8,
+	[VTUI16] = cmp_u16,
+	[VTUI32] = cmp_u32,
+	[VTUI64] = cmp_u64,
+	[VTSF32] = cmp_float,
+	[VTSF64] = cmp_double
+};
+static CompareFunc compares_rev[VTSF64 + 1] = {
+	[VTSI08] = cmp_i8_rev,
+	[VTSI16] = cmp_i16_rev,
+	[VTSI32] = cmp_i32_rev,
+	[VTSI64] = cmp_i64_rev,
+	[VTUI08] = cmp_u8_rev,
+	[VTUI16] = cmp_u16_rev,
+	[VTUI32] = cmp_u32_rev,
+	[VTUI64] = cmp_u64_rev,
+	[VTSF32] = cmp_float_rev,
+	[VTSF64] = cmp_double_rev
+};
 
 REBU64 get_vect(REBCNT bits, REBYTE *data, REBCNT n)
 {
-	switch (bits) {
-	case VTSI08:
-		return (REBI64) ((i8*)data)[n];
-
-	case VTSI16:
-		return (REBI64) ((i16*)data)[n];
-
-	case VTSI32:
-		return (REBI64) ((i32*)data)[n];
-
-	case VTSI64:
-		return (REBI64) ((i64*)data)[n];
-
-	case VTUI08:
-		return (REBU64) ((u8*)data)[n];
-
-	case VTUI16:
-		return (REBU64) ((u16*)data)[n];
-
-	case VTUI32:
-		return (REBU64) ((u32*)data)[n];
-
-	case VTUI64:
-		return (REBU64) ((i64*)data)[n];
-
-//	case VTSF08:
-//	case VTSF16:
-	case VTSF32:
-		return f_to_u64(((float*)data)[n]);
-	
-	case VTSF64:
-		return ((REBU64*)data)[n];
-	}
-
-	return 0;
+	ASSERT1(bits >= 0 && bits <= VTSF64, RP_BAD_SIZE);
+	return getters[bits](data, n);
 }
 
 void set_vect(REBCNT bits, REBYTE *data, REBCNT n, REBI64 i, REBDEC f) {
-	switch (bits) {
+	ASSERT1(bits >= 0 && bits <= VTSF64, RP_BAD_SIZE);
+	setters[bits](data, n, i, f);
+}
 
-	case VTSI08:
-		((i8*)data)[n] = (i8)i;
-		break;
-
-	case VTSI16:
-		((i16*)data)[n] = (i16)i;
-		break;
-
-	case VTSI32:
-		((i32*)data)[n] = (i32)i;
-		break;
-
-	case VTSI64:
-		((i64*)data)[n] = (i64)i;
-		break;
-
-	case VTUI08:
-		((u8*)data)[n] = (u8)i;
-		break;
-
-	case VTUI16:
-		((u16*)data)[n] = (u16)i;
-		break;
-
-	case VTUI32:
-		((u32*)data)[n] = (u32)i;
-		break;
-
-	case VTUI64:
-		((i64*)data)[n] = (u64)i;
-		break;
-
-//	case VTSF08:
-//	case VTSF16:
-	case VTSF32:
-		((float*)data)[n] = (float)f;
-		break;
-
-	case VTSF64:
-		((double*)data)[n] = f;
-		break;
+void Set_Vector_Value(REBCNT bits, REBYTE *data, REBCNT n, REBVAL *val) {
+	REBI64 i = 0;
+	REBDEC f = 0.0;
+	ASSERT1(bits >= 0 && bits <= VTSF64, RP_BAD_SIZE);
+	if (IS_INTEGER(val) || IS_CHAR(val)) {
+		i = VAL_INT64(val);
+		if (bits > VTUI64) f = (REBDEC)(i);
 	}
+	else if (IS_DECIMAL(val)) {
+		f = VAL_DECIMAL(val);
+		if (bits <= VTUI64) i = (REBINT)(f);
+	}
+	setters[bits](data, n, i, f);
 }
 
 
@@ -198,7 +243,6 @@ void Set_Vector_Row(REBSER *ser, REBVAL *blk)
 				if (bits <= VTUI64) i = (REBINT)(f);
 			}
 			else Trap_Arg(val);
-			//if (n >= ser->tail) Expand_Vector(ser);
 			set_vect(bits, ser->data, n++, i, f);
 		}
 	}
@@ -562,10 +606,23 @@ void Find_Maximum_Of_Vector(REBSER *vect, REBVAL *ret) {
 	}
 }
 
+/***********************************************************************
+**
+*/	void Sort_Vector(REBVAL *vect, REBLEN len, REBFLG reversed)
+/*
+***********************************************************************/
+{
+	REBCNT type = VECT_TYPE(VAL_SERIES(vect));
+	REBCNT idx = VAL_INDEX(vect);
+	REBCNT skp = VECT_BYTE_SIZE(type);
+	REBYTE *data = VAL_SERIES(vect)->data + (idx * skp);
+
+	reb_qsort(data, len, skp, reversed ? compares_rev[type] : compares[type]);
+}
 
 /***********************************************************************
 **
-*/	void Set_Vector_Value(REBVAL *var, REBSER *series, REBCNT index)
+*/	void Get_Vector_Value(REBVAL *var, REBSER *series, REBCNT index)
 /*
 ***********************************************************************/
 {
@@ -831,19 +888,7 @@ size_spec:
 	TRAP_PROTECT(vect);
 
 	if (n <= 0 || (REBCNT)n > vect->tail) return PE_BAD_RANGE;
-
-	if (IS_INTEGER(set)) {
-		i = VAL_INT64(set);
-		if (bits > VTUI64) f = (REBDEC)(i);
-	}
-	else if (IS_DECIMAL(set)) {
-		f = VAL_DECIMAL(set);
-		if (bits <= VTUI64) i = (REBINT)(f);
-	}
-	else return PE_BAD_SET;
-
-	set_vect(bits, vp, n-1, i, f);
-
+	Set_Vector_Value(bits, vp, n-1, set);
 	return PE_OK;
 }
 
@@ -976,6 +1021,17 @@ static void reverse_vector(REBVAL *value, REBCNT len)
 	case A_REVERSE:
 		len = Partial(value, 0, D_ARG(3), 0);
 		if (len > 0) reverse_vector(value, len);
+		break;
+
+	case A_SORT:
+		len = Partial(value, 0, D_ARG(8), 0);
+		Sort_Vector(value, len, D_REF(10));
+		if (
+		//	D_REF(2) ||	// case sensitive
+			D_REF(3) ||	// skip
+			D_REF(5) 	// comparator
+		//	D_REF(9) 	// all fields
+			) Trap0(RE_FEATURE_NA);
 		break;
 			
 	case A_RANDOM:
