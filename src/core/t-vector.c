@@ -140,7 +140,7 @@ static int cmp_u64_rev(const void *b, const void *a) { COMP_FUNC_BODY(u64) }
 static int cmp_float_rev(const void *b, const void *a) { COMP_FUNC_BODY(float) }
 static int cmp_double_rev(const void *b, const void *a) { COMP_FUNC_BODY(double) }
 
-#undef COMP_FUNC_BODY;
+#undef COMP_FUNC_BODY
 
 // Jump table initialization
 static SetterFunc setters[VTSF64+1] = {
