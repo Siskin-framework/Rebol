@@ -569,16 +569,15 @@ new_line:
 {
 	REBCNT lines = 0;
 	REBSER *buf = BUF_SCAN;
+	REBYTE *dst = BIN_HEAD(buf);
 	REBLEN n;
 	REBINT chr;
-	size_t len;
 
 	RESET_TAIL(buf);
 
 	while (*src) {
-		chr = Decode_UTF8_Char_Size(&src, &len);
-		//if (*bp == CR && bp[1] == LF) bp++; // replace CRLF with LF
-
+		chr = *src++;
+		if (SERIES_FULL(buf)) Extend_Series(buf, 1);
 		if (chr == LF) lines++;
 		else if (chr == '}' && src[0] == '%') {
 			n = 1;
@@ -591,11 +590,8 @@ new_line:
 			}
 			if (n > num) return 0;
 		}
-		if (SERIES_FULL(buf))
-			Extend_Series(buf, len);
-
-		Encode_UTF8_Char(STR_TAIL(buf), chr);
-		buf->tail += len;
+		*dst++ = chr;
+		buf->tail++;
 	}
 	return 0; // end of source intput without closing
 }

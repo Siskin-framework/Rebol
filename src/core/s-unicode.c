@@ -524,9 +524,10 @@ done:
 	return codepoint;
 }
 
+#ifdef unused
 /***********************************************************************
 **
-*/	UTF32 Decode_UTF8_Char_Size(const REBYTE **RESTRICT str, REBCNT *RESTRICT size)
+X*/	UTF32 Decode_UTF8_Char_Size(const REBYTE **RESTRICT str, REBCNT *RESTRICT size)
 /*
 **		Converts a single UTF8 code-point (to 32 bit).
 **		Errors are returned as zero size.
@@ -554,7 +555,7 @@ done:
 	*str = src;
 	return codepoint;
 }
-
+#endif
 
 
 // -------------------------------------------------------------------------
