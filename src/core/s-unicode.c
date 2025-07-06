@@ -147,7 +147,7 @@ static const REBYTE utf8d[] = {
   12,36,12,12,12,12,12,12,12,12,12,12, 
 };
 
-static const uint8_t utf8d_class_to_size[] = {
+static const REBYTE utf8d_class_to_size[] = {
 	[0] = 1, // ASCII
 	[1] = 1, // Continuation
 	[2] = 2, // 2-byte lead
@@ -162,7 +162,7 @@ static const uint8_t utf8d_class_to_size[] = {
 	[11] = 4 // 4-byte lead
 };
 
-static uint8_t const u8_length[] = {
+static REBYTE const u8_length[] = {
 	// 0 1 2 3 4 5 6 7 8 9 A B C D E F
 	   1,1,1,1,1,1,1,1,0,0,0,0,2,2,3,4
 };
@@ -275,7 +275,6 @@ FORCE_INLINE
 	REBLEN index = 0;
 	while (chars-- > 0 && str[index]) {
 		index += UTF8_Next_Char_Size(str, index);
-
 	}
 	return index;
 }

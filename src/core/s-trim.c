@@ -84,8 +84,8 @@ static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
 
 	src = dst = STR_SKIP(ser, index);
 	// Remove all occurances of chars found in WITH string:
-	for (; index < tail; index += n) {
-		chr = Decode_UTF8_Char_Size(&src, &n);
+	for (n = tail - index; n > 0; ) {
+		chr = UTF8_Decode_Codepoint(&src, &n);
 		if (!find_in_uni(with_chars, wlen, chr)) {
 			dst += Encode_UTF8_Char(dst, chr);
 		}
@@ -227,10 +227,8 @@ static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
 	if (!h && !t) {
 		REBOOL outside = FALSE; // inside an inner line
 		REBCNT left = 0; // index of leftmost space (in output)
-
-		for (; index < tail; index += size) {
-			chr = Decode_UTF8_Char_Size(&src, &size);
-			if (!size) break;
+		for (size = tail - index; size > 0;) {
+			chr = UTF8_Decode_Codepoint(&src, &size);
 			if (chr < 0x7F && IS_SPACE(chr)) {
 				if (outside) continue;
 				if (!left) left = out;
@@ -238,6 +236,9 @@ static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
 			else if (chr == LF) {
 				outside = TRUE;
 				if (left) out = left, left = 0;
+			}
+			else if (chr == UNI_ERROR) {
+				break;
 			}
 			else {
 				outside = FALSE;
@@ -248,10 +249,10 @@ static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
 		}
 	}
 	else {
-		while (*src && index < tail) {
-			chr = Decode_UTF8_Char_Size(&src, &size);
+		size = tail - index;
+		while (size > 0) {
+			chr = UTF8_Decode_Codepoint(&src, &size);
 			out += Encode_UTF8_Char(BIN_SKIP(ser, out), chr);
-			index += size;
 		}
 	}
 

@@ -77,7 +77,6 @@
 #define UTF8_REJECT 1
 
 // Local includes:
-#include "utf8.h"
 #include "reb-c.h"
 #include "reb-defs.h"
 #include "reb-args.h"

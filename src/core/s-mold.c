@@ -550,15 +550,13 @@ STOID Mold_Issue(REBVAL *value, REB_MOLD *mold)
 STOID Mold_Url(REBVAL *value, REB_MOLD *mold)
 {
 	REBCNT n;
-	UTF32  c;
+	REBYTE c;
 	REBCNT len = VAL_LEN(value);
 	REBCNT idx = VAL_INDEX(value);
 	REBYTE *bp = VAL_BIN_DATA(value);
 	REBSER *ser = VAL_SERIES(value);
-	UTF32  required = (UTF32)(VAL_TYPE(value) == REB_EMAIL ? '@' : ':');
+	REBYTE required = (VAL_TYPE(value) == REB_EMAIL ? '@' : ':');
 	REBCNT found = 0;
-	REBCNT sz=0;
-	
 
 	// check if construction syntax is needed...
 	// 1. empty content
@@ -568,8 +566,8 @@ mold_constr:
 		return;
 	}
 	// 2. contains a delimiter or invalid required chars
-	for (n = idx; n < VAL_TAIL(value); n+=sz) {
-		c = Decode_UTF8_Char_Size(&bp, &sz);
+	for (n = idx; n < VAL_TAIL(value); n++) {
+		c = bp[n];
 		if (c < 0x7F && IS_LEX_DELIMIT(c)) {
 			// allow / inside urls...
 			if (c == '/' && required == ':') continue;

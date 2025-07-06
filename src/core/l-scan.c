@@ -616,48 +616,57 @@ new_line:
 	REBSER *buf;
 	UTF32 chr;
 	REBLEN len;
+	REBLEN bytes;
+	REBYTE *dst;
 
 	buf = BUF_SCAN;
 	RESET_TAIL(buf);
+	dst = BIN_HEAD(buf);
 
 	while (src < end && *src != term) {
-		chr = Decode_UTF8_Char_Size(&src, &len);
+		len = UTF8_Next_Char_Size(src, 0);
+		if (SERIES_FULL(buf)) Extend_Series(buf, len);
+		
+		if (len == 1) {
+			chr = *src++;
 
-		// End of stream?
-		if (chr == 0) break;
+			// End of stream?
+			if (chr == 0) break;
 
-		// If no term, then any white will terminate:
-		if (!term && IS_WHITE(chr)) break;
-
-		// Ctrl chars are invalid:
-		if (chr < ' ') return 0;	// invalid char
-
-		if (chr == '\\') chr = '/';
-
-		if (SERIES_FULL(buf)) {
-			Extend_Series(buf, len);
-		}
-
-		// Accept %xx encoded char:
-		else if (chr == '%') {
-			if (!Scan_Hex2(src, &chr)) return 0;
-			src += 2;
-		}
-
-		// Accept ^X encoded char:
-		else if (chr == '^') {
-			// checks also if not used in file like: %a^b which must be invalid!
-			if (src+1 == end || (invalid && strchr(cs_cast(invalid), chr)))
-				return 0; // nothing follows ^ or used in unquoted file
-			chr = Scan_Char(&src, state);
+			// If no term, then any white will terminate:
 			if (!term && IS_WHITE(chr)) break;
-			src--;
+
+			// Ctrl chars are invalid:
+			if (chr < ' ') return 0;	// invalid char
+
+			if (chr == '\\') chr = '/';
+
+			// Accept %xx encoded char:
+			else if (chr == '%') {
+				if (!Scan_Hex2(src, &chr)) return 0;
+				src += 2;
+			}
+
+			// Accept ^X encoded char:
+			else if (chr == '^') {
+				// checks also if not used in file like: %a^b which must be invalid!
+				if (src + 1 == end || (invalid && strchr(cs_cast(invalid), chr)))
+					return 0; // nothing follows ^ or used in unquoted file
+				chr = Scan_Char(&src, state);
+				if (!term && IS_WHITE(chr)) break;
+				src--;
+			}
+
+			// Is char as literal valid? (e.g. () [] etc.)
+			else if (invalid && chr < 0x80 && strchr(cs_cast(invalid), chr)) return 0;
+		}
+		else {
+			bytes = end - src;
+			chr = UTF8_Decode_Codepoint(&src, &bytes);
 		}
 
-		// Is char as literal valid? (e.g. () [] etc.)
-		else if (invalid && chr < 0x80 && strchr(cs_cast(invalid), chr)) return 0;
-
-		Encode_UTF8_Char(STR_TAIL(buf), chr);
+		len = Encode_UTF8_Char(dst, chr);
+		dst += len;
 		buf->tail += len;
     }
 
