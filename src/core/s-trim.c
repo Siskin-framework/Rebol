@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2022 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,15 +23,14 @@
 **  Module:  s-trim.c
 **  Summary: string trimming
 **  Section: strings
-**  Author:  Carl Sassenrath, Oldes
+**  Author:  Carl Sassenrath
 **  Notes:
 **
 ***********************************************************************/
 
 #include "sys-core.h"
 
-FORCE_INLINE
-static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
+static REBFLG find_in_uni(REBUNI *up, REBINT len, REBUNI c)
 {
 	while (len-- > 0) if (*up++ == c) return TRUE;
 	return FALSE;
@@ -49,17 +48,17 @@ static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
 ***********************************************************************/
 {
 	#define MAX_WITH 32
-	REBCNT wlen = 0, n;
-	UTF32  with_chars[MAX_WITH];	// chars to be trimmed
-	UTF32  *up = with_chars;
-	UTF32  chr;
-	REBYTE *src = NULL;
-	REBYTE *dst;
+	REBCNT wlen = 0;
+	REBUNI with_chars[MAX_WITH];	// chars to be trimmed
+	REBUNI *up = with_chars;
+	REBYTE *bp = NULL;
+	REBCNT n;
+	REBUNI uc;
 
 	// Setup WITH array from arg or the default:
 	n = 0;
 	if (IS_NONE(with)) {
-		src = b_cast("\n \r\t");
+		bp = b_cast("\n \r\t");
 		wlen = n = 4;
 	}
 	else if (IS_CHAR(with)) {
@@ -73,25 +72,27 @@ static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
 	else if (ANY_BINSTR(with)) {
 		n = VAL_LEN(with);
 		if (n >= MAX_WITH) n = MAX_WITH-1;
-		src = VAL_BIN_DATA(with);
 		wlen = n;
+		if (VAL_BYTE_SIZE(with)) {
+			bp = VAL_BIN_DATA(with);
+		} else {
+			memcpy(up, VAL_UNI_DATA(with), n * sizeof(REBUNI));
+			n = 0;
+		}
 	}
-	if (src) {
-		while (n > 0) {
-			*up++ = UTF8_Decode_Codepoint(&src, &n);
+	for (; n > 0; n--) *up++ = (REBUNI)*bp++;
+
+	// Remove all occurances of chars found in WITH string:
+	for (n = index; index < tail; index++) {
+		uc = GET_ANY_CHAR(ser, index);
+		if (!find_in_uni(with_chars, wlen, uc)) {
+			SET_ANY_CHAR(ser, n, uc);
+			n++;
 		}
 	}
 
-	src = dst = STR_SKIP(ser, index);
-	// Remove all occurances of chars found in WITH string:
-	for (; index < tail; index += n) {
-		chr = Decode_UTF8_Char_Size(&src, &n);
-		if (!find_in_uni(with_chars, wlen, chr)) {
-			dst += Encode_UTF8_Char(dst, chr);
-		}
-	}
-	SERIES_TAIL(ser) = dst - BIN_HEAD(ser);
-	TERM_SERIES(ser);
+	SET_ANY_CHAR(ser, n, 0);	
+	SERIES_TAIL(ser) = n;
 }
 
 
@@ -111,19 +112,18 @@ static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
 	REBCNT line;
 	REBCNT len;
 	REBCNT indent;
-	REBYTE uc = 0;
-	REBYTE *bp = BIN_HEAD(ser);
+	REBUNI uc = 0;
 
 	// Skip whitespace, remember start of last line:
 	for (line = index; index < tail; index++) {
-		uc = bp[index];
+		uc = GET_ANY_CHAR(ser, index);
 		if (!IS_WHITE(uc)) break;
 		if (uc == LF) line = index+1;
 	}
 
 	// Count the indentation used:
 	for (indent = 0; line < index; line++) {
-		if (bp[line] == ' ') indent++;
+		if (GET_ANY_CHAR(ser, line) == ' ') indent++;
 		else indent = (indent + TAB_SIZE) & ~3;
 	}
 
@@ -131,7 +131,7 @@ static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
 	while (index < tail) {
 		// Skip to next content, track indentation:
 		for (len = 0; index < tail; index++) {
-			uc = bp[index];
+			uc = GET_ANY_CHAR(ser, index);
 			if (!IS_SPACE(uc) || len >= indent) break;
 			if (uc == ' ') len++;
 			else len = (len + TAB_SIZE) & ~3;
@@ -139,21 +139,22 @@ static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
 
 		// Indent the line:
 		for (; len > indent; len--) {
-			bp[out] = ' ';
+			SET_ANY_CHAR(ser, out, ' ');
 			out++;
 		}
 
 		// Copy line contents:
 		while (index < tail) {
-			bp[out] = uc = bp[index];
+			uc = GET_ANY_CHAR(ser, index);
+			SET_ANY_CHAR(ser, out, uc);
 			out++;
 			index++;
 			if (uc == LF) break;
 		}
 	}
 
+	SET_ANY_CHAR(ser, out, 0);
 	SERIES_TAIL(ser) = out;
-	TERM_SERIES(ser);
 }
 
 
@@ -166,21 +167,22 @@ static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
 ***********************************************************************/
 {
 	REBINT pad = 1; // used to allow a single space
-	REBYTE uc;
-	REBYTE *bp = BIN_HEAD(ser);
+	REBUNI uc;
 	REBCNT out = index;
 
 	for (; index < tail; index++) {
-		uc = bp[index];
+		uc = GET_ANY_CHAR(ser, index);
 		if (IS_WHITE(uc)) {
 			uc = ' ';
 			if (!pad) {
-				bp[out++] = uc;
+				SET_ANY_CHAR(ser, out, uc);
+				out++;
 				pad = 2;
 			}
 		}
 		else {
-			bp[out++] = uc;
+			SET_ANY_CHAR(ser, out, uc);
+			out++;
 			pad = 0;
 		}
 	}
@@ -188,8 +190,8 @@ static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
 	// Remove extra end pad if found:
 	if (pad == 2) out--;
 
+	SET_ANY_CHAR(ser, out, 0);	
 	SERIES_TAIL(ser) = out;
-	TERM_SERIES(ser);
 }
 
 
@@ -204,22 +206,22 @@ static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
 {
 	REBCNT out = index;
 	REBOOL append_line_feed = FALSE;
-	UTF32 chr;
-	REBYTE *src = BIN_SKIP(ser, index);
-	REBYTE *dst = src;
-	REBCNT size;
+	REBUNI uc;
 
 	// Skip head lines if required:
 	if (h || !t) {
-		while (index < tail && IS_WHITE(*src)) src++, index++;
+		for (; index < tail; index++) {
+			uc = GET_ANY_CHAR(ser, index);
+			if (!IS_WHITE(uc)) break;
+		}
 	}
 
 	// Skip tail lines if required:
 	if (t || !h) {
 		for (; index < tail; tail--) {
-			REBYTE b = BIN_HEAD(ser)[tail-1];
-			if (b == LF) append_line_feed = TRUE;
-			if (!IS_WHITE(b)) break;
+			uc = GET_ANY_CHAR(ser, tail -1);
+			if (uc == LF) append_line_feed = TRUE;
+			if (!IS_WHITE(uc)) break;
 		}
 	}
 
@@ -228,14 +230,15 @@ static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
 		REBOOL outside = FALSE; // inside an inner line
 		REBCNT left = 0; // index of leftmost space (in output)
 
-		for (; index < tail; index += size) {
-			chr = Decode_UTF8_Char_Size(&src, &size);
-			if (!size) break;
-			if (chr < 0x7F && IS_SPACE(chr)) {
+		for (; index < tail; index++) {
+
+			uc = GET_ANY_CHAR(ser, index);
+
+			if (IS_SPACE(uc)) {
 				if (outside) continue;
 				if (!left) left = out;
 			}
-			else if (chr == LF) {
+			else if (uc == LF) {
 				outside = TRUE;
 				if (left) out = left, left = 0;
 			}
@@ -244,23 +247,26 @@ static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
 				left = 0;
 			}
 
-			out += Encode_UTF8_Char(BIN_SKIP(ser, out), chr);
+			SET_ANY_CHAR(ser, out, uc);
+			out++;
 		}
 	}
 	else {
-		while (*src && index < tail) {
-			chr = Decode_UTF8_Char_Size(&src, &size);
-			out += Encode_UTF8_Char(BIN_SKIP(ser, out), chr);
-			index += size;
+		for (; index < tail; index++) {
+			uc = GET_ANY_CHAR(ser, index);
+			SET_ANY_CHAR(ser, out, uc);
+			out++;
 		}
 	}
 
 	// Append line feed if necessary
 	if (append_line_feed && !t) {
-		out += Encode_UTF8_Char(BIN_SKIP(ser, out), LF);
+		SET_ANY_CHAR(ser, out, LF);
+		out++;
 	}
+
+	SET_ANY_CHAR(ser, out, 0);
 	SERIES_TAIL(ser) = out;
-	TERM_SERIES(ser);
 }
 
 

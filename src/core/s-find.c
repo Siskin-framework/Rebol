@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2023 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@
 **  Module:  s-find.c
 **  Summary: string search and comparison
 **  Section: strings
-**  Author:  Carl Sassenrath, Oldes
+**  Author:  Carl Sassenrath
 **  Notes:
 **
 ***********************************************************************/
@@ -70,18 +70,16 @@
 {
 	REBINT d;
 
-	if (uncase) {
-		for (; len > 0; len--, b1++, b2++) {
+	for (; len > 0; len--, b1++, b2++) {
+
+		if (uncase)
 			d = LO_CASE(*b1) - LO_CASE(*b2);
-			if (d != 0) return d;
-		}
-	}
-	else {
-		for (; len > 0; len--, b1++, b2++) {
+		else
 			d = *b1 - *b2;
-			if (d != 0) return d;
-		}
+
+		if (d != 0) return d;
 	}
+
 	return 0;
 }
 
@@ -214,7 +212,7 @@
 **
 */	REBINT Compare_String_Vals(REBVAL *v1, REBVAL *v2, REBOOL uncase)
 /*
-**		Compare two string values.
+**		Compare two string values. Either can be byte or unicode wide.
 **
 **		Uncase: compare is case-insensitive.
 **
@@ -229,7 +227,19 @@
 
 	if (IS_BINARY(v1) || IS_BINARY(v2)) uncase = FALSE;
 
-	n = Compare_Bytes(VAL_BIN_DATA(v1), VAL_BIN_DATA(v2), len, uncase);
+	if (VAL_BYTE_SIZE(v1)) { // v1 is 8
+		if (VAL_BYTE_SIZE(v2))
+			n = Compare_Bytes(VAL_BIN_DATA(v1), VAL_BIN_DATA(v2), len, uncase);
+		else
+			n = -Compare_Uni_Byte(VAL_UNI_DATA(v2), VAL_BIN_DATA(v1), len, uncase);
+	}
+	else { // v1 is 16
+		if (VAL_BYTE_SIZE(v2))
+			n = Compare_Uni_Byte(VAL_UNI_DATA(v1), VAL_BIN_DATA(v2), len, uncase);
+		else
+			n = Compare_Uni_Str(VAL_UNI_DATA(v1), VAL_UNI_DATA(v2), len, uncase);
+	}
+
 	if (n != 0) return n;
 	return l1 - l2;
 }
@@ -262,9 +272,11 @@
 	REBCNT l1 = (REBCNT)LEN_BYTES(s1);
 	REBINT result = 0;
 
-	for (; l1 > 0 && l2 > 0;) {
-		c1 = UTF8_Decode_Codepoint(&s1, &l1);
-		c2 = UTF8_Decode_Codepoint(&s2, &l2);
+	for (; l1 > 0 && l2 > 0; s1++, s2++, l1--, l2--) {
+		c1 = (REBYTE)*s1;
+		c2 = (REBYTE)*s2;
+		if (c1 > 127) c1 = Decode_UTF8_Char(&s1, &l1); //!!! can return 0 on error!
+		if (c2 > 127) c2 = Decode_UTF8_Char(&s2, &l2);
 		if (c1 != c2) {
 			if (c1 >= UNICODE_CASES || c2 >= UNICODE_CASES ||
 				LO_CASE(c1) != LO_CASE(c2)) {
@@ -356,93 +368,38 @@
 **
 ***********************************************************************/
 {
-	UTF32 c1;
-	UTF32 c2;
-	UTF32 c3;
-	REBYTE *str1, *str2;
+	REBUNI c1;
+	REBUNI c2;
+	REBUNI c3;
 	REBCNT n = 0;
-	const REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
+	REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
 
-	c2 = GET_UTF8_CHAR(ser2, index2); // starting char
+	c2 = GET_ANY_CHAR(ser2, index2); // starting char
 	if (uncase && c2 < UNICODE_CASES) c2 = LO_CASE(c2);
-	str1 = BIN_HEAD(ser1);
-	str2 = BIN_HEAD(ser2);
 
-	if (IS_UTF8_SERIES(ser1)) {
-		while (index >= head && index < tail) {
-			str1 = BIN_SKIP(ser1, index);
-			str2 = BIN_SKIP(ser2, index2);
-			c1 = UTF8_Get_Codepoint(str1);
-			if (uncase && c1 < UNICODE_CASES) c1 = LO_CASE(c1);
-			if (c1 == c2) {
-				REBYTE *end = str1 + len;
-				str1 += UTF8_Skip_Forward(str1, 1);
-				str2 += UTF8_Skip_Forward(str2, 1);
-				while (str1 < end) {
-					c1 = UTF8_Get_Codepoint(str1);
-					c3 = UTF8_Get_Codepoint(str2);
-					if (uncase && c1 < UNICODE_CASES && c3 < UNICODE_CASES) {
-						if (LO_CASE(c1) != LO_CASE(c3)) break;
-					}
-					else {
-						if (c1 != c3) break;
-					}
-					str1 += UTF8_Skip_Forward(str1, 1);
-					str2 += UTF8_Skip_Forward(str2, 1);
-				}
-				if ((str2 - BIN_SKIP(ser2, index2)) == len) {
-					if (flags & AM_FIND_TAIL) return index + len;
-					return index;
+	for (; index >= head && index < tail; index += skip) {
+
+		c1 = GET_ANY_CHAR(ser1, index);
+		if (uncase && c1 < UNICODE_CASES) c1 = LO_CASE(c1);
+
+		if (c1 == c2) {
+			for (n = 1; n < len; n++) {
+				c1 = GET_ANY_CHAR(ser1, index+n);
+				c3 = GET_ANY_CHAR(ser2, index2+n);
+				if (uncase && c1 < UNICODE_CASES && c3 < UNICODE_CASES) {
+					if (LO_CASE(c1) != LO_CASE(c3)) break;
+				} else {
+					if (c1 != c3) break;
 				}
 			}
-			if (flags & AM_FIND_MATCH) break;
-			index = UTF8_Skip(ser1, index, skip);
+			if (n == len) {
+				if (flags & AM_FIND_TAIL) return index + len;
+				return index;
+			}
 		}
+		if (flags & AM_FIND_MATCH) break;
 	}
-	else {
-		// ser1 is ASCII, so ser2 must also be ASCII to be found
-		if (IS_UTF8_SERIES(ser2)) return NOT_FOUND;
-		if (uncase) {
-			for (; index >= head && index < tail; index += skip) {
-				c1 = str1[index];
-				if (c1 < UNICODE_CASES) c1 = LO_CASE(c1);
-				if (c1 == c2) {
-					for (n = 1; n < len; n++) {
-						c1 = str1[index + n];
-						c3 = str2[index2 + n];
-						if (c1 < UNICODE_CASES && c3 < UNICODE_CASES) {
-							if (LO_CASE(c1) != LO_CASE(c3)) break;
-						}
-						else {
-							if (c1 != c3) break;
-						}
-					}
-					if (n == len) {
-						if (flags & AM_FIND_TAIL) return index + len;
-						return index;
-					}
-				}
-				if (flags & AM_FIND_MATCH) break;
-			}
-		}
-		else {
-			for (; index >= head && index < tail; index += skip) {
-				c1 = str1[index];
-				if (c1 == c2) {
-					for (n = 1; n < len; n++) {
-						c1 = str1[index + n];
-						c3 = str2[index2 + n];
-						if (c1 != c3) break;
-					}
-					if (n == len) {
-						if (flags & AM_FIND_TAIL) return index + len;
-						return index;
-					}
-				}
-				if (flags & AM_FIND_MATCH) break;
-			}
-		}
-	}
+
 	return NOT_FOUND;
 }
 
@@ -460,72 +417,36 @@
 **
 ***********************************************************************/
 {
-	UTF32 c1;
-	UTF32 c2;
-	REBYTE *str1, *str2, *end;
+	REBUNI c1;
+	REBUNI c2;
 	REBCNT n = 0;
-	const REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
+	REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
 
-	str1 = BIN_HEAD(ser1);
-	str2 = BIN_HEAD(ser2);
-
-	if (IS_UTF8_SERIES(ser1)) {
-		while (index >= head && index < tail) {
-			if (str1[index] == '<') {
-				index++;
-				str1 = BIN_SKIP(ser1, index);
-				str2 = BIN_SKIP(ser2, index2);
-				end = str1 + len;
-				while (str1 < end) {
-					c1 = UTF8_Get_Codepoint(str1);
-					c2 = UTF8_Get_Codepoint(str2);
-					if (uncase && c1 < UNICODE_CASES && c2 < UNICODE_CASES) {
-						if (LO_CASE(c1) != LO_CASE(c2)) break;
-					}
-					else {
-						if (c1 != c2) break;
-					}
-					str1 += UTF8_Skip_Forward(str1, 1);
-					str2 += UTF8_Skip_Forward(str2, 1);
+	for (; index >= head && index < tail; index += skip) {
+		c1 = GET_ANY_CHAR(ser1, index);
+		if (c1 == '<') {
+			index++;
+			for (n = 0; n < len; n++) {
+				c1 = GET_ANY_CHAR(ser1, index + n);
+				c2 = GET_ANY_CHAR(ser2, index2 + n);
+				if (uncase && c1 < UNICODE_CASES && c2 < UNICODE_CASES) {
+					if (LO_CASE(c1) != LO_CASE(c2)) break;
 				}
-				if (str1 == end) {
-					c1 = UTF8_Get_Codepoint(str1);
-					if (c1 == '>') {
-						if (flags & AM_FIND_TAIL) return index + len + 1;
-						return index - 1;
-					}
+				else {
+					if (c1 != c2) break;
 				}
 			}
-			if (flags & AM_FIND_MATCH) break;
-			index = UTF8_Skip(ser1, index, skip);
-		}
-	}
-	else { // ASCII version
-		if (IS_UTF8_SERIES(ser2)) return NOT_FOUND;
-		for (; index >= head && index < tail; index += skip) {
-			if (str1[index] == '<') {
-				index++;
-				for (n = 0; n < len; n++) {
-					c1 = str1[index + n];
-					c2 = str2[index2 + n];
-					if (uncase && c1 < UNICODE_CASES && c2 < UNICODE_CASES) {
-						if (LO_CASE(c1) != LO_CASE(c2)) break;
-					}
-					else {
-						if (c1 != c2) break;
-					}
-				}
-				if (n == len) {
-					c1 = str1[index + n];
-					if (c1 == '>') {
-						if (flags & AM_FIND_TAIL) return index + len + 1;
-						return index - 1;
-					}
+			if (n == len) {
+				c1 = GET_ANY_CHAR(ser1, index + n);
+				if (c1 == '>') {
+					if (flags & AM_FIND_TAIL) return index + len + 1;
+					return index-1;
 				}
 			}
-			if (flags & AM_FIND_MATCH) break;
 		}
+		if (flags & AM_FIND_MATCH) break;
 	}
+
 	return NOT_FOUND;
 }
 
@@ -544,21 +465,21 @@
 **
 ***********************************************************************/
 {
-	UTF32 c1;
-	UTF32 c2;
-	UTF32 c3 = 0;
+	REBUNI c1;
+	REBUNI c2;
+	REBUNI c3 = 0;
 	REBCNT n = 0, start = 0, pos = 0;
 	REBCNT sn = 0;
 	REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
-	UTF32 c_some = '*';
-	UTF32 c_one  = '?';
+	REBUNI c_some = '*';
+	REBUNI c_one  = '?';
 
 	if (IS_STRING(wild)) {
-		if (VAL_INDEX(wild)   < VAL_TAIL(wild)) c_some = GET_UTF8_CHAR(VAL_SERIES(wild), VAL_INDEX(wild));
-		if (VAL_INDEX(wild)+1 < VAL_TAIL(wild)) c_one  = GET_UTF8_CHAR(VAL_SERIES(wild), VAL_INDEX(wild)+1);
+		if (VAL_INDEX(wild)   < VAL_TAIL(wild)) c_some = GET_ANY_CHAR(VAL_SERIES(wild), VAL_INDEX(wild));
+		if (VAL_INDEX(wild)+1 < VAL_TAIL(wild)) c_one  = GET_ANY_CHAR(VAL_SERIES(wild), VAL_INDEX(wild)+1);
 	}
 
-	c2 = GET_UTF8_CHAR(ser2, index2); // starting char
+	c2 = GET_ANY_CHAR(ser2, index2); // starting char
 	if (uncase && c2 < UNICODE_CASES) c2 = LO_CASE(c2);
 
 	for (; index >= head && index < tail; index += skip) {
@@ -643,7 +564,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Find_Str_Char(REBSER *ser, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, UTF32 c2, REBCNT flags)
+*/	REBCNT Find_Str_Char(REBSER *ser, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBUNI c2, REBCNT flags)
 /*
 **		General purpose find a char in a string.
 **
@@ -655,47 +576,30 @@
 **
 ***********************************************************************/
 {
-	UTF32 c1;
-	REBYTE *bp;
-	const REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
+	REBUNI c1;
+	REBOOL uncase = !GET_FLAG(flags, ARG_FIND_CASE-1); // uncase = case insenstive
 
 	if (uncase && c2 < UNICODE_CASES) c2 = LO_CASE(c2);
 
-	if (IS_UTF8_SERIES(ser)) {
-		while (index >= head && index < tail) {
-			bp = BIN_SKIP(ser, index);
-			c1 = UTF8_Get_Codepoint(bp);
-			if (uncase && c1 < UNICODE_CASES) c1 = LO_CASE(c1);
-			if (c1 == c2) {
-				if (flags & AM_FIND_TAIL) {
-					index += UTF8_Next_Char_Size(bp, 0);
-				}
-				return index;
-			}
-			if (flags & AM_FIND_MATCH) break;
-			index = UTF8_Skip(ser, index, skip);
+	for (; index >= head && index < tail; index += skip) {
+
+		c1 = GET_ANY_CHAR(ser, index);
+		if (uncase && c1 < UNICODE_CASES) c1 = LO_CASE(c1);
+
+		if (c1 == c2) {
+			if GET_FLAG(flags, ARG_FIND_TAIL - 1) index++;
+			return index;
 		}
+		if GET_FLAG(flags, ARG_FIND_MATCH-1) break;
 	}
-	else {
-		if (c2 > 0x7F) return NOT_FOUND;
-		bp = BIN_HEAD(ser);
-		for (; index >= head && index < tail; index += skip) {
-			c1 = bp[index];
-			if (uncase && c1 < UNICODE_CASES) c1 = LO_CASE(c1);
-			if (c1 == c2) {
-				if (flags & AM_FIND_TAIL) index++;
-				return index;
-			}
-			if (flags & AM_FIND_MATCH) break;
-		}
-	}
+
 	return NOT_FOUND;
 }
 
 
 /***********************************************************************
 **
-*/	REBCNT Find_Str_Bitset(const REBSER *ser, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, const REBSER *bset, REBCNT flags)
+*/	REBCNT Find_Str_Bitset(REBSER *ser, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBSER *bset, REBCNT flags)
 /*
 **		General purpose find a bitset char in a string.
 **
@@ -707,33 +611,21 @@
 **
 ***********************************************************************/
 {
-	UTF32 chr;
-	REBYTE *str = BIN_HEAD(ser);
+	REBUNI c1;
+	REBOOL uncase = !GET_FLAG(flags, ARG_FIND_CASE-1); // uncase = case insenstive
 
-	const REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
+	for (; index >= head && index < tail; index += skip) {
 
-	if (IS_UTF8_SERIES(ser)) {
-		while (index >= head && index < tail) {
-			str = BIN_SKIP(ser, index);
-			chr = UTF8_Get_Codepoint(str);
-			if (Check_Bit(bset, chr, uncase)) {
-				if (flags & AM_FIND_TAIL) {
-					index += UTF8_Next_Char_Size(str, 0);
-				}
-				return index;
-			}
-			if (flags & AM_FIND_MATCH) break;
-			index = UTF8_Skip(ser, index, skip);
-		}
-	}
-	else {
-		for (; index >= head && index < tail; index += skip) {
-			if (Check_Bit(bset, str[index], uncase)) {
-				if (flags & AM_FIND_TAIL) index++;
-				return index;
-			}
-			if (flags & AM_FIND_MATCH) break;
-		}
+		c1 = GET_ANY_CHAR(ser, index);
+
+		//if (uncase && c1 < UNICODE_CASES) {
+		//	if (Check_Bit(bset, LO_CASE(c1)) || Check_Bit(bset, UP_CASE(c1)))
+		//		return index;
+		//}
+		//else
+		if (Check_Bit(bset, c1, uncase)) return index;
+
+		if (flags & AM_FIND_MATCH) break;
 	}
 
 	return NOT_FOUND;
@@ -748,11 +640,10 @@
 **
 ***********************************************************************/
 {
-	REBYTE ch;
-	REBYTE *str = BIN_HEAD(ser);
+	REBUNI ch;
 
 	for (; index < tail; index++) {
-		ch = str[index];
+		ch = GET_ANY_CHAR(ser, index);
 		if (ch == '*' || ch == '?') return index;
 	}
 	return NOT_FOUND;

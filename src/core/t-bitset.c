@@ -142,21 +142,15 @@
 	case REB_TAG:
 //	case REB_ISSUE:
 		n = VAL_INDEX(val);
-		if (IS_UTF8_SERIES(VAL_SERIES(val))) {
-			UTF32 chr;
-			REBCNT sz;
-			REBYTE *bp = VAL_BIN_DATA(val);
-			while (n < VAL_TAIL(val)) {
-				chr = UTF8_Decode_Codepoint(&bp, &sz);
-				if (chr > maxi) maxi = chr;
-				n += sz;
-			}
-		}
-		else {
-			//ASCII...
+		if (VAL_BYTE_SIZE(val)) {
 			REBYTE *bp = VAL_BIN(val);
 			for (; n < (REBINT)VAL_TAIL(val); n++)
 				if (bp[n] > maxi) maxi = bp[n];
+		}
+		else {
+			REBUNI *up = VAL_UNI(val);
+			for (; n < (REBINT)VAL_TAIL(val); n++)
+				if (up[n] > maxi) maxi = up[n];
 		}
 		//maxi++; //@@ https://github.com/Oldes/Rebol-issues/issues/2415
 		break;
@@ -324,24 +318,19 @@ retry:
 /*
 ***********************************************************************/
 {
-	REBCNT index = VAL_INDEX(val);
-	REBYTE *bp;
-	REBCNT sz=VAL_LEN(val);
-	UTF32 chr;
+	REBCNT n = VAL_INDEX(val);
 
 	if(IS_PROTECT_SERIES(bset)) Trap0(RE_PROTECTED);
 
-	if (IS_UTF8_SERIES(VAL_SERIES(val))) {
-		bp = VAL_BIN_DATA(val);
-		while (sz > 0) {
-			chr = UTF8_Decode_Codepoint(&bp, &sz);
-			Set_Bit(bset, chr, set);
-		}
+	if (VAL_BYTE_SIZE(val)) {
+		REBYTE *bp = VAL_BIN(val);
+		for (; n < VAL_TAIL(val); n++)
+			Set_Bit(bset, bp[n], set);
 	}
 	else {
-		bp = VAL_BIN(val);
-		for (; index < VAL_TAIL(val); index++)
-			Set_Bit(bset, bp[index], set);
+		REBUNI *up = VAL_UNI(val);
+		for (; n < VAL_TAIL(val); n++)
+			Set_Bit(bset, up[n], set);
 	}
 }
 

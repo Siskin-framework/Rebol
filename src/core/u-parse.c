@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2022 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -1227,14 +1227,7 @@ bad_target:
 				switch (cmd = VAL_WORD_CANON(item)) {
 
 				case SYM_SKIP:
-					//O: this could be optimized to skip all values in one step!
-					if (index < series->tail) {
-						if (IS_UTF8_SERIES(series)) {
-							i = index + UTF8_Next_Char_Size(BIN_DATA(series), index);
-						}
-						else i = index + 1;
-					}
-					else i = NOT_FOUND;
+					i = (index < series->tail) ? index+1 : NOT_FOUND;
 					break;
 
 				case SYM_END:
@@ -1389,7 +1382,7 @@ post:
 						item = Get_Var_Safe(word);
 						if (count == 0) SET_NONE(item);
 						else {
-							i = GET_UTF8_CHAR(series, begin);
+							i = GET_ANY_CHAR(series, begin);
 							if (parse->type == REB_BINARY) {
 								SET_INTEGER(item, i);
 							} else {

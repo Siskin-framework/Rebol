@@ -173,8 +173,8 @@ catalog: object [
 		alt-up 
 		aux-down 
 		aux-up 
-		key    ;; Key down event (with a physical key information)
-		key-up ;; Key up event
+		key
+		key-up ; Move above when version changes!!!
 
 		scroll-line
 		scroll-page
@@ -189,8 +189,6 @@ catalog: object [
 
 		control    ;; used to pass control key events to a console port
 		control-up ;; only on Windows?
-
-		char ;; 
 	]
 	event-keys: [
 		; Event types. Order dependent for C and REBOL.

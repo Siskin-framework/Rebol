@@ -616,19 +616,6 @@ foreach :type-record boot-types [
 
 boot-words: load-boot %words.reb
 
-;vector-words: copy []
-;vector-aliases: copy []
-;foreach [word aliases] load-boot %types-aliases.reb [
-;	append vector-words word
-;	append vector-aliases aliases
-;]
-;append vector-words vector-aliases
-;?? vector-words
-;replace boot-words <VECTOR-TYPES> vector-words
-;
-;?? boot-words
-;ask ""
-
 foreach [group words] load-boot %modes.reb [
 	replace boot-words group words
 ]

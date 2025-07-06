@@ -60,23 +60,23 @@
 static void str_to_char(REBVAL *out, REBVAL *val, REBCNT idx)
 {
 	// STRING value to CHAR value (save some code space)
-	SET_CHAR(out, GET_UTF8_CHAR(VAL_SERIES(val), idx));
+	SET_CHAR(out, GET_ANY_CHAR(VAL_SERIES(val), idx));
 }
 
 static void swap_chars(REBVAL *val1, REBVAL *val2)
 {
-	UTF32 c1;
-	UTF32 c2;
+	REBUNI c1;
+	REBUNI c2;
 	REBSER *s1 = VAL_SERIES(val1);
 	REBSER *s2 = VAL_SERIES(val2);
 
-	c1 = GET_UTF8_CHAR(s1, VAL_INDEX(val1));
-	c2 = GET_UTF8_CHAR(s2, VAL_INDEX(val2));
+	c1 = GET_ANY_CHAR(s1, VAL_INDEX(val1));
+	c2 = GET_ANY_CHAR(s2, VAL_INDEX(val2));
 
-	if (!IS_UTF8_SERIES(s1) && c2 > 0x7F) UTF8_SERIES(s1);
+	if (BYTE_SIZE(s1) && c2 > 0xff) Widen_String(s1);
 	SET_ANY_CHAR(s1, VAL_INDEX(val1), c2);
 	
-	if (!IS_UTF8_SERIES(s2) && c1 > 0x7F) UTF8_SERIES(s2);
+	if (BYTE_SIZE(s2) && c1 > 0xff) Widen_String(s2);
 	SET_ANY_CHAR(s2, VAL_INDEX(val2), c1);
 }
 
@@ -86,22 +86,7 @@ static void reverse_string(REBVAL *value, REBCNT len)
 	REBCNT m;
 	REBUNI c;
 
-	if (IS_UTF8_SERIES(VAL_SERIES(value))) {
-		REBYTE *out = Reset_Buffer(BUF_FORM, len);
-		REBYTE *bp = VAL_BIN(value);
-		REBUNI index = VAL_TAIL(value);
-		REBCNT bytes;
-		while (index > VAL_INDEX(value)) {
-			bytes = UTF8_Prev_Char_Size(VAL_BIN(value), index);
-			index -= bytes;
-			bp = VAL_BIN_SKIP(value, index);
-			UTF32 chr = UTF8_Decode_Codepoint(&bp, &bytes);
-			out += Encode_UTF8_Char(out, chr);
-		}
-		COPY_MEM(VAL_BIN_DATA(value), BIN_HEAD(BUF_FORM), len);
-
-	}
-	else {
+	if (VAL_BYTE_SIZE(value)) {
 		REBYTE *bp = VAL_BIN_DATA(value);
 
 		for (n = 0, m = len-1; n < len / 2; n++, m--) {
@@ -110,11 +95,19 @@ static void reverse_string(REBVAL *value, REBCNT len)
 			bp[m] = (REBYTE)c;
 		}
 	}
+	else {
+		REBUNI *up = VAL_UNI_DATA(value);
+
+		for (n = 0, m = len-1; n < len / 2; n++, m--) {
+			c = up[n];
+			up[n] = up[m];
+			up[m] = c;
+		}
+	}
 }
 
-static REBCNT find_string(REBVAL *value, REBCNT index, REBCNT end, REBVAL *target, REBCNT len, REBCNT flags, REBINT skip, REBVAL *wild)
+static REBCNT find_string(REBSER *series, REBCNT index, REBCNT end, REBVAL *target, REBCNT len, REBCNT flags, REBINT skip, REBVAL *wild)
 {
-	REBSER *series = VAL_SERIES(value);
 	REBCNT start = index;
 
 	if (flags & (AM_FIND_REVERSE | AM_FIND_LAST)) {
@@ -134,10 +127,8 @@ static REBCNT find_string(REBVAL *value, REBCNT index, REBCNT end, REBVAL *targe
 	//O: not using ANY_BINSTR as TAG is now handled separately
 	if (VAL_TYPE(target) >= REB_BINARY && VAL_TYPE(target) < REB_TAG) {
 		// Do the optimal search or the general search?
-		if ((IS_BINARY(value) || !IS_UTF8_SERIES(series) && !IS_UTF8_SERIES(VAL_SERIES(target))) && !(flags & ~(AM_FIND_CASE|AM_FIND_MATCH|AM_FIND_TAIL))) {
-			index = Find_Byte_Str(series, start, VAL_BIN_DATA(target), len, !GET_FLAG(flags, ARG_FIND_CASE-1), GET_FLAG(flags, ARG_FIND_MATCH-1));
-			if (flags & AM_FIND_TAIL) index += len;
-			return index;
+		if (BYTE_SIZE(series) && VAL_BYTE_SIZE(target) && !(flags & ~(AM_FIND_CASE|AM_FIND_MATCH))) {
+			return Find_Byte_Str(series, start, VAL_BIN_DATA(target), len, !GET_FLAG(flags, ARG_FIND_CASE-1), GET_FLAG(flags, ARG_FIND_MATCH-1));
 		} else if (flags & AM_FIND_ANY) {
 			return Find_Str_Str_Any(series, start, index, end, skip, VAL_SERIES(target), VAL_INDEX(target), len, flags, wild);
 		} else {
@@ -155,7 +146,7 @@ static REBCNT find_string(REBVAL *value, REBCNT index, REBCNT end, REBVAL *targe
 		return Find_Str_Char(series, start, index, end, skip, VAL_CHAR(target), flags);
 	}
 	else if (IS_INTEGER(target)) {
-		return Find_Str_Char(series, start, index, end, skip, VAL_INT32(target), flags);
+		return Find_Str_Char(series, start, index, end, skip, (REBUNI)VAL_INT32(target), flags);
 	}
 	else if (IS_BITSET(target)) {
 		return Find_Str_Bitset(series, start, index, end, skip, VAL_SERIES(target), flags);
@@ -173,25 +164,12 @@ static REBSER *make_string(REBVAL *arg, REBOOL make)
 		ser = Make_Binary(Int32s(arg, 0));
 	}
 	// MAKE/TO <type> <binary!>
+	else if (IS_BINARY(arg)) {
+		ser = Decode_UTF_String(VAL_BIN_DATA(arg), VAL_LEN(arg), -1, FALSE, FALSE);
+	}
 	// MAKE/TO <type> <any-string>
 	else if (ANY_BINSTR(arg)) {
-		ser = VAL_SERIES(arg);
-		if (IS_BINARY(arg)) {
-			//TODO: optimalize!
-			REBFLG surrogates = 0;
-			REBYTE *bp = STR_SKIP(ser, VAL_INDEX(arg));
-			REBYTE *acc = UTF8_Check(bp, STR_TAIL(ser) - bp, &surrogates);
-			if (acc != NULL) {
-				DS_PUSH_NONE;
-				SET_BINARY(DS_TOP, ser);
-				VAL_INDEX(DS_TOP) = acc - bp;
-				Trap1(RE_INVALID_UTF8, DS_TOP);
-			}
-			if (surrogates) {
-				return UTF8_Copy_Surrogates(bp, STR_TAIL(ser) - bp);
-			}
-		}
-		ser = Copy_String(ser, VAL_INDEX(arg), VAL_LEN(arg));
+		ser = Copy_String(VAL_SERIES(arg), VAL_INDEX(arg), VAL_LEN(arg));
 	}
 	// MAKE/TO <type> <any-word>
 	else if (ANY_WORD(arg) || ANY_PATH(arg)) {
@@ -200,7 +178,8 @@ static REBSER *make_string(REBVAL *arg, REBOOL make)
 	}
 	// MAKE/TO <type> #"A"
 	else if (IS_CHAR(arg)) {
-		ser = Append_Byte(ser, VAL_CHAR(arg));
+		ser = (VAL_CHAR(arg) > 0xff) ? Make_Unicode(2) : Make_Binary(2);
+		Append_Byte(ser, VAL_CHAR(arg));
 	}
 	// MAKE/TO <type> <any-value>
 //	else if (IS_NONE(arg)) {
@@ -231,7 +210,7 @@ static REBSER *Make_Binary_BE64(REBVAL *arg)
 
 static REBSER *make_binary(REBVAL *arg, REBOOL make)
 {
-	REBSER *ser = NULL;
+	REBSER *ser;
 
 	// MAKE BINARY! 123
 	switch (VAL_TYPE(arg)) {
@@ -242,16 +221,19 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 		break;
 
 	// MAKE/TO BINARY! BINARY!
-	// MAKE/TO BINARY! <any-string>
 	case REB_BINARY:
+		ser = Copy_Bytes(VAL_BIN_DATA(arg), VAL_LEN(arg));
+		break;
+
+	// MAKE/TO BINARY! <any-string>
 	case REB_STRING:
 	case REB_FILE:
 	case REB_EMAIL:
 	case REB_URL:
 	case REB_TAG:
 	case REB_REF:
-	//case REB_ISSUE:
-		ser = Copy_Bytes(VAL_BIN_DATA(arg), VAL_LEN(arg));
+//	case REB_ISSUE:
+		ser = Encode_UTF8_Value(arg, VAL_LEN(arg), 0);
 		break;
 
 	// MAKE/TO BINARY! <vector!>
@@ -272,7 +254,8 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 	// MAKE/TO BINARY! <char!>
 	case REB_CHAR:
-		ser = Append_Byte(ser, VAL_CHAR(arg));
+		ser = Make_Binary(6);
+		ser->tail = Encode_UTF8_Char(BIN_HEAD(ser), VAL_CHAR(arg));
 		break;
 
 	// MAKE/TO BINARY! <bitset!>
@@ -434,10 +417,6 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	len = Partial(string, 0, part, 0);
 	if (len <= 1) return;
 
-	//TODO: implement sorting UTF-8 encoded strings!!!
-	if (IS_UTF8_SERIES(VAL_SERIES(string)))
-		Trap0(RE_FEATURE_NA);
-
 	// Skip factor:
 	if (!IS_NONE(skipv)) {
 		skip = Get_Num_Arg(skipv);
@@ -481,33 +460,6 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	}
 }
 
-FORCE_INLINE
-/***********************************************************************
-**
-*/	REBINT Skip_UTF8_String(REBVAL *str, REBINT chars)
-/*
-***********************************************************************/
-{
-	REBLEN pos = VAL_INDEX(str);
-	REBLEN tail;
-	const REBYTE *bin = VAL_BIN_HEAD(str);
-
-	if (chars > 0) {
-		tail = VAL_TAIL(str);
-		while (pos < tail && chars-- > 0) {
-			pos += UTF8_Next_Char_Size(bin, pos);
-		}
-		if (chars > 0) return NOT_FOUND;
-	}
-	else if (chars < 0) {
-		while (pos > 0 && chars++ < 0) {
-			pos -= UTF8_Prev_Char_Size(bin, pos);
-		}
-		if (chars < 0) return NOT_FOUND;
-	}
-	return pos;
-
-}
 
 /***********************************************************************
 **
@@ -526,14 +478,7 @@ FORCE_INLINE
 		i = Int32(pvs->select);
 		if (i == 0) return PE_NONE; // like in case: path/0
 		if (i < 0) i++;
-		if (IS_UTF8_SERIES(ser)) {
-			n = i - 1;
-			n = Skip_UTF8_String(data, n);
-			if (n == NOT_FOUND || n >= VAL_TAIL(data)) return PE_NONE;
-		}
-		else {
-			n = i + VAL_INDEX(data) - 1;
-		}
+		n = i + VAL_INDEX(data) - 1;
 	}
 	else return PE_BAD_SELECT;
 
@@ -542,7 +487,7 @@ FORCE_INLINE
 		if (IS_BINARY(data)) {
 			SET_INTEGER(pvs->store, *BIN_SKIP(ser, n));
 		} else {
-			SET_CHAR(pvs->store, GET_UTF8_CHAR(ser, n));
+			SET_CHAR(pvs->store, GET_ANY_CHAR(ser, n));
 		}
 		return PE_USE;
 	}
@@ -565,20 +510,14 @@ FORCE_INLINE
 	else if (ANY_BINSTR(val)) {
 		// for example: s: "abc" s/2: "xyz" s == "axc"
 		if (VAL_INDEX(val) >= VAL_TAIL(val)) return PE_BAD_SET;
-		c = GET_UTF8_CHAR(VAL_SERIES(val), VAL_INDEX(val));
+		c = GET_ANY_CHAR(VAL_SERIES(val), VAL_INDEX(val));
 	}
 	else
 		return PE_BAD_SELECT;
 
 	TRAP_PROTECT(ser);
 
-//	if (c > 0x7F || IS_UTF8_SERIES(ser)) {
-//		UTF8_SERIES(ser); // in case we are adding unicode char to ascii series
-//		UTF8_Replace_Codepoint(ser, n, c);
-//	}
-//	else {
-//		BIN_HEAD(ser)[n] = (REBYTE)c;
-//	}
+	if (BYTE_SIZE(ser) && c > 0xff) Widen_String(ser);
 	SET_ANY_CHAR(ser, n, c);
 
 	return PE_OK;
@@ -615,7 +554,7 @@ FORCE_INLINE
 		arg = mo.series;
 		n = 0;
 	}
-	c = GET_UTF8_CHAR(arg, n);
+	c = GET_ANY_CHAR(arg, n);
 	n += (c == '/' || c == '\\') ? 1 : 0;
 	Append_String(ser, arg, n, arg->tail-n);
 
@@ -688,14 +627,10 @@ find:
 
 		if (IS_BINARY(value)) {
 			args |= AM_FIND_CASE;
-			if (!ANY_BINSTR(arg) && !IS_INTEGER(arg) && !IS_BITSET(arg) && !IS_CHAR(arg)) Trap0(RE_NOT_SAME_TYPE);
+			if (!IS_BINARY(arg) && !IS_INTEGER(arg) && !IS_BITSET(arg) && !IS_CHAR(arg)) Trap0(RE_NOT_SAME_TYPE);
 			if (IS_INTEGER(arg)) {
 				if (VAL_INT64(arg) < 0 || VAL_INT64(arg) > 255) Trap_Range(arg);
 				len = 1;
-			}
-			if (IS_CHAR(arg) && VAL_CHAR(arg) > 0x7F) {
-				SERIES_TAIL(BUF_SCAN) = Encode_UTF8_Char(BIN_HEAD(BUF_SCAN), VAL_CHAR(arg));
-				Set_String(arg, BUF_SCAN);
 			}
 		}
 		else {
@@ -710,13 +645,13 @@ find:
 		if (args & AM_FIND_PART) tail = index + Partial(value, 0, D_ARG(ARG_FIND_RANGE), 0);
 		ret = 1; // skip size
 		if (args & AM_FIND_SKIP) {
-			ret = Int32(D_ARG(ARG_FIND_SIZE));
+			ret = Partial(value, 0, D_ARG(ARG_FIND_SIZE), 0);
 			if(!ret) goto is_none;
 		}
 
 		if (action == A_SELECT) args |= AM_FIND_TAIL;
 
-		ret = find_string(value, index, tail, arg, len, args, ret, D_ARG(ARG_FIND_WILD));
+		ret = find_string(VAL_SERIES(value), index, tail, arg, len, args, ret, D_ARG(ARG_FIND_WILD));
 
 		if (ret > (REBCNT)tail) goto is_none;
 		if (args & AM_FIND_ONLY) len = 1;
@@ -738,21 +673,13 @@ find:
 	case A_PICK:
 	case A_POKE:
 		len = Get_Num_Arg(arg); // Position
-		if (IS_UTF8_SERIES(VAL_SERIES(value))) {
-			if (len == 0) Trap_Range(arg);
-			if (len > 0) len--;
-			index = Skip_UTF8_String(value, len);
-			if (index == NOT_FOUND || index >= VAL_TAIL(value)) return PE_NONE;
-		}
-		else {
-			if (len < 0) REB_I32_ADD_OF(index, 1, &index);
-			if (len == 0
-				|| REB_I32_SUB_OF(len, 1, &len)
-				|| REB_I32_ADD_OF(index, len, &index)
-				|| index < 0 || index >= tail) {
-				if (action == A_PICK) goto is_none;
-				Trap_Range(arg);
-			}
+		if (len < 0) REB_I32_ADD_OF(index, 1, &index);
+		if (len == 0
+			|| REB_I32_SUB_OF(len, 1, &len)
+			|| REB_I32_ADD_OF(index, len, &index)
+			|| index < 0 || index >= tail) {
+			if (action == A_PICK) goto is_none;
+			Trap_Range(arg);
 		}
 		if (action == A_PICK) {
 pick_it:
@@ -764,7 +691,7 @@ pick_it:
 			return R_RET;
 		}
 		else {
-			UTF32 c = 0;
+			REBUNI c = 0;
 			arg = D_ARG(3);
 			if (IS_CHAR(arg))
 				c = VAL_CHAR(arg);
@@ -778,6 +705,7 @@ pick_it:
 				BIN_HEAD(ser)[index] = (REBYTE)c;
 			}
 			else {
+				if (BYTE_SIZE(ser) && c > 0xff) Widen_String(ser);
 				SET_ANY_CHAR(ser, index, c);
 			}
 			value = arg;
@@ -828,9 +756,6 @@ zero_str:
 			else {
 				VAL_TAIL(value) = (REBCNT)index;
 				TERM_SERIES(VAL_SERIES(value));
-			}
-			if (IS_UTF8_SERIES(VAL_SERIES(value)) && Is_ASCII(VAL_BIN(value), VAL_TAIL(value))) {
-				SERIES_CLR_FLAG(VAL_SERIES(value), SER_UTF8);
 			}
 		}
 		break;
@@ -925,9 +850,6 @@ zero_str:
 		if (D_REF(4)) { // /only
 			if (index >= tail) goto is_none;
 			index += (REBCNT)Random_Int(D_REF(3)) % (tail - index);  // /secure
-			if ((VAL_BIN_HEAD(value)[index] & 0xC0) == 0x80) {
-				index = UTF8_Prev_Char_Position(VAL_BIN_HEAD(value), index);
-			}
 			goto pick_it;
 		}
 		Shuffle_String(value, D_REF(3));  // /secure

@@ -3,7 +3,6 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +35,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *To_REBOL_Path(REBYTE *bp, REBCNT len, REBINT uni, REBFLG dir)
+*/	REBSER *To_REBOL_Path(void *bp, REBCNT len, REBINT uni, REBFLG dir)
 /*
 **		Convert local filename to a REBOL filename.
 **
@@ -57,23 +56,16 @@
 	REBSER *dst;
 	REBCNT n;
 	REBCNT i;
-	REBYTE *out;
-	REBYTE *src;
 
-	if (uni) {
-		len = OS_WIDE_TO_MULTIBYTE(bp, &src);
-	}
-	else {
-		src = bp;
-	}
-	if (len == 0) LEN_BYTES(src);
+	if (len == 0)
+		len = (REBCNT)(uni ? wcslen((const wchar_t*)bp) : LEN_BYTES((REBYTE*)bp));
 	
 	n = 0;
-	dst = Make_Binary(len+FN_PAD);
-	out = BIN_HEAD(dst);
+	dst = ((uni == -1) || (uni && Is_Wide((REBUNI*)bp, len))) 
+		? Make_Unicode(len+FN_PAD) : Make_Binary(len+FN_PAD);
 
 	for (i = 0; i < len;) {
-		c = src[i];
+		c = uni ? ((REBUNI*)bp)[i] : ((REBYTE*)bp)[i];
 		i++;
 #ifdef TO_WINDOWS
 		if (c == ':') {
@@ -81,7 +73,7 @@
 			if (colon || slash) return 0; // no prior : or / allowed
 			colon = 1;
 			if (i < len) {
-				c = src[i];
+				c = uni ? ((REBUNI*)bp)[i] : ((REBYTE*)bp)[i];
 				if (c == '\\' || c == '/') i++; // skip / in foo:/file
 			}
 			c = '/'; // replace : with a /
@@ -94,20 +86,17 @@
 			slash = 1;
 		}
 		else slash = 0;
-		out[n++] = c;
+		SET_ANY_CHAR(dst, n++, c);
 	}
 	if (dir && c != '/') {  // watch for %/c/ case
-		out[n++] = '/';
+		SET_ANY_CHAR(dst, n++, '/');
 	}
 	SERIES_TAIL(dst) = n;
-	STR_TERM(dst);
-
-	if (uni) 
-		free(src);
+	TERM_SERIES(dst);
 
 	// Change C:/ to /C/ (and C:X to /C/X):
-	if (colon)
-		Insert_Char(dst, 0, (REBCNT)'/');
+	if (colon) Insert_Char(dst, 0, (REBCNT)'/');
+
 	return dst;
 }
 
@@ -121,16 +110,13 @@
 ***********************************************************************/
 {
 	ASSERT1(ANY_BINSTR(val), RP_MISC);
-	if (!VAL_BYTE_SIZE(val))
-		puts("Value_To_REBOL_Path expects UTF8 encode input!");
-
 	return To_REBOL_Path(VAL_DATA(val), VAL_LEN(val), (REBOOL)!VAL_BYTE_SIZE(val), dir);
 }
 
 
 /***********************************************************************
 **
-*/	REBSER *To_Local_Path(REBYTE *bp, REBCNT len, REBOOL wide, REBFLG full)
+*/	REBSER *To_Local_Path(void *bp, REBCNT len, REBOOL uni, REBFLG full)
 /*
 **		Convert REBOL filename to a local filename.
 **
@@ -144,24 +130,20 @@
 {
 	REBUNI c;
 	REBSER *dst;
-	REBSER *tmp = NULL;
-	REBYTE *src;
 	REBCNT i = 0;
 	REBCNT n = 0;
-	REBYTE *out;
+	REBUNI *out;
 	REBCHR *lpath = NULL;
 	REBCNT l = 0;
 
-	if (!bp) return NULL;
-
-	if (len == 0) len = (REBCNT)LEN_BYTES(bp);
-	src = bp;
+	if (len == 0)
+		len = (REBCNT)(uni ? wcslen((const wchar_t*)bp) : LEN_BYTES((REBYTE*)bp));
 
 	// Prescan for: /c/dir = c:/dir, /vol/dir = //vol/dir, //dir = ??
-	c = src[i];
+	c = GET_CHAR_UNI(uni, bp, i);
 	if (c == '/') {			// %/
-		dst = Make_Binary(len+FN_PAD);
-		out = STR_HEAD(dst);
+		dst = Make_Unicode(len+FN_PAD);
+		out = UNI_HEAD(dst);
 #ifdef TO_WINDOWS
 		if (len == 1) {
 			// it was really just: %/
@@ -170,13 +152,13 @@
 		}
 		i++;
 		if (i < len) {
-			c = src[i];
+			c = GET_CHAR_UNI(uni, bp, i);
 			i++;
 		}
 		if (c != '/') {		// %/c or %/c/ but not %/ %// %//c
 			// peek ahead for a '/':
 			REBUNI d = '/';
-			if (i < len) d = src[i];
+			if (i < len) d = GET_CHAR_UNI(uni, bp, i);
 			if (d == '/') {	// %/c/ => "c:/"
 				i++;
 				out[n++] = c;
@@ -192,21 +174,20 @@
 	}
 	else {
 		if (full) l = OS_GET_CURRENT_DIR(&lpath);
-		dst = Make_Binary(l + len + FN_PAD); // may be longer (if lpath is encoded)
+		dst = Make_Unicode(l + len + FN_PAD); // may be longer (if lpath is encoded)
 		if (full) {
 #ifdef TO_WINDOWS
-			Append_Uni_Bytes(dst, lpath, l);
+			Append_Uni_Uni(dst, lpath, l);
 #else
-			Append_Bytes_Len(dst, lpath, l;
+			REBINT clen = Decode_UTF8(UNI_HEAD(dst), lpath, l, FALSE);
+			dst->tail = abs(clen);
+			//Append_Bytes(dst, lpath);
 #endif
-			if (OS_DIR_SEP != STR_LAST(dst)[0]) {
-				EXPAND_SERIES_TAIL(dst, 1);
-				*STR_LAST(dst) = OS_DIR_SEP;
-				*STR_TAIL(dst) = 0;
-			}
+			if (OS_DIR_SEP != UNI_LAST(dst)[0])
+				Append_Byte(dst, OS_DIR_SEP);
 			OS_FREE(lpath);
 		}
-		out = STR_HEAD(dst);
+		out = UNI_HEAD(dst);
 		n = SERIES_TAIL(dst);
 	}
 
@@ -215,12 +196,12 @@
 	while (i < len) {
 		if (full) {
 			// Peek for: . ..
-			c = src[i];
+			c = GET_CHAR_UNI(uni, bp, i);
 			if (c == '.') {		// .
 				i++;
-				c = src[i];
+				c = GET_CHAR_UNI(uni, bp, i);
 				if (c == '.') {	// ..
-					c = src[i+1];
+					c = GET_CHAR_UNI(uni, bp, i+1);
 					if (c == 0 || c == '/') { // ../ or ..
 						i++;
 						// backup a dir
@@ -241,7 +222,7 @@
 			}
 		}
 		for (; i < len; i++) {
-			c = src[i];
+			c = GET_CHAR_UNI(uni, bp, i);
 			if (c == '/') {
 				if (n == 0 || out[n-1] != OS_DIR_SEP) out[n++] = OS_DIR_SEP;
 				i++;
@@ -251,23 +232,10 @@
 		}
 	}
 term_out:
+	out[n] = 0;
 	SERIES_TAIL(dst) = n;
-	STR_TERM(dst);
-
-	if (wide) {
-		REBYTE *uni = NULL;
-		REBLEN len = OS_MULTIBYTE_TO_WIDE(STR_HEAD(dst), &uni);
-		if (uni == NULL) return NULL;
-		//wprintf(L"--wide: [ %s ]-- %u %u\n", (REBCHR*)uni, len, wcslen(uni));
-		Free_Series(dst);
-		dst = Make_Unicode(len + 1);
-		memcpy(BIN_HEAD(dst), (const void*)uni, len * sizeof(REBUNI));
-		OS_FREE((void*)uni);
-
-		SERIES_TAIL(dst) = len;
-		UNI_TERM(dst);
-		//Debug_Uni(dst);
-	}
+//	TERM_SERIES(dst);
+//	Debug_Uni(dst);
 
 	return dst;
 }
@@ -282,9 +250,7 @@ term_out:
 ***********************************************************************/
 {
 	ASSERT1(ANY_BINSTR(val), RP_MISC);
-	if (!VAL_BYTE_SIZE(val))
-		puts("Value_To_Local_Path expects UTF8 encode input!");
-	return To_Local_Path(VAL_DATA(val), VAL_LEN(val), OS_WIDE, full);
+	return To_Local_Path(VAL_DATA(val), VAL_LEN(val), (REBOOL)!VAL_BYTE_SIZE(val), full);
 }
 
 
@@ -296,12 +262,25 @@ term_out:
 **
 ***********************************************************************/
 {
-	REBSER *ser; // will be unicode size on Windows
+	REBSER *ser; // will be unicode size
+#ifndef TO_WINDOWS
+	REBSER *bin;
+	REBCNT n;
+#endif
 
 	ASSERT1(ANY_BINSTR(val), RP_MISC);
-	if (!VAL_BYTE_SIZE(val))
-		puts("Value_To_OS_Path expects UTF8 encode input!");
-	ser = To_Local_Path(VAL_DATA(val), VAL_LEN(val), OS_WIDE, full);
-	
+
+	ser = To_Local_Path(VAL_DATA(val), VAL_LEN(val), (REBOOL)!VAL_BYTE_SIZE(val), full);
+
+#ifndef TO_WINDOWS
+	// Posix needs UTF8 conversion:
+	n = Length_As_UTF8(UNI_HEAD(ser), SERIES_TAIL(ser), TRUE, OS_CRLF);
+	bin = Make_Binary(n + FN_PAD);
+	Encode_UTF8(BIN_HEAD(bin), n, UNI_HEAD(ser), &n, TRUE, OS_CRLF);
+	SERIES_TAIL(bin) = n;
+	TERM_SERIES(bin);
+	ser = bin;
+#endif
+
 	return ser;
 }

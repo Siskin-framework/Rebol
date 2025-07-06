@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2022 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,8 +44,6 @@
 	REBINT	tail;
 	REBINT	len = 0;
 
-	//ASSERT1(VAL_BYTE_SIZE(value), RP_BAD_SIZE);
-
 	// Common setup code for all actions:
 	if (action != A_MAKE && action != A_TO) {
 		index = (REBINT)VAL_INDEX(value);
@@ -74,22 +72,11 @@
 		DECIDE(index > tail);
 
 	case A_NEXT:
-		if (index < tail) {
-			if (IS_UTF8_SERIES(VAL_SERIES(value)))
-				VAL_INDEX(value) += UTF8_Next_Char_Size(VAL_BIN(value), VAL_INDEX(value));
-			else
-				VAL_INDEX(value)++;
-				
-		}
+		if (index < tail) VAL_INDEX(value)++;
 		break;
 
 	case A_BACK:
-		if (index > 0) {
-			if (IS_UTF8_SERIES(VAL_SERIES(value)))
-				VAL_INDEX(value) = UTF8_Prev_Char_Position(VAL_BIN(value), index);
-			else
-				VAL_INDEX(value)--;
-		}
+		if (index > 0) VAL_INDEX(value)--;
 		break;
 
 	case A_SKIP:
@@ -97,64 +84,28 @@
 	case A_ATZ:
 		len = Get_Num_Arg(arg);
 		{
-			if (IS_UTF8_SERIES(VAL_SERIES(value))) {
-				if (action == A_SKIP) {
-					if (IS_LOGIC(arg)) len--;
-				}
-				else if (action == A_AT) {
-					if (len > 0) len--;
-				}
-				if (len > 0) {
-					while (len-- > 0 ) {
-						index += UTF8_Next_Char_Size(VAL_BIN(value), index);
-						if (index > tail) {
-							index = tail;
-							break;
-						}
-					}
-				}
-				else {
-					while (len++ < 0) {
-						index = UTF8_Prev_Char_Position(VAL_BIN(value), index);
-						if (index < 0) {
-							index = 0;
-							break;
-						}
-					}
-				}
-				VAL_INDEX(value) = (REBCNT)index;
+			REBI64 i = (REBI64)index + (REBI64)len;
+			if (action == A_SKIP) {
+				if (IS_LOGIC(arg)) i--;
+			} else if (action == A_AT) {
+				if (len > 0) i--;
 			}
-			else {
-				REBI64 i = (REBI64)index + (REBI64)len;
-				if (action == A_SKIP) {
-					if (IS_LOGIC(arg)) i--;
-				}
-				else if (action == A_AT) {
-					if (len > 0) i--;
-				}
-				if (i > (REBI64)tail) i = (REBI64)tail;
-				else if (i < 0) i = 0;
-				VAL_INDEX(value) = (REBCNT)i;
-			}
+			if (i > (REBI64)tail) i = (REBI64)tail;
+			else if (i < 0) i = 0;
+			VAL_INDEX(value) = (REBCNT)i;
 		}
 		break;
 
-	
-	case A_INDEXZQ:
 	case A_INDEXQ:
-		if (IS_UTF8_SERIES(VAL_SERIES(value)))
-			index = (REBI64)UTF8_Index_To_Position(VAL_BIN(value), index);
-		if (action == A_INDEXQ) index++;
+		SET_INTEGER(DS_RETURN, ((REBI64)index) + 1);
+		return R_RET;
+
+	case A_INDEXZQ:
 		SET_INTEGER(DS_RETURN, ((REBI64)index));
 		return R_RET;
 
 	case A_LENGTHQ:
-		if (IS_UTF8_SERIES(VAL_SERIES(value))) {
-			SET_INTEGER(DS_RETURN, tail > index ? Length_As_UTF8_Code_Points(VAL_BIN_DATA(value)) : 0);
-		}
-		else {
-			SET_INTEGER(DS_RETURN, tail > index ? tail - index : 0);
-		}
+		SET_INTEGER(DS_RETURN, tail > index ? tail - index : 0);
 		return R_RET;
 
 	case A_REMOVE:

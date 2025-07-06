@@ -253,8 +253,13 @@ static struct digest {
 	len = Partial1(data, D_ARG(ARG_CHECKSUM_LENGTH));
 	sym = VAL_WORD_CANON(method);
 
-	if (IS_BINARY(data) || IS_STRING(data)) {
+	if (IS_BINARY(data)) {
 		bin = VAL_BIN_DATA(data);
+	}
+	else if (IS_STRING(data)) {
+		ser = Encode_UTF8_Value(data, len, 0);
+		bin = SERIES_DATA(ser);
+		len = SERIES_LEN(ser) - 1;
 	}
 	else {
 		// Dispatch file to file-checksum function...
@@ -294,10 +299,16 @@ static struct digest {
 					if (IS_INTEGER(spec))
 						Trap1(RE_BAD_REFINE, D_ARG(ARG_CHECKSUM_SPEC));
 
-					// UTF-8 encoded...
-					keycp = VAL_BIN_DATA(spec);
-					keylen = VAL_LEN(spec);
-
+					if (IS_BINARY(spec)) {
+						keycp = VAL_BIN_DATA(spec);
+						keylen = VAL_LEN(spec);
+					}
+					else {
+						// normalize to UTF8 first
+						ser = Encode_UTF8_Value(spec, VAL_LEN(spec), 0);
+						keycp = SERIES_DATA(ser);
+						keylen = SERIES_LEN(ser) - 1;
+					}
 					REBYTE tmpdigest[128];		// Size must be max of all digest[].len;
 					REBYTE ipad[128],opad[128];	// Size must be max of all digest[].hmacblock;
 					void *ctx = Make_CMem(digests[i].ctxsize());
@@ -393,10 +404,13 @@ static struct digest {
 	REBOOL ref_level = D_REF(5);
 	REBVAL *level    = D_ARG(6);
 
-	REBSER *ser = VAL_SERIES(data);
-	REBCNT index = VAL_INDEX(data);
-	REBCNT len = Partial1(data, length);
+	REBSER *ser;
+	REBCNT index;
+	REBCNT len;
 	REBINT windowBits = MAX_WBITS;
+
+	len = Partial1(data, length);
+	ser = Prep_Bin_Str(data, &index, &len); // result may be a SHARED BUFFER!
 
 	switch (method) {
 	case SYM_ZLIB:
@@ -541,12 +555,17 @@ static struct digest {
 	REBSER *frame;
 
 	if (IS_STRING(value) || IS_BINARY(value)) {
+		REBCNT index;
+
 		// Just a guess at size:
 		frame = Make_Block(10);		// Use a std BUF_?
 		Set_Block(D_RET, frame);	// Keep safe
 
+		// Convert string if necessary. Store back for safety.
+		VAL_SERIES(value) = Prep_Bin_Str(value, &index, 0);
+
 		// !issue! Is this what we really want here?
-		Scan_Net_Header(frame, VAL_DATA(value));
+		Scan_Net_Header(frame, VAL_BIN(value) + index);
 		value = D_RET;
 	}
 
@@ -572,6 +591,7 @@ static struct digest {
 	REBVAL *arg = D_ARG(1);
 	REBINT base = VAL_INT32(D_ARG(2));
 	REBVAL *part = D_ARG(5);
+	REBSER *ser;
 	REBCNT index;
 	REBCNT len = 0;
 
@@ -582,10 +602,10 @@ static struct digest {
 			return R_RET;
 		}
 	}
-	else {
-		len = VAL_LEN(arg);
-	}
-	if (!Decode_Binary(D_RET, VAL_DATA(arg), len, base, 0, D_REF(3)))
+
+	ser = Prep_Bin_Str(D_ARG(1), &index, &len); // result may be a SHARED BUFFER!
+
+	if (!Decode_Binary(D_RET, BIN_SKIP(ser, index), len, base, 0, D_REF(3)))
  		Trap1(RE_INVALID_DATA, D_ARG(1));
 
 	return R_RET;
@@ -616,6 +636,9 @@ static struct digest {
 			return R_RET;
 		}
 	}
+
+	Set_Binary(arg, Prep_Bin_Str(arg, &index, (limit == NO_LIMIT) ? 0 : &limit)); // may be SHARED buffer
+	VAL_INDEX(arg) = index;
 
 	switch (base) {
 	case 64:
@@ -704,20 +727,27 @@ static struct digest {
 //	REBVAL *val_escape = D_ARG(3);
 	REBOOL as_uri      = D_REF(4);
 	REBINT len = (REBINT)VAL_LEN(arg); // due to len -= 2 below
-	UTF32 n;
+	REBUNI n;
 	REBSER *ser;
 	REBYTE *bp, *dp;
 
 	const REBCHR escape_char = D_REF(2) ? VAL_CHAR(D_ARG(3)) : '%';
 	const REBCHR space_char = escape_char == '=' ? '_' : '+';
 
-	ASSERT1(VAL_BYTE_SIZE(arg), RP_BAD_SIZE);
-	bp = VAL_BIN_DATA(arg);
+	if (VAL_BYTE_SIZE(arg)) {
+		bp = VAL_BIN_DATA(arg);
+	}
+	else {
+		// if the input is an unicode string, convert it to UTF8
+		ser = Encode_UTF8_String(VAL_UNI_DATA(arg), len, TRUE, 0);
+		len = BIN_LEN(ser); // because the lengh may be changed!
+		bp = BIN_HEAD(ser);
+	}
 
-	dp = Reset_Buffer(BUF_SCAN, len+1); // count also the terminating null byte
+	dp = Reset_Buffer(BUF_FORM, len+1); // count also the terminating null byte
 
 	for (; len > 0; len--) {
-		if (*bp == escape_char && len > 2 && Scan_Hex2(bp+1, &n)) {
+		if (*bp == escape_char && len > 2 && Scan_Hex2(bp+1, &n, FALSE)) {
 			*dp++ = (REBYTE)n;
 			bp  += 3;
 			len -= 2;
@@ -732,7 +762,11 @@ static struct digest {
 	}
 
 	*dp = 0;
-	ser = Copy_String(BUF_SCAN, 0, dp - BIN_HEAD(BUF_SCAN));
+	if (IS_BINARY(arg)) {
+		ser = Copy_String(BUF_FORM, 0, dp - BIN_HEAD(BUF_FORM));
+	} else {
+		ser = Decode_UTF_String(VAL_BIN_DATA(TASK_BUF_FORM), dp - BIN_HEAD(BUF_FORM), -1, FALSE, FALSE);
+	}
 
 	Set_Series(VAL_TYPE(arg), D_RET, ser);
 
@@ -779,7 +813,7 @@ static struct digest {
 	// using FORM buffer for intermediate conversion;
 	// counting with the worst scenario, where each single codepoint
 	// might need 4 bytes of UTF-8 data (%XX%XX%XX%XX)
-	REBYTE *dp = Reset_Buffer(BUF_SCAN, 12 * VAL_LEN(arg));
+	REBYTE *dp = Reset_Buffer(BUF_FORM, 12 * VAL_LEN(arg));
 
 	if (VAL_BYTE_SIZE(arg)) {
 		// byte size is 1, so the series should not contain chars with value over 0x80
@@ -844,7 +878,7 @@ static struct digest {
 		}
 	}
 	*dp = 0;
-	ser = Copy_String(BUF_SCAN, 0, dp - BIN_HEAD(BUF_SCAN));
+	ser = Copy_String(BUF_FORM, 0, dp - BIN_HEAD(BUF_FORM));
 	Set_Series(VAL_TYPE(arg), D_RET, ser);
 
 	return R_RET;
@@ -920,8 +954,11 @@ static struct digest {
 	if (D_REF(2)) tabsize = Int32s(D_ARG(3), 1);
 
 	// Set up the copy buffer:
-	ASSERT1(VAL_BYTE_SIZE(val), RP_BAD_SIZE);
-	ser = Entab_Bytes(VAL_BIN(val), VAL_INDEX(val), len, tabsize);
+	if (VAL_BYTE_SIZE(val))
+		ser = Entab_Bytes(VAL_BIN(val), VAL_INDEX(val), len, tabsize);
+	else
+		ser = Entab_Unicode(VAL_UNI(val), VAL_INDEX(val), len, tabsize);
+
 	Set_Series(VAL_TYPE(val), D_RET, ser);
 	
 	return R_RET;
@@ -942,8 +979,11 @@ static struct digest {
 	if (D_REF(2)) tabsize = Int32s(D_ARG(3), 1);
 
 	// Set up the copy buffer:
-	ASSERT1(VAL_BYTE_SIZE(val), RP_BAD_SIZE);
-	ser = Detab_Bytes(VAL_BIN(val), VAL_INDEX(val), len, tabsize);
+	if (VAL_BYTE_SIZE(val))
+		ser = Detab_Bytes(VAL_BIN(val), VAL_INDEX(val), len, tabsize);
+	else
+		ser = Detab_Unicode(VAL_UNI(val), VAL_INDEX(val), len, tabsize);
+
 	Set_Series(VAL_TYPE(val), D_RET, ser);
 	
 	return R_RET;
@@ -1097,9 +1137,8 @@ static struct digest {
 {
 	REBVAL *arg = D_ARG(1);
 	const REBYTE *bp;
-	REBFLG surrogates;
 
-	bp = UTF8_Check(VAL_BIN_DATA(arg), VAL_LEN(arg), &surrogates);
+	bp = Check_UTF8(VAL_BIN_DATA(arg), VAL_LEN(arg));
 	if (bp == 0) return R_NONE;
 
 	VAL_INDEX(arg) = bp - VAL_BIN_HEAD(arg);

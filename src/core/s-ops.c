@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2022 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,16 +34,16 @@
 
 /*********************************************************************
 **
-*/	REBOOL Is_ASCII(REBYTE *bp, REBCNT len)
+*/	REBOOL Is_Not_ASCII(REBYTE *bp, REBCNT len)
 /*
 **		Returns TRUE if byte string uses upper code page.
 **
 ***********************************************************************/
 {
 	for (; len > 0; len--, bp++)
-		if (*bp >= 0x80) return FALSE;
+		if (*bp >= 0x80) return TRUE;
 
-	return TRUE;
+	return FALSE;
 }
 
 
@@ -73,14 +73,16 @@
 **
 **	Opts can be:
 **		0 - no special options
-**		1 - allow UTF8
+**		1 - allow UTF8 (val is converted to UTF8 during qualification)
 **		2 - allow binary
 **
-**	Checks:
+**	Checks or converts it:
 **
-**		1. it's actual content (less space, newlines) <= max len
-**		2. it does not contain other values ("123 456")
-**		3. it's not empty or only whitespace
+**		1. it is byte string (not unicode)
+**		2. if unicode, copy and return as temp byte string
+**		3. it's actual content (less space, newlines) <= max len
+**		4. it does not contain other values ("123 456")
+**		5. it's not empty or only whitespace
 **
 **	Notes:
 *
@@ -91,47 +93,57 @@
 {
 	REBCNT tail = VAL_TAIL(val);
 	REBCNT index = VAL_INDEX(val);
-	REBCNT len = 0;
-	REBINT c;
-	REBYTE *dst, *src, *end;
+	REBCNT len;
+	REBUNI c;
+	REBYTE *bp;
+	REBSER *src = VAL_SERIES(val);
 
 	if (index > tail) Trap0(RE_PAST_END);
 
-	Resize_Series(BUF_SCAN, max_len+1);
-	dst = BIN_HEAD(BUF_SCAN);
-
-	src = VAL_DATA(val);
-	end = STR_TAIL(VAL_SERIES(val));
+	Resize_Series(BUF_FORM, max_len+1);
+	bp = BIN_HEAD(BUF_FORM);
 
 	// Skip leading whitespace:
-	while (src < end && IS_LEX_SPACE(*src)) src++;
+	for (; index < tail; index++) {
+		c = GET_ANY_CHAR(src, index);
+		if (!IS_SPACE(c)) break;
+	}
 
 	// Copy chars that are valid:
-	while (src < end) {
-		REBCNT sz = UTF8_Next_Char_Size(src, 0);
-		if (opts == 0 && sz > 1) Trap0(RE_INVALID_CHARS);
-		if (IS_SPACE(*src)) break;
-		len += sz;
-		src += sz;
-		if (len > max_len)
+	for (; index < tail; index++) {
+		c = GET_ANY_CHAR(src, index);
+		if (opts < 2 && c >= 0x80) {
+			if (opts == 0) Trap0(RE_INVALID_CHARS);
+			len = Encode_UTF8_Char(bp, c);
+			max_len -= len;
+			bp += len;
+		}
+		else if (!IS_SPACE(c)) {
+			*bp++ = (REBYTE)c;
+			max_len--;
+		}
+		else break;
+		if (max_len < 0)
 			Trap0(RE_TOO_LONG);
 	}
-	if (len == 0) Trap0(RE_TOO_SHORT);
-
-	COPY_MEM(dst, src - len, len);
-	BIN_LEN(BUF_SCAN) = len;
-	dst[len] = 0;
 
 	// Rest better be just spaces:
-	while (src < end) {
-		if (!IS_LEX_SPACE(*src)) Trap0(RE_INVALID_CHARS);
-		src++;
+	for (; index < tail; index++) {
+		c = GET_ANY_CHAR(src, index);
+		if (!IS_SPACE(c)) Trap0(RE_INVALID_CHARS);
 	}
+
+	*bp= 0;
+
+	len = bp - BIN_HEAD(BUF_FORM);
+	if (len == 0) Trap0(RE_TOO_SHORT);
+
 	if (length) *length = len;
-	return dst;
+
+	return BIN_HEAD(BUF_FORM);
 }
 
-#ifdef unused
+
 /*********************************************************************
 **
 */	REBSER *Prep_Bin_Str(REBVAL *val, REBCNT *index, REBCNT *length)
@@ -173,7 +185,7 @@
 	if (length) *length = len;
 	return ser;
 }
-#endif
+
 
 /***********************************************************************
 **
@@ -354,12 +366,16 @@ static REBYTE seed_str[SEED_LEN] = {
 	// Decode KEY as VALUE field (binary, string, or integer)
 	if (klen == 0) {
 		REBVAL *val = (REBVAL*)kp;
+		REBSER *ser;
 
 		switch (VAL_TYPE(val)) {
 		case REB_BINARY:
-		case REB_STRING:
 			kp = (void*)VAL_BIN_DATA(val);
 			klen = VAL_LEN(val);
+			break;
+		case REB_STRING:
+			ser = Prep_Bin_Str(val, &i, &klen); // result may be a SHARED BUFFER!
+			kp = BIN_SKIP(ser, i);
 			break;
 		case REB_INTEGER:
 			INT_TO_STR(VAL_INT64(val), dst);
@@ -401,15 +417,13 @@ static REBYTE seed_str[SEED_LEN] = {
 **
 ***********************************************************************/
 {
+	REBOOL wide = !BYTE_SIZE(src);
 	REBCNT tail;
-	REBYTE c;
-
-	ASSERT1(chr < 0x80, RP_MISC);
-	ASSERT1(BYTE_SIZE(src), RP_MISC);
+	REBUNI c;
 
 	for (tail = SERIES_TAIL(src); tail > 0; tail--) {
-		c = *BIN_SKIP(src, tail-1);
-		if (c != chr) break;
+		c = wide ? *UNI_SKIP(src, tail-1) : (REBUNI)*BIN_SKIP(src, tail-1);
+		if (c != (REBUNI)chr) break;
 	}
 	SERIES_TAIL(src) = tail;
 	TERM_SERIES(src);
@@ -574,7 +588,7 @@ static REBYTE seed_str[SEED_LEN] = {
 	REBYTE *dp;
 	REBYTE c;
 
-	dp = Reset_Buffer(BUF_SCAN, len);
+	dp = Reset_Buffer(BUF_FORM, len);
 
 	for (; index < len; index++) {
 
@@ -608,10 +622,10 @@ static REBYTE seed_str[SEED_LEN] = {
 		}
 	}
 
-	return Copy_Buffer(BUF_SCAN, dp);
+	return Copy_Buffer(BUF_FORM, dp);
 }
 
-#ifdef unused
+
 /***********************************************************************
 **
 */  REBSER *Entab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
@@ -660,7 +674,7 @@ static REBYTE seed_str[SEED_LEN] = {
 
 	return Copy_Buffer(BUF_MOLD, dp);
 }
-#endif
+
 
 /***********************************************************************
 **
@@ -679,7 +693,7 @@ static REBYTE seed_str[SEED_LEN] = {
 	for (n = index; n < len; n++)
 		if (bp[n] == TAB) cnt++;
 
-	dp = Reset_Buffer(BUF_SCAN, len + (cnt * (tabsize-1)));
+	dp = Reset_Buffer(BUF_FORM, len + (cnt * (tabsize-1)));
 
 	n = 0;
 	while (index < len) {
@@ -699,10 +713,10 @@ static REBYTE seed_str[SEED_LEN] = {
 		*dp++ = c;
 	}
 
-	return Copy_Buffer(BUF_SCAN, dp);
+	return Copy_Buffer(BUF_FORM, dp);
 }
 
-#ifdef unused
+
 /***********************************************************************
 **
 */  REBSER *Detab_Unicode(REBUNI *bp, REBCNT index, REBCNT len, REBINT tabsize)
@@ -742,7 +756,7 @@ static REBYTE seed_str[SEED_LEN] = {
 
 	return Copy_Buffer(BUF_MOLD, dp);
 }
-#endif
+
 
 /***********************************************************************
 **
@@ -758,7 +772,7 @@ static REBYTE seed_str[SEED_LEN] = {
 	*D_RET = *val;
 
 	if (IS_CHAR(val)) {
-		REBINT c = VAL_CHAR(val);
+		REBUNI c = VAL_CHAR(val);
 		if (c < UNICODE_CASES) {
 			c = upper ? UP_CASE(c) : LO_CASE(c);
 		}
@@ -771,29 +785,27 @@ static REBYTE seed_str[SEED_LEN] = {
 	if (IS_PROTECT_SERIES(VAL_SERIES(val))) Trap0(RE_PROTECTED);
 
 	len = Partial(val, 0, part, 0);
+	n = VAL_INDEX(val);
+	len += n;
 
-	ASSERT1(VAL_BYTE_SIZE(val), RP_BAD_SIZE);
-
-	REBYTE *bp = VAL_BIN_SKIP(val, VAL_INDEX(val));
-	REBYTE *ep = bp + len;
-	REBYTE *np = bp;
-	REBINT c;
-	if (upper) {
-		while (bp < ep) {
-			c = UTF8_Decode_Codepoint(&bp, &len);
-			if (c < UNICODE_CASES) {
-				np += Encode_UTF8_Char(np, UP_CASE(c));
-			}
-			else np = bp;
+	if (VAL_BYTE_SIZE(val)) {
+		REBYTE *bp = VAL_BIN(val);
+		if (upper)
+			for (; n < len; n++) bp[n] = (REBYTE)UP_CASE(bp[n]);
+		else {
+			for (; n < len; n++) bp[n] = (REBYTE)LO_CASE(bp[n]);
 		}
-	}
-	else {
-		while (bp < ep) {
-			c = UTF8_Decode_Codepoint(&bp, &len);
-			if (c < UNICODE_CASES) {
-				np += Encode_UTF8_Char(np, LO_CASE(c));
+	} else {
+		REBUNI *up = VAL_UNI(val);
+		if (upper) {
+			for (; n < len; n++) { 
+				if (up[n] < UNICODE_CASES) up[n] = UP_CASE(up[n]);
 			}
-			else np = bp;
+		}
+		else {
+			for (; n < len; n++) {
+				if (up[n] < UNICODE_CASES) up[n] = LO_CASE(up[n]);
+			}
 		}
 	}
 }
@@ -816,19 +828,17 @@ static REBYTE seed_str[SEED_LEN] = {
 	REBSER *out;
 	REBUNI c; // don't use REBCHR!!! it is only for OS strings! see issue#1794 
 
-	ASSERT1(VAL_BYTE_SIZE(val), RP_BAD_SIZE);
-
 	BLK_RESET(ser);
 
 	while (idx < len) {
-		c = BIN_HEAD(str)[idx];
+		c = GET_ANY_CHAR(str, idx);
 		if (c == LF || c == CR) {
-			out = Copy_Bytes(BIN_SKIP(str, start), idx - start);
+			out = Copy_String(str, start, idx - start);
 			val = Append_Value(ser);
 			SET_STRING(val, out);
 			VAL_SET_LINE(val);
 			idx++;
-			if (c == CR && BIN_HEAD(str)[idx] == LF) idx++;
+			if (c == CR && GET_ANY_CHAR(str, idx) == LF) idx++;
 			start = idx;
 		}
 		else idx++;
