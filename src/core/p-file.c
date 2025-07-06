@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,8 +61,9 @@
 		Trap1(RE_BAD_FILE_PATH, path);
 	
 	file->file.path = (REBCHR*)(ser->data);
+	file->file.size = ser->tail * SERIES_WIDE(ser);
 
-	SET_FLAG(file->modes, RFM_NAME_MEM);
+	//SET_FLAG(file->modes, RFM_NAME_MEM);
 
 	Secure_Port(SYM_FILE, file, path, ser);
 }
@@ -296,9 +297,8 @@ resize:
 	STR_TERM(ser);
 
 	// Convert to string or block of strings.
-	// NOTE: This code is incorrect for files read in chunks!!!
+	// NOTE: This code may be incorrect for files read in chunks!!!
 	if (args & (AM_READ_STRING | AM_READ_LINES)) {
-		ser = Decode_UTF_String(BIN_HEAD(ser), file->actual, -1, TRUE, FALSE);
 		Set_String(ds, ser);
 		if (args & AM_READ_LINES) Set_Block(ds, Split_Lines(ds));
 	}
@@ -311,7 +311,6 @@ resize:
 /*
 ***********************************************************************/
 {
-	REBSER *ser;
 	REBOOL lines = (args & AM_WRITE_LINES) != 0;
 	REBINT n = 0;
 
@@ -339,16 +338,16 @@ resize:
 		len += n;
 	}
 	
-	if (IS_BINARY(data)) {
+	if (IS_BINARY(data) || IS_STRING(data)) {
 		file->data = VAL_BIN_DATA(data);
 	}
-	else if (IS_STRING(data)) {
-		// Auto convert string to UTF-8
-		// Using LF to CRLF conversion on Windows if not used /binary refinement!
-		ser = Encode_UTF8_Value(data, len, (args & AM_WRITE_BINARY) ? 0 : ENCF_OS_CRLF);
-		file->data = ser? BIN_HEAD(ser) : VAL_BIN_DATA(data); // No encoding may be needed
-		len = SERIES_TAIL(ser);
-	}
+//	else if (IS_STRING(data)) {
+//		// Auto convert string to UTF-8
+//		// Using LF to CRLF conversion on Windows if not used /binary refinement!
+//		ser = Encode_UTF8_Value(data, len, (args & AM_WRITE_BINARY) ? 0 : ENCF_OS_CRLF);
+//		file->data = ser? BIN_HEAD(ser) : VAL_BIN_DATA(data); // No encoding may be needed
+//		len = SERIES_TAIL(ser);
+//	}
 	else if (IS_CHAR(data)) {
 		// Auto convert char to UTF-8
 		REBYTE buf[8];

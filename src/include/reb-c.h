@@ -160,6 +160,29 @@ typedef struct sInt64 {
 } I64;
 #pragma pack()
 
+
+/* ---------------------------------------------------------------------
+	The following 4 definitions are compiler-specific.
+	The C standard does not guarantee that wchar_t has at least
+	16 bits, so wchar_t is no less portable than unsigned short!
+	All should be unsigned values to avoid sign extension during
+	bit mask & shift operations.
+------------------------------------------------------------------------ */
+
+typedef unsigned long	UTF32;	/* at least 32 bits */
+typedef unsigned short	UTF16;	/* at least 16 bits */
+typedef unsigned char	UTF8;	/* typically 8 bits */
+typedef unsigned char	Boolean; /* 0 or 1 */
+
+/* Some fundamental constants */
+#define UNI_ERROR (UTF32)0xFFFFFFFF
+#define UNI_REPLACEMENT_CHAR (UTF32)0x0000FFFD
+#define UNI_MAX_BMP (UTF32)0x0000FFFF
+#define UNI_MAX_UTF16 (UTF32)0x0010FFFF
+#define UNI_MAX_UTF32 (UTF32)0x7FFFFFFF
+#define UNI_MAX_LEGAL_UTF32 (UTF32)0x0010FFFF
+
+
 /***********************************************************************
 **
 **  REBOL Code Types
@@ -178,6 +201,7 @@ typedef double			REBDEC;     // 64 bit decimal
 
 typedef unsigned char	REBYTE;     // unsigned byte data
 typedef u16				REBUNI;     // unicode char
+typedef u32 REBUTF;
 
 // REBCHR - only to refer to OS char strings (not internal strings)
 #ifdef OS_WIDE_CHAR
@@ -186,7 +210,7 @@ typedef REBUNI          REBCHR;
 typedef REBYTE          REBCHR;
 #endif
 
-#define MAX_UNI ((1 << (8*sizeof(REBUNI))) - 1)
+#define MAX_UNI 0x10FFFF
 
 #define MIN_D64 ((double)-9.2233720368547758e18)
 #define MAX_D64 ((double) 9.2233720368547758e18)
@@ -282,6 +306,16 @@ typedef void(*CFUNC)(void *);
 # define BIG_CONSTANT(x) (x##LLU)
 #endif // !defined(_MSC_VER)
 
+
+#if defined(_MSC_VER)
+#define RESTRICT __restrict
+#elif defined(__clang__) || defined(__GNUC__)
+#define RESTRICT __restrict__
+#elif defined(__IAR_SYSTEMS_ICC__)
+#define RESTRICT __restrict
+#else
+#define RESTRICT
+#endif
 
 #define UNUSED(x) (void)x;
 

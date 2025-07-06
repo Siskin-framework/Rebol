@@ -859,9 +859,9 @@ RL_API REBUPT RL_Series(REBSER *series, REBCNT what)
 	return 0;
 }
 
-RL_API int RL_Get_Char(REBSER *series, u32 index)
+RL_API UTF32 RL_Get_Char(REBSER *series, u32 index)
 /*
-**	Get a character from byte or unicode string.
+**	Get a character from UTF8 encoded string.
 **
 **	Returns:
 **		A Unicode character point from string. If index is
@@ -875,7 +875,7 @@ RL_API int RL_Get_Char(REBSER *series, u32 index)
 **		R3 build options. The default is 16 bits.
 */
 {
-	if (index >= series->tail) return -1;
+	if (index >= series->tail) return NOT_FOUND;
 	return GET_ANY_CHAR(series, index);
 }
 
@@ -1197,7 +1197,21 @@ RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
 **		len  - number of source bytes consumed.
 */
 {
-	return  Decode_UTF8_Char(&str, len);
+	return  UTF8_Decode_Codepoint(&str, &len);
+}
+
+RL_API REBCNT RL_Encode_UTF8_Char(REBYTE *dst, REBCNT *src)
+/*
+**	Converts a single char to UTF8 code-point.
+**
+**	Returns:
+**		Returns length of char stored in dst
+**	Arguments:
+**		dst  - UTF8 encoded data
+**		src  - Unicode character.
+*/
+{
+	return  Encode_UTF8_Char(&dst, src);
 }
 
 /***********************************************************************
@@ -1253,12 +1267,12 @@ RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
 	REBLEN  index = file->index;
 
 	if (!ser || index > SERIES_TAIL(ser)) return 0;
-
-	ser = To_Local_Path(SERIES_SKIP(ser, index), SERIES_TAIL(ser)-index, !BYTE_SIZE(ser), full);
-	// To_Local_Path always returns REBUNI series
-	if (ser && utf8) {
-		ser = Encode_UTF8_String(SERIES_DATA(ser), SERIES_TAIL(ser), 1, 0);
+	if (!BYTE_SIZE(ser)) {
+		puts("RL_To_Local_Path expects UTF8 encode input!");
+		return NULL;
 	}
+
+	ser = To_Local_Path(SERIES_SKIP(ser, index), SERIES_TAIL(ser)-index, !utf8, full);
 	return ser;
 }
 

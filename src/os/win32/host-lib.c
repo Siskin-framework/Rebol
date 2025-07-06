@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,11 +68,14 @@
 
 #include "reb-host.h"
 #include "host-lib.h"
+#include "utf8.h"
 
 RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host-window, host-ext-test..)
 
 // Semaphore lock to sync sub-task launch:
 static void *Task_Ready;
+static void *Temp_Buffer;
+static size_t Temp_Buffer_Size = 0;
 
 #ifdef REB_VIEW
 void Dispose_Windows(void);
@@ -136,6 +139,46 @@ void Dispose_Windows(void);
 		JOIN_STR(cmd, arg, limit - LEN_STR(cmd) - 1);
 	}
 }
+
+
+/***********************************************************************
+**
+*/	REBLEN OS_Wide_To_Multibyte(const REBCHR* wide, REBYTE **utf8)
+/*
+**		Return new utf-8 encoded string.
+**
+***********************************************************************/
+{
+	size_t len = wcslen(wide);
+	size_t needed = WideCharToMultiByte(CP_UTF8, 0, wide, len, NULL, 0, NULL, NULL);
+	if (needed == 0) return 0;
+	REBYTE *out = (REBYTE*)malloc(needed+1);
+	if (out == NULL) return 0;
+	WideCharToMultiByte(CP_UTF8, 0, wide, len, out, needed, NULL, NULL);
+	out[needed] = 0;
+	*utf8 = out;
+	return (REBLEN)needed;
+}
+
+/***********************************************************************
+**
+*/	REBLEN OS_Multibyte_To_Wide(const REBYTE *utf8, REBYTE **wide)
+/*
+**		Return new wide encoded string.
+**
+***********************************************************************/
+{
+	size_t len = LEN_BYTES(utf8);
+	size_t needed = MultiByteToWideChar(CP_UTF8, 0, utf8, len, NULL, 0);
+	if (needed == 0) return 0;
+	REBUNI *out = (REBUNI *)malloc((needed + 1) * sizeof(REBCHR));
+	if (out == NULL) return 0;
+	MultiByteToWideChar(CP_UTF8, 0, utf8, len, out, needed);
+	out[needed] = 0;
+	*wide = out;
+	return (REBLEN)needed;
+}
+
 
 #ifdef removing_this_code
 // this function is not needed. Now is possible to use RL_GET_STRING with WIDE flag
@@ -671,7 +714,7 @@ void Dispose_Windows(void);
 
 /***********************************************************************
 **
-*/	REBCHR* OS_Real_Path(const REBCHR *path)
+*/	REBCHR* OS_Real_Path(const REBYTE *path)
 /*
 **		Returns a null-terminated string containing the canonicalized
 **		absolute pathname corresponding to path. In the returned string,
@@ -680,19 +723,39 @@ void Dispose_Windows(void);
 **
 ***********************************************************************/
 {
-	static REBCHR result[MAX_PATH+2];
-	if (!_wfullpath(result, path, MAX_PATH)) return NULL;
-	size_t len = wcslen(result);
+	static REBCHR real_path[MAX_PATH + 2];
+	int needed = MultiByteToWideChar(CP_UTF8, 0, path, -1, NULL, 0);
+	if (needed == 0) return NULL;
+	size_t temp_size = needed * sizeof(wchar_t);
+	REBCHR *temp = (REBCHR *)malloc(temp_size);
+	if (temp == NULL) return NULL;
+	MultiByteToWideChar(CP_UTF8, 0, path, -1, (wchar_t *)temp, needed);
+
+	if (!_wfullpath(real_path, (wchar_t *)temp, MAX_PATH)) return NULL;
+	size_t len = wcslen(real_path);
 	// if there is not a trailing slash, check if the result is not a directory anyway
-	if (result[len-1] != L'\\') {
+	if (real_path[len-1] != L'\\') {
 		// and append the slash, if it is...
 		// https://github.com/Oldes/Rebol-issues/issues/2600
-		DWORD fileAttr = GetFileAttributes(result);
+		DWORD fileAttr = GetFileAttributes(real_path);
 		if (fileAttr & FILE_ATTRIBUTE_DIRECTORY)
-			result[len++] = L'\\';
+			real_path[len++] = L'\\';
 	}
-	result[len] = 0;
-	return (REBCHR*)result; // Be sure to copy or process the result soon!
+	real_path[len] = 0;
+
+	needed = WideCharToMultiByte(CP_UTF8, 0, real_path, len, NULL, 0, NULL, NULL);
+	if (needed == 0) return NULL;
+	if (needed > temp_size) {
+		void* temp_new = realloc(temp, needed);
+		if (!temp_new) {
+			free(temp);
+			return NULL;
+		}
+		temp = temp_new;
+	}
+	WideCharToMultiByte(CP_UTF8, 0, real_path, len, temp, needed, NULL, NULL);
+	temp[needed] = 0;
+	return temp; // Be sure to copy and free!
 }
 
 /***********************************************************************
@@ -1475,13 +1538,16 @@ static INT CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 {
 	REBCNT size = 64;
 	REBCNT  pos = 0;
-	REBCHR *str = (REBUNI*)malloc(size * sizeof(REBCHR));
-	REBCHR *tmp;
-	REBCHR  c;
+	REBYTE *str = malloc(size);
+	REBYTE *tmp;
+	REBYTE *dst;
+	REBUTF  c;
 
 	req->data = NULL;
 
 	if (str == NULL) return;
+
+	dst = str;
 
 	while ((c = _getwch()) != '\r') {
 		if (c ==  27) { // ESC
@@ -1492,19 +1558,24 @@ static INT CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 			if (pos > 0) pos--;
 			continue;
 		}
-		str[pos++] = c;
-		if (pos+1 == size) {
+		if (pos >= size - 5) { // max 4 bytes char + terminal null
 			size += 64;
-			tmp = (REBCHR *)realloc(str, size * sizeof(REBCHR));
+			tmp = realloc(str, size);
 			if (tmp == NULL) {
 				free(str);
 				return;
 			}
 			str = tmp;
-
+			dst = str + pos;
+		}
+		if (c < 128) {
+			dst[pos++] = c;
+		}
+		else {
+			pos += RL_Encode_UTF8_Char(dst, c);
 		}
 	}
-	req->data = (REBYTE*)str;
+	req->data = str;
 	req->actual = pos;
 	str[pos++] = 0;
 }

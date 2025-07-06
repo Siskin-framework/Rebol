@@ -73,7 +73,11 @@
 	#include <stdarg.h>
 #endif
 
+#define UTF8_ACCEPT 0
+#define UTF8_REJECT 1
+
 // Local includes:
+#include "utf8.h"
 #include "reb-c.h"
 #include "reb-defs.h"
 #include "reb-args.h"
@@ -364,7 +368,9 @@ enum {
 #define BUF_PRINT VAL_SERIES(TASK_BUF_PRINT)
 #define BUF_FORM  VAL_SERIES(TASK_BUF_FORM)
 #define BUF_MOLD  VAL_SERIES(TASK_BUF_MOLD)
-#define BUF_UTF8  VAL_SERIES(TASK_BUF_UTF8)
+#define BUF_SCAN  VAL_SERIES(TASK_BUF_SCAN)
+//#define BUF_UTF8  VAL_SERIES(TASK_BUF_UTF8)
+#define BUF_UCS2  VAL_SERIES(TASK_BUF_UCS2)
 #define MOLD_LOOP VAL_SERIES(TASK_MOLD_LOOP)
 
 #ifdef OS_WIDE_CHAR

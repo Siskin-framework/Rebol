@@ -63,14 +63,15 @@ dt [ ;- delta time
 ;		%units/power-test.r3
 ;		%units/protect-test.r3
 ;		%units/series-test.r3
-		%units/struct-test.r3
+;		%units/struct-test.r3
 ;		%units/task-test.r3
 ;		%units/time-test.r3
 ;		%units/tuple-test.r3
 ;		%units/typeset-test.r3
+;		%units/unicode-test.r3
 ;		%units/url-test.r3
 ;		%units/vector-test.r3
-;		%units/word-test.r3
+		%units/word-test.r3
 ;		%units/thru-cache-test.r3
 ;		;- cryptography tests:
 ;		%units/aes-test.r3

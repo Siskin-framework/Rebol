@@ -107,10 +107,10 @@
 **		action: INSERT, APPEND, CHANGE
 **
 **		dst_ser:	target
-**		dst_idx:	position
+**		dst_idx:	position (in bytes)
 **		src_val:	source
 **		flags:		AN_PART
-**		dst_len:	length to remove
+**		dst_len:	length to remove (in bytes)
 **		dups:		dup count
 **
 **		return: new dst_idx
@@ -144,16 +144,11 @@
 			src_ser->tail = Encode_UTF8_Char(BIN_HEAD(src_ser), VAL_CHAR(src_val));
 		}
 		else if (ANY_STR(src_val)) {
-			// here is used temporary src_len, used to limit conversion of the string to binary
-			// If /part is used, not complete src is converted to binary (UTF8).
-			// This src_len is modified by purpose later so the result may be shorter.
-			// Like in this case: #{E1} == append/part #{} "^(1234)" 1
 			if (action != A_CHANGE && GET_FLAG(flags, AN_PART)) {
 				src_len = dst_len;
 			} else {
 				src_len = VAL_LEN(src_val);
 			}
-			src_ser = Encode_UTF8_Value(src_val, src_len, FALSE); // NOTE: uses shared FORM buffer!
 		}
 		else if (IS_TUPLE(src_val)) {
 			src_ser = BUF_FORM;
@@ -166,15 +161,8 @@
 		else Trap_Arg(src_val);
 	}
 	else if (IS_CHAR(src_val)) {
-		if (VAL_CHAR(src_val) < 128) {
-			src_ser = BUF_FORM;
-			*SERIES_DATA(src_ser) = (REBYTE)VAL_CHAR(src_val);
-		}
-		else {
-			src_ser = BUF_UTF8;
-			*(REBUNI*)SERIES_DATA(src_ser) = (REBUNI)VAL_CHAR(src_val);
-		}
-		SERIES_TAIL(src_ser) = 1;
+		src_ser = BUF_FORM;
+		SERIES_TAIL(src_ser) = Encode_UTF8_Char(STR_HEAD(src_ser), VAL_CHAR(src_val));
 	}
 	else if (IS_BLOCK(src_val)) {
 		src_ser = Form_Tight_Block(src_val);
@@ -225,6 +213,9 @@
 		Insert_String(dst_ser, dst_idx, src_ser, src_idx, src_len, TRUE);
 		dst_idx += src_len;
 	}
+
+	if (!IS_UTF8_SERIES(dst_ser) && !Is_ASCII(STR_SKIP(src_ser, src_idx), src_len))
+		UTF8_SERIES(dst_ser);
 
 	TERM_SERIES(dst_ser);
 
