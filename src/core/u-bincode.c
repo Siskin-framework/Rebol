@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -440,6 +440,10 @@ static REBCNT EncodedVINT_Size(REBU64 value) {
 				}
 				switch (VAL_TYPE(data)) {
 				case REB_BINARY:
+				case REB_STRING:
+				case REB_FILE:
+				case REB_URL:
+				case REB_EMAIL:
 					count += VAL_LEN(data);
 					break;
 				case REB_WORD:
@@ -449,11 +453,6 @@ static REBCNT EncodedVINT_Size(REBU64 value) {
 					} else if (IS_GET_PATH(next)) {	
 						Do_Path(&next, NULL);
 						next = DS_POP; // volatile stack reference
-					}
-					if (IS_STRING(next) || IS_FILE(next) || IS_URL(next)) {
-						DS_PUSH_NONE;
-						Set_Binary(DS_TOP, Encode_UTF8_Value(next, VAL_LEN(next), 0));
-						next = DS_POP;
 					}
 					cmd = VAL_WORD_CANON(data);
 					switch (cmd) {
@@ -520,13 +519,13 @@ static REBCNT EncodedVINT_Size(REBU64 value) {
 						}
 						goto error;
 					case SYM_BYTES:
-						if (IS_BINARY(next)) {
+						if (ANY_BINSTR(next)) {
 							count += VAL_LEN(next);
 							continue;
 						}
 						goto error;
 					case SYM_UI8BYTES:
-						if (IS_BINARY(next)) {
+						if (ANY_BINSTR(next)) {
 							ASSERT_UIBYTES_RANGE(next, 0xFF);
 							count += (1 + VAL_LEN(next));
 						}
@@ -535,7 +534,7 @@ static REBCNT EncodedVINT_Size(REBU64 value) {
 					case SYM_UI16BYTES:
 					case SYM_UI16LEBYTES:
 					case SYM_UI16BEBYTES:
-						if (IS_BINARY(next)) {
+						if (ANY_BINSTR(next)) {
 							ASSERT_UIBYTES_RANGE(next, 0xFFFF);
 							count += (2 + VAL_LEN(next));
 							continue;
@@ -544,7 +543,7 @@ static REBCNT EncodedVINT_Size(REBU64 value) {
 					case SYM_UI24BYTES:
 					case SYM_UI24LEBYTES:
 					case SYM_UI24BEBYTES:
-						if (IS_BINARY(next)) {
+						if (ANY_BINSTR(next)) {
 							ASSERT_UIBYTES_RANGE(next, 0xFFFFFF);
 							count += (3 + VAL_LEN(next));
 							continue;
@@ -553,7 +552,7 @@ static REBCNT EncodedVINT_Size(REBU64 value) {
 					case SYM_UI32BYTES:
 					case SYM_UI32LEBYTES:
 					case SYM_UI32BEBYTES:
-						if (IS_BINARY(next)) {
+						if (ANY_BINSTR(next)) {
 							ASSERT_UIBYTES_RANGE(next, 0xFFFFFFFF);
 							count += (4 + VAL_LEN(next));
 							continue;
@@ -695,6 +694,10 @@ static REBCNT EncodedVINT_Size(REBU64 value) {
 
 				switch (VAL_TYPE(data)) {
 				case REB_BINARY:
+				case REB_STRING:
+				case REB_FILE:
+				case REB_URL:
+				case REB_EMAIL:
 					n = VAL_LEN(data);
 					//printf("write bytes: %i to #%0X\n", n, cp);
 					memcpy(cp, VAL_BIN_AT(data), n);
@@ -706,11 +709,6 @@ static REBCNT EncodedVINT_Size(REBU64 value) {
 					else if (IS_GET_PATH(next)) {
 						Do_Path(&next, NULL);
 						next = DS_POP; // volatile stack reference
-					}
-					if (IS_STRING(next) || IS_FILE(next) || IS_URL(next)) {
-						DS_PUSH_NONE;
-						Set_Binary(DS_TOP, Encode_UTF8_Value(next, VAL_LEN(next), 0));
-						next = DS_POP;
 					}
 					cmd = VAL_WORD_CANON(data);
 					switch (cmd) {
