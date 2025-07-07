@@ -262,6 +262,16 @@ Rebol [
 		--assert "🙂b" == take/all "🙂b"
 		--assert "🙂b" == take/all next "á🙂b"
 
+	--test-- "remove"
+		--assert "b" == remove "áb"
+		--assert "b" == remove "🙂b"
+		--assert "b" == remove/part "áb" 1
+		--assert "b" == remove/part "🙂b" 1
+		--assert "b" == remove/part "xáb" 2
+		--assert "b" == remove/part "x🙂b" 2
+		--assert "x" == head remove/part tail "xáb" -2
+		--assert "x" == head remove/part tail "x🙂b" -2
+
 	--test-- "trim"
 		--assert "á^/b^/🙂" == trim " á^/  b^/   🙂"
 	--test-- "trim/head/tail"

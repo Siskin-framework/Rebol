@@ -167,7 +167,14 @@
 			}
 			else Trap0(RE_FEATURE_NA);
 		} else {
-			len = DS_REF(2) ? Partial(value, 0, DS_ARG(3), 0) : 1;
+			if (DS_REF(2)) {
+				len = Partial(value, 0, DS_ARG(3), 0);
+			}
+			else {
+				len = (IS_UTF8_SERIES(VAL_SERIES(value)))
+					? UTF8_Next_Char_Size(VAL_BIN_HEAD(value), VAL_INDEX(value))
+					: 1;
+			}
 			index = (REBINT)VAL_INDEX(value);
 		}
 		if (index < tail && len != 0)
