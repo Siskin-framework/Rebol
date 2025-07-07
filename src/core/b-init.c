@@ -1173,7 +1173,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 //		Free_Series(VAL_SERIES(TASK_BUF_UTF8));
 		Free_Series(VAL_SERIES(TASK_BUF_UCS2));
 		Free_Series(VAL_SERIES(TASK_BUF_PRINT));
-		Free_Series(VAL_SERIES(TASK_BUF_FORM));
+//		Free_Series(VAL_SERIES(TASK_BUF_FORM));
 		Free_Series(VAL_SERIES(TASK_BUF_MOLD));
 		Free_Series(VAL_SERIES(TASK_MOLD_LOOP));
 	}

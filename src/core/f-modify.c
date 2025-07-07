@@ -132,7 +132,7 @@
 			// use as it is
 		}
 		else if (IS_INTEGER(src_val)) {
-			src_ser = BUF_FORM;
+			src_ser = BUF_SCAN;
 			SERIES_DATA(src_ser)[0] = Int8u(src_val);
 			SERIES_TAIL(src_ser) = 1;
 		}
@@ -140,7 +140,7 @@
 			src_ser = Join_Binary(src_val); // NOTE: it's the shared FORM buffer!
 		}
 		else if (IS_CHAR(src_val)) {
-			src_ser = BUF_FORM;
+			src_ser = BUF_SCAN;
 			src_ser->tail = Encode_UTF8_Char(BIN_HEAD(src_ser), VAL_CHAR(src_val));
 		}
 		else if (ANY_STR(src_val)) {
@@ -151,7 +151,7 @@
 			}
 		}
 		else if (IS_TUPLE(src_val)) {
-			src_ser = BUF_FORM;
+			src_ser = BUF_SCAN;
 			src_len = VAL_TUPLE_LEN(src_val);
 			for (uint i = 0; i < src_len; i++) {
 				SERIES_DATA(src_ser)[i] = VAL_TUPLE(src_val)[i];
@@ -161,7 +161,7 @@
 		else Trap_Arg(src_val);
 	}
 	else if (IS_CHAR(src_val)) {
-		src_ser = BUF_FORM;
+		src_ser = BUF_SCAN;
 		SERIES_TAIL(src_ser) = Encode_UTF8_Char(STR_HEAD(src_ser), VAL_CHAR(src_val));
 	}
 	else if (IS_BLOCK(src_val)) {

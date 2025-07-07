@@ -87,7 +87,7 @@ static void reverse_string(REBVAL *value, REBCNT len)
 	REBUNI c;
 
 	if (IS_UTF8_SERIES(VAL_SERIES(value))) {
-		REBYTE *out = Reset_Buffer(BUF_FORM, len);
+		REBYTE *out = Reset_Buffer(BUF_SCAN, len);
 		REBYTE *bp = VAL_BIN(value);
 		REBUNI index = VAL_TAIL(value);
 		REBCNT bytes;
@@ -98,7 +98,7 @@ static void reverse_string(REBVAL *value, REBCNT len)
 			UTF32 chr = UTF8_Decode_Codepoint(&bp, &bytes);
 			out += Encode_UTF8_Char(out, chr);
 		}
-		COPY_MEM(VAL_BIN_DATA(value), BIN_HEAD(BUF_FORM), len);
+		COPY_MEM(VAL_BIN_DATA(value), BIN_HEAD(BUF_SCAN), len);
 
 	}
 	else {

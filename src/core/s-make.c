@@ -541,7 +541,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 **
 ***********************************************************************/
 {
-	REBSER *series = BUF_FORM;
+	REBSER *series = BUF_SCAN;
 	REBVAL *val;
 	REBCNT tail = 0;
 	REBCNT len;

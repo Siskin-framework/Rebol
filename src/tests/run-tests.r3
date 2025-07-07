@@ -62,7 +62,7 @@ dt [ ;- delta time
 ;	;@@	%units/port-http-test.r3 ;; temporary disabled, because httpbin.org server has serious connection issues!
 ;		%units/power-test.r3
 ;		%units/protect-test.r3
-;		%units/series-test.r3
+		%units/series-test.r3
 ;		%units/struct-test.r3
 ;		%units/task-test.r3
 ;		%units/time-test.r3
@@ -71,7 +71,7 @@ dt [ ;- delta time
 ;		%units/unicode-test.r3
 ;		%units/url-test.r3
 ;		%units/vector-test.r3
-		%units/word-test.r3
+;		%units/word-test.r3
 ;		%units/thru-cache-test.r3
 ;		;- cryptography tests:
 ;		%units/aes-test.r3
