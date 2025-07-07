@@ -136,7 +136,7 @@ static REBCNT find_string(REBVAL *value, REBCNT index, REBCNT end, REBVAL *targe
 		// Do the optimal search or the general search?
 		if ((IS_BINARY(value) || !IS_UTF8_SERIES(series) && !IS_UTF8_SERIES(VAL_SERIES(target))) && !(flags & ~(AM_FIND_CASE|AM_FIND_MATCH|AM_FIND_TAIL))) {
 			index = Find_Byte_Str(series, start, VAL_BIN_DATA(target), len, !GET_FLAG(flags, ARG_FIND_CASE-1), GET_FLAG(flags, ARG_FIND_MATCH-1));
-			if (flags & AM_FIND_TAIL) index += len;
+			if (flags & AM_FIND_TAIL && index != NOT_FOUND) index += len;
 			return index;
 		} else if (flags & AM_FIND_ANY) {
 			return Find_Str_Str_Any(series, start, index, end, skip, VAL_SERIES(target), VAL_INDEX(target), len, flags, wild);
@@ -694,7 +694,15 @@ find:
 				len = 1;
 			}
 			if (IS_CHAR(arg) && VAL_CHAR(arg) > 0x7F) {
-				SERIES_TAIL(BUF_SCAN) = Encode_UTF8_Char(BIN_HEAD(BUF_SCAN), VAL_CHAR(arg));
+				if (VAL_CHAR(arg) <= 0xFF) {
+					// Search for the byte...
+					BIN_HEAD(BUF_SCAN)[0] = VAL_CHAR(arg);
+					SERIES_TAIL(BUF_SCAN) = 1;
+				}
+				else {
+					// Search for UTF-8 encoded character...
+					SERIES_TAIL(BUF_SCAN) = Encode_UTF8_Char(BIN_HEAD(BUF_SCAN), VAL_CHAR(arg));
+				}
 				Set_String(arg, BUF_SCAN);
 			}
 		}
