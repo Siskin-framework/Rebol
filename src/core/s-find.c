@@ -561,8 +561,8 @@
 	c2 = GET_UTF8_CHAR(ser2, index2); // starting char
 	if (uncase && c2 < UNICODE_CASES) c2 = LO_CASE(c2);
 
-	for (; index >= head && index < tail; index += skip) {
-		n = 1;
+	for (; index >= head && index < tail; index = UTF8_Skip(ser1, index, skip)) {
+		n = UTF8_Codepoint_Size(c2);
 		pos = index;
 		if (c2 == c_some) {
 			n = 0;
@@ -572,21 +572,21 @@
 		if (c2 == c_one) {
 			c1 = c2;
 		} else {
-			c1 = GET_ANY_CHAR(ser1, index);
+			c1 = GET_UTF8_CHAR(ser1, index);
 			if (uncase && c1 < UNICODE_CASES) c1 = LO_CASE(c1);
 		}
 		if (c1 == c2) { // found first needle's char
-			pos++;
+			pos = UTF8_Skip(ser1, pos, 1);
 			while (n < len && pos < tail) {
-				c1 = GET_ANY_CHAR(ser1, pos);
-				c3 = GET_ANY_CHAR(ser2, index2 + n);
+				c1 = GET_UTF8_CHAR(ser1, pos);
+				c3 = GET_UTF8_CHAR(ser2, index2 + n);
 				if (c3 == c_some) {
 				some_loop:
 					while (n < len) {
 						// skip all * and ? chars in needle
-						c3 = GET_ANY_CHAR(ser2, index2 + n);
+						c3 = GET_UTF8_CHAR(ser2, index2 + n);
 						if (c3 != c_some && c3 != c_one) break;
-						n++;
+						n += UTF8_Codepoint_Size(c3);
 					}
 					if (n == len) {
 						// * was at tail, so we can resolve it as found
@@ -597,14 +597,14 @@
 					// skip in 'hay' all chars until found next needle's char
 					while (1) {
 						if (pos < head || pos >= tail) return NOT_FOUND;
-						c1 = GET_ANY_CHAR(ser1, pos);
+						c1 = GET_UTF8_CHAR(ser1, pos);
 						// printf("? %c == %c\n", c1, c3);
 						if (c1 == c3) goto next_char;
 						if (uncase && c1 < UNICODE_CASES && c3 < UNICODE_CASES) {
 							if (LO_CASE(c1) == LO_CASE(c3)) goto next_char;
 						}
-						index++;
-						pos++;
+						index = UTF8_Skip(ser1, index, 1);
+						pos += UTF8_Codepoint_Size(c1);
 					}
 				} else if (c3 == c_one) {
 					goto next_char;
@@ -625,14 +625,12 @@
 					}
 				}
 			next_char:
-				pos++;
-				n++;
+				pos = UTF8_Skip(ser1, pos, 1);
+				n += UTF8_Codepoint_Size(c3);
 			}
 			if (n == len) {
 			found:
-				if (flags & AM_FIND_TAIL)
-					return pos;
-				return start ;
+				return (flags & AM_FIND_TAIL) ? pos : start;
 			}
 		}
 		if (flags & AM_FIND_MATCH) break;
