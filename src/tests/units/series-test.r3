@@ -1707,20 +1707,23 @@ Rebol [
 	--assert "zyxcba" == sort/compare "abczyx" :comp
 	--assert %54321 == sort/compare %21543 :comp
 	--assert #{050403020100} == sort/compare #{000102030405} :comp
-	--assert "šřba" == sort/compare "ašbř" :comp
+	--assert "šřba" == try [sort/compare "ašbř" :comp]
 
 --test-- "SORT/compare string! (nested)"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2621
 	s1: sort/compare "abcd" func[a b][s2: sort/compare/reverse "1234" func[a b][a < b] a < b]
 	--assert s1 == "abcd"
 	--assert s2 == "4321"
+try/with [
 	s1: sort/compare "abcdabcd" func[a b][s2: sort/compare "áéíáéíáéí" func[a b][a < b] a < b]
 	--assert s1 == "aabbccdd"
 	--assert s2 == "áááéééííí"
 	s1: sort/compare "abcdabcd" func[a b][s2: sort/compare "áéíáéíáéí" :greater? a < b]
 	--assert s1 == "aabbccdd"
 	--assert s2 == "íííéééááá"
-
+][
+	print as-purple "!!! Sorting of the unicode string is not available now!"
+]
 --test-- "SORT/compare block! (nested)"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2622
 	s1: sort/compare ["a" "b" "c" "d"] func[a b][s2: sort/compare/reverse [1 2 3 4] func[a b][a < b] a < b]
@@ -2029,9 +2032,12 @@ Rebol [
 
 --test-- "issue-2186"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2186
+try/with [
 	--assert "äöü^/" = to-string #{FFFE0000E4000000F6000000FC0000000A000000}
 	--assert "äöü^/" = to-string #{0000FEFF000000E4000000F6000000FC0000000A}
-
+][
+	print as-purple "!!! Conversion from binary to string now expects valid UTF-8 data!"
+]
 ; additional tests which also contain CRLF
 --test-- "issue-2186 read UCS16-LE"
 	bin: read %units/files/issue-2186-UTF16-LE.txt
@@ -2082,9 +2088,12 @@ Rebol [
 --test-- "invalid UTF8 char"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1064
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1216
-	--assert 1 = length? str: to-string #{C2E0}
-	--assert "^(FFFD)" = str
-	--assert #{EFBFBD} = to-binary str
+print as-purple "!!! Load now expects only UTF-8 encoded binary input"
+	--assert all [error? e: try [to-string #{C2E0}] e/id = 'invalid-utf8]
+	--assert all [error? e: try [to-string #{C3}] e/id = 'invalid-utf8]
+	--assert all [error? e: try [to-string #{EF}] e/id = 'invalid-utf8]
+	--assert all [error? e: try [to-string #{EFBF}] e/id = 'invalid-utf8]
+
 	--assert #{C2E0} = invalid-utf? #{C2E0}
 	--assert #{C2E0} = invalid-utf? #{01C2E0}
 	--assert 2 = index? invalid-utf? #{20C2E030}
@@ -2092,17 +2101,17 @@ Rebol [
 	--assert none? invalid-utf? #{20C3A030}
 	--assert #{EF} = invalid-utf? #{20EF}
 	--assert #{EFBF} = invalid-utf? #{20EFBF}
-	--assert "^(FFFD)" = to-string #{C3}
-	--assert "^(FFFD)" = to-string #{EF}
-	--assert "^(FFFD)" = to-string #{EFBF}
 	--assert "^(FFFD)" = to-string #{EFBFBD}
+
 	;- using quickbrown.bin instead of quickbrown.txt beacause GIT modifies CRLF to LF on posix
 	--assert none? invalid-utf? bin: read %units/files/quickbrown.bin
 	--assert 13806406 = checksum str: to-string bin 'crc24 ; does not normalize CRLF
 	--assert  5367801 = checksum deline str 'crc24
 	--assert  5367801 = checksum read/string %units/files/quickbrown.bin 'crc24 ;converts CRLF to LF
 
+
 --test-- "LOAD Unicode encoded text with BOM"
+try/with [
 	--assert "Writer" = form load #{FEFF005700720069007400650072}     ;UTF-16BE
 	--assert "Writer" = form load #{FFFE570072006900740065007200}     ;UTF-16LE
 	--assert "ěšč"    = form load #{0000feff0000011b000001610000010d} ;UTF-32BE
@@ -2111,6 +2120,9 @@ Rebol [
 	--assert "esc"    = form load #{fffe0000650000007300000063000000} ;UTF-32LE
 	--assert [a b]    = load #{0000feff000000610000002000000062}
 	--assert [a b]    = load #{fffe0000610000002000000062000000}
+][
+	print as-purple "!!! Load now expects only UTF-8 encoded binary input"
+]
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2280
 	--assert "äöü"    = form load #{EFBBBFC3A4C3B6C3BC}               ;UTF-8
 	--assert "aou"    = form load #{EFBBBF616F75}                     ;UTF-8
@@ -2244,8 +2256,8 @@ Rebol [
 	--assert       "šik" = to-string dehex enhex to-binary "šik"
 	--assert       "šik" = dehex enhex "šik"
 	--assert       "%7F" = enhex to-string #{7F}
-	--assert "%EF%BF%BD" = enhex to-string #{80} ; #{80} is not valid UTF-8!
-	--assert "%EF%BF%BD" = enhex to-string #{81}
+	--assert error? try ["%EF%BF%BD" = enhex to-string #{80}] ; #{80} is not valid UTF-8!
+	--assert error? try ["%EF%BF%BD" = enhex to-string #{81}]
 	--assert "%E5%85%83" = enhex {元}
 
 --test-- "ENHEX/escape"
