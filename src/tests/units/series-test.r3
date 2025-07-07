@@ -2251,7 +2251,7 @@ try/with [
 	--assert ";,/?:@&=+$#" = form enhex as url! {;,/?:@&=+$#}
 	--assert "%3B%2C%2F%3F%3A%40%26%3D%2B%24%23" = enhex {;,/?:@&=+$#}
 	--assert "!'()*_.-~" = enhex {!'()*_.-~}
-	--assert http://a?b=%25C5%25A1 = enhex http://a?b=š
+	--assert http://a?b=%C5%A1 = enhex http://a?b=š
 	--assert "%C5%A1ik"  = to-string enhex %šik
 	--assert       "šik" = to-string dehex enhex to-binary "šik"
 	--assert       "šik" = dehex enhex "šik"
