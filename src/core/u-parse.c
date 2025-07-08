@@ -237,8 +237,14 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 
 	// Do we match to a char set?
 	case REB_BITSET:
-		flags = Check_Bit(VAL_SERIES(item), GET_ANY_CHAR(series, index), !HAS_CASE(parse));
-		index = flags ? index + 1 : NOT_FOUND;
+		if (IS_UTF8_SERIES(series)) {
+			flags = Check_Bit(VAL_SERIES(item), UTF8_Get_Codepoint(BIN_SKIP(series, index)), !HAS_CASE(parse));
+			index = flags ? index + UTF8_Next_Char_Size(BIN_HEAD(series), index) : NOT_FOUND;
+		}
+		else {
+			flags = Check_Bit(VAL_SERIES(item), BIN_HEAD(series)[index], !HAS_CASE(parse));
+			index = flags ? index + 1 : NOT_FOUND;
+		}
 		break;
 /*
 	case REB_DATATYPE:	// Currently: integer!

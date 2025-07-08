@@ -398,7 +398,22 @@ Rebol [
 	--test-- "parse collect after string"
 		--assert all [str: "XX" parse "á11🙂22" [collect after str any [keep skip 2 skip]]  str == "XXá🙂"]
 		--assert all [str: next "XX" parse "á11🙂22" [collect after str any [keep skip 2 skip]]  str == "Xá🙂"]
-		
+
+	--test-- "parse collect from block"
+		--assert [["áb" #"🙂"]] == parse ["áb" #"🙂"] [collect [keep 2 skip]]
+		--assert [ "áb" #"🙂" ] == parse ["áb" #"🙂"] [collect [keep pick 2 skip]]
+
+		--assert all [parse ["áb" #"🙂"] [collect set o [keep 2 skip]]       o == [["áb" #"🙂"]] ]
+		--assert all [parse ["áb" #"🙂"] [collect set o [keep pick 2 skip]]  o == [ "áb" #"🙂" ] ]
+
+	--test-- "parse with bitset"
+		bits: charset "á🙂"
+		--assert parse "á🙂" [some bits]
+		--assert "xx" == parse "á🙂xx" [some bits return to end]
+		--assert [#"á" #"🙂"] == parse "áxx🙂xx" [collect some [keep some bits 2 skip]]
+		not-bits: complement bits
+		--assert [#"á" #"🙂"] == parse "áxx🙂x" [collect some [keep some bits some not-bits]]
+
 ===end-group===
 
 ~~~end-file~~~
