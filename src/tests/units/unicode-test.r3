@@ -414,6 +414,24 @@ Rebol [
 		not-bits: complement bits
 		--assert [#"á" #"🙂"] == parse "áxx🙂x" [collect some [keep some bits some not-bits]]
 
+	--test-- "parse with chars"
+		--assert parse "á" [#"á"]
+		--assert parse "á🙂" [#"á" #"🙂"]
+		--assert parse "á🙂" [thru #"🙂"]
+		--assert parse "á🙂" [to #"🙂" skip]
+
+	--test-- "parse with string"
+		--assert parse "á" ["á"]
+		--assert parse "á🙂" ["á" "🙂"]
+		--assert parse "á🙂" [thru "🙂"]
+		--assert parse "á🙂" [to "🙂" skip]
+
+	--test-- "parse with tag"
+		--assert parse "<á>" [<á>]
+		--assert parse "<á🙂>" [thru <á🙂>]
+		--assert parse "<á🙂>" [to <á🙂> to end]
+
+
 ===end-group===
 
 ~~~end-file~~~

@@ -199,7 +199,7 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 	// !!! THIS CODE NEEDS CLEANUP AND REWRITE BASED ON OTHER CHANGES
 	REBSER *series = parse->series;
 	REBCNT flags = parse->flags | AM_FIND_MATCH | AM_FIND_TAIL;
-	REBUNI ch1, ch2;
+	REBCNT ch1, ch2, size;
 //	int rewrite_needed;
 
 	if (Trace_Level) {
@@ -215,15 +215,19 @@ void Print_Parse_Index(REBCNT type, REBVAL *rules, REBSER *series, REBCNT index)
 
 	// Do we match a single character?
 	case REB_CHAR:
-		if (HAS_CASE(parse))
-			index = (VAL_CHAR(item) == GET_ANY_CHAR(series, index)) ? index+1 : NOT_FOUND;
-		else {
-			ch1 = VAL_CHAR(item);
-			ch2 = GET_ANY_CHAR(series, index);
+		ch1 = VAL_CHAR(item);
+		if (IS_UTF8_SERIES(series)) {
+			ch2 = UTF8_Get_Codepoint(BIN_SKIP(series, index));
+			size = UTF8_Codepoint_Size(VAL_CHAR(item));
+		} else {
+			ch2 = BIN_HEAD(series)[index];
+			size = 1;
+		}
+		if (!HAS_CASE(parse)) {
 			if (ch1 < UNICODE_CASES) ch1 = UP_CASE(ch1);
 			if (ch2 < UNICODE_CASES) ch2 = UP_CASE(ch2);
-			index = (ch1 == ch2) ? index + 1 : NOT_FOUND;
 		}
+		index = (ch1 == ch2) ? index + size : NOT_FOUND;
 		break;
 
 	case REB_STRING:
@@ -547,26 +551,23 @@ bad_target:
 			i = Find_Block(series, index, series->tail, item, 1, HAS_CASE(parse)?AM_FIND_CASE:0, 1);
 			if (i != NOT_FOUND && is_thru) i++;
 		}
-		else {
-			// "str"
+		else {// "str"
+			REBCNT flags = (is_thru ? AM_FIND_TAIL : 0) | (HAS_CASE(parse) ? AM_FIND_CASE : 0);
+
 			//O: not using ANY_BINSTR as TAG is now handled separately
 			if (VAL_TYPE(item) >= REB_BINARY && VAL_TYPE(item) < REB_TAG) {
-				i = Find_Str_Str(series, 0, index, series->tail, 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), HAS_CASE(parse));
-				if (i != NOT_FOUND && is_thru) i += VAL_LEN(item);
+				i = Find_Str_Str(series, 0, index, series->tail, 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), flags);
 			}
 			// #"A"
 			else if (IS_CHAR(item)) {
-				i = Find_Str_Char(series, 0, index, series->tail, 1, VAL_CHAR(item), HAS_CASE(parse));
-				if (i != NOT_FOUND && is_thru) i++;
+				i = Find_Str_Char(series, 0, index, series->tail, 1, VAL_CHAR(item), flags);
 			}
 			// bitset
 			else if (IS_BITSET(item)) {
-				i = Find_Str_Bitset(series, 0, index, series->tail, 1, VAL_BITSET(item), HAS_CASE(parse));
-				if (i != NOT_FOUND && is_thru) i++;
+				i = Find_Str_Bitset(series, 0, index, series->tail, 1, VAL_BITSET(item), flags);
 			}
 			else if (IS_TAG(item)) {
-				i = Find_Str_Tag(series, 0, index, series->tail, 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), HAS_CASE(parse));
-				if (i != NOT_FOUND && is_thru) i += VAL_LEN(item) + 2;
+				i = Find_Str_Tag(series, 0, index, series->tail, 1, VAL_SERIES(item), VAL_INDEX(item), VAL_LEN(item), flags);
 			}
 			else
 				Trap1(RE_PARSE_RULE, item - 1);
