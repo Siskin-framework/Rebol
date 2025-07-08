@@ -677,9 +677,7 @@ bad_target:
 	// get the previous target block from the stack and use it
 	//printf("collect ends %u dsp: %i blk: %x\n", collect->depth, DSP, collect->block);
 	collect->mode = VAL_INT32(DS_POP);
-	if (collect->mode == SYM_INTO) {
-		VAL_INDEX(collect->value) = VAL_INT32(DS_POP);
-	}
+	VAL_INDEX(collect->value) = VAL_INT32(DS_POP);
 	collect->value = DS_POP;
 	collect->block = VAL_SERIES(collect->value);
 	collect->depth--;
@@ -693,138 +691,107 @@ bad_target:
 {
 	REBVAL *val;
 	REBINT i, e;
+	REBCNT c;
 	REBSER *ser;
 	REBSER *block = parse->collect->block; // Parse_Collect_Block(parse);
 	REBCNT index;
+
+	if (count == 0) return;
 
 	if (parse->collect->depth == 0)
 		Trap0(RE_PARSE_NO_COLLECT);
 
 	ASSERT2(block, RP_MISC); // should never happen
 
-	//printf("Keep from %i count: %i to: %x\n", begin, count, block);
+	index = VAL_INDEX(parse->collect->value);
+	
+	if (IS_BLOCK_INPUT(parse)) {
+		if (count == 1) {
+			Expand_Series(block, index, 1);
+			*BLK_SKIP(block, index) = *BLK_SKIP(series, begin);
+		}
+		else if (pick) {
+			Insert_Series(block, index, SERIES_SKIP(series, begin), count);
+		}
+		else {
+			Expand_Series(block, index, 1);
+			val = BLK_SKIP(block, index);
+			VAL_SERIES(val) = Copy_Block_Len(series, begin, count);
+			VAL_INDEX(val) = 0;
+			VAL_SET(val, parse->type);
+			count = 1;
+		}
+		VAL_INDEX(parse->collect->value) = index + count;
+		return;
+	}
+	
+	if (ANY_BINSTR(parse->collect->value)) {
+		// e.g.: str: "" parse "ábc" [collect into str some [keep skip]] str
+		Insert_String(block, index, series, begin, count, FALSE);
+		VAL_INDEX(parse->collect->value) += count;
+		return;
+	}
 
-	if (parse->collect->mode == BLOCK_COLLECT || parse->collect->mode == SYM_SET) {
-		// Collects into a new block (noname or named (set)).
-		// Always appends to tail, so may use faster code...
-		if (count > 1) {
-			if (IS_BLOCK_INPUT(parse)) {
-				if (pick) {
-					Insert_Series(block, AT_TAIL, SERIES_SKIP(series, begin), count);
-				}
-				else {
-					val = Append_Value(block);
-					Set_Block(val, Copy_Block_Len(series, begin, count));
-				}
-			}
-			else {
-				if (pick) {
-					e = begin + count;
-					if (parse->type == REB_BINARY) {
-						for (i = begin; i < e; i++) {
-							val = Append_Value(block);
-							SET_INTEGER(val, BIN_HEAD(series)[i]);
-						}
-					}
-					else {
-						for (i = begin; i < e; i++) {
-							val = Append_Value(block);
-							SET_CHAR(val, GET_ANY_CHAR(series, i));
-						}
-					}
-				}
-				else {
-					val = Append_Value(block);
-					VAL_SERIES(val) = Copy_String(series, begin, count);
-					VAL_INDEX(val) = 0;
-					VAL_SET(val, parse->type);
-				}
+	// collecting into block...
+
+	if (IS_UTF8_SERIES(series)) {
+		if (pick) {
+			// e.g.: blk: [] parse "ábc" [collect into blk some [keep pick skip]] blk
+			e = begin + count;
+			for (i = begin; i < e; i += UTF8_Codepoint_Size(c)) {
+				val = Append_Value(block);
+				c = UTF8_Get_Codepoint(BIN_SKIP(series, i));
+				SET_CHAR(val, c);
 			}
 		}
-		else if (count == 1) {
-			val = Append_Value(block);
-			if (IS_BLOCK_INPUT(parse)) {
-				*val = *BLK_SKIP(series, begin);
+		else {
+			// e.g.: blk: [] parse "ábc" [collect into blk some [keep skip]] blk
+			Expand_Series(block, index, 1);
+			val = BLK_SKIP(block, index);
+			// In UTF8 series count is number of bytes and not codepoints!
+			if (count == 1) {
+				SET_CHAR(val, BIN_HEAD(series)[begin]);
 			}
-			else if (parse->type == REB_BINARY) {
-				SET_INTEGER(val, BIN_HEAD(series)[begin]);
+			else if (count == UTF8_Next_Char_Size(BIN_HEAD(series), begin)) {
+				SET_CHAR(val, UTF8_Get_Codepoint(BIN_SKIP(series, begin)));
 			}
 			else {
-				SET_CHAR(val, GET_ANY_CHAR(series, begin));
+				VAL_SERIES(val) = Copy_String(series, begin, count);
+				VAL_INDEX(val) = 0;
+				VAL_SET(val, parse->type);
 			}
+			VAL_INDEX(parse->collect->value)++;
 		}
 	}
-	else {
-		// `collect into` and `collect after` keeps at any index, 
-		// so we must take care of it!
-		index = VAL_INDEX(parse->collect->value);
-		//printf("series %x index: %u\n", parse->collect->value, index);
-		if (count > 1) {
-			if (IS_BLOCK_INPUT(parse)) {
-				if (pick) {
-					Insert_Series(block, index, SERIES_SKIP(series, begin), count);
-				}
-				else {
-					ser = Copy_Block_Len(series, begin, count);
-					Expand_Series(block, index, 1);
-					val = BLK_SKIP(block, index);
-					VAL_SERIES(val) = ser;
-					VAL_INDEX(val) = 0;
-					VAL_SET(val, parse->type);
+	else { // Binary or ASCII string
+		if (pick) {
+			e = begin + count;
+			if (parse->type == REB_BINARY) {
+				for (i = begin; i < e; i++) {
+					val = Append_Value(block);
+					SET_INTEGER(val, BIN_HEAD(series)[i]);
 				}
 			}
 			else {
-				Expand_Series(block, index, count);
-				if (ANY_BLOCK(parse->collect->value)) {
-					if (pick) {
-						e = begin + count;
-						if (parse->type == REB_BINARY) {
-							for (i = begin; i < e; i++) {
-								val = Append_Value(block);
-								SET_INTEGER(val, BIN_HEAD(series)[i]);
-							}
-						}
-						else {
-							for (i = begin; i < e; i++) {
-								val = Append_Value(block);
-								SET_CHAR(val, GET_ANY_CHAR(series, i));
-							}
-						}
-					}
-					else {
-						val = BLK_SKIP(block, index);
-						VAL_SERIES(val) = Copy_String(series, begin, count);
-						VAL_INDEX(val) = 0;
-						VAL_SET(val, parse->type);
-					}
-				}
-				else {
-					// string like parse input into string value
-					Insert_String(block, index, series, begin, count, TRUE);
-					VAL_INDEX(parse->collect->value) += count;
+				for (i = begin; i < e; i++) {
+					val = Append_Value(block);
+					SET_CHAR(val, BIN_HEAD(series)[i]);
 				}
 			}
 		}
-		else if (count == 1) {
+		else {
+			// e.g.: blk: [] parse "abc" [collect into blk some [keep skip]] blk
 			Expand_Series(block, index, 1);
-			if (ANY_BLOCK(parse->collect->value)) {
-				// string like parse intput into block value
-				
-				val = BLK_SKIP(block, index);
-
-				if (IS_BLOCK_INPUT(parse)) {
-					*val = *BLK_SKIP(series, begin);
-				}
-				else if (parse->type == REB_BINARY) {
-					SET_INTEGER(val, BIN_HEAD(series)[begin]);
-				}
-				else {
-					SET_CHAR(val, GET_ANY_CHAR(series, begin));
-				}
+			val = BLK_SKIP(block, index);
+			// In UTF8 series count is number of bytes and not codepoints!
+			if (count == 1) {
+				VAL_SET(val, (parse->type == REB_BINARY) ? REB_INTEGER : REB_CHAR);
+				VAL_UNT32(val) = BIN_HEAD(series)[begin];
 			}
 			else {
-				// string like parse input into string value
-				Insert_String(block, index, series, begin, 1, TRUE);
+				VAL_SERIES(val) = Copy_String(series, begin, count);
+				VAL_INDEX(val) = 0;
+				VAL_SET(val, parse->type);
 			}
 			VAL_INDEX(parse->collect->value)++;
 		}
@@ -1010,6 +977,7 @@ bad_target:
 							collect->value = val;
 							collect->mode = SYM_SET;
 							DS_PUSH(val);
+							DS_PUSH_INTEGER(0); // index (will be restored)
 							DS_PUSH_INTEGER(SYM_SET); // store mode
 							rules++;
 						}
@@ -1035,9 +1003,12 @@ bad_target:
 							collect->block = VAL_SERIES(val);
 							collect->mode = wrd;
 							DS_PUSH(val);
-							if (wrd == SYM_INTO)
-								DS_PUSH_INTEGER(VAL_INDEX(val)); // store current index (will be restored)
+							DS_PUSH_INTEGER(VAL_INDEX(val)); // store current index (will be restored)
 							DS_PUSH_INTEGER(wrd); // store mode (into or after)
+
+							if (wrd == SYM_AFTER)
+								VAL_INDEX(val) = VAL_TAIL(val);
+
 							rules++;
 						}
 						else {
@@ -1062,6 +1033,7 @@ bad_target:
 								Set_Series(REB_BLOCK, val, collect->block);
 							}
 							collect->mode = BLOCK_COLLECT;
+							DS_PUSH_INTEGER(0); // index (will be restored)
 							DS_PUSH_INTEGER(BLOCK_COLLECT); // no special mode (block collect)
 						}
 						collect->depth++;

@@ -224,6 +224,9 @@
 	ASSERT1(BYTE_SIZE(dst), RP_BAD_SIZE);
 
 	COPY_MEM(BIN_SKIP(dst, idx), BIN_SKIP(src, pos), len);
+	if (IS_UTF8_SERIES(src) && !IS_UTF8_SERIES(dst) && !Is_ASCII(BIN_SKIP(src, pos), len)) {
+		UTF8_SERIES(dst);
+	}
 }
 
 #ifdef not_used

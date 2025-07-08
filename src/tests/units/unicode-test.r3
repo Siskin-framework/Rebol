@@ -358,6 +358,47 @@ Rebol [
 		--assert all [parse "ábč" [copy x 2 skip to end] x == "áb"]
 		--assert all [parse "🙂bč" [copy x 2 skip to end] x == "🙂b"]
 		--assert all [parse "🙂bč" [skip copy x 2 skip] x == "bč"]
+
+	--test-- "parse keep"
+		--assert [#"š"] == parse "š" [collect [keep skip]]
+		--assert ["áb"] == parse "áb🙂" [collect [keep 2 skip]]
+		--assert ["áb" #"🙂"] == parse "áb🙂" [collect [keep 2 skip keep skip]]
+		--assert [#"á" #"b" #"🙂"] == parse "áb🙂" [collect [keep skip keep skip keep skip]]
+	--test-- "parse keep pick"
+		--assert [#"á" #"b" #"🙂"] == parse "áb🙂" [collect some [keep pick 3 skip]]
+
+	--test-- "parse collect set"
+		--assert all [parse "áb🙂" [collect set blk [keep skip] to end]  blk == [#"á"]]
+		--assert all [parse "áb🙂" [collect set blk [2 skip keep skip]]  blk == [#"🙂"]]
+		--assert all [parse skip "áb🙂" 2 [collect set blk [keep skip]]  blk == [#"🙂"]]
+
+	--test-- "parse collect set pick"
+		--assert all [parse "áb🙂" [collect set blk [keep pick skip] to end]  blk == [#"á"]]
+		--assert all [parse "áb🙂" [collect set blk [keep pick 3 skip]]       blk == [#"á" #"b" #"🙂"]]
+
+	--test-- "parse collect into block"
+		--assert all [blk: [] parse "š" [collect into blk [keep skip]] blk == [#"š"]]
+		--assert all [blk: [] parse "áb🙂" [collect into blk [keep skip keep skip keep skip]] blk == [#"á" #"b" #"🙂"]]
+
+	--test-- "parse collect into string"
+		--assert all [str: "" parse "š" [collect into str [keep skip]] str == "š"]
+		--assert all [str: "" parse "áb🙂" [collect into str [keep skip keep skip keep skip]] str == "áb🙂"]
+		--assert all [str: "" parse "áb🙂" [collect into str [2 skip keep skip]] str == "🙂"]
+		--assert all [str: "X" parse "š" [collect into str [keep skip]] str == "šX"]
+		--assert all [str: "X" parse "áb🙂" [collect into str [keep skip keep skip keep skip]] str == "áb🙂X"]
+		--assert all [str: "X" parse "áb🙂" [collect into str [2 skip keep skip]] str == "🙂X"]
+
+	--test-- "parse collect any"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2537
+		--assert [#"á" "11" #"🙂" "22"] == parse "á11🙂22" [collect any [keep skip keep 2 skip]]
+		--assert all [parse "á11🙂22" [collect set o any [keep skip keep 2 skip]]  o == [#"á" "11" #"🙂" "22"]]
+		--assert all [o: "" parse "á11🙂22" [collect into o any [keep skip 2 skip]]  o == "á🙂"]
+		--assert all [o: "X" parse "á11🙂22" [collect into o any [keep skip 2 skip]]  o == "á🙂X"]
+
+	--test-- "parse collect after string"
+		--assert all [str: "XX" parse "á11🙂22" [collect after str any [keep skip 2 skip]]  str == "XXá🙂"]
+		--assert all [str: next "XX" parse "á11🙂22" [collect after str any [keep skip 2 skip]]  str == "Xá🙂"]
+		
 ===end-group===
 
 ~~~end-file~~~
