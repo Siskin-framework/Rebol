@@ -2145,7 +2145,9 @@ try/with [
 	--assert txt = iconv #{50F869686CE1736974} <ISO-8859-2>
 	--assert txt = iconv #{50F869686CE1736974} 28592
 	--assert txt = iconv #{50005901690068006C00E100730069007400} 1200
-	;--assert txt = iconv #{FFFE50005901690068006C00E100730069007400} 'UTF16
+	--assert txt = iconv #{0050015900690068006C00E1007300690074} 1201
+	--assert txt = iconv #{FFFE50005901690068006C00E100730069007400} 'UTF16
+	--assert txt = iconv #{FEFF0050015900690068006C00E1007300690074} 'UTF16
 	--assert (next txt) = iconv next #{50F869686CE1736974} 28592
 
 --test-- "ICONV from UTF-8"
@@ -2167,8 +2169,8 @@ try/with [
 
 --test-- "ICONV from UTF-16 with BOM"
 	;@@ https://github.com/Oldes/Rebol3/issues/19
-	--assert "^(FEFF)Writer" = iconv #{FEFF005700720069007400650072} 'UTF-16BE
-	--assert "^(FEFF)Writer" = iconv #{FFFE570072006900740065007200} 'UTF-16LE
+	--assert "Writer" = iconv #{FEFF005700720069007400650072} 'UTF-16BE
+	--assert "Writer" = iconv #{FFFE570072006900740065007200} 'UTF-16LE
 	--assert "Writer" = decode 'text #{FEFF005700720069007400650072}
 	--assert "Writer" = decode 'text #{FFFE570072006900740065007200}
 
