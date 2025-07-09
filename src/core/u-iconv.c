@@ -625,22 +625,31 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 	REBSER *dest;
 
 #ifdef TO_WINDOWS
+	REBSER *src_ser;
+	REBYTE *src_bin = VAL_BIN_AT(data);
 	REBSER *ucs2_ser;
 	REBCHR *ucs2_bin;
 	REBLEN  ucs2_len;
 	REBINT  dst_len = 0;
-	REBINT cp, tp;
+	REBINT cp, tp = CP_UTF8;
 
 	cp = get_codepage_id(val_from);
 	if (cp < 0) {
 		Trap1(RE_INVALID_ARG, val_from);
 		return R_NONE;
 	}
+	if (ref_to) {
+		tp = get_codepage_id(val_to);
+		if (tp < 0) {
+			Trap1(RE_INVALID_ARG, val_to);
+			return R_NONE;
+		}
+	}
 
 	if (cp == 1200 || cp == 1201) { // data are already wide (UTF-16LE or UTF-16BE)
 		ucs2_len = src_len / 2;
 		ucs2_bin = (REBCHR *)Reset_Buffer(BUF_UCS2, ucs2_len);
-		COPY_MEM(ucs2_bin, VAL_BIN_AT(data), src_len);
+		COPY_MEM(ucs2_bin, src_bin, src_len);
 		// Skip the BOM if exists...
 		// https://github.com/Oldes/Rebol3/issues/19
 		if (ucs2_bin[0] == 0xFEFF || ucs2_bin[0] == 0xFFFE) {
@@ -655,19 +664,31 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 	}
 	else if (cp == 12000 || cp == 12001) {  // data are UTF-32LE or UTF-32BE
 		// this codepage is not supported by `MultiByteToWideChar`
-		ucs2_ser = Decode_UTF_String(VAL_BIN_AT(data), src_len, cp == 12000 ? -32 : 32, FALSE, TRUE);
-		ucs2_bin = BIN_HEAD(ucs2_ser);
-		ucs2_len = SERIES_TAIL(ucs2_ser);
-		goto convert_to;
+		// so convert it first to UTF-8...
+		src_ser = Decode_UTF_String(src_bin, src_len, cp == 12000 ? -32 : 32, FALSE, TRUE);
+		if (!src_ser) Trap1(RE_INVALID_DATA, data);
+		src_bin = BIN_HEAD(src_ser);
+		src_len = SERIES_TAIL(src_ser);
+		cp = CP_UTF8;
+		if (tp == CP_UTF8) {
+			SET_STRING(D_RET, src_ser);
+			return R_RET;
+		}
 	}
-	
+
+	if (cp == CP_UTF8 && (tp == 12000 || tp == 12001)) {
+		dest = UTF8_To_UTF32(src_bin, src_len, (tp == 12000));
+		SET_BINARY(D_RET, dest);
+		return R_RET;
+	}
+
 	if (src_len > 0) {
 		// Count number of UCS2 codepoints needed...
-		ucs2_len = MultiByteToWideChar(cp, 0, cs_cast(VAL_BIN_DATA(data)), src_len, NULL, 0);
+		ucs2_len = MultiByteToWideChar(cp, 0, src_bin, src_len, NULL, 0);
 		if (ucs2_len <= 0) return R_NONE; //@@ or error?
 		// Convert input to UCS2...
 		ucs2_bin = (REBCHR *)Reset_Buffer(BUF_UCS2, ucs2_len);
-		ucs2_len = MultiByteToWideChar(cp, 0, cs_cast(VAL_BIN_DATA(data)), src_len, ucs2_bin, ucs2_len);
+		ucs2_len = MultiByteToWideChar(cp, 0, src_bin, src_len, ucs2_bin, ucs2_len);
 	} else {
 		// Empty input...
 		ucs2_len = 0;
@@ -681,11 +702,6 @@ convert_to:
 	}
 	if (ref_to) {
 		// Convert to the target codepage...
-		tp = get_codepage_id(val_to);
-		if (tp < 0) {
-			Trap1(RE_INVALID_ARG, val_to);
-			return R_NONE;
-		}
 		if (tp == 1200 || tp ==  1201) {
 			if (tp == 1201) {
 				Swap_Endianess_U16(ucs2_bin, ucs2_len);

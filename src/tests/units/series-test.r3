@@ -2032,12 +2032,9 @@ try/with [
 
 --test-- "issue-2186"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2186
-try/with [
 	--assert "äöü^/" = to-string #{FFFE0000E4000000F6000000FC0000000A000000}
 	--assert "äöü^/" = to-string #{0000FEFF000000E4000000F6000000FC0000000A}
-][
-	print as-purple "!!! Conversion from binary to string now expects valid UTF-8 data!"
-]
+
 ; additional tests which also contain CRLF
 --test-- "issue-2186 read UCS16-LE"
 	bin: read %units/files/issue-2186-UTF16-LE.txt
@@ -2088,7 +2085,6 @@ try/with [
 --test-- "invalid UTF8 char"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1064
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1216
-print as-purple "!!! Load now expects only UTF-8 encoded binary input"
 	--assert all [error? e: try [to-string #{C2E0}] e/id = 'invalid-utf8]
 	--assert all [error? e: try [to-string #{C3}] e/id = 'invalid-utf8]
 	--assert all [error? e: try [to-string #{EF}] e/id = 'invalid-utf8]
@@ -2189,8 +2185,16 @@ try/with [
 	--assert "^(FEFF)ěšč" = iconv #{0000feff0000011b000001610000010d} 'UTF-32BE
 	--assert "^(FEFF)ěšč" = iconv #{fffe00001b010000610100000d010000} 'UTF-32LE
 --test-- "ICONV from UTF-32 to UTF-8"	
-	--assert #{C49BC5A1C48D} = iconv/to #{1b010000610100000d010000} 'UTF-32LE 'UTF-8
-	--assert #{C49BC5A1C48D} = iconv/to #{0000011b000001610000010d} 'UTF-32BE 'UTF-8
+	--assert "ěšč" = iconv/to #{1b010000610100000d010000} 'UTF-32LE 'UTF-8
+	--assert "ěšč" = iconv/to #{0000011b000001610000010d} 'UTF-32BE 'UTF-8
+
+--test-- "ICONV to UTF16"
+	--assert #{1B0161010D01} == iconv/to #{C49BC5A1C48D} 'utf-8 'utf-16le
+	--assert #{011B0161010D} == iconv/to #{C49BC5A1C48D} 'utf-8 'utf-16be
+--test-- "ICONV to UTF32"
+	--assert #{1b010000610100000d010000} == iconv/to #{C49BC5A1C48D} 'utf-8 'utf-32le
+	--assert #{0000011b000001610000010d} == iconv/to #{C49BC5A1C48D} 'utf-8 'utf-32be
+
 
 --test-- "ICONV/TO (conversion to different codepage - binary result)"
 	bin: to binary! txt ; normaly conversion is done to UTF-8

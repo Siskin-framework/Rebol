@@ -813,13 +813,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 {
 	REBSER *ser;
 	REBVAL *val;
-	if (OS_WIDE) {
-		ser = To_REBOL_Path(src, 0, OS_WIDE, dir);
-	}
-	else {
-		ser = Decode_UTF_String(src, LEN_BYTES(src), 8, FALSE, FALSE);
-		ser = To_REBOL_Path(BIN_DATA(ser), BIN_LEN(ser), (REBOOL)!BYTE_SIZE(ser), dir);
-	}
+	ser = To_REBOL_Path(src, 0, OS_WIDE, dir);
 	val = Get_System(SYS_OPTIONS, field);
 	Set_Series(REB_FILE, val, ser);
 }

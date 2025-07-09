@@ -103,7 +103,7 @@ Rebol [
 
 	--test-- "iconv"
 		--assert #{00E1D83DDE42} == iconv/to to binary! "á🙂" 'UTF8 'UTF-16BE
-		--assert #{E1003DD842DE} == iconv/to to binary! "á🙂" 'UTF8 'UTF-16BE
+		--assert #{E1003DD842DE} == iconv/to to binary! "á🙂" 'UTF8 'UTF-16LE
 		--assert "á🙂" == iconv #{00E1D83DDE42} 'UTF-16BE
 		--assert "á🙂" == iconv #{E1003DD842DE} 'UTF-16LE
 		

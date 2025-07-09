@@ -37,6 +37,30 @@
 #define OS_EPERM  -3
 #define OS_ESRCH  -4
 
+
+#ifdef ENDIAN_LITTLE
+#define WRITE_BE_2(cp, bp)  cp[0] = bp[1]; cp[1] = bp[0];
+#define WRITE_BE_3(cp, bp)  cp[0] = bp[2]; cp[1] = bp[1]; cp[2] = bp[0];
+#define WRITE_BE_4(cp, bp)  cp[0] = bp[3]; cp[1] = bp[2]; cp[2] = bp[1]; cp[3] = bp[0];
+#define WRITE_BE_8(cp, bp)  cp[0] = bp[7]; cp[1] = bp[6]; cp[2] = bp[5]; cp[3] = bp[4]; \
+							cp[4] = bp[3]; cp[5] = bp[2]; cp[6] = bp[1]; cp[7] = bp[0];
+#define WRITE_LE_2(cp, bp)  memcpy(cp, bp, 2);
+#define WRITE_LE_3(cp, bp)  memcpy(cp, bp, 3);
+#define WRITE_LE_4(cp, bp)  memcpy(cp, bp, 4);
+#define WRITE_LE_8(cp, bp)  memcpy(cp, bp, 8);
+#else
+#define WRITE_BE_2(cp, bp)  memcpy(cp, bp, 2);
+#define WRITE_BE_3(cp, bp)  memcpy(cp, bp, 3);
+#define WRITE_BE_4(cp, bp)  memcpy(cp, bp, 4);
+#define WRITE_BE_8(cp, bp)  memcpy(cp, bp, 8);
+#define WRITE_LE_2(cp, bp)  cp[0] = bp[1]; cp[1] = bp[0];
+#define WRITE_LE_3(cp, bp)  cp[0] = bp[2]; cp[1] = bp[1]; cp[2] = bp[0];
+#define WRITE_LE_4(cp, bp)  cp[0] = bp[3]; cp[1] = bp[2]; cp[2] = bp[1]; cp[3] = bp[0];
+#define WRITE_LE_8(cp, bp)  cp[0] = bp[7]; cp[1] = bp[6]; cp[2] = bp[5]; cp[3] = bp[4]; \
+							cp[4] = bp[3]; cp[5] = bp[2]; cp[6] = bp[1]; cp[7] = bp[0];
+#endif
+
+
 #pragma pack(4)
 
 // Standard date and time:

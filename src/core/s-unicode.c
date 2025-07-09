@@ -524,38 +524,51 @@ done:
 	return codepoint;
 }
 
-#ifdef unused
+
+// Helper: Write a UTF-32 code point with specified endianness
+static void write_u32(REBYTE *dst, REBU32 codepoint, int is_little_endian) {
+	if (is_little_endian) {
+		dst[0] = (REBYTE)(codepoint & 0xFF);
+		dst[1] = (REBYTE)((codepoint >> 8) & 0xFF);
+		dst[2] = (REBYTE)((codepoint >> 16) & 0xFF);
+		dst[3] = (REBYTE)((codepoint >> 24) & 0xFF);
+	}
+	else {
+		dst[0] = (REBYTE)((codepoint >> 24) & 0xFF);
+		dst[1] = (REBYTE)((codepoint >> 16) & 0xFF);
+		dst[2] = (REBYTE)((codepoint >> 8) & 0xFF);
+		dst[3] = (REBYTE)(codepoint & 0xFF);
+	}
+}
+
 /***********************************************************************
 **
-X*/	UTF32 Decode_UTF8_Char_Size(const REBYTE **RESTRICT str, REBCNT *RESTRICT size)
+*/	REBSER* UTF8_To_UTF32(const REBYTE *str, REBCNT len, REBFLG little_endian)
 /*
-**		Converts a single UTF8 code-point (to 32 bit).
-**		Errors are returned as zero size.
-**		Increments str by extra chars needed.
-**		Sets numer of consumed bytes in size.
-**
 ***********************************************************************/
 {
-	REBYTE *src = (REBYTE *)*str;
-	REBCNT codepoint = 0;
-	REBCNT state = 0;
-	REBI64 len = (REBI64)*size;
+	REBLEN  dst_len = 0;
+	REBSER *dst_ser;
+	REBYTE *dst_bin;
+	REBU32 codepoint;
 
-	for (; len > 0; len--, src++) {
-		// read bytes until codepoint is not complete or invalid...
-		if (UTF8_Decode_Step(&state, &codepoint, *src)) {
-			if (state == UTF8_REJECT) break;
-			continue; // not yet complete
-		}
-		++src;
-		break; // only one codepoint
+	const REBYTE *bp = str;
+	REBYTE *cp;
+
+	while (*bp) dst_len += (*bp++ & 0xC0) != 0x80;
+
+	dst_ser = Make_Series((dst_len+1) * 4, 1, FALSE);
+	dst_bin = (REBU32*)BIN_HEAD(dst_ser);
+
+	bp = str;
+	while (*bp && len > 0) {
+		codepoint = UTF8_Decode_Codepoint(&bp, &len);
+		write_u32(dst_bin, codepoint, little_endian);
+		dst_bin+=4;
 	}
-	*size = src - *str;
-	if (state != UTF8_ACCEPT) return 0;
-	*str = src;
-	return codepoint;
+	SERIES_TAIL(dst_ser) = (dst_bin - BIN_HEAD(dst_ser));
+	return dst_ser;
 }
-#endif
 
 
 // -------------------------------------------------------------------------
@@ -650,118 +663,25 @@ X*/	UTF32 Decode_UTF8_Char_Size(const REBYTE **RESTRICT str, REBCNT *RESTRICT si
 }
 
 
-/***********************************************************************
-**
-*/	int Decode_UTF16(REBUNI *dst, const REBYTE *src, REBCNT len, REBFLG lee, REBFLG ccr)
-/*
-**		dst: the desination array, must always be large enough!
-**		src: source binary data
-**		len: byte-length of source (not number of chars)
-**		lee: little endian encoded
-**		ccr: convert CRLF/CR to LF
-**
-**		Returns length in chars (negative if all chars are latin-1).
-**		No terminator is added.
-**
-***********************************************************************/
-{
-#define EXPECT_LF 2
-	int flag = -1;
-	UTF32 ch;
-	REBUNI *start = dst;
-
-	if (ccr) ccr = 1;
-
-	for (; len > 0; len--, src++) {
-
-		// Combine bytes in big or little endian format:
-		ch = *src;
-		if (!lee) ch <<= 8;
-		if (--len <= 0) break;
-		src++;
-		ch |= lee ? (UTF32)(*src) << 8 : *src;
-
-		// Skip CR, but add LF (even if missing)
-		if (ccr) {
-			if (ccr == EXPECT_LF && ch != LF) {
-				*dst++ = LF;
-			}
-			if (ch == CR) {
-				ccr = EXPECT_LF;
-				continue;
-			}
-			ccr = 1;
-		}
-
-		// check for surrogate pair ??
-
-		if (ch > 0xff) flag = 1;
-
-		*dst++ = (REBUNI)ch;
-	}
-
-	return (dst - start) * flag;
+// Helper to read a 16-bit code unit with endianness
+FORCE_INLINE
+static REBU16 read_u16(const REBYTE *src, int is_little_endian) {
+	if (is_little_endian)
+		return (REBU16)src[0] | ((REBU16)src[1] << 8);
+	else
+		return ((REBU16)src[0] << 8) | (REBU16)src[1];
 }
 
-
-/***********************************************************************
-**
-*/	int Decode_UTF32(REBUNI *dst, const REBYTE *src, REBINT len, REBFLG lee, REBFLG ccr)
-/*
-***********************************************************************/
-{
-	REBCNT ch;
-	REBUNI *start = dst;
-	int flag = -1;
-	if (ccr) ccr = 1;
-	for (; len > 0; len-=4, src+=4) {
-		if (lee) {
-			ch = (REBCNT)src[3]<<24 | (REBCNT)src[2] << 16 | (REBCNT)src[1] << 8 | (REBCNT)src[0];
-		} else {
-			ch = (REBCNT)src[0]<<24 | (REBCNT)src[1] << 16 | (REBCNT)src[2] << 8 | (REBCNT)src[3];
-		}
-		if (ch <= UNI_MAX_BMP) { /* Target is a character <= 0xFFFF */
-			/* UTF-16 surrogate values are illegal in UTF-32; 0xffff or 0xfffe are both reserved values */
-			if (ch >= UNI_SUR_HIGH_START && ch <= UNI_SUR_LOW_END) {
-				ch = UNI_REPLACEMENT_CHAR;
-			}
-		} else if (ch > UNI_MAX_LEGAL_UTF32) {
-			ch = UNI_REPLACEMENT_CHAR;
-		} else {
-			/* target is a character in range 0xFFFF - 0x10FFFF. */
-			//O: there must be change in function definition to support this
-			//O: because now we have no info how many available bytes there is in dst
-			Trap0(RE_BAD_DECODE); // not yet supported
-
-			//if (dst + 1 >= dstEnd) {
-			//	--source; /* Back up source pointer! */
-			//	result = targetExhausted; break;
-			//}
-			//ch -= 0x0010000UL;
-			//*dst++ = (UTF16)((ch >> 10) + UNI_SUR_HIGH_START);
-			//*dst++ = (UTF16)((ch & 0x3FFUL) + UNI_SUR_LOW_START);
-			//continue;
-		}
-		
-		// Skip CR, but add LF (even if missing)
-		if (ccr) {
-			if (ccr == EXPECT_LF && ch != LF) {
-				*dst++ = LF;
-			}
-			if (ch == CR) {
-				ccr = EXPECT_LF;
-				continue;
-			}
-			ccr = 1;
-		}
-
-		if (ch > 0xff) flag = 1;
-		*dst++ = (REBUNI)ch;
-	}
-
-	return (dst - start) * flag;
+// Helper to read a 32-bit code unit with endianness
+FORCE_INLINE
+static REBU32 read_u32(const REBYTE *src, int is_little_endian) {
+	if (is_little_endian)
+		return (REBU32)src[0] | ((REBU32)src[1] << 8) |
+		((REBU32)src[2] << 16) | ((REBU32)src[3] << 24);
+	else
+		return ((REBU32)src[0] << 24) | ((REBU32)src[1] << 16) |
+		((REBU32)src[2] << 8) | (REBU32)src[3];
 }
-
 
 /***********************************************************************
 **
@@ -772,15 +692,18 @@ X*/	UTF32 Decode_UTF8_Char_Size(const REBYTE **RESTRICT str, REBCNT *RESTRICT si
 **		The utf is 0, 8, +/-16, +/-32.
 **		A special -1 means use the BOM.
 **		Use `uni = TRUE` not to shorten ASCII result
+**		ccr: convert CRLF 
+* 
 **
 ***********************************************************************/
 {
-	REBSER *ser = BUF_SCAN; // buffer is Unicode width
-	REBSER *dst;
-	REBINT size;
-
-	//REBFLG ccr = FALSE; // in original R3-alpha if was TRUE
-	//@@ https://github.com/rebol/rebol-issues/issues/2336
+#define EXPECT_LF 2
+	REBU32 codepoint;
+	REBYTE *dst;
+	REBCNT cps; // number of input codepoints
+	REBCNT i = 0;
+	REBCNT unit_size;
+	REBFLG is_little_endian;
 
 	if (utf == -1) {
 		utf = What_UTF(bp, len);
@@ -791,30 +714,77 @@ X*/	UTF32 Decode_UTF8_Char_Size(const REBYTE **RESTRICT str, REBCNT *RESTRICT si
 		}
 	}
 
-	if (utf == 0 || utf == 8) {
-		size = Decode_UTF8((REBUNI*)Reset_Buffer(ser, len), bp, len, ccr);
+	if (utf == 8) {
+		unit_size = 1;
 	} 
 	else if (utf == -16 || utf == 16) {
-		size = Decode_UTF16((REBUNI*)Reset_Buffer(ser, len/2 + 1), bp, len, utf < 0, ccr);
+		unit_size = 2;
 	}
 	else if (utf == -32 || utf == 32) {
-		size = Decode_UTF32((REBUNI*)Reset_Buffer(ser, len/4 + 1), bp, len, utf < 0, ccr);
+		unit_size = 4;
 	}
     else {
-        return NULL;
+        return NULL; // Unknown UTF
     }
-	if (uni && size < 0) size = -size;
-	if (size < 0) {
-		size = -size;
-		dst = Make_Binary(size);
-		Append_Uni_Bytes(dst, UNI_HEAD(ser), size);
-	}
-	else {
-		dst = Make_Unicode(size);
-		Append_Uni_Uni(dst, UNI_HEAD(ser), size);
+	is_little_endian = (utf < 0);
+
+	dst = Reset_Buffer(BUF_SCAN, len); // should be large enough for the worst scenario
+
+	if (ccr) ccr = 1;
+
+	REBYTE *end = bp + len;
+
+	while (bp < end) {
+		// Read next code unit(s)
+		if (unit_size == 2) {
+			// UTF-16: handle surrogate pairs
+			REBUNI w1 = read_u16(bp, is_little_endian);
+			if (w1 >= 0xD800 && w1 <= 0xDBFF) {
+				bp += 2;
+				if (bp >= end) return NULL; // Truncated surrogate pair
+				REBUNI w2 = read_u16(bp, is_little_endian);
+				if (w2 < 0xDC00 || w2 > 0xDFFF) return NULL; // Invalid surrogate pair
+				codepoint = 0x10000 + (((w1 - 0xD800) << 10) | (w2 - 0xDC00));
+				bp += 2;
+			}
+			else if (w1 >= 0xDC00 && w1 <= 0xDFFF) {
+				return NULL; // Unpaired low surrogate
+			}
+			else {
+				codepoint = w1;
+				bp += 2;
+			}
+		}
+		else if (unit_size == 4) {
+			// UTF-32: each unit is a codepoint
+			codepoint = read_u32(bp, is_little_endian);
+			bp += 4;
+		}
+		else {
+			codepoint = UTF8_Decode_Codepoint(&bp, &len);
+		}
+
+		// CR/LF handling
+		if (ccr) {
+			if (ccr == EXPECT_LF && codepoint != LF) {
+				*dst++ = LF;
+			}
+			if (codepoint == CR) {
+				ccr = EXPECT_LF;
+				continue;
+			}
+			ccr = 1;
+		}
+
+		dst += Encode_UTF8_Char(dst, codepoint);
+
+		if (codepoint > 0x7F) {
+			UTF8_SERIES(BUF_SCAN);
+		}
 	}
 
-	return dst;
+	return Copy_String(BUF_SCAN, 0, (dst - BIN_HEAD(BUF_SCAN)));
+
 }
 
 /***********************************************************************
@@ -863,7 +833,7 @@ X*/	UTF32 Decode_UTF8_Char_Size(const REBYTE **RESTRICT str, REBCNT *RESTRICT si
 	return size;
 }
 
-
+FORCE_INLINE
 /***********************************************************************
 **
 */	REBCNT Encode_UTF8_Char(REBYTE *dst, UTF32 chr)

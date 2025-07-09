@@ -209,8 +209,9 @@ Rebol [
 	
 --test-- "block collect nested (known issues)"
 	;; following tests produces empty block at tail :-/
-	--assert [[1] [2]] = parse [1 2][collect some [collect keep integer!]]
-	--assert [[1] a [2] a] = parse [1 2][collect some [collect keep integer! keep ('a)]]
+	--assert [[1] [2]]     == parse [1 2][collect some [collect keep integer!]]
+	--assert [[1] a [2] a] == parse [1 2][collect some [collect keep integer! keep ('a)]]
+	--assert [[1 a] [2 a]] == parse [1 2][collect some [collect [keep integer! keep ('a)]]]
 
 --test-- "block collect bizzar"
 	--assert [[1 2] [3]] = parse [1 2 3] [collect [keep 2 integer!] collect [keep integer!]]

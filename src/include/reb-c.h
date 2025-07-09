@@ -192,6 +192,7 @@ typedef unsigned char	Boolean; /* 0 or 1 */
 typedef i32				REBINT;     // 32 bit (64 bit defined below)
 typedef u32				REBCNT;     // 32 bit (counting number)
 typedef u32             REBLEN;     // 32 bit series length/index - used instead of size_t
+typedef u32             REBU32;		// 32 bit Unicode
 typedef i64				REBI64;     // 64 bit integer
 typedef u64				REBU64;     // 64 bit unsigned integer
 typedef i8				REBOOL;     // 8  bit flag (for struct usage)
@@ -201,6 +202,7 @@ typedef double			REBDEC;     // 64 bit decimal
 
 typedef unsigned char	REBYTE;     // unsigned byte data
 typedef u16				REBUNI;     // unicode char
+typedef u16				REBU16;     // 16bit UCS2 codepoint
 typedef u32 REBUTF;
 
 // REBCHR - only to refer to OS char strings (not internal strings)
