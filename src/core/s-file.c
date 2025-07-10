@@ -60,7 +60,7 @@
 	REBYTE *out;
 	REBYTE *src;
 
-	if (uni) {
+	if (uni && len > 0) {
 		len = OS_WIDE_TO_MULTIBYTE(bp, &src);
 	}
 	else {
@@ -102,7 +102,7 @@
 	SERIES_TAIL(dst) = n;
 	STR_TERM(dst);
 
-	if (uni) 
+	if (uni && len > 0) 
 		free(src);
 
 	// Change C:/ to /C/ (and C:X to /C/X):
@@ -254,7 +254,7 @@ term_out:
 	SERIES_TAIL(dst) = n;
 	STR_TERM(dst);
 
-	if (wide) {
+	if (wide && n > 0) {
 		REBYTE *uni = NULL;
 		REBLEN len = OS_MULTIBYTE_TO_WIDE(STR_HEAD(dst), &uni);
 		if (uni == NULL) return NULL;
