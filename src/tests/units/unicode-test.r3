@@ -41,12 +41,12 @@ Rebol [
 		--assert "" == to string! #{}
 		--assert all [
 			error? e: try [to string! #{C5A1C5}]
-			e/id = 'invalid-utf8
+			e/id = 'invalid-utf
 			e/arg1 = #{C5}
 		]
 		--assert all [
 			error? e: try [to string! #{C5A1C500}]
-			e/id = 'invalid-utf8
+			e/id = 'invalid-utf
 			e/arg1 = #{C500}
 		]
  	--test-- "to block!"
