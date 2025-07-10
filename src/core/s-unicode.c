@@ -168,6 +168,43 @@ static REBYTE const u8_length[] = {
 };
 
 
+// Helper to write a UTF-32 code point with specified endianness
+FORCE_INLINE
+static void write_u32(REBYTE *dst, REBU32 codepoint, int is_little_endian) {
+	if (is_little_endian) {
+		dst[0] = (REBYTE)(codepoint & 0xFF);
+		dst[1] = (REBYTE)((codepoint >> 8) & 0xFF);
+		dst[2] = (REBYTE)((codepoint >> 16) & 0xFF);
+		dst[3] = (REBYTE)((codepoint >> 24) & 0xFF);
+	}
+	else {
+		dst[0] = (REBYTE)((codepoint >> 24) & 0xFF);
+		dst[1] = (REBYTE)((codepoint >> 16) & 0xFF);
+		dst[2] = (REBYTE)((codepoint >> 8) & 0xFF);
+		dst[3] = (REBYTE)(codepoint & 0xFF);
+	}
+}
+// Helper to read a 16-bit code unit with endianness
+FORCE_INLINE
+static REBU16 read_u16(const REBYTE *src, int is_little_endian) {
+	if (is_little_endian)
+		return (REBU16)src[0] | ((REBU16)src[1] << 8);
+	else
+		return ((REBU16)src[0] << 8) | (REBU16)src[1];
+}
+
+// Helper to read a 32-bit code unit with endianness
+FORCE_INLINE
+static REBU32 read_u32(const REBYTE *src, int is_little_endian) {
+	if (is_little_endian)
+		return (REBU32)src[0] | ((REBU32)src[1] << 8) |
+		((REBU32)src[2] << 16) | ((REBU32)src[3] << 24);
+	else
+		return ((REBU32)src[0] << 24) | ((REBU32)src[1] << 16) |
+		((REBU32)src[2] << 8) | (REBU32)src[3];
+}
+
+
 FORCE_INLINE
 /***********************************************************************
 **
@@ -525,22 +562,6 @@ done:
 }
 
 
-// Helper: Write a UTF-32 code point with specified endianness
-static void write_u32(REBYTE *dst, REBU32 codepoint, int is_little_endian) {
-	if (is_little_endian) {
-		dst[0] = (REBYTE)(codepoint & 0xFF);
-		dst[1] = (REBYTE)((codepoint >> 8) & 0xFF);
-		dst[2] = (REBYTE)((codepoint >> 16) & 0xFF);
-		dst[3] = (REBYTE)((codepoint >> 24) & 0xFF);
-	}
-	else {
-		dst[0] = (REBYTE)((codepoint >> 24) & 0xFF);
-		dst[1] = (REBYTE)((codepoint >> 16) & 0xFF);
-		dst[2] = (REBYTE)((codepoint >> 8) & 0xFF);
-		dst[3] = (REBYTE)(codepoint & 0xFF);
-	}
-}
-
 /***********************************************************************
 **
 */	REBSER* UTF8_To_UTF32(const REBYTE *str, REBCNT len, REBFLG little_endian)
@@ -663,26 +684,6 @@ static void write_u32(REBYTE *dst, REBU32 codepoint, int is_little_endian) {
 }
 
 
-// Helper to read a 16-bit code unit with endianness
-FORCE_INLINE
-static REBU16 read_u16(const REBYTE *src, int is_little_endian) {
-	if (is_little_endian)
-		return (REBU16)src[0] | ((REBU16)src[1] << 8);
-	else
-		return ((REBU16)src[0] << 8) | (REBU16)src[1];
-}
-
-// Helper to read a 32-bit code unit with endianness
-FORCE_INLINE
-static REBU32 read_u32(const REBYTE *src, int is_little_endian) {
-	if (is_little_endian)
-		return (REBU32)src[0] | ((REBU32)src[1] << 8) |
-		((REBU32)src[2] << 16) | ((REBU32)src[3] << 24);
-	else
-		return ((REBU32)src[0] << 24) | ((REBU32)src[1] << 16) |
-		((REBU32)src[2] << 8) | (REBU32)src[3];
-}
-
 /***********************************************************************
 **
 */	REBSER *Decode_UTF_String(const REBYTE *bp, REBCNT len, REBINT utf, REBFLG ccr, REBFLG uni)
@@ -700,7 +701,6 @@ static REBU32 read_u32(const REBYTE *src, int is_little_endian) {
 #define EXPECT_LF 2
 	REBU32 codepoint;
 	REBYTE *dst;
-	REBCNT cps; // number of input codepoints
 	REBCNT i = 0;
 	REBCNT unit_size;
 	REBFLG is_little_endian;
