@@ -394,8 +394,8 @@ static struct digest {
 	REBVAL *level    = D_ARG(6);
 
 	REBSER *ser = VAL_SERIES(data);
+	REBCNT len = Partial1(data, length); // May modify the index!
 	REBCNT index = VAL_INDEX(data);
-	REBCNT len = Partial1(data, length);
 	REBINT windowBits = MAX_WBITS;
 
 	switch (method) {
