@@ -1124,9 +1124,14 @@ RL_API REBSER* RL_Decode_UTF_String(REBYTE *src, REBCNT len, REBINT utf, REBFLG 
 **		utf  - is 0, 8, +/-16, +/-32.
 **		ccr  - Convert LF/CRLF
 **		uni  - keep uni version even for plain ascii
+**
+**  Note:
+**		uni is not used anymore! Instead there is REBCNT err,
+**		which is used to report error position. But not used here,
+**		because this function may be used by old extensions:/
 */
 {
-	return Decode_UTF_String(src, len, utf, ccr, uni);
+	return Decode_UTF_String(src, len, utf, ccr, NULL);
 }
 
 /***********************************************************************

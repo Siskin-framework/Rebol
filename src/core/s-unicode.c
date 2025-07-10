@@ -476,7 +476,7 @@ UTF32 Decode_Surrogate_Pair(const REBYTE *src) {
 
 /***********************************************************************
 **
-*/	REBSER *UTF8_Copy_Surrogates(const REBYTE *str, REBCNT len)
+*/	REBSER *UTF8_Copy_Surrogates(const REBYTE *str, REBCNT len, REBCNT *err)
 /*
 **		Copy UTF-8 string while collapsing all surrogate pairs.
 **
@@ -485,7 +485,7 @@ UTF32 Decode_Surrogate_Pair(const REBYTE *src) {
 	if (len == 0) return 0;
 	REBYTE *start = str;
 	const REBYTE *end = str + len;
-	const REBYTE *acc = str - 1;
+	REBYTE *acc = start;
 	REBCNT codepoint = 0;
 	REBCNT state = UTF8_ACCEPT;
 
@@ -493,10 +493,9 @@ UTF32 Decode_Surrogate_Pair(const REBYTE *src) {
 
 	for (; str < end; ++str) {
 		switch (UTF8_Decode_Step(&state, &codepoint, *str)) {
-		case UTF8_ACCEPT: acc = str; break; // remember last accepted char position
+		case UTF8_ACCEPT: acc = str + 1; break; // remember last accepted char position
 		case UTF8_REJECT:
 			codepoint = Decode_Surrogate_Pair(str - 1);
-			//	//return acc + 1;
 			if (codepoint != UNI_ERROR) {
 				REBLEN bytes = str - 1 - start;
 				if (bytes > 0) {
@@ -504,21 +503,23 @@ UTF32 Decode_Surrogate_Pair(const REBYTE *src) {
 				}
 				Append_Byte(dst, codepoint);
 				str += 4;
-				acc = str;
 				start = str;
 				state = UTF8_ACCEPT;
 			}
 			break;
 		}
 	}
-	if (state == UTF8_ACCEPT && start < acc) {
-		Append_Bytes_Len(dst, cb_cast(start), acc - start);
-		//return 0;
+	if (state == UTF8_ACCEPT) {
+		if (start < str) Append_Bytes_Len(dst, cb_cast(start), str - start);
+		return dst;
+	}
+	else {
+		// if state is not accepted, we must have incomplete utf-8 sequence or error!
+		if (err) *err = (acc - start);
+		return NULL;
 	}
 	return dst;
-	// if state is not accepted, we must have incomplete utf-8 sequence
-	// not using str-1, because the sequence may have more than 2 bytes!
-	//return acc + 1;
+	
 }
 
 /***********************************************************************
@@ -686,7 +687,7 @@ done:
 
 /***********************************************************************
 **
-*/	REBSER *Decode_UTF_String(const REBYTE *bp, REBCNT len, REBINT utf, REBFLG ccr, REBFLG uni)
+*/	REBSER *Decode_UTF_String(const REBYTE *bp, REBCNT len, REBINT utf, REBFLG ccr, REBCNT *err)
 /*
 **		Do all the details to decode a string.
 **		Input is a byte series. Len is len of input.
@@ -698,12 +699,15 @@ done:
 **
 ***********************************************************************/
 {
-#define EXPECT_LF 2
 	REBU32 codepoint;
 	REBYTE *dst;
 	REBCNT i = 0;
 	REBCNT unit_size;
 	REBFLG is_little_endian;
+
+	if (len == 0) {
+		return Make_Series(1, 1, FALSE);
+	}
 
 	if (utf == -1) {
 		utf = What_UTF(bp, len);
@@ -714,8 +718,14 @@ done:
 		}
 	}
 
-	if (utf == 8) {
-		unit_size = 1;
+	if (utf == 0 || utf == 8) {
+		REBSER *ser = UTF8_Copy_Surrogates(bp, len, err);
+		if (!ser) return NULL;
+		if (ccr) {
+			ser->tail = Replace_CRLF_to_LF_Bytes(BIN_HEAD(ser), BIN_LEN(ser));
+		}
+		if (!Is_ASCII(BIN_HEAD(ser), BIN_LEN(ser))) UTF8_SERIES(ser);
+		return ser;
 	} 
 	else if (utf == -16 || utf == 16) {
 		unit_size = 2;
@@ -726,14 +736,11 @@ done:
     else {
         return NULL; // Unknown UTF
     }
+
 	is_little_endian = (utf < 0);
-
 	dst = Reset_Buffer(BUF_SCAN, len); // should be large enough for the worst scenario
-
-	if (ccr) ccr = 1;
-
-	REBYTE *end = bp + len;
-
+	const REBYTE *start = bp;
+	const REBYTE *end = bp + len;
 	while (bp < end) {
 		// Read next code unit(s)
 		if (unit_size == 2) {
@@ -741,14 +748,21 @@ done:
 			REBUNI w1 = read_u16(bp, is_little_endian);
 			if (w1 >= 0xD800 && w1 <= 0xDBFF) {
 				bp += 2;
-				if (bp >= end) return NULL; // Truncated surrogate pair
+				if (bp >= end) {
+					// Truncated surrogate pair
+					goto u16_error;
+				}
 				REBUNI w2 = read_u16(bp, is_little_endian);
-				if (w2 < 0xDC00 || w2 > 0xDFFF) return NULL; // Invalid surrogate pair
+				if (w2 < 0xDC00 || w2 > 0xDFFF) {
+					// Invalid surrogate pair
+					goto u16_error;
+				}
 				codepoint = 0x10000 + (((w1 - 0xD800) << 10) | (w2 - 0xDC00));
 				bp += 2;
 			}
 			else if (w1 >= 0xDC00 && w1 <= 0xDFFF) {
-				return NULL; // Unpaired low surrogate
+				// Unpaired low surrogate
+				goto u16_error;
 			}
 			else {
 				codepoint = w1;
@@ -758,33 +772,26 @@ done:
 		else if (unit_size == 4) {
 			// UTF-32: each unit is a codepoint
 			codepoint = read_u32(bp, is_little_endian);
+			// Validate data input
+			if (codepoint > 0x10FFFF || (codepoint >= UNI_SUR_HIGH_START && codepoint <= UNI_SUR_LOW_END)) {
+				if (err) *err = (bp - start);
+				return NULL;
+			}
 			bp += 4;
 		}
-		else {
-			codepoint = UTF8_Decode_Codepoint(&bp, &len);
-		}
-
-		// CR/LF handling
-		if (ccr) {
-			if (ccr == EXPECT_LF && codepoint != LF) {
-				*dst++ = LF;
-			}
-			if (codepoint == CR) {
-				ccr = EXPECT_LF;
-				continue;
-			}
-			ccr = 1;
-		}
-
 		dst += Encode_UTF8_Char(dst, codepoint);
 
-		if (codepoint > 0x7F) {
-			UTF8_SERIES(BUF_SCAN);
-		}
+		if (codepoint > 0x7F) UTF8_SERIES(BUF_SCAN);
 	}
+	len = dst - BIN_HEAD(BUF_SCAN);
+	if (ccr) {
+		len = Replace_CRLF_to_LF_Bytes(BIN_HEAD(BUF_SCAN), len);
+	}
+	return Copy_String(BUF_SCAN, 0, len);
 
-	return Copy_String(BUF_SCAN, 0, (dst - BIN_HEAD(BUF_SCAN)));
-
+u16_error:
+	if (err) *err = 2 * (bp - 2 - start);
+	return NULL;
 }
 
 /***********************************************************************

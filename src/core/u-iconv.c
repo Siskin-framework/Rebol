@@ -665,7 +665,7 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 	else if (cp == 12000 || cp == 12001) {  // data are UTF-32LE or UTF-32BE
 		// this codepage is not supported by `MultiByteToWideChar`
 		// so convert it first to UTF-8...
-		src_ser = Decode_UTF_String(src_bin, src_len, cp == 12000 ? -32 : 32, FALSE, TRUE);
+		src_ser = Decode_UTF_String(src_bin, src_len, cp == 12000 ? -32 : 32, FALSE, NULL);
 		if (!src_ser) Trap1(RE_INVALID_DATA, data);
 		src_bin = BIN_HEAD(src_ser);
 		src_len = SERIES_TAIL(src_ser);

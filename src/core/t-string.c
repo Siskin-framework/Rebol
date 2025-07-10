@@ -52,35 +52,6 @@
 
 /***********************************************************************
 **
-*/	REBSER* Binary_To_String(REBVAL *arg, REBFLG ccr)
-/*
-***********************************************************************/
-{
-	REBSER *ser = VAL_SERIES(arg);
-	if (IS_BINARY(arg)) {
-		//TODO: optimalize!
-		REBFLG surrogates = 0;
-		REBYTE *bp = STR_SKIP(ser, VAL_INDEX(arg));
-		REBYTE *acc = UTF8_Check(bp, STR_TAIL(ser) - bp, &surrogates);
-		if (acc != NULL) {
-			// data are not valid utf-8.. try with BOM..
-			ser = Decode_UTF_String(bp, STR_TAIL(ser) - bp, -1, ccr, 0);
-			if (ser) return ser;
-			// else report error...
-			DS_PUSH_NONE;
-			SET_BINARY(DS_TOP, VAL_SERIES(arg));
-			VAL_INDEX(DS_TOP) = acc - bp;
-			Trap1(RE_INVALID_UTF8, DS_TOP);
-		}
-		if (surrogates) {
-			return UTF8_Copy_Surrogates(bp, STR_TAIL(ser) - bp);
-		}
-	}
-	return Copy_String(ser, VAL_INDEX(arg), VAL_LEN(arg));
-}
-
-/***********************************************************************
-**
 **	Local Utility Functions
 **
 ***********************************************************************/
@@ -202,8 +173,16 @@ static REBSER *make_string(REBVAL *arg, REBOOL make)
 	}
 	// MAKE/TO <type> <binary!>
 	// MAKE/TO <type> <any-string>
-	else if (ANY_BINSTR(arg)) {
-		ser = Binary_To_String(arg, FALSE);
+	else if (IS_BINARY(arg)) {
+		REBCNT err = NOT_FOUND;
+		ser = Decode_UTF_String(VAL_BIN_AT(arg), VAL_LEN(arg), -1, FALSE, &err);
+		if (!ser) {
+			VAL_INDEX(arg) = err;
+			Trap1(RE_INVALID_UTF, arg);
+		}
+	}
+	else if (ANY_STR(arg)) {
+		ser = Copy_String(VAL_SERIES(arg), VAL_INDEX(arg), VAL_LEN(arg));
 	}
 	// MAKE/TO <type> <any-word>
 	else if (ANY_WORD(arg) || ANY_PATH(arg)) {

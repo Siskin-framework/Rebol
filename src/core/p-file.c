@@ -299,8 +299,8 @@ resize:
 	// Convert to string or block of strings.
 	// NOTE: This code may be incorrect for files read in chunks!!!
 	if (args & (AM_READ_STRING | AM_READ_LINES)) {
-		Set_Binary(ds, ser);
-		ser = Binary_To_String(ds, TRUE);
+		ser = Decode_UTF_String(BIN_HEAD(ser), file->actual, -1, TRUE, NULL);
+		if (!ser) return;
 		Set_String(ds, ser);
 		if (args & AM_READ_LINES) Set_Block(ds, Split_Lines(ds));
 	}

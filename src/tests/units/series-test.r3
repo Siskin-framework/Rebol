@@ -2085,10 +2085,10 @@ try/with [
 --test-- "invalid UTF8 char"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1064
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1216
-	--assert all [error? e: try [to-string #{C2E0}] e/id = 'invalid-utf8]
-	--assert all [error? e: try [to-string #{C3}] e/id = 'invalid-utf8]
-	--assert all [error? e: try [to-string #{EF}] e/id = 'invalid-utf8]
-	--assert all [error? e: try [to-string #{EFBF}] e/id = 'invalid-utf8]
+	--assert all [error? e: try [to-string #{C2E0}] e/id = 'invalid-utf]
+	--assert all [error? e: try [to-string #{C3}] e/id = 'invalid-utf]
+	--assert all [error? e: try [to-string #{EF}] e/id = 'invalid-utf]
+	--assert all [error? e: try [to-string #{EFBF}] e/id = 'invalid-utf]
 
 	--assert #{C2E0} = invalid-utf? #{C2E0}
 	--assert #{C2E0} = invalid-utf? #{01C2E0}
@@ -2105,6 +2105,10 @@ try/with [
 	--assert  5367801 = checksum deline str 'crc24
 	--assert  5367801 = checksum read/string %units/files/quickbrown.bin 'crc24 ;converts CRLF to LF
 
+--test-- "invalid utf16"
+	--assert try ["á🙂" == to-string #{FEFF00E1D83DDE42}]
+	--assert all [error? e: try [to-string #{FEFF00E1D83D} e/id = 'invalid-utf]]
+	--assert all [error? e: try [to-string #{FEFF00E1D83DEE42} e/id = 'invalid-utf]]
 
 --test-- "LOAD Unicode encoded text with BOM"
 try/with [

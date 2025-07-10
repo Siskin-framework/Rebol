@@ -696,7 +696,7 @@ extern const REBYTE Str_Banner[];
 	}
 
 	if (codi->action == CODI_DECODE) {
-		codi->other = (void*)Decode_UTF_String(codi->data, codi->len, -1, TRUE, FALSE);
+		codi->other = (void*)Decode_UTF_String(codi->data, codi->len, -1, TRUE, &codi->error);
 		return CODI_STRING;
 	}
 
