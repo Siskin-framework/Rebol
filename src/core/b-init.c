@@ -786,7 +786,7 @@ static void Set_Option_String(REBCHR *str, REBCNT field)
 	REBVAL *val;
 	if (str) {
 		val = Get_System(SYS_OPTIONS, field);
-		Set_String(val, Copy_OS_Str(str, (REBINT)LEN_STR(str)));
+		Set_String(val, Copy_Str(str, (REBINT)LEN_STR(str)));
 	}
 }
 
@@ -813,7 +813,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 {
 	REBSER *ser;
 	REBVAL *val;
-	ser = To_REBOL_Path(src, 0, OS_WIDE, dir);
+	ser = To_REBOL_Path(src, 0, 0, dir);
 	val = Get_System(SYS_OPTIONS, field);
 	Set_Series(REB_FILE, val, ser);
 }

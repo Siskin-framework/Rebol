@@ -149,14 +149,31 @@
 **
 **		Converts wide char string using UTF8 encoding.
 **		Else just copy the string.
+**		Marks series if not ASCII.
 **
 ***********************************************************************/
 {
 #ifdef OS_WIDE_CHAR
-	return Encode_UTF8_String(src, len, TRUE, 0);
+	REBSER *ser = Encode_UTF8_String(src, len, TRUE, 0);
 #else
-	return Copy_Bytes((REBYTE*)src, len);
+	REBSER *ser = Copy_Bytes((REBYTE*)src, len);
 #endif
+	if (!Is_ASCII(BIN_HEAD(ser), BIN_LEN(ser))) UTF8_SERIES(ser);
+	return ser;
+}
+
+/***********************************************************************
+**
+*/	REBSER *Copy_Str(const REBYTE *src, REBINT len)
+/*
+**		Create a string series from the given UTF-8 encoded input.
+**		Marks series if not ASCII.
+**
+***********************************************************************/
+{
+	REBSER *dst = Copy_Bytes(src, len);
+	if (!Is_ASCII(src, len)) UTF8_SERIES(dst);
+	return dst;
 }
 
 

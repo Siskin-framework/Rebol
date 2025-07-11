@@ -53,20 +53,21 @@
 {
 	REBOOL colon = 0;  // have we hit a ':' yet?
 	REBOOL slash = 0; // have we hit a '/' yet?
-	REBUNI c = 0;
+	REBYTE c = 0;
 	REBSER *dst;
 	REBCNT n;
 	REBCNT i;
 	REBYTE *out;
 	REBYTE *src;
 
-	if (uni && len > 0) {
+	if (uni) {
+		//?? original len is ignored.. is it a problem?
 		len = OS_WIDE_TO_MULTIBYTE(bp, &src);
 	}
 	else {
 		src = bp;
+		if (len == 0) len = LEN_BYTES(src);
 	}
-	if (len == 0) LEN_BYTES(src);
 	
 	n = 0;
 	dst = Make_Binary(len+FN_PAD);
@@ -102,7 +103,7 @@
 	SERIES_TAIL(dst) = n;
 	STR_TERM(dst);
 
-	if (uni && len > 0) 
+	if (uni) 
 		free(src);
 
 	// Change C:/ to /C/ (and C:X to /C/X):
@@ -142,7 +143,7 @@
 **
 ***********************************************************************/
 {
-	REBUNI c;
+	REBYTE c;
 	REBSER *dst;
 	REBSER *tmp = NULL;
 	REBYTE *src;
@@ -191,14 +192,10 @@
 		out[n++] = OS_DIR_SEP;
 	}
 	else {
-		if (full) l = OS_GET_CURRENT_DIR(&lpath);
+		if (full) l = OS_GET_CURRENT_DIR(&lpath); // lpath is UTF-8 encoded!
 		dst = Make_Binary(l + len + FN_PAD); // may be longer (if lpath is encoded)
 		if (full) {
-#ifdef TO_WINDOWS
-			Append_Uni_Bytes(dst, lpath, l);
-#else
-			Append_Bytes_Len(dst, lpath, l;
-#endif
+			Append_Bytes_Len(dst, lpath, l);
 			if (OS_DIR_SEP != STR_LAST(dst)[0]) {
 				EXPAND_SERIES_TAIL(dst, 1);
 				*STR_LAST(dst) = OS_DIR_SEP;
@@ -288,20 +285,15 @@ term_out:
 }
 
 
+FORCE_INLINE
 /***********************************************************************
 **
 */	REBSER *Value_To_OS_Path(REBVAL *val, REBFLG full)
 /*
-**		Helper to above function.
+**		Helper to above function. Result will be wide size on Windows.
 **
 ***********************************************************************/
 {
-	REBSER *ser; // will be unicode size on Windows
-
 	ASSERT1(ANY_BINSTR(val), RP_MISC);
-	if (!VAL_BYTE_SIZE(val))
-		puts("Value_To_OS_Path expects UTF8 encode input!");
-	ser = To_Local_Path(VAL_DATA(val), VAL_LEN(val), OS_WIDE, full);
-	
-	return ser;
+	return To_Local_Path(VAL_DATA(val), VAL_LEN(val), OS_WIDE, full);
 }

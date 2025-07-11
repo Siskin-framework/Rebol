@@ -150,12 +150,11 @@ void Dispose_Windows(void);
 {
 	size_t len = wcslen(wide);
 	size_t needed = WideCharToMultiByte(CP_UTF8, 0, wide, len, NULL, 0, NULL, NULL);
-	if (needed == 0) return 0;
 	REBYTE *out = (REBYTE*)malloc(needed+1);
-	if (out == NULL) return 0;
+	*utf8 = out;
+	if (out == NULL || needed == 0) return 0;
 	WideCharToMultiByte(CP_UTF8, 0, wide, len, out, needed, NULL, NULL);
 	out[needed] = 0;
-	*utf8 = out;
 	return (REBLEN)needed;
 }
 
@@ -524,8 +523,13 @@ void Dispose_Windows(void);
 **
 ***********************************************************************/
 {
-	*name = MAKE_STR(MAX_FILE_NAME);
-	return (GetModuleFileName(0, *name, MAX_FILE_NAME) > 0);
+	REBCHR *wide = MAKE_STR(MAX_FILE_NAME);
+	if (!GetModuleFileName(0, wide, MAX_FILE_NAME)) return 0;
+	REBYTE *temp = NULL;
+	OS_Wide_To_Multibyte(wide, &temp);
+	OS_Free(wide);
+	*name = temp;
+	return 1;
 }
 
 
@@ -673,7 +677,7 @@ void Dispose_Windows(void);
 
 /***********************************************************************
 **
-*/	int OS_Get_Current_Dir(REBCHR **path)
+*/	int OS_Get_Current_Dir(REBYTE **path)
 /*
 **		Return the current directory path as a string and
 **		its length in chars (not bytes).
@@ -682,14 +686,22 @@ void Dispose_Windows(void);
 **
 ***********************************************************************/
 {
-	int len;
+	if (!path) return 0;
+	REBLEN len = GetCurrentDirectory(0, NULL); // length, incl terminator.
+	REBCHR *wide = MAKE_STR(len);
+	if (!wide) return 0; // Allocation failed
+	DWORD got = GetCurrentDirectory(len, wide);
+	if (got == 0 || got >= len) {
+		OS_Free(wide);
+		return 0; // Failure
+	}
 
-	len = GetCurrentDirectory(0, NULL); // length, incl terminator.
-	*path = MAKE_STR(len);
-	GetCurrentDirectory(len, *path);
-	len--; // less terminator
+	REBYTE *temp = NULL;
+	len = OS_Wide_To_Multibyte(wide, &temp);
+	OS_Free(wide);
 
-	return len; // Be sure to call free() after usage
+	*path = temp;
+	return len; // Be sure to call free() on path after usage
 }
 
 
@@ -713,7 +725,7 @@ void Dispose_Windows(void);
 
 /***********************************************************************
 **
-*/	REBCHR* OS_Real_Path(const REBYTE *path)
+*/	REBYTE* OS_Real_Path(const REBU16 *path)
 /*
 **		Returns a null-terminated string containing the canonicalized
 **		absolute pathname corresponding to path. In the returned string,
@@ -722,18 +734,11 @@ void Dispose_Windows(void);
 **
 ***********************************************************************/
 {
-	static REBCHR real_path[MAX_PATH + 2];
-	int needed = MultiByteToWideChar(CP_UTF8, 0, path, -1, NULL, 0);
-	if (needed == 0) return NULL;
-	size_t temp_size = needed * sizeof(wchar_t);
-	REBCHR *temp = (REBCHR *)malloc(temp_size);
-	if (temp == NULL) return NULL;
-	MultiByteToWideChar(CP_UTF8, 0, path, -1, (wchar_t *)temp, needed);
-
-	if (!_wfullpath(real_path, (wchar_t *)temp, MAX_PATH)) return NULL;
+	static REBU16 real_path[MAX_PATH + 2];
+	if (!_wfullpath(real_path, path, MAX_PATH)) return NULL;
 	size_t len = wcslen(real_path);
 	// if there is not a trailing slash, check if the result is not a directory anyway
-	if (real_path[len-1] != L'\\') {
+	if (real_path[len - 1] != L'\\') {
 		// and append the slash, if it is...
 		// https://github.com/Oldes/Rebol-issues/issues/2600
 		DWORD fileAttr = GetFileAttributes(real_path);
@@ -742,19 +747,14 @@ void Dispose_Windows(void);
 	}
 	real_path[len] = 0;
 
-	needed = WideCharToMultiByte(CP_UTF8, 0, real_path, len, NULL, 0, NULL, NULL);
-	if (needed == 0) return NULL;
-	if (needed > temp_size) {
-		void* temp_new = realloc(temp, needed);
-		if (!temp_new) {
-			free(temp);
-			return NULL;
-		}
-		temp = temp_new;
-	}
-	WideCharToMultiByte(CP_UTF8, 0, real_path, len, temp, needed, NULL, NULL);
-	temp[needed] = 0;
-	return temp; // Be sure to copy and free!
+	// convert result to UTF-8...
+	size_t utf8_len = WideCharToMultiByte(CP_UTF8, 0, real_path, len, NULL, 0, NULL, NULL);
+	if (utf8_len == 0) return NULL;
+	REBYTE *utf8_path = malloc(utf8_len+1);
+	if (utf8_path == 0) return NULL;
+	WideCharToMultiByte(CP_UTF8, 0, real_path, len, utf8_path, utf8_len, NULL, NULL);
+	utf8_path[utf8_len] = 0;
+	return utf8_path; // Be sure to copy and free!
 }
 
 /***********************************************************************

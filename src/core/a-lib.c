@@ -726,6 +726,8 @@ RL_API int RL_Get_UTF8_String(REBSER *series, u32 index, void **str)
 **	Notes:
 **		Strings are allowed to move in memory. Therefore, you will want
 **		to make a copy of the string if needed.
+**
+**	This function should be DEPRECATED! All strings should be UTF-8 encoded now.
 */
 {
 	int len = (index >= series->tail) ? 0 : series->tail - index;

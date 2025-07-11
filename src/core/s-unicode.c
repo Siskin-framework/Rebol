@@ -996,10 +996,10 @@ FORCE_INLINE
 
 }
 
-
+#ifdef unused
 /***********************************************************************
 **
-*/  int Encode_UTF8_Line(REBSER *dst, REBSER *src, REBCNT idx)
+X*/  int Encode_UTF8_Line(REBSER *dst, REBSER *src, REBCNT idx)
 /*
 **		Encode a unicode source buffer into a binary line of UTF8.
 **		Include the LF terminator in the result.
@@ -1036,10 +1036,9 @@ FORCE_INLINE
 	return idx;
 }
 
-
 /***********************************************************************
 **
-*/	REBSER *Encode_UTF8_Value(REBVAL *arg, REBCNT len, REBFLG opts)
+X*/	REBSER *Encode_UTF8_Value(REBVAL *arg, REBCNT len, REBFLG opts)
 /*
 **		Do all the details to encode a string as UTF8.
 **		No_copy means do not make a copy.
@@ -1055,6 +1054,7 @@ FORCE_INLINE
 	}
 	return ser;
 }
+#endif
 
 /***********************************************************************
 **
@@ -1079,6 +1079,7 @@ FORCE_INLINE
 		Encode_UTF8(cp, size, up, &len, TRUE, ccr);
 	}
 	else {
+		//TODO: review this part!!!
 		REBYTE *bp = (REBYTE*)src;
 
 		if (ccr || !Is_ASCII(bp, len)) {

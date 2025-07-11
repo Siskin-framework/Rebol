@@ -488,27 +488,27 @@ chk_neg:
 {
 	REBVAL *path = D_ARG(1);
 	REBSER *ser = NULL;
-	REBSER *new;
 	REBYTE *tmp;
-	return R_ARG1;
+
 	// First normalize to OS native wide string
-	ser = Value_To_OS_Path(path, FALSE);
+	ser = Value_To_OS_Path(path, FALSE); // returns wide series on Windows!
 	// Above function does . and .. pre-processing, which does also the OS_REAL_PATH.
 	// So it could be replaced with version, which just prepares the input to required OS wide! 
 	if (!ser) {
 		return R_NONE;
 	}
 	// Try to call realpath on posix or _fullpath on Windows
-	tmp = OS_REAL_PATH(SERIES_DATA(ser));
+	tmp = OS_REAL_PATH(SERIES_DATA(ser)); // returns UTF-8 encoded data
+	Free_Series(ser);
 	if (!tmp) return R_NONE;
 
 	// Convert OS native utf8 string back to Rebol file type
 	REBLEN len = LEN_BYTES(tmp);
-	new = To_REBOL_Path(tmp, len, 0, FALSE);
+	ser = To_REBOL_Path(tmp, len, 0, FALSE);
 	free(tmp);
-	if (!new) return R_NONE;
+	if (!ser) return R_NONE;
 	
-	Set_Series(REB_FILE, D_RET, new);
+	Set_Series(REB_FILE, D_RET, ser);
 	return R_RET;
 }
 
@@ -574,11 +574,11 @@ chk_neg:
 ***********************************************************************/
 {
 	REBSER *ser;
-	REBCHR *lpath;
+	REBYTE *lpath;
 	REBINT len;
 
 	len = OS_GET_CURRENT_DIR(&lpath);
-	ser = To_REBOL_Path(lpath, len, OS_WIDE, TRUE); // allocates extra for end /
+	ser = To_REBOL_Path(lpath, len, 0, TRUE); // allocates extra for end /
 
 	ASSERT1(ser, RP_MISC); // should never happen
 	OS_FREE(lpath);
