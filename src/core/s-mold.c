@@ -281,7 +281,6 @@ typedef struct REB_Str_Flags {
 	REBCNT newline;		// lf
 	REBCNT quote;		// "
 	REBCNT paren;		// (1234)
-	REBCNT chr1e;
 	REBCNT malign;
 	REBLEN chars;
 	REBLEN invalid;
@@ -299,7 +298,6 @@ STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 
 	REBCNT state = 0;
 	REBCNT slen = 0;
-	size_t len = STR_TAIL(ser) - STR_SKIP(ser, idx);
 
 	bp = STR_SKIP(ser, idx);
 	ep = STR_TAIL(ser);
@@ -353,9 +351,11 @@ STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 			sf->newline++;
 			break;
 		default:
-			if (c == 0x1e) sf->chr1e += 4; // special case of ^(1e)
+			if (c == 0x7f || c == 0x1e)
+				sf->paren += 4; // ^(7f) - 1 byte is already as UTF-8 codepoint + 3 for additional ^ ()
+			else if (c > 0x7f && c < 0xA0)
+				sf->paren += 3; // ^(12) - 2 bytes are already as UTF-8 codepoint + 3 for additional ^()
 			else if (IS_CHR_ESC(c)) sf->escape++;
-			else if (c >= 0x7f && c < 0xA0) sf->paren += 4; // ^(12)
 		}
 	}
 	if (sf->brace_in != sf->brace_out) sf->malign++;
@@ -435,7 +435,7 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 	// If it is a short quoted string, emit it as "string":
 	if (sf.chars <= MAX_QUOTED_STR && sf.quote == 0 && sf.newline < 3) {
 
-		dlen = len + sf.newline + sf.escape + sf.paren + sf.chr1e + 2 + sf.invalid;
+		dlen = len + sf.newline + sf.escape + sf.paren + 2 + sf.invalid;
 		dp = Prep_Mold_Series(mold, dlen);
 		dend = dp + dlen;
 
@@ -455,7 +455,7 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 	// It is a braced string, emit it as {string}:
 	if (!sf.malign) sf.brace_in = sf.brace_out = 0;
 
-	dlen = len + sf.brace_in + sf.brace_out + sf.escape + sf.paren + sf.chr1e + 2 + sf.invalid;
+	dlen = len + sf.brace_in + sf.brace_out + sf.escape + sf.paren + 2 + sf.invalid;
 	dp = Prep_Mold_Series(mold, dlen);
 	dend = dp + dlen;
 
