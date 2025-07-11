@@ -1058,7 +1058,7 @@ X*/	REBSER *Encode_UTF8_Value(REBVAL *arg, REBCNT len, REBFLG opts)
 
 /***********************************************************************
 **
-*/	REBSER *Encode_UTF8_String(void *src, REBCNT len, REBFLG uni, REBFLG opts)
+*/	REBSER *Encode_UTF8_String(void *src, REBLEN len, REBFLG uni, REBFLG opts)
 /*
 **		Do all the details to encode a string as UTF8.
 **		No_copy means do not make a copy.
@@ -1066,22 +1066,32 @@ X*/	REBSER *Encode_UTF8_Value(REBVAL *arg, REBCNT len, REBFLG opts)
 **
 ***********************************************************************/
 {
-	REBSER *ser = BUF_SCAN; // a shared buffer
-	REBCNT size;
+	REBSER *ser; // a shared buffer
+	REBLEN size;
 	REBYTE *cp;
-	REBFLG ccr = GET_FLAG(opts, ENC_OPT_CRLF);
+//	REBFLG ccr = GET_FLAG(opts, ENC_OPT_CRLF);
+	REBFLG no_copy = GET_FLAG(opts, ENC_OPT_NO_COPY); // using share buffer
 
 	if (uni) {
-		REBUNI *up = (REBUNI*)src;
-
-		size = Length_As_UTF8(up, len, TRUE, (REBOOL)ccr);
-		cp = Reset_Buffer(ser, size + (GET_FLAG(opts, ENC_OPT_BOM) ? 3 : 0));
-		Encode_UTF8(cp, size, up, &len, TRUE, ccr);
+		REBYTE *utf8 = NULL;
+		// Uasing OS conversion, because the old Rebol UTF-8 encoder does not support surrogates yet!
+		size = OS_WIDE_TO_MULTIBYTE((const REBCHR *)src, &utf8, len);
+		if (no_copy) {
+			ser = BUF_SCAN;
+			cp = Reset_Buffer(ser, size); // +(GET_FLAG(opts, ENC_OPT_BOM) ? 3 : 0));
+			COPY_MEM(cp, utf8, size);
+			SERIES_TAIL(ser) = size;
+			STR_TERM(ser);
+		}
+		else {
+			ser = Copy_Bytes(utf8, size);
+		}
+		OS_FREE(utf8);
 	}
 	else {
-		//TODO: review this part!!!
-		REBYTE *bp = (REBYTE*)src;
-
+		size = len;
+		ser = Copy_Bytes((REBYTE *)src, size);
+#ifdef unused
 		if (ccr || !Is_ASCII(bp, len)) {
 			size = Length_As_UTF8((REBUNI*)bp, len, FALSE, (REBOOL)ccr);
 			cp = Reset_Buffer(ser, size + (GET_FLAG(opts, ENC_OPT_BOM) ? 3 : 0));
@@ -1089,10 +1099,8 @@ X*/	REBSER *Encode_UTF8_Value(REBVAL *arg, REBCNT len, REBFLG opts)
 		}
 		else if (GET_FLAG(opts, ENC_OPT_NO_COPY)) return 0;
 		else return Copy_Bytes(bp, len);
+#endif
 	}
-
-	SERIES_TAIL(ser) = len;
-	STR_TERM(ser);
-
-	return Copy_Bytes(BIN_HEAD(ser), len);
+	if (!Is_ASCII(BIN_HEAD(ser), size)) UTF8_SERIES(ser);
+	return ser;
 }

@@ -66,7 +66,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *Copy_Bytes(const REBYTE *src, REBINT len)
+*/	REBSER *Copy_Bytes(const REBYTE *src, REBLEN len)
 /*
 **		Create a string series from the given bytes.
 **		Source is always latin-1 valid. Result is always 8bit.
@@ -75,7 +75,7 @@
 {
 	REBSER *dst;
 
-	if (len < 0) len = (REBINT)LEN_BYTES(src);
+	if (len == UNKNOWN) len = LEN_BYTES(src);
 
 	dst = Make_Binary(len);
 	COPY_MEM(STR_DATA(dst), src, len);
@@ -164,7 +164,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *Copy_Str(const REBYTE *src, REBINT len)
+*/	REBSER *Copy_Str(const REBYTE *src, REBLEN len)
 /*
 **		Create a string series from the given UTF-8 encoded input.
 **		Marks series if not ASCII.
@@ -343,12 +343,21 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 {
 #ifdef OS_WIDE_CHAR
 	if (VAL_BYTE_SIZE(val)) {
+		REBSER *up;
 		// On windows, we need to convert byte to wide:
-		REBINT n = VAL_LEN(val);
-		REBSER *up = Make_Unicode(n);  // will be GC'd ok
-		n = Decode_UTF8(UNI_HEAD(up), VAL_BIN_DATA(val), n, FALSE);
-		SERIES_TAIL(up) = abs(n);
-		UNI_TERM(up);
+		if (IS_UTF8_SERIES(VAL_SERIES(val))) {
+			REBYTE *wide = NULL;
+			REBLEN len = OS_MULTIBYTE_TO_WIDE(VAL_BIN_DATA(val), &wide);
+			if (!wide) return NULL;
+			up = Make_Unicode(len);  // will be GC'd ok
+			COPY_MEM(BIN_HEAD(up), wide, len * sizeof(REBUNI));
+			OS_FREE(wide);
+			SERIES_TAIL(up) = len;
+			UNI_TERM(up);
+		}
+		else {
+			up = Copy_Bytes_To_Unicode(VAL_BIN_DATA(val), VAL_LEN(val));
+		}
 		return UNI_HEAD(up);
 	}
 	else {

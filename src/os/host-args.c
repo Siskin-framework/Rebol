@@ -47,7 +47,7 @@
 
 extern int OS_Get_Current_Dir(REBCHR **lp);
 extern REBOOL OS_Get_Boot_Path(REBCHR **path);
-extern REBLEN OS_Wide_To_Multibyte(const REBCHR *wide, REBYTE **utf8);
+extern REBLEN OS_Wide_To_Multibyte(const REBCHR *wide, REBYTE **utf8, REBLEN len);
 
 // REBOL Option --Words:
 
@@ -157,7 +157,7 @@ const struct arg_chr arg_chars2[] = {
 	REBYTE *value = NULL;
 
 #ifdef OS_WIDE_CHAR
-	OS_Wide_To_Multibyte(arg, &value);
+	OS_Wide_To_Multibyte(arg, &value, (REBLEN)-1);
 #else
 	value = arg;
 #endif
@@ -240,7 +240,7 @@ const struct arg_chr arg_chars2[] = {
 		// First arg is path to executable (on most systems):
 		if (argc > 0) {
 #ifdef OS_WIDE_CHAR
-			OS_Wide_To_Multibyte(*argv, &rargs->exe_path);
+			OS_Wide_To_Multibyte(*argv, &rargs->exe_path, -1);
 #else
 			rargs->exe_path = *argv;
 #endif
@@ -305,7 +305,7 @@ const struct arg_chr arg_chars2[] = {
 			}
 			else {
 #ifdef OS_WIDE_CHAR
-				OS_Wide_To_Multibyte(arg, &rargs->script);
+				OS_Wide_To_Multibyte(arg, &rargs->script, -1);
 #else
 				rargs->script = arg;
 #endif

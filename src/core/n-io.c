@@ -841,32 +841,20 @@ chk_neg:
 						  output_type, &os_output, &output_len,
 						  err_type, &os_err, &err_len);
 
-	if (output_type == STRING_TYPE) {
-		if (output != NULL
-			&& output_len > 0) {
-			REBSER *ser = Copy_OS_Str(os_output, output_len);
-			Append_String(VAL_SERIES(output), ser, 0, SERIES_TAIL(ser));
-			OS_FREE(os_output);
-		}
-	} else if (output_type == BINARY_TYPE) {
-		if (output != NULL
-			&& output_len > 0) {
+	if (output_type == STRING_TYPE || output_type == BINARY_TYPE) {
+		if (output != NULL && output_len > 0) {
 			Append_Bytes_Len(VAL_SERIES(output), os_output, output_len);
+			if (output_type == STRING_TYPE && !IS_UTF8_SERIES(VAL_SERIES(output)) && !Is_ASCII(os_output, output_len))
+				UTF8_SERIES(VAL_SERIES(output));
 			OS_FREE(os_output);
 		}
 	}
 
-	if (err_type == STRING_TYPE) {
-		if (err != NULL
-			&& err_len > 0) {
-			REBSER *ser = Copy_OS_Str(os_err, err_len);
-			Append_String(VAL_SERIES(err), ser, 0, SERIES_TAIL(ser));
-			OS_FREE(os_err);
-		}
-	} else if (err_type == BINARY_TYPE) {
-		if (err != NULL
-			&& err_len > 0) {
+	if (err_type == STRING_TYPE || err_type == BINARY_TYPE) {
+		if (err != NULL	&& err_len > 0) {
 			Append_Bytes_Len(VAL_SERIES(err), os_err, err_len);
+			if (err_type == STRING_TYPE && !IS_UTF8_SERIES(VAL_SERIES(err)) && !Is_ASCII(os_err, err_len))
+				UTF8_SERIES(VAL_SERIES(err));
 			OS_FREE(os_err);
 		}
 	}

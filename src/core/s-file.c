@@ -61,8 +61,7 @@
 	REBYTE *src;
 
 	if (uni) {
-		//?? original len is ignored.. is it a problem?
-		len = OS_WIDE_TO_MULTIBYTE(bp, &src);
+		len = OS_WIDE_TO_MULTIBYTE(bp, &src, len);
 	}
 	else {
 		src = bp;

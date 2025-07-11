@@ -786,7 +786,8 @@ static void Set_Option_String(REBCHR *str, REBCNT field)
 	REBVAL *val;
 	if (str) {
 		val = Get_System(SYS_OPTIONS, field);
-		Set_String(val, Copy_Str(str, (REBINT)LEN_STR(str)));
+		// The string is UTF-8 encoded even on Windows!
+		Set_String(val, Copy_Str(str, LEN_BYTES(str)));
 	}
 }
 

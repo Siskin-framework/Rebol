@@ -840,7 +840,7 @@ new_line:
 	Append_Bytes(ser, ") ");
 	Append_Series(ser, bp, len);
 	Set_String(&error->nearest, ser);
-	Set_String(&error->arg1, Copy_Bytes(name, -1));
+	Set_String(&error->arg1, Copy_Bytes(name, UNKNOWN));
 	Set_String(&error->arg2, Copy_Bytes(arg, size));
 
 	if (relax) {

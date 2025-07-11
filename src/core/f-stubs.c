@@ -574,7 +574,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Val_Series_Len(REBVAL *value)
+*/	REBLEN Val_Series_Len(REBVAL *value)
 /*
 **		Get length of series, but avoid negative values.
 **
@@ -587,7 +587,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Val_String_Len(REBVAL *value)
+*/	REBLEN Val_String_Len(REBVAL *value)
 /*
 **		Get length of string series.
 **
@@ -595,7 +595,7 @@
 {
 	if (VAL_INDEX(value) >= VAL_TAIL(value)) return 0;
 	if (IS_UTF8_SERIES(VAL_SERIES(value))) {
-
+		return Length_As_UTF8_Code_Points(VAL_BIN_DATA(value));
 	}
 	return VAL_TAIL(value) - VAL_INDEX(value);
 }

@@ -593,7 +593,7 @@ end_date:
 
 /***********************************************************************
 **
-*/	const REBYTE *Scan_Email(const REBYTE *cp, REBCNT len, REBVAL *value)
+*/	const REBYTE *Scan_Email(const REBYTE *cp, REBLEN len, REBVAL *value)
 /*
 **		Scan and convert email.
 **
@@ -601,8 +601,8 @@ end_date:
 {
 	REBYTE *str = Reset_Buffer(BUF_SCAN, len);
 	REBOOL at = FALSE;
-	UTF32 n;
-	REBCNT cnt = len;
+	REBU32 n;
+	REBLEN cnt = len;
 
 	for (; len > 0; len--) {
 		if (*cp == '@') {
@@ -632,7 +632,7 @@ end_date:
 
 /***********************************************************************
 **
-*/	const REBYTE *Scan_Ref(const REBYTE *cp, REBCNT len, REBVAL *value)
+*/	const REBYTE *Scan_Ref(const REBYTE *cp, REBLEN len, REBVAL *value)
 /*
 **		Scan and convert ref!
 **
@@ -651,7 +651,7 @@ end_date:
 
 /***********************************************************************
 **
-*/	const REBYTE *Scan_URL(const REBYTE *cp, REBCNT len, REBVAL *value)
+*/	const REBYTE *Scan_URL(const REBYTE *cp, REBLEN len, REBVAL *value)
 /*
 **		Scan and convert a URL.
 **

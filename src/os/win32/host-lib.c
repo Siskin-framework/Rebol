@@ -142,13 +142,13 @@ void Dispose_Windows(void);
 
 /***********************************************************************
 **
-*/	REBLEN OS_Wide_To_Multibyte(const REBCHR* wide, REBYTE **utf8)
+*/	REBLEN OS_Wide_To_Multibyte(const REBCHR* wide, REBYTE **utf8, REBLEN len)
 /*
 **		Return new utf-8 encoded string.
 **
 ***********************************************************************/
 {
-	size_t len = wcslen(wide);
+	if (len == (REBLEN)-1) len = wcslen(wide);
 	size_t needed = WideCharToMultiByte(CP_UTF8, 0, wide, len, NULL, 0, NULL, NULL);
 	REBYTE *out = (REBYTE*)malloc(needed+1);
 	*utf8 = out;
@@ -524,9 +524,10 @@ void Dispose_Windows(void);
 ***********************************************************************/
 {
 	REBCHR *wide = MAKE_STR(MAX_FILE_NAME);
+	if (!wide) return 0;
 	if (!GetModuleFileName(0, wide, MAX_FILE_NAME)) return 0;
 	REBYTE *temp = NULL;
-	OS_Wide_To_Multibyte(wide, &temp);
+	OS_Wide_To_Multibyte(wide, &temp, -1);
 	OS_Free(wide);
 	*name = temp;
 	return 1;
@@ -697,7 +698,7 @@ void Dispose_Windows(void);
 	}
 
 	REBYTE *temp = NULL;
-	len = OS_Wide_To_Multibyte(wide, &temp);
+	len = OS_Wide_To_Multibyte(wide, &temp, len);
 	OS_Free(wide);
 
 	*path = temp;
@@ -1257,41 +1258,6 @@ void Dispose_Windows(void);
 		CloseHandle(pi.hThread);
 		CloseHandle(pi.hProcess);
 
-		if (output_type == STRING_TYPE && *output != NULL && *output_len > 0) {
-			/* convert to wide char string */
-			int dest_len = 0;
-			wchar_t *dest = NULL;
-			dest_len = MultiByteToWideChar(CP_OEMCP, 0, *output, *output_len, dest, 0);
-			if (dest_len <= 0) {
-				OS_Free(*output);
-				*output = NULL;
-				*output_len = 0;
-			}
-			dest = OS_Make(*output_len * sizeof(wchar_t));
-			if (dest == NULL) goto cleanup;
-			MultiByteToWideChar(CP_OEMCP, 0, *output, *output_len, dest, dest_len);
-			OS_Free(*output);
-			*output = dest;
-			*output_len = dest_len;
-		}
-
-		if (err_type == STRING_TYPE && *err != NULL && *err_len > 0) {
-			/* convert to wide char string */
-			int dest_len = 0;
-			wchar_t *dest = NULL;
-			dest_len = MultiByteToWideChar(CP_OEMCP, 0, *err, *err_len, dest, 0);
-			if (dest_len <= 0) {
-				OS_Free(*err);
-				*err = NULL;
-				*err_len = 0;
-			}
-			dest = OS_Make(*err_len * sizeof(wchar_t));
-			if (dest == NULL) goto cleanup;
-			MultiByteToWideChar(CP_OEMCP, 0, *err, *err_len, dest, dest_len);
-			OS_Free(*err);
-			*err = dest;
-			*err_len = dest_len;
-		}
 	} else if (result) {
 		/* no wait */
 		/* Close handles to avoid leaks */
