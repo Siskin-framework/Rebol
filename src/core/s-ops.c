@@ -110,7 +110,7 @@
 	while (src < end) {
 		REBCNT sz = UTF8_Next_Char_Size(src, 0);
 		if (opts == 0 && sz > 1) Trap0(RE_INVALID_CHARS);
-		if (IS_SPACE(*src)) break;
+		if (IS_LEX_SPACE(*src)) break;
 		len += sz;
 		src += sz;
 		if (len > max_len)
