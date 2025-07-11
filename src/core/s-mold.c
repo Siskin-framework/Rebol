@@ -553,7 +553,7 @@ STOID Mold_Url(REBVAL *value, REB_MOLD *mold)
 	REBYTE c;
 	REBCNT len = VAL_LEN(value);
 	REBCNT idx = VAL_INDEX(value);
-	REBYTE *bp = VAL_BIN_DATA(value);
+	REBYTE *bp = VAL_BIN_HEAD(value);
 	REBSER *ser = VAL_SERIES(value);
 	REBYTE required = (VAL_TYPE(value) == REB_EMAIL ? '@' : ':');
 	REBCNT found = 0;
