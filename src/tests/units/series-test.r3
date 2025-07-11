@@ -746,6 +746,7 @@ Rebol [
 	--test-- "APPEND binary! binary!"
 		--assert #{0102}     = append #{01} #{02}
 		--assert #{0102}     = append next #{01} #{02}
+		--assert 5 == length? append #{} #{ff01000100}
 	--test-- "APPEND binary! string!"
 		--assert #{0001}     = append #{00} "^(01)"
 		--assert #{0001}     = append next #{00} "^(01)"

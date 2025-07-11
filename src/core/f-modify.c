@@ -210,11 +210,14 @@
 
 	// For dup count:
 	for (; dups > 0; dups--) {
-		Insert_String(dst_ser, dst_idx, src_ser, src_idx, src_len, TRUE);
+		// Don't use Insert_String as we may be inserting to a binary!
+		// Destination is already expanded above.
+		COPY_MEM(BIN_SKIP(dst_ser, dst_idx), BIN_SKIP(src_ser, src_idx), src_len);
 		dst_idx += src_len;
 	}
 
-	if (!IS_UTF8_SERIES(dst_ser) && !Is_ASCII(STR_SKIP(src_ser, src_idx), src_len))
+	// Mark as UTF-8 only if destination is not a binary (AN_SERIES flag)
+	if (!GET_FLAG(flags, AN_SERIES) && !IS_UTF8_SERIES(dst_ser) && !Is_ASCII(STR_SKIP(src_ser, src_idx), src_len))
 		UTF8_SERIES(dst_ser);
 
 	TERM_SERIES(dst_ser);
