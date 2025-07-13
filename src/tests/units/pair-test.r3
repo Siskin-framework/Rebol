@@ -217,6 +217,16 @@ Rebol [
 	--test-- "pcomp-3"		--assert not-equal? 1x1 0x1
 	--test-- "pcomp-4"		--assert not-equal? 1x1 0x0
 
+	--test-- "p-comp5"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2392
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2651
+	--assert 1x1 = 1x1
+	--assert 1x1 = 1.0x1.0
+	--assert 1x1 <> 1x0
+	--assert 1x1 < 2x2
+	--assert 0x0 < 1x-1
+	--assert -1x1 < 0x0
+
 ===end-group===
 
 ===start-group=== "pair - min/max/negative/positive"

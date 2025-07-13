@@ -1682,6 +1682,11 @@ Rebol [
 	--assert [A B C a b c] == sort/case b
 	--assert [A a B b C c] == sort b
 
+--test-- "sort block of pairs"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2392
+	--assert [-1x-1 -1x0 0x-1 0x0 1x-1 1x6 2x5] == sort [1x6 2x5 -1x0 0x-1 0x0 -1x-1 1x-1]
+	--assert [1x1 1x2 2x1 2x2] == sort [1x2 1x1 2x1 2x2]
+
 --test-- "sort block of datatypes"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/406
 	--assert (reduce [integer! string!]) == (sort reduce [string! integer!])
