@@ -888,10 +888,15 @@ compare:
 /*
 ***********************************************************************/
 {
-	REBVAL *val = &DS_Base[++DSP];
-	CLEARS(val);
-	VAL_SET(val, VAL_TYPE(D_ARG(1)));
-	if (Compare_Values(D_ARG(1), D_ARG(2), -1)) return R_FALSE;
+	REBVAL *arg = D_ARG(1);
+	REBVAL *zero;
+	if (IS_PAIR(arg)) {
+		return (VAL_PAIR_X(arg) < 0 && VAL_PAIR_Y(arg) < 0) ? R_TRUE : R_FALSE;
+	}
+	zero = &DS_Base[++DSP];
+	CLEARS(zero);
+	VAL_SET(zero, VAL_TYPE(arg));
+	if (Compare_Values(arg, zero, -1)) return R_FALSE;
 	return R_TRUE;
 }
 
@@ -901,10 +906,15 @@ compare:
 /*
 ***********************************************************************/
 {
-	REBVAL *val = &DS_Base[++DSP];
-	CLEARS(val);
-	VAL_SET(val, VAL_TYPE(D_ARG(1)));
-	if (Compare_Values(D_ARG(1), D_ARG(2), -2)) return R_TRUE;
+	REBVAL *arg = D_ARG(1);
+	REBVAL *zero;
+	if (IS_PAIR(arg)) {
+		return (VAL_PAIR_X(arg) >= 0 && VAL_PAIR_Y(arg) >= 0) ? R_TRUE : R_FALSE;
+	}
+	zero = &DS_Base[++DSP];
+	CLEARS(zero);
+	VAL_SET(zero, VAL_TYPE(arg));
+	if (Compare_Values(arg, zero, -2)) return R_TRUE;
 	return R_FALSE;
 }
 
