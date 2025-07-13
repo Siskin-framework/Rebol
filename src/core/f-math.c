@@ -3,7 +3,6 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -116,8 +115,9 @@
 {
 	REBYTE tmp[MAX_NUM_LEN];
 	REBYTE *tp = tmp;
+	REBI64 n;
+	REBI64 r;
 	REBINT len = 0;
-	REBU64 uval;
 
 	// defaults for problem cases
 	buf[0] = '?';
@@ -131,25 +131,24 @@
 		return 1;
 	}
 
-	// Handle negative numbers
 	if (val < 0) {
+		val = -val;
 		*buf++ = '-';
-		// Handle INT64_MIN safely: cast to unsigned
-		// (REBU64)-(INT64_MIN) == 9223372036854775808ULL
-		// This is well-defined in C99+
-		uval = (REBU64)(-(val + 1)) + 1;
 		maxl--;
 		len = 1;
-	}
-	else {
-		uval = (REBU64)val;
 	}
 
 	// Generate string in reverse:
 	*tp++ = 0;
-	while (uval != 0) {
-		*tp++ = '0' + (uval % 10);
-		uval /= 10;
+	while (val != 0) {
+		n = val / 10;	// not using ldiv for easier compatibility
+		r = val % 10;
+		if (r < 0) {	// check for overflow case when val = 0x80000000...
+			r = -r;
+			n = -n;
+		}
+		*tp++ = (REBYTE)('0' + (REBYTE)(r));
+		val = n;
 	}
 	tp--;
 

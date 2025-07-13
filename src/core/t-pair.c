@@ -36,14 +36,13 @@
 /*
 ***********************************************************************/
 {
-	REBINT diff = Cmp_Pair(a, b);
-	if (mode >= 0) return diff == 0;
-	if (mode == -1) return diff >= 0;
-	return diff > 0;
-	//		return (VAL_PAIR_X(a) >= VAL_PAIR_X(b) || VAL_PAIR_Y(a) >= 0); // not LT
-	//	return (VAL_PAIR_X(a) > 0 && VAL_PAIR_Y(a) > 0); // NOT LTE
-	//}
-	//return -1;
+	if (mode >= 0) return Cmp_Pair(a, b) == 0; // works for INTEGER=0 too (spans x y)
+	if (IS_PAIR(b) && 0 == VAL_INT64(b)) { // for negative? and positive?
+		if (mode == -1)
+			return (VAL_PAIR_X(a) >= 0 || VAL_PAIR_Y(a) >= 0); // not LT
+		return (VAL_PAIR_X(a) > 0 && VAL_PAIR_Y(a) > 0); // NOT LTE
+	}
+	return -1;
 }
 
 
