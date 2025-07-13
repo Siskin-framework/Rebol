@@ -273,6 +273,15 @@ Rebol [
 ===end-group=== 
 
 
+===start-group=== "mold integer!"
+	--test-- "mold min integer"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2650
+		--assert "-9223372036854775808" == mold 0#8000000000000000
+	--test-- "mold max integer"
+		--assert "-9223372036854775807" == mold 0#7FFFFFFFFFFFFFFF
+
+===end-group=== 
+
 ===start-group=== "mold-all"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2159
 	--test-- "mold-true" --assert "#(true)" = mold true
