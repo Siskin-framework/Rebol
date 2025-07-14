@@ -361,7 +361,7 @@ STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 	if (sf->brace_in != sf->brace_out) sf->malign++;
 }
 
-static REBYTE *Emit_Mold_Char(REBYTE *bp, UTF32 chr)
+static REBYTE *Emit_Mold_Char(REBYTE *bp, REBU32 chr)
 {
 	if (chr >= 0x7f || chr == 0x1e) {  // non ASCII or ^ must be (00) escaped
 		if (chr < 0xA0 || chr == 0x1e) { // do not AND with above
@@ -382,7 +382,7 @@ static REBYTE *Emit_Mold_Char(REBYTE *bp, UTF32 chr)
 	return bp;
 }
 
-STOID Mold_Char(REBSER *dst, UTF32 chr, REBOOL molded)
+STOID Mold_Char(REBSER *dst, REBU32 chr, REBOOL molded)
 {
 	REBCNT tail = SERIES_TAIL(dst);
 	REBYTE *bp;
@@ -409,11 +409,11 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 	REBSER *ser = VAL_SERIES(value);
 	REBCNT idx = VAL_INDEX(value);
 	REB_STRF sf = {0};
-	REBYTE *bp;
-	REBYTE *ep;
+	const REBYTE *bp;
+	const REBYTE *ep;
 	REBYTE *dp;
 	REBOOL uni = !BYTE_SIZE(ser);
-	UTF32 c;
+	REBU32 c;
 	REBCNT len = VAL_LEN(value);
 	REBLEN dlen;
 	REBYTE *dend;
@@ -598,7 +598,7 @@ STOID Mold_File(REBVAL *value, REB_MOLD *mold)
 	REBINT c;
 	REBCNT len = VAL_LEN(value);
 	REBSER *ser = VAL_SERIES(value);
-	REBYTE *bp;
+	const REBYTE *bp;
 	REBCNT bytes = len;
 
 

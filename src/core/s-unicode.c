@@ -115,16 +115,13 @@
 #include "sys-core.h"
 #include <wchar.h>
 
-#define UNI_SUR_HIGH_START  (UTF32)0xD800
-#define UNI_SUR_HIGH_END    (UTF32)0xDBFF
-#define UNI_SUR_LOW_START   (UTF32)0xDC00
-#define UNI_SUR_LOW_END     (UTF32)0xDFFF
+#define UNI_SUR_HIGH_START  (REBU32)0xD800
+#define UNI_SUR_HIGH_END    (REBU32)0xDBFF
+#define UNI_SUR_LOW_START   (REBU32)0xDC00
+#define UNI_SUR_LOW_END     (REBU32)0xDFFF
 
 // Copyright (c) 2008-2010 Bjoern Hoehrmann <bjoern@hoehrmann.de>
 // See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
-
-#define UTF8_ACCEPT 0
-#define UTF8_REJECT 12
 
 static const REBYTE utf8d[] = {
   // The first part of the table maps bytes to character classes that
@@ -208,7 +205,7 @@ static REBU32 read_u32(const REBYTE *src, int is_little_endian) {
 FORCE_INLINE
 /***********************************************************************
 **
-*/	REBCNT UTF8_Codepoint_Size(UTF32 codepoint)
+*/	REBCNT UTF8_Codepoint_Size(REBU32 codepoint)
 /*
 **		Returns the size of the given codepoint in bytes.
 **
@@ -319,7 +316,7 @@ FORCE_INLINE
 FORCE_INLINE
 /***********************************************************************
 **
-*/	REBCNT UTF8_Skip(REBSER *ser, REBCNT index, REBINT chars)
+*/	REBCNT UTF8_Skip(const REBSER *ser, REBCNT index, REBINT chars)
 /*
 **		Return position in series after skipping number of chars forward or reverse.
 **
@@ -413,7 +410,7 @@ FORCE_INLINE
 FORCE_INLINE
 /***********************************************************************
 **
-*/	REBSER *UTF8_Replace_Codepoint(REBSER *ser, REBLEN index, UTF32 codepoint)
+*/	REBSER *UTF8_Replace_Codepoint(REBSER *ser, REBLEN index, REBU32 codepoint)
 /*
 **		Replace codepoint at given index with a new one.
 **
@@ -428,9 +425,9 @@ FORCE_INLINE
 	Encode_UTF8_Char(STR_SKIP(ser, index), codepoint);
 }
 
-UTF32 Decode_Surrogate_Pair(const REBYTE *src) {
-	UTF32 c1 = ((src[0] & 0x0F) << 12) | ((src[1] & 0x3F) << 6) | (src[2] & 0x3F);
-	UTF32 c2 = ((src[3] & 0x0F) << 12) | ((src[4] & 0x3F) << 6) | (src[5] & 0x3F);
+REBU32 Decode_Surrogate_Pair(const REBYTE *src) {
+	REBU32 c1 = ((src[0] & 0x0F) << 12) | ((src[1] & 0x3F) << 6) | (src[2] & 0x3F);
+	REBU32 c2 = ((src[3] & 0x0F) << 12) | ((src[4] & 0x3F) << 6) | (src[5] & 0x3F);
 	if (c1 >= 0xD800 && c1 <= 0xDBFF && c2 >= 0xDC00 && c2 <= 0xDFFF) {
 		return 0x10000 + ((c1 - 0xD800) << 10) + (c2 - 0xDC00);
 	}
@@ -483,9 +480,9 @@ UTF32 Decode_Surrogate_Pair(const REBYTE *src) {
 ***********************************************************************/
 {
 	if (len == 0) return 0;
-	REBYTE *start = str;
+	const REBYTE *start = str;
 	const REBYTE *end = str + len;
-	REBYTE *acc = start;
+	const REBYTE *acc = start;
 	REBCNT codepoint = 0;
 	REBCNT state = UTF8_ACCEPT;
 
@@ -524,7 +521,7 @@ UTF32 Decode_Surrogate_Pair(const REBYTE *src) {
 
 /***********************************************************************
 **
-*/	UTF32 UTF8_Decode_Codepoint(const REBYTE **RESTRICT str, REBCNT *RESTRICT len)
+*/	REBU32 UTF8_Decode_Codepoint(const REBYTE **RESTRICT str, REBCNT *RESTRICT len)
 /*
 **		Converts a single UTF8 code-point (to 32 bit).
 **		Errors are returned as zero. (So prescan source for null.)
@@ -580,7 +577,7 @@ done:
 	while (*bp) dst_len += (*bp++ & 0xC0) != 0x80;
 
 	dst_ser = Make_Series((dst_len+1) * 4, 1, FALSE);
-	dst_bin = (REBU32*)BIN_HEAD(dst_ser);
+	dst_bin = BIN_HEAD(dst_ser);
 
 	bp = str;
 	while (*bp && len > 0) {
@@ -659,7 +656,7 @@ done:
 ***********************************************************************/
 {
 	int flag = -1;
-	UTF32 ch;
+	REBU32 ch;
 	REBUNI *start = dst;
 
 	while (len > 0) {
@@ -843,7 +840,7 @@ u16_error:
 FORCE_INLINE
 /***********************************************************************
 **
-*/	REBCNT Encode_UTF8_Char(REBYTE *dst, UTF32 chr)
+*/	REBCNT Encode_UTF8_Char(REBYTE *dst, REBU32 chr)
 /*
 **		Converts a single char to UTF8 code-point.
 **		Returns length of char stored in dst.
@@ -896,7 +893,7 @@ FORCE_INLINE
 **
 ***********************************************************************/
 {
-	UTF32 c, c2;
+	REBU32 c, c2;
 	REBINT n;
 	REBYTE buf[8];
 	REBYTE *bs = dst; // save start

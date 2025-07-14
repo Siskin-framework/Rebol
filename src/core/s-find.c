@@ -356,9 +356,9 @@
 **
 ***********************************************************************/
 {
-	UTF32 c1;
-	UTF32 c2;
-	UTF32 c3;
+	REBU32 c1;
+	REBU32 c2;
+	REBU32 c3;
 	REBYTE *str1, *str2;
 	REBCNT n = 0;
 	const REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
@@ -460,8 +460,8 @@
 **
 ***********************************************************************/
 {
-	UTF32 c1;
-	UTF32 c2;
+	REBU32 c1;
+	REBU32 c2;
 	REBYTE *str1, *str2, *end;
 	REBCNT n = 0;
 	const REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
@@ -544,14 +544,14 @@
 **
 ***********************************************************************/
 {
-	UTF32 c1;
-	UTF32 c2;
-	UTF32 c3 = 0;
+	REBU32 c1;
+	REBU32 c2;
+	REBU32 c3 = 0;
 	REBCNT n = 0, start = 0, pos = 0;
 	REBCNT sn = 0;
 	REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
-	UTF32 c_some = '*';
-	UTF32 c_one  = '?';
+	REBU32 c_some = '*';
+	REBU32 c_one  = '?';
 
 	if (IS_STRING(wild)) {
 		if (VAL_INDEX(wild)   < VAL_TAIL(wild)) c_some = GET_UTF8_CHAR(VAL_SERIES(wild), VAL_INDEX(wild));
@@ -641,7 +641,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Find_Str_Char(REBSER *ser, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, UTF32 c2, REBCNT flags)
+*/	REBCNT Find_Str_Char(REBSER *ser, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBU32 c2, REBCNT flags)
 /*
 **		General purpose find a char in a string.
 **
@@ -653,7 +653,7 @@
 **
 ***********************************************************************/
 {
-	UTF32 c1;
+	REBU32 c1;
 	REBYTE *bp;
 	const REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
 
@@ -705,8 +705,8 @@
 **
 ***********************************************************************/
 {
-	UTF32 chr;
-	REBYTE *str = BIN_HEAD(ser);
+	REBU32 chr;
+	const REBYTE *str = BIN_HEAD(ser);
 
 	const REBOOL uncase = !(flags & AM_FIND_CASE); // uncase = case insenstive
 

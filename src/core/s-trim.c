@@ -31,7 +31,7 @@
 #include "sys-core.h"
 
 FORCE_INLINE
-static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
+static REBFLG find_in_uni(REBU32 *up, REBINT len, REBU32 c)
 {
 	while (len-- > 0) if (*up++ == c) return TRUE;
 	return FALSE;
@@ -50,16 +50,16 @@ static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
 {
 	#define MAX_WITH 32
 	REBCNT wlen = 0, n;
-	UTF32  with_chars[MAX_WITH];	// chars to be trimmed
-	UTF32  *up = with_chars;
-	UTF32  chr;
-	REBYTE *src = NULL;
+	REBU32  with_chars[MAX_WITH];	// chars to be trimmed
+	REBU32  *up = with_chars;
+	REBU32  chr;
+	const REBYTE *src = NULL;
 	REBYTE *dst;
 
 	// Setup WITH array from arg or the default:
 	n = 0;
 	if (IS_NONE(with)) {
-		src = b_cast("\n \r\t");
+		src = cb_cast("\n \r\t");
 		wlen = n = 4;
 	}
 	else if (IS_CHAR(with)) {
@@ -204,9 +204,9 @@ static REBFLG find_in_uni(UTF32 *up, REBINT len, UTF32 c)
 {
 	REBCNT out = index;
 	REBOOL append_line_feed = FALSE;
-	UTF32 chr;
-	REBYTE *src = BIN_SKIP(ser, index);
-	REBYTE *dst = src;
+	REBU32 chr;
+	const REBYTE *src = BIN_SKIP(ser, index);
+	REBYTE *dst = (REBYTE*)src;
 	REBCNT size;
 
 	// Skip head lines if required:

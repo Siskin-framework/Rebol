@@ -103,4 +103,7 @@ enum encoding_opts {
 
 #pragma pack()
 
+#define UTF8_ACCEPT 0
+#define UTF8_REJECT 12
+
 #endif

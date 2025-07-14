@@ -704,7 +704,7 @@ static struct digest {
 //	REBVAL *val_escape = D_ARG(3);
 	REBOOL as_uri      = D_REF(4);
 	REBINT len = (REBINT)VAL_LEN(arg); // due to len -= 2 below
-	UTF32 n;
+	REBU32 n;
 	REBSER *ser;
 	REBYTE *bp, *dp;
 

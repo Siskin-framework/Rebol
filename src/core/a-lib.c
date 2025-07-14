@@ -861,7 +861,7 @@ RL_API REBUPT RL_Series(REBSER *series, REBCNT what)
 	return 0;
 }
 
-RL_API UTF32 RL_Get_Char(REBSER *series, u32 index)
+RL_API REBU32 RL_Get_Char(REBSER *series, u32 index)
 /*
 **	Get a character from UTF8 encoded string.
 **

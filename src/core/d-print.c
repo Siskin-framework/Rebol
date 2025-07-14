@@ -110,7 +110,7 @@ static REBREQ *Req_SIO;
 ***********************************************************************/
 {
 	Req_SIO->actual = 0;
-	Req_SIO->data = bp;
+	Req_SIO->data = b_cast(bp);
 	Req_SIO->length = (len == UNKNOWN) ? LEN_BYTES(bp) : len; // byte size of buffer
 	OS_DO_DEVICE(Req_SIO, RDC_WRITE);
 	if (Req_SIO->error) Crash(RP_IO_ERROR);
@@ -596,7 +596,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	REBUNI *Form_Hex_Esc(REBYTE *bp, REBINT c)
+*/	REBYTE *Form_Hex_Esc(REBYTE *bp, REBINT c)
 /*
 **		Convert byte int to %xx format (in unicode destination)
 **
@@ -612,7 +612,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	REBUNI *Form_RGB(REBYTE *bp, REBCNT val)
+*/	REBYTE *Form_RGB(REBYTE *bp, REBCNT val)
 /*
 **		Convert 24 bit RGB to xxxxxx format.
 **

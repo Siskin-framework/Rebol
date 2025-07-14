@@ -73,9 +73,6 @@
 	#include <stdarg.h>
 #endif
 
-#define UTF8_ACCEPT 0
-#define UTF8_REJECT 1
-
 // Local includes:
 #include "reb-c.h"
 #include "reb-defs.h"

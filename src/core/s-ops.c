@@ -34,7 +34,7 @@
 
 /*********************************************************************
 **
-*/	REBOOL Is_ASCII(REBYTE *bp, REBLEN len)
+*/	REBOOL Is_ASCII(const REBYTE *bp, REBLEN len)
 /*
 **		Returns TRUE if byte string uses upper code page.
 **
@@ -134,7 +134,7 @@
 #ifdef unused
 /*********************************************************************
 **
-*/	REBSER *Prep_Bin_Str(REBVAL *val, REBCNT *index, REBCNT *length)
+X*/	REBSER *Prep_Bin_Str(REBVAL *val, REBCNT *index, REBCNT *length)
 /*
 **	Determines if UTF8 conversion is needed for a series before it
 **	is used with a byte-oriented function.
@@ -774,9 +774,9 @@ static REBYTE seed_str[SEED_LEN] = {
 
 	ASSERT1(VAL_BYTE_SIZE(val), RP_BAD_SIZE);
 
-	REBYTE *bp = VAL_BIN_SKIP(val, VAL_INDEX(val));
-	REBYTE *ep = bp + len;
-	REBYTE *np = bp;
+	const REBYTE *bp = VAL_BIN_SKIP(val, VAL_INDEX(val));
+	const REBYTE *ep = bp + len;
+	REBYTE *np = (REBYTE*)bp;
 	REBINT c;
 	if (upper) {
 		while (bp < ep) {
@@ -784,7 +784,8 @@ static REBYTE seed_str[SEED_LEN] = {
 			if (c < UNICODE_CASES) {
 				np += Encode_UTF8_Char(np, UP_CASE(c));
 			}
-			else np = bp;
+			else
+				np = (REBYTE *)bp;
 		}
 	}
 	else {
@@ -793,7 +794,7 @@ static REBYTE seed_str[SEED_LEN] = {
 			if (c < UNICODE_CASES) {
 				np += Encode_UTF8_Char(np, LO_CASE(c));
 			}
-			else np = bp;
+			else np = (REBYTE *)bp;
 		}
 	}
 }

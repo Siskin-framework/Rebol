@@ -140,44 +140,6 @@ void Dispose_Windows(void);
 }
 
 
-/***********************************************************************
-**
-*/	REBLEN OS_Wide_To_Multibyte(const REBCHR* wide, REBYTE **utf8, REBLEN len)
-/*
-**		Return new utf-8 encoded string.
-**
-***********************************************************************/
-{
-	if (len == (REBLEN)-1) len = wcslen(wide);
-	size_t needed = WideCharToMultiByte(CP_UTF8, 0, wide, len, NULL, 0, NULL, NULL);
-	REBYTE *out = (REBYTE*)malloc(needed+1);
-	*utf8 = out;
-	if (out == NULL || needed == 0) return 0;
-	WideCharToMultiByte(CP_UTF8, 0, wide, len, out, needed, NULL, NULL);
-	out[needed] = 0;
-	return (REBLEN)needed;
-}
-
-/***********************************************************************
-**
-*/	REBLEN OS_Multibyte_To_Wide(const REBYTE *utf8, REBYTE **wide)
-/*
-**		Return new wide encoded string.
-**
-***********************************************************************/
-{
-	size_t len = LEN_BYTES(utf8);
-	size_t needed = MultiByteToWideChar(CP_UTF8, 0, utf8, len, NULL, 0);
-	if (needed == 0) return 0;
-	REBUNI *out = (REBUNI *)malloc((needed + 1) * sizeof(REBCHR));
-	if (out == NULL) return 0;
-	MultiByteToWideChar(CP_UTF8, 0, utf8, len, out, needed);
-	out[needed] = 0;
-	*wide = out;
-	return (REBLEN)needed;
-}
-
-
 #ifdef removing_this_code
 // this function is not needed. Now is possible to use RL_GET_STRING with WIDE flag
 /***********************************************************************
@@ -1543,5 +1505,43 @@ static INT CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 	req->data = str;
 	req->actual = pos;
 	str[pos++] = 0;
+}
+
+
+/***********************************************************************
+**
+*/	REBLEN OS_Wide_To_Multibyte(const REBCHR* wide, REBYTE **utf8, REBLEN len)
+/*
+**		Return new utf-8 encoded string.
+**
+***********************************************************************/
+{
+	if (len == (REBLEN)-1) len = wcslen(wide);
+	size_t needed = WideCharToMultiByte(CP_UTF8, 0, wide, len, NULL, 0, NULL, NULL);
+	REBYTE *out = (REBYTE*)malloc(needed+1);
+	*utf8 = out;
+	if (out == NULL || needed == 0) return 0;
+	WideCharToMultiByte(CP_UTF8, 0, wide, len, out, needed, NULL, NULL);
+	out[needed] = 0;
+	return (REBLEN)needed;
+}
+
+/***********************************************************************
+**
+*/	REBLEN OS_Multibyte_To_Wide(const REBYTE *utf8, REBYTE **wide)
+/*
+**		Return new wide encoded string.
+**
+***********************************************************************/
+{
+	size_t len = LEN_BYTES(utf8);
+	size_t needed = MultiByteToWideChar(CP_UTF8, 0, utf8, len, NULL, 0);
+	if (needed == 0) return 0;
+	REBUNI *out = (REBUNI *)malloc((needed + 1) * sizeof(REBCHR));
+	if (out == NULL) return 0;
+	MultiByteToWideChar(CP_UTF8, 0, utf8, len, out, needed);
+	out[needed] = 0;
+	*wide = out;
+	return (REBLEN)needed;
 }
 

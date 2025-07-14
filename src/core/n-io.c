@@ -1015,11 +1015,11 @@ chk_neg:
 	n = (REBCNT)LEN_STR(str);
 
 	if (len == 1) {  // First is full file path
-		dir = To_REBOL_Path(str, n, -1, 0);
+		dir = To_REBOL_Path(str, n, OS_WIDE, 0);
 		Set_Series(REB_FILE, Append_Value(blk), dir);
 	}
 	else {  // First is dir path for the rest of the files
-		dir = To_REBOL_Path(str, n, -1, TRUE);
+		dir = To_REBOL_Path(str, n, OS_WIDE, TRUE);
 		str += n + 1; // next
 		len = dir->tail;
 		while ((n = (REBCNT)LEN_STR(str))) {

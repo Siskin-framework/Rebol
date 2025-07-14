@@ -793,7 +793,7 @@ bad_target:
 			// In UTF8 series count is number of bytes and not codepoints!
 			if (count == 1) {
 				VAL_SET(val, (parse->type == REB_BINARY) ? REB_INTEGER : REB_CHAR);
-				VAL_UNT32(val) = BIN_HEAD(series)[begin];
+				VAL_CHAR(val) = BIN_HEAD(series)[begin];
 			}
 			else {
 				VAL_SERIES(val) = Copy_String(series, begin, count);

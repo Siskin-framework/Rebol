@@ -1418,3 +1418,65 @@ static int Try_Browser(char *browser, REBCHR *url)
 }
 
 
+/***********************************************************************
+**
+*/	REBLEN OS_Wide_To_Multibyte(const wchar_t *wide, REBYTE **utf8, REBLEN len)
+/*
+**		Return new utf-8 encoded string.
+**
+***********************************************************************/
+{
+	//if (len == (REBLEN)-1) len = wcslen(wide);
+wprintf(L"wide: %s\n", wide);
+	// Get the required buffer size
+	size_t needed = wcstombs(NULL, wide, 0);
+	if (needed == (size_t)-1) goto error;
+
+	REBYTE *out = (REBYTE *)malloc(needed + 1);
+	if (!out) goto error;
+
+	size_t written = wcstombs((char *)out, wide, needed + 1);
+	if (written == (size_t)-1) {
+		free(out);
+		goto error;
+	}
+
+	out[needed] = 0;
+	*utf8 = out;
+	return (REBLEN)needed;
+error:
+	*utf8 = NULL;
+	return 0;
+}
+
+/***********************************************************************
+**
+*/	REBLEN OS_Multibyte_To_Wide(const REBYTE *utf8, REBYTE **wide)
+/*
+**		Return new wide encoded string.
+**
+***********************************************************************/
+{
+    size_t len = LEN_BYTES(utf8);
+
+    // mbstowcs requires a NUL-terminated string, so we ensure it
+    // Get the number of wide characters needed (excluding NUL)
+    size_t needed = mbstowcs(NULL, (const char*)utf8, 0);
+    if (needed == (size_t)-1) return 0;
+
+    // Allocate output buffer (+1 for NUL terminator)
+    wchar_t *out = (wchar_t *)malloc((needed + 1) * sizeof(wchar_t));
+    if (out == NULL) return 0;
+
+    // Perform the conversion
+    size_t written = mbstowcs(out, (const char*)utf8, needed + 1);
+    if (written == (size_t)-1) {
+        free(out);
+        return 0;
+    }
+
+    out[needed] = 0; // NUL-terminate
+    *wide = (REBYTE*)out;
+    return (REBLEN)needed;
+}
+

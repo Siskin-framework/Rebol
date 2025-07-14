@@ -64,8 +64,8 @@ static void str_to_char(REBVAL *out, REBVAL *val, REBCNT idx)
 
 static void swap_chars(REBVAL *val1, REBVAL *val2)
 {
-	UTF32 c1;
-	UTF32 c2;
+	REBU32 c1;
+	REBU32 c2;
 	REBSER *s1 = VAL_SERIES(val1);
 	REBSER *s2 = VAL_SERIES(val2);
 
@@ -87,14 +87,14 @@ static void reverse_string(REBVAL *value, REBCNT len)
 
 	if (IS_UTF8_SERIES(VAL_SERIES(value))) {
 		REBYTE *out = Reset_Buffer(BUF_SCAN, len);
-		REBYTE *bp = VAL_BIN(value);
+		const REBYTE *bp = VAL_BIN(value);
 		REBUNI index = VAL_TAIL(value);
 		REBCNT bytes;
 		while (index > VAL_INDEX(value)) {
 			bytes = UTF8_Prev_Char_Size(VAL_BIN(value), index);
 			index -= bytes;
 			bp = VAL_BIN_SKIP(value, index);
-			UTF32 chr = UTF8_Decode_Codepoint(&bp, &bytes);
+			REBU32 chr = UTF8_Decode_Codepoint(&bp, &bytes);
 			out += Encode_UTF8_Char(out, chr);
 		}
 		COPY_MEM(VAL_BIN_DATA(value), BIN_HEAD(BUF_SCAN), len);
@@ -763,7 +763,7 @@ pick_it:
 			return R_RET;
 		}
 		else {
-			UTF32 c = 0;
+			REBU32 c = 0;
 			arg = D_ARG(3);
 			if (IS_CHAR(arg))
 				c = VAL_CHAR(arg);

@@ -143,9 +143,9 @@
 //	case REB_ISSUE:
 		n = VAL_INDEX(val);
 		if (IS_UTF8_SERIES(VAL_SERIES(val))) {
-			UTF32 chr;
+			REBU32 chr;
 			REBCNT sz;
-			REBYTE *bp = VAL_BIN_DATA(val);
+			const REBYTE *bp = VAL_BIN_DATA(val);
 			while (n < VAL_TAIL(val)) {
 				chr = UTF8_Decode_Codepoint(&bp, &sz);
 				if (chr > maxi) maxi = chr;
@@ -188,7 +188,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG Check_Bit(REBSER *bset, REBCNT c, REBFLG uncased)
+*/	REBFLG Check_Bit(const REBSER *bset, REBCNT c, REBFLG uncased)
 /*
 **		Check bit indicated. Returns TRUE if set.
 **		If uncased is TRUE, try to match either upper or lower case.
@@ -325,21 +325,20 @@ retry:
 ***********************************************************************/
 {
 	REBCNT index = VAL_INDEX(val);
-	REBYTE *bp;
 	REBCNT sz=VAL_LEN(val);
-	UTF32 chr;
+	REBU32 chr;
 
 	if(IS_PROTECT_SERIES(bset)) Trap0(RE_PROTECTED);
 
 	if (IS_UTF8_SERIES(VAL_SERIES(val))) {
-		bp = VAL_BIN_DATA(val);
+		const REBYTE *bp = VAL_BIN_DATA(val);
 		while (sz > 0) {
 			chr = UTF8_Decode_Codepoint(&bp, &sz);
 			Set_Bit(bset, chr, set);
 		}
 	}
 	else {
-		bp = VAL_BIN(val);
+		REBYTE *bp = VAL_BIN(val);
 		for (; index < VAL_TAIL(val); index++)
 			Set_Bit(bset, bp[index], set);
 	}

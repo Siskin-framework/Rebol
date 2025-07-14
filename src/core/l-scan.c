@@ -318,7 +318,7 @@
 	const REBYTE *cp;
 	REBYTE c;
 	REBYTE lex;
-	size_t len = 4;
+	REBLEN len = 4;
 
 	c = **bp;
 
@@ -326,7 +326,7 @@
 	if (c >= 0x80) {
 		n = UTF8_Decode_Codepoint(bp, &len);
 		if (n == UNI_ERROR && state)
-			state->invalid_utf = bp;
+			state->invalid_utf = *bp;
 		return n;
 	}
 
@@ -418,7 +418,7 @@
 	RESET_TAIL(buf);
 	term = (*src++ == '{') ? '}' : '"';	// pick termination
 
-	REBYTE *start = src;
+	const REBYTE *start = src;
 
 	while (*src != term || nest > 0) {
 		switch (*src) {
@@ -610,7 +610,7 @@ new_line:
 ***********************************************************************/
 {
 	REBSER *buf;
-	UTF32 chr;
+	REBU32 chr;
 	REBLEN len;
 	REBLEN bytes;
 	REBYTE *dst;
@@ -671,6 +671,31 @@ new_line:
 	STR_TERM(buf);
 
 	return src;
+}
+
+
+/***********************************************************************
+**
+*/	const REBYTE *Scan_File(const REBYTE *cp, REBCNT len, REBVAL *value)
+/*
+**		Scan and convert a file name.
+**
+***********************************************************************/
+{
+	REBYTE term = 0;
+	const REBYTE *invalid = cb_cast(":;()[]\"^");
+
+	if (*cp == '%') cp++, len--;
+	if (*cp == '"') {
+		cp++;
+		len--;
+		term = '"';
+		invalid = cb_cast(":;\"");
+	}
+	cp = Scan_Item(cp, cp + len, term, invalid, NULL);
+	if (cp)
+		Set_Series(REB_FILE, value, Copy_String(BUF_SCAN, 0, NO_LIMIT));
+	return cp;
 }
 
 

@@ -75,7 +75,7 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
 
 /***********************************************************************
 **
-*/	REBOOL Scan_Hex2(const REBYTE *bp, UTF32 *n)
+*/	REBOOL Scan_Hex2(const REBYTE *bp, REBU32 *n)
 /*
 **		Decode a %xx hex encoded byte into a char.
 **
@@ -101,7 +101,7 @@ typedef REBFLG (*MAKE_FUNC)(REBVAL *, REBVAL *, REBCNT);
 	d2 = lex & LEX_VALUE;
 	if (lex < LEX_WORD || (!d2 && lex < LEX_NUMBER)) return FALSE;
 
-    *n = (UTF32)((d1 << 4) + d2);
+    *n = (REBU32)((d1 << 4) + d2);
 
 	return TRUE;
 }
@@ -565,31 +565,6 @@ end_date:
 	Set_Date_UTC(value, year, month, day, VAL_TIME(value), tz);
 	return cp;
 }
-
-/***********************************************************************
-**
-*/	const REBYTE *Scan_File(const REBYTE *cp, REBCNT len, REBVAL *value)
-/*
-**		Scan and convert a file name.
-**
-***********************************************************************/
-{
-	REBYTE term = 0;
-	const REBYTE *invalid = cb_cast(":;()[]\"^");
-
-	if (*cp == '%') cp++, len--;
-	if (*cp == '"') {
-		cp++;
-		len--;
-		term = '"';
-		invalid = cb_cast(":;\"");
-	}
-	cp = Scan_Item(cp, cp+len, term, invalid, NULL);
-	if (cp)
-		Set_Series(REB_FILE, value, Copy_String(BUF_SCAN, 0, NO_LIMIT));
-	return cp;
-}
-
 
 /***********************************************************************
 **

@@ -355,7 +355,7 @@
 		VAL_SET(value, REB_TUPLE);
 		vp = VAL_TUPLE(value);
 		if (IS_ISSUE(arg)) {
-			UTF32 c;
+			REBU32 c;
 			ap = Get_Word_Name(arg);
 			len = (REBINT)LEN_BYTES(ap);  // UTF-8 len
 			if (len & 1) goto bad_arg; // must have even # of chars
