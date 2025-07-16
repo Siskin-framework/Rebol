@@ -505,7 +505,9 @@ chk_neg:
 	// Convert OS native utf8 string back to Rebol file type
 	REBLEN len = LEN_BYTES(tmp);
 	ser = To_REBOL_Path(tmp, len, 0, FALSE);
+#ifdef TO_WINDOWS
 	free(tmp);
+#endif
 	if (!ser) return R_NONE;
 	
 	Set_Series(REB_FILE, D_RET, ser);

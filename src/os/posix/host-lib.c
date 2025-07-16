@@ -1420,14 +1420,14 @@ static int Try_Browser(char *browser, REBCHR *url)
 
 /***********************************************************************
 **
-*/	REBLEN OS_Wide_To_Multibyte(const wchar_t *wide, REBYTE **utf8, REBLEN len)
+*/	REBLEN OS_Wide_To_Multibyte(const REBU16 *wide, REBYTE **utf8, REBLEN len)
 /*
 **		Return new utf-8 encoded string.
 **
 ***********************************************************************/
 {
+#ifdef not_used
 	//if (len == (REBLEN)-1) len = wcslen(wide);
-wprintf(L"wide: %s\n", wide);
 	// Get the required buffer size
 	size_t needed = wcstombs(NULL, wide, 0);
 	if (needed == (size_t)-1) goto error;
@@ -1446,6 +1446,7 @@ wprintf(L"wide: %s\n", wide);
 	return (REBLEN)needed;
 error:
 	*utf8 = NULL;
+#endif
 	return 0;
 }
 
@@ -1457,6 +1458,7 @@ error:
 **
 ***********************************************************************/
 {
+#ifdef not_used
     size_t len = LEN_BYTES(utf8);
 
     // mbstowcs requires a NUL-terminated string, so we ensure it
@@ -1465,7 +1467,7 @@ error:
     if (needed == (size_t)-1) return 0;
 
     // Allocate output buffer (+1 for NUL terminator)
-    wchar_t *out = (wchar_t *)malloc((needed + 1) * sizeof(wchar_t));
+    REBU16 *out = (REBU16 *)malloc((needed + 1) * sizeof(REBU16));
     if (out == NULL) return 0;
 
     // Perform the conversion
@@ -1478,5 +1480,7 @@ error:
     out[needed] = 0; // NUL-terminate
     *wide = (REBYTE*)out;
     return (REBLEN)needed;
+#endif
+    return 0;
 }
 
