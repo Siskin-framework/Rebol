@@ -958,7 +958,9 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	}
 	else if (ANY_SERIES(value)) {
 		n = VAL_INDEX(value);
-		if (n < VAL_TAIL(value)) VAL_INDEX(value) = n + 1;
+		if (n < VAL_TAIL(value)) {
+			VAL_INDEX(value) += IS_UTF8_SERIES(VAL_SERIES(value)) ? UTF8_Next_Char_Size(VAL_BIN_HEAD(value), n) : 1;
+		}
 	}
 	else if (IS_DECIMAL(value)) {
 		VAL_DECIMAL(value) += 1.0;
@@ -992,7 +994,9 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	}
 	else if (ANY_SERIES(value)) {
 		n = VAL_INDEX(value);
-		if (n > 0) VAL_INDEX(value) = n - 1;
+		if (n > 0) {
+			VAL_INDEX(value) -= IS_UTF8_SERIES(VAL_SERIES(value)) ? UTF8_Prev_Char_Size(VAL_BIN_HEAD(value), n) : 1;
+		}
 	}
 	else if (IS_DECIMAL(value)) {
 		VAL_DECIMAL(value) -= 1.0;

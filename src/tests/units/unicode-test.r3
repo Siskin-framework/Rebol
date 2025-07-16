@@ -126,6 +126,22 @@ Rebol [
 		--assert all [#"č" == first+ str  str == "b"]
 		--assert all [#"b" == first+ str  str == ""]
 		--assert all [none? first+ str  str == ""]
+
+	--test-- "++"
+		str: "🙂čb"
+		--assert all ["🙂čb" == ++ str  str == "čb"]
+		--assert all ["čb" == ++ str  str == "b"]
+		--assert all ["b" == ++ str  str == ""]
+		--assert all ["" == ++ str  str == ""]
+
+	--test-- "--"
+		str: tail "🙂čb"
+		--assert all ["" == -- str  str == "b"]
+		--assert all ["b" == -- str  str == "čb"]
+		--assert all ["čb" == -- str  str == "🙂čb"]
+		--assert all ["🙂čb" == -- str  str == "🙂čb"]
+
+		
 		
 ===end-group===
 
