@@ -929,7 +929,9 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 
 	*D_ARG(1) = *value;
 	index = VAL_INDEX(value); // same for VAL_GOB_INDEX
-	if (index < tail) VAL_INDEX(value) = index + 1;
+	if (index < tail) {
+		VAL_INDEX(value) += IS_UTF8_SERIES(VAL_SERIES(value)) ? UTF8_Next_Char_Size(VAL_BIN_HEAD(value), index) : 1;
+	}
 	return Do_Ordinal(ds, 1);
 }
 

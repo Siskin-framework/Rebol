@@ -119,6 +119,13 @@ Rebol [
 			not error? try [call/shell/output rejoin [exe { --do "print 'á🙂"}] out]
 			out == to binary! "á🙂^/"
 		]
+
+	--test-- "first+"
+		str: "🙂čb"
+		--assert all [#"🙂" == first+ str  str == "čb"]
+		--assert all [#"č" == first+ str  str == "b"]
+		--assert all [#"b" == first+ str  str == ""]
+		--assert all [none? first+ str  str == ""]
 		
 ===end-group===
 
