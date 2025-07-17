@@ -660,7 +660,7 @@ void Dispose_Windows(void);
 	}
 
 	REBYTE *temp = NULL;
-	len = OS_Wide_To_Multibyte(wide, &temp, len);
+	len = OS_Wide_To_Multibyte(wide, &temp, len-1);
 	OS_Free(wide);
 
 	*path = temp;
