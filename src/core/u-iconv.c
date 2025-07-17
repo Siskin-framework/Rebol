@@ -677,7 +677,7 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 	}
 
 	if (cp == CP_UTF8 && (tp == 12000 || tp == 12001)) {
-		dest = UTF8_To_UTF32(src_bin, src_len, (tp == 12000));
+		dest = UTF8_To_UTF32(NULL, src_bin, src_len, (tp == 12000));
 		SET_BINARY(D_RET, dest);
 		return R_RET;
 	}

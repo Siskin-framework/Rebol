@@ -39,6 +39,7 @@
 
 
 #ifdef ENDIAN_LITTLE
+#define OS_LITTLE_ENDIAN TRUE 
 #define WRITE_BE_2(cp, bp)  cp[0] = bp[1]; cp[1] = bp[0];
 #define WRITE_BE_3(cp, bp)  cp[0] = bp[2]; cp[1] = bp[1]; cp[2] = bp[0];
 #define WRITE_BE_4(cp, bp)  cp[0] = bp[3]; cp[1] = bp[2]; cp[2] = bp[1]; cp[3] = bp[0];
@@ -49,6 +50,7 @@
 #define WRITE_LE_4(cp, bp)  memcpy(cp, bp, 4);
 #define WRITE_LE_8(cp, bp)  memcpy(cp, bp, 8);
 #else
+#define OS_LITTLE_ENDIAN FALSE 
 #define WRITE_BE_2(cp, bp)  memcpy(cp, bp, 2);
 #define WRITE_BE_3(cp, bp)  memcpy(cp, bp, 3);
 #define WRITE_BE_4(cp, bp)  memcpy(cp, bp, 4);

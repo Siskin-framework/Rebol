@@ -562,12 +562,11 @@ done:
 
 /***********************************************************************
 **
-*/	REBSER* UTF8_To_UTF32(const REBYTE *str, REBCNT len, REBFLG little_endian)
+*/	REBSER* UTF8_To_UTF32(REBSER *dst_ser, const REBYTE *str, REBCNT len, REBFLG little_endian)
 /*
 ***********************************************************************/
 {
 	REBLEN  dst_len = 0;
-	REBSER *dst_ser;
 	REBYTE *dst_bin;
 	REBU32 codepoint;
 
@@ -576,7 +575,11 @@ done:
 
 	while (*bp) dst_len += (*bp++ & 0xC0) != 0x80;
 
-	dst_ser = Make_Series((dst_len+1) * 4, 1, FALSE);
+	if (!dst_ser)
+		dst_ser = Make_Series((dst_len + 1) * 4, 1, FALSE);
+	else
+		Expand_Series(dst_ser, 0, dst_len);
+
 	dst_bin = BIN_HEAD(dst_ser);
 
 	bp = str;
@@ -589,6 +592,39 @@ done:
 	return dst_ser;
 }
 
+
+/***********************************************************************
+**
+*/	REBSER *UTF32_To_UTF8(REBSER *dst_ser, const REBYTE *str, REBCNT len, REBFLG little_endian)
+/*
+***********************************************************************/
+{
+	REBLEN  dst_len = 0, i;
+	REBYTE *dst_bin;
+	REBU32 codepoint;
+
+	const REBU32 *uni = (REBU32*)str;
+	const REBLEN uni_len = len / 4;
+	REBYTE *cp;
+
+	for (i = 0; i < uni_len; i++) {
+		dst_len = UTF8_Codepoint_Size(uni[i]);
+	}
+
+	if (!dst_ser)
+		dst_ser = Make_Series(dst_len+1, 1, FALSE);
+	else
+		Expand_Series(dst_ser, 0, dst_len);
+
+	dst_bin = BIN_HEAD(dst_ser);
+
+
+	for (i = 0; i < uni_len; i++) {
+		dst_bin += Encode_UTF8_Char(dst_bin, uni[i]);
+	}
+	SERIES_TAIL(dst_ser) = (dst_bin - BIN_HEAD(dst_ser));
+	return dst_ser;
+}
 
 // -------------------------------------------------------------------------
 

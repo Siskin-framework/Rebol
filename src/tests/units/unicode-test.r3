@@ -377,6 +377,15 @@ Rebol [
 		s: "ábč🙂"
 		--assert loop 10 [unless find s random/only s [break/return false] true]
 
+	--test-- "sort"
+		--assert "aAabč🙂" == sort "bač🙂Aa"
+		--assert "Aaabč🙂" == sort/case "bač🙂Aa"
+	--test-- "sort/skip"
+		--assert "aa bb ba " == sort/skip "bb ba aa " 3
+		--assert "aa b🙂 ba " == sort/skip "b🙂 ba aa " 3
+	--test-- "sort/skip/all"
+		--assert "aa ba bb " == sort/skip/all "bb ba aa " 3
+		--assert "aa ba b🙂 " == sort/skip/all "b🙂 ba aa " 3
 
 ===end-group===
 

@@ -1774,6 +1774,18 @@ try/with [
 		e/id = 'bad-refines
 	]
 
+--test-- "SORT/skip/all"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2646
+	--assert "1234" == sort/skip/all "1234" 2
+	--assert "3412" == sort/skip/all/reverse "1234" 2
+	--assert "4143" == sort/skip/all "4341" 2
+	--assert "4341" == sort/skip/all/reverse "4341" 2
+	--assert "3241" == sort/skip/all "4132" 2
+	--assert "4132" == sort/skip/all/reverse "4132" 2
+	--assert "2143" == sort/skip/all "4321" 2
+	--assert "1234" == sort/skip/all "4321" 1
+	--assert "4321" == sort/skip/all/reverse "4321" 1
+
 --test-- "SORT with invalid compare function"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1766
 	--assert error? try [sort/compare [1 2 3]  func [/local loc-1 loc-2][local < loc-1] ]

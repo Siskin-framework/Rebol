@@ -317,50 +317,133 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 }
 
 
-/***********************************************************************
-**
-*/	static int Compare_Chr_Cased(const void *v1, const void *v2)
-/*
-***********************************************************************/
-{
+static int Compare_Chr_Cased(const void *v1, const void *v2) {
 	return ((int)*(REBYTE*)v1) - ((int)*(REBYTE*)v2);
 }
-
-
-/***********************************************************************
-**
-*/	static int Compare_Chr_Cased_Rev(const void *v1, const void *v2)
-/*
-***********************************************************************/
-{
+static int Compare_Chr_Cased_Rev(const void *v1, const void *v2) {
 	return ((int)*(REBYTE*)v2) - ((int)*(REBYTE*)v1);
 }
-
-/***********************************************************************
-**
-*/	static int Compare_Chr_Uncased(const void *v1, const void *v2)
-/*
-***********************************************************************/
-{
+static int Compare_Chr_Uncased(const void *v1, const void *v2) {
 	return ((int)LO_CASE(*(REBYTE*)v1)) - ((int)LO_CASE(*(REBYTE*)v2));
 }
-
-
-/***********************************************************************
-**
-*/	static int Compare_Chr_Uncased_Rev(const void *v1, const void *v2)
-/*
-***********************************************************************/
-{
+static int Compare_Chr_Uncased_Rev(const void *v1, const void *v2) {
 	return ((int)LO_CASE(*(REBYTE*)v2)) - ((int)LO_CASE(*(REBYTE*)v1));
 }
 
-/***********************************************************************
-**
-*/	static int Compare_Call(const void *p1, const void *p2)
-/*
-***********************************************************************/
-{
+static int Compare_U32_Cased(const void *v1, const void *v2) {
+	return ((int)*(REBU32 *)v1) - ((int)*(REBU32 *)v2);
+}
+static int Compare_U32_Cased_Rev(const void *v1, const void *v2) {
+	return ((int)*(REBU32 *)v2) - ((int)*(REBU32 *)v1);
+}
+static int Compare_U32_Uncased(const void *v1, const void *v2) {
+	REBU32 a = *(REBU32 *)v1;
+	REBU32 b = *(REBU32 *)v2;
+	if (a < UNICODE_CASES) a = LO_CASE(a);
+	if (b < UNICODE_CASES) b = LO_CASE(b);
+	return ((int)a - (int)b);
+}
+static int Compare_U32_Uncased_Rev(const void *v1, const void *v2) {
+	REBU32 a = *(REBU32 *)v1;
+	REBU32 b = *(REBU32 *)v2;
+	if (a < UNICODE_CASES) a = LO_CASE(a);
+	if (b < UNICODE_CASES) b = LO_CASE(b);
+	return ((int)b - (int)a);
+}
+
+static int Compare_All_Chr_Cased(const void *v1, const void *v2) {
+	REBCNT size = VAL_UNT32(DS_TOP);
+	REBINT offset = 0;
+	REBINT result = 0;
+	while (size-- > 0 && result == 0) {
+		result = ((int)*((REBYTE *)v1+offset)) - ((int)*((REBYTE *)v2 + offset));
+		offset++;
+	}
+	return result;
+}
+static int Compare_All_Chr_Cased_Rev(const void *v1, const void *v2) {
+	REBCNT size = VAL_UNT32(DS_TOP);
+	REBINT offset = 0;
+	REBINT result = 0;
+	while (size-- > 0 && result == 0) {
+		result = ((int)*((REBYTE *)v2 + offset)) - ((int)*((REBYTE *)v1 + offset));
+		offset++;
+	}
+	return result;
+}
+static int Compare_All_Chr_Uncased(const void *v1, const void *v2) {
+	REBCNT size = VAL_UNT32(DS_TOP);
+	REBINT offset = 0;
+	REBINT result = 0;
+	while (size-- > 0 && result == 0) {
+		result = ((int)LO_CASE(*((REBYTE *)v1 + offset))) - ((int)LO_CASE(*((REBYTE *)v2 + offset)));
+		offset++;
+	}
+	return result;
+}
+static int Compare_All_Chr_Uncased_Rev(const void *v1, const void *v2) {
+	REBCNT size = VAL_UNT32(DS_TOP);
+	REBINT offset = 0;
+	REBINT result = 0;
+	while (size-- > 0 && result == 0) {
+		result = ((int)LO_CASE(*((REBYTE *)v2 + offset))) - ((int)LO_CASE(*((REBYTE *)v1 + offset)));
+		offset++;
+	}
+	return result;
+}
+
+static int Compare_All_U32_Cased(const void *v1, const void *v2) {
+	REBCNT size = VAL_UNT32(DS_TOP);
+	REBINT offset = 0;
+	REBINT result = 0;
+	while (size-- > 0 && result == 0) {
+		result = ((int)*((REBU32 *)v1 + offset)) - ((int)*((REBU32 *)v2 + offset));
+		offset++;
+	}
+	return result;
+}
+static int Compare_All_U32_Cased_Rev(const void *v1, const void *v2) {
+	REBCNT size = VAL_UNT32(DS_TOP);
+	REBINT offset = 0;
+	REBINT result = 0;
+	while (size-- > 0 && result == 0) {
+		result = ((int)*((REBU32 *)v2 + offset)) - ((int)*((REBU32 *)v1 + offset));
+		offset++;
+	}
+	return result;
+}
+static int Compare_All_U32_Uncased(const void *v1, const void *v2) {
+	REBCNT size = VAL_UNT32(DS_TOP);
+	REBINT offset = 0;
+	REBINT result = 0;
+	REBU32 a, b;
+	while (size-- > 0 && result == 0) {
+		REBU32 a = *((REBU32 *)v1 + offset);
+		REBU32 b = *((REBU32 *)v2 + offset);
+		if (a < UNICODE_CASES) a = LO_CASE(a);
+		if (b < UNICODE_CASES) b = LO_CASE(b);
+		result = (int)a - (int)b;
+		offset++;
+	}
+	return result;
+}
+static int Compare_All_U32_Uncased_Rev(const void *v1, const void *v2) {
+	REBCNT size = VAL_UNT32(DS_TOP);
+	REBINT offset = 0;
+	REBINT result = 0;
+	REBU32 a, b;
+	while (size-- > 0 && result == 0) {
+		REBU32 a = *((REBU32 *)v1 + offset);
+		REBU32 b = *((REBU32 *)v2 + offset);
+		if (a < UNICODE_CASES) a = LO_CASE(a);
+		if (b < UNICODE_CASES) b = LO_CASE(b);
+		result = (int)b - (int)1;
+		offset++;
+	}
+	return result;
+}
+
+static int Compare_Call(const void *p1, const void *p2) {
 	REBVAL *v1;
 	REBVAL *v2;
 	REBVAL *val;
@@ -408,6 +491,36 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	return -1;
 }
 
+typedef int (*cmp_func)(const void *, const void *);
+// [all][case][width][rev]
+static const cmp_func sfunc_table[2][2][2][2] = {
+	// all == 0: not-All
+	{
+		// ccase == 0: uncased
+		{
+			{ Compare_Chr_Uncased,   Compare_Chr_Uncased_Rev },
+			{ Compare_U32_Uncased,   Compare_U32_Uncased_Rev }
+		},
+		// ccase == 1: cased
+		{
+			{ Compare_Chr_Cased,     Compare_Chr_Cased_Rev },
+			{ Compare_U32_Cased,     Compare_U32_Cased_Rev }
+		}
+	},
+	// all == 1: All
+	{
+		// ccase == 0: uncased
+		{
+			{ Compare_All_Chr_Uncased,   Compare_All_Chr_Uncased_Rev },
+			{ Compare_All_U32_Uncased,   Compare_All_U32_Uncased_Rev }
+		},
+		// ccase == 1: cased
+		{
+			{ Compare_All_Chr_Cased,     Compare_All_Chr_Cased_Rev },
+			{ Compare_All_U32_Cased,     Compare_All_U32_Cased_Rev }
+		}
+	  }
+};
 
 /***********************************************************************
 **
@@ -419,15 +532,25 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 	REBCNT skip = 1;
 	REBCNT size = 1;
 	REBSER *args;
+	REBVAL *uval = NULL;
+	REBYTE *str_bin;
+	REBCNT wide = 1;
 	int (*sfunc)(const void *v1, const void *v2);
+
+	ASSERT1(BYTE_SIZE(VAL_SERIES(string)), RP_BAD_SIZE);
 
 	// Determine length of sort:
 	len = Partial(string, 0, part, 0);
 	if (len <= 1) return;
 
-	//TODO: implement sorting UTF-8 encoded strings!!!
-	if (IS_UTF8_SERIES(VAL_SERIES(string)))
-		Trap0(RE_FEATURE_NA);
+	if (IS_UTF8_SERIES(VAL_SERIES(string))) {
+		UTF8_To_UTF32(BUF_SCAN, VAL_DATA(string), len, OS_LITTLE_ENDIAN);
+		str_bin = BIN_HEAD(BUF_SCAN);
+		wide = 4;
+		len = SERIES_TAIL(BUF_SCAN) / 4;
+	}
+	else
+		str_bin = VAL_DATA(string);
 
 	// Skip factor:
 	if (!IS_NONE(skipv)) {
@@ -449,21 +572,25 @@ static REBSER *make_binary(REBVAL *arg, REBOOL make)
 
 		REBU64 flags = 0;
 		if (rev) SET_FLAG(flags, SORT_FLAG_REVERSE);
-		if (1 < SERIES_WIDE(VAL_SERIES(string))) SET_FLAG(flags, SORT_FLAG_WIDE);
+		//if (1 < SERIES_WIDE(VAL_SERIES(string))) SET_FLAG(flags, SORT_FLAG_WIDE);
 		
 		// Store the comparator function and flags on the stack
 		DS_PUSH(compv);
 		DS_PUSH_INTEGER(flags);
 		sfunc = Compare_Call;
 
-	} else if (ccase) {
-		sfunc = rev ? Compare_Chr_Cased_Rev : Compare_Chr_Cased;
 	} else {
-		sfunc = rev ? Compare_Chr_Uncased_Rev : Compare_Chr_Uncased;
+		if (all) {
+			if (!IS_NONE(compv)) Trap0(RE_BAD_REFINES);
+			DS_PUSH_INTEGER(skip);
+		}
+		sfunc = sfunc_table[all][ccase][wide != 1][rev];
 	}
 
-	//!!uni - needs to compare wide chars too
-	reb_qsort((void *)VAL_DATA(string), len, size * SERIES_WIDE(VAL_SERIES(string)), sfunc);
+	reb_qsort((void *)str_bin, len, size * wide, sfunc);
+	if (wide == 4) {
+		UTF32_To_UTF8(VAL_SERIES(string), str_bin, len*4*skip, OS_LITTLE_ENDIAN);
+	}
 
 	if (ANY_FUNC(compv)) {
 		// Stored comparator and flags are not needed anymore
