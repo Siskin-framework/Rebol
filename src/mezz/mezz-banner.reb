@@ -43,7 +43,6 @@ make-banner: func [
 	]
 	append str format/pad [#"╚" 74 "╝^/"] "" #"═"
 	str
-	""
 ]
 
 if #"/" <> first system/options/home [

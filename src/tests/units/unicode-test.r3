@@ -296,6 +296,39 @@ Rebol [
 		--assert "ášbč" == head insert next "ábč" #"š"
 		--assert "á🙂bč" == head insert next "ábč" #"🙂"
 
+	--test-- "change string!"
+		--assert all [(change o: "ábč" "č") == "bč"  o == "čbč"]
+		--assert all [(change o: "abc" "🙂") == "bc"  o == "🙂bc"]
+		--assert all [(change o: "ábč" "🙂") == "bč"  o == "🙂bč"]
+		--assert all [(change o: "abc" "x🙂") == "c"  o == "x🙂c"]
+		--assert all [(change o: "ábč" "x🙂") == "č"  o == "x🙂č"]
+		--assert all [(change o: "🙂bc" "a") == "bc"  o == "abc"]
+		--assert all [(change o: next "a🙂c" "b") == "c"  o == "bc"  "abc" == head o]
+
+		--assert all [(change o: tail "abc" "🙂") == ""  o == "🙂" (head o) == "abc🙂"]
+		--assert all [(change o: tail "ábč" "🙂") == ""  o == "🙂" (head o) == "ábč🙂"]
+		--assert all [(change o: tail "abc" "x🙂") == ""  o == "x🙂" (head o) == "abcx🙂"]
+		--assert all [(change o: tail "ábč" "x🙂") == ""  o == "x🙂" (head o) == "ábčx🙂"]
+
+		--assert #{78787878}       == to binary! head change "═" "xxxx"
+		--assert #{78787878}       == to binary! head change "═══" "xxxx"
+		--assert #{78787878}       == to binary! head change "════" "xxxx"
+		--assert #{78787878E29590} == to binary! head change "═════" "xxxx"
+
+	--test-- "change/dup string!"
+		--assert all [(change/dup o: "abc" "🙂" 2) == "c"  o == "🙂🙂c"]
+		--assert all [(change/dup o: "abc" "🙂" 3) == ""   o == "🙂🙂🙂"]
+		--assert all [(change/dup o: "ábč" "🙂" 2) == "č"  o == "🙂🙂č"]
+		--assert all [(change/dup o: "ábč" "🙂" 3) == ""   o == "🙂🙂🙂"]
+		--assert all [(change/dup o: "ábč" "🙂" 4) == ""   o == "🙂🙂🙂🙂"]
+		--assert all [(change/dup o: "🙂bc" "a" 2) == "c"  o == "aac"]
+		--assert all [(change/dup o: "🙂bc" "a" 3) == ""   o == "aaa"]
+		--assert all [(change/dup o: "🙂bc" "a" 4) == ""   o == "aaaa"]
+
+	--test-- "change char!"
+		--assert all [(change o: "---" #"╔") == "--"  o == "╔--"]
+		--assert all [(change o: "---" #"🙂") == "--"  o == "🙂--"]
+
 	--test-- "take"
 		--assert #"á" == take "áb"
 		--assert #"🙂" == take "🙂b"

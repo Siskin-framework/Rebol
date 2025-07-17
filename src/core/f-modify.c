@@ -163,6 +163,8 @@
 	else if (IS_CHAR(src_val)) {
 		src_ser = BUF_SCAN;
 		SERIES_TAIL(src_ser) = Encode_UTF8_Char(STR_HEAD(src_ser), VAL_CHAR(src_val));
+		TERM_SERIES(src_ser);
+		if (SERIES_TAIL(src_ser) > 1) UTF8_SERIES(src_ser);
 	}
 	else if (IS_BLOCK(src_val)) {
 		src_ser = Form_Tight_Block(src_val);
@@ -199,13 +201,25 @@
 		// Always expand dst_ser for INSERT and APPEND actions:
 		Expand_Series(dst_ser, dst_idx, size);
 	} else {
-		if (size > dst_len) 
+		// CHANGE action...
+		// Special case when source or target has Unicode chars and not used /part and target is not binary
+		if ((IS_UTF8_SERIES(src_ser) || IS_UTF8_SERIES(dst_ser)) && !GET_FLAGS(flags, AN_PART, AN_SERIES)) {
+			// src_len and dst_len are in bytes... so map it to real chars in the destination
+			REBCNT chr = dups * Length_As_UTF8_Code_Points(BIN_SKIP(src_ser, src_idx));
+			REBCNT idx = dst_idx;
+			while (chr-- > 0 && idx < tail) {
+				idx += UTF8_Next_Char_Size(BIN_HEAD(dst_ser), idx);
+			}
+			dst_len = idx - dst_idx;
+			SET_FLAG(flags, AN_PART);
+		}
+		if (size > dst_len)
 			Expand_Series(dst_ser, dst_idx, size - dst_len);
 		else if (size < dst_len && GET_FLAG(flags, AN_PART))
 			Remove_Series(dst_ser, dst_idx, dst_len - size);
-		else if (size + dst_idx > tail) {
-			EXPAND_SERIES_TAIL(dst_ser, size - (tail - dst_idx));
-		}
+		//else if (size + dst_idx > tail) {
+		//	EXPAND_SERIES_TAIL(dst_ser, size - (tail - dst_idx));
+		//}
 	}
 
 	// For dup count:
