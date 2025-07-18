@@ -1453,7 +1453,7 @@ scanword:
         cp = scan_state->end;   /* then, must be a URL */
         while (*cp == '/') {    /* deal with path delimiter */
             cp++;
-            while (IS_LEX_AT_LEAST_SPECIAL(*cp) || *cp == '/') cp++;
+            while (IS_LEX_AT_LEAST_SPECIAL(*cp) || *cp == '/' || *cp == 0x7F) cp++;
         }
         scan_state->end = cp;
         return TOKEN_URL;
