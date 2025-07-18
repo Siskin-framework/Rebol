@@ -102,8 +102,10 @@
 	SERIES_TAIL(dst) = n;
 	STR_TERM(dst);
 
-	if (uni) 
+	if (uni) {
+		if (!Is_ASCII(src, len)) UTF8_SERIES(dst);
 		free(src);
+	}
 
 	// Change C:/ to /C/ (and C:X to /C/X):
 	if (colon)

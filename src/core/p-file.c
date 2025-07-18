@@ -110,7 +110,7 @@
 		Set_File_Date(file->file.modified_time, ret);
 		break;
 	case SYM_NAME:
-		Set_Series(REB_FILE, ret, To_REBOL_Path(file->file.path, 0, OS_WIDE, 0));
+		Set_Series(REB_FILE, ret, To_REBOL_Path(file->file.path, UNKNOWN, OS_WIDE, 0));
 		break;
 	case SYM_ACCESSED:
 		Set_File_Date(file->file.accessed_time, ret);
