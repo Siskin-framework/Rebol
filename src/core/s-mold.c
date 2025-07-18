@@ -316,10 +316,10 @@ STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 		if (state != UTF8_ACCEPT) {
 			// uncomplete or invalid
 			
-			if (state == 12) bp--;
+			//if (state == 12) bp--;
 			REBINT e = bp - acc;
 			while (e-- > 0) {
-				c = bp[-e];
+				c = bp[e];
 				if (c >= 0x7f || c == 0x1e) {  // non ASCII or ^ must be (00) escaped
 					if (c < 0xA0 || c == 0x1e) { // do not AND with above
 						sf->invalid += 5;
