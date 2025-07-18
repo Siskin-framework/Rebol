@@ -80,6 +80,8 @@ void reb_qsort(void *a, size_t n, size_t es, cmp_t *cmp);
 #define SORT_FLAG_REVERSE 1
 #define SORT_FLAG_WIDE    2
 #define SORT_FLAG_CASE    3
+#define SORT_FLAG_ALL     4
+#define SORT_FLAG_BINARY  5 // used with the custom sort function
 
 
 // Encoding_opts was originally in sys-core.h, but I moved it here so it can

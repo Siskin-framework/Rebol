@@ -443,6 +443,28 @@ static int Compare_All_U32_Uncased_Rev(const void *v1, const void *v2) {
 	return result;
 }
 
+static int Compare_Comp(const void *v1, const void *v2) {
+	REBINT offset = VAL_INT64(DS_GET(DSP - 1));
+	REBU64 flags  = VAL_UNT64(DS_TOP);
+	REBINT result = 0;
+	REBU32 a, b;
+	if (GET_FLAG(flags, SORT_FLAG_WIDE)) {
+		a = *((REBU32 *)v1 + offset);
+		b = *((REBU32 *)v2 + offset);
+	}
+	else {
+		a = *((REBYTE *)v1 + offset);
+		b = *((REBYTE *)v2 + offset);
+	}
+	if (!GET_FLAG(flags, SORT_FLAG_CASE)) {
+		if (a < UNICODE_CASES) a = LO_CASE(a);
+		if (b < UNICODE_CASES) b = LO_CASE(b);
+	}
+	return (GET_FLAG(flags, SORT_FLAG_REVERSE))
+		? (int)b - (int)a
+		: (int)a - (int)b;
+}
+
 static int Compare_Call(const void *p1, const void *p2) {
 	REBVAL *v1;
 	REBVAL *v2;
@@ -463,24 +485,33 @@ static int Compare_Call(const void *p1, const void *p2) {
 	DS_SKIP; v1 = DS_TOP;
 	DS_SKIP; v2 = DS_TOP;
 
-	while (count-- > 0) {
-		// NOTE: We apply the custom compare function to 2 chars.
-		// In Red, when /all is used, it sends 2 strings to the compare function!
-		// That would require converting the U32 array back to UTF-8 for each comparison,
-		// so it's better to compare just chars for now (unless someone requests otherwise).
-
+	if (count == 1) {
+		// We apply the custom compare function to 2 chars.
 		if (GET_FLAG(flags, SORT_FLAG_WIDE)) {
-			SET_CHAR(v1, (int)(*((REBU32 *)p2 + offset)));
-			SET_CHAR(v2, (int)(*((REBU32 *)p1 + offset)));
+			SET_CHAR(v1, (int)(*(REBU32 *)p2));
+			SET_CHAR(v2, (int)(*(REBU32 *)p1));
 		}
 		else {
-			SET_CHAR(v1, (int)(*((REBYTE *)p2 + offset)));
-			SET_CHAR(v2, (int)(*((REBYTE *)p1 + offset)));
+			SET_CHAR(v1, (int)(*(REBYTE *)p2));
+			SET_CHAR(v2, (int)(*(REBYTE *)p1));
 		}
-		val = Apply_Func(0, func, v1, v2, 0);
-		if (VAL_INT64(val) != 0) break;
-		offset++;
 	}
+	else {
+		if (GET_FLAG(flags, SORT_FLAG_WIDE)) {
+			Set_String(v1, UTF32_To_UTF8(NULL, (REBYTE *)p2, count * 4, OS_LITTLE_ENDIAN));
+			Set_String(v2, UTF32_To_UTF8(NULL, (REBYTE *)p1, count * 4, OS_LITTLE_ENDIAN));
+		}
+		else {
+			Set_String(v1, Copy_Bytes((REBYTE *)p2, count));
+			Set_String(v2, Copy_Bytes((REBYTE *)p1, count));
+			if (GET_FLAG(flags, SORT_FLAG_BINARY)) {
+				VAL_TYPE(v1) = REB_BINARY;
+				VAL_TYPE(v2) = REB_BINARY;
+			}
+		}
+	}
+
+	val = Apply_Func(0, func, v1, v2, 0);
 
 	// v1 and v2 no more needed...
 	DS_DROP;
@@ -545,6 +576,7 @@ static const cmp_func sfunc_table[2][2][2][2] = {
 	REBVAL *uval = NULL;
 	REBYTE *str_bin;
 	REBCNT wide = 1;
+	REBU64 flags = 0;
 	int (*sfunc)(const void *v1, const void *v2);
 
 	ASSERT1(BYTE_SIZE(VAL_SERIES(string)), RP_BAD_SIZE);
@@ -572,27 +604,47 @@ static const cmp_func sfunc_table[2][2][2][2] = {
 	// Use fast quicksort library function:
 	if (skip > 1) len /= skip, size *= skip;
 
-	// Store the skip (used to implement /all)
-	DS_PUSH_INTEGER(all ? skip : 1);
-
+	if (!IS_NONE(compv)) {
+		if (rev) SET_FLAG(flags, SORT_FLAG_REVERSE);
+		if (all) SET_FLAG(flags, SORT_FLAG_ALL);
+		if (IS_UTF8_SERIES(VAL_SERIES(string))) SET_FLAG(flags, SORT_FLAG_WIDE);
+	}
 	if (ANY_FUNC(compv)) {
 		// Check argument types of the comparator function.
 		args = VAL_FUNC_ARGS(compv);
-		if (BLK_LEN(args) > 1 && !TYPE_CHECK(BLK_SKIP(args, 1), REB_CHAR))
-			Trap3(RE_EXPECT_ARG, Of_Type(compv), BLK_SKIP(args, 1), Get_Type_Word(REB_CHAR));
-		if (BLK_LEN(args) > 2 && !TYPE_CHECK(BLK_SKIP(args, 2), REB_CHAR))
-			Trap3(RE_EXPECT_ARG, Of_Type(compv), BLK_SKIP(args, 2), Get_Type_Word(REB_CHAR));
+		REBCNT type = all ? REB_STRING : REB_CHAR;
+		if (IS_BINARY(string)) {
+			SET_FLAG(flags, SORT_FLAG_BINARY);
+			type = REB_BINARY;
+		}
+		if (BLK_LEN(args) > 1 && !TYPE_CHECK(BLK_SKIP(args, 1), type))
+			Trap3(RE_EXPECT_ARG, Of_Type(compv), BLK_SKIP(args, 1), Get_Type_Word(type));
+		if (BLK_LEN(args) > 2 && !TYPE_CHECK(BLK_SKIP(args, 2), type))
+			Trap3(RE_EXPECT_ARG, Of_Type(compv), BLK_SKIP(args, 2), Get_Type_Word(type));
 
-		REBU64 flags = 0;
-		if (rev) SET_FLAG(flags, SORT_FLAG_REVERSE);
-		if (IS_UTF8_SERIES(VAL_SERIES(string))) SET_FLAG(flags, SORT_FLAG_WIDE);
-		
+		// Store the skip (used to implement /all)
+		DS_PUSH_INTEGER(all ? skip : 1);
+
 		// Store the comparator function and flags on the stack
 		DS_PUSH(compv);
 		DS_PUSH_INTEGER(flags);
 		sfunc = Compare_Call;
 
-	} else {
+	}
+	else if (IS_INTEGER(compv)) {
+		// Using the offset comparator
+		if (all) Trap0(RE_BAD_REFINES); // not compatible
+		REBI64 ofs = VAL_INT64(compv);
+		if (ofs < 1 || ofs > skip) Trap_Arg(compv);
+		if (ccase) SET_FLAG(flags, SORT_FLAG_CASE);
+		DS_PUSH_INTEGER(ofs-1);
+		DS_PUSH_INTEGER(flags);
+		sfunc = Compare_Comp;
+	}
+	else {
+		// Store the skip (used to implement /all)
+		DS_PUSH_INTEGER(all ? skip : 1);
+
 		if (all && !IS_NONE(compv)) Trap0(RE_BAD_REFINES);
 		sfunc = sfunc_table[all][ccase][wide != 1][rev];
 	}
@@ -602,11 +654,14 @@ static const cmp_func sfunc_table[2][2][2][2] = {
 		UTF32_To_UTF8(VAL_SERIES(string), str_bin, len*4*skip, OS_LITTLE_ENDIAN);
 	}
 
-	DS_DROP; // Stored skip
+	DS_DROP; // Stored skip or offset
 	if (ANY_FUNC(compv)) {
 		// Stored comparator and flags are not needed anymore
 		DS_DROP;
 		DS_DROP;
+	}
+	else if (IS_INTEGER(compv)) {
+		DS_DROP; // Stored flags
 	}
 }
 

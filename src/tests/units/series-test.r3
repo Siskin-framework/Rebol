@@ -1708,7 +1708,19 @@ Rebol [
 	--assert "zyxcba" == sort/compare "abczyx" :comp
 	--assert %54321 == sort/compare %21543 :comp
 	--assert #{050403020100} == sort/compare #{000102030405} :comp
-	--assert "šřba" == try [sort/compare "ašbř" :comp]
+	--assert "šřba" == sort/compare "ašbř" :comp
+	comp: func [a b] [a <= b]
+	--assert "abřš" == sort/compare "ašbř" :comp
+
+--test-- "SORT/compare string! with offset"
+	--assert "ab aa ba " == sort/compare/skip "ba ab aa " 1 3 ;; sort using 1st char
+	--assert "ba aa ab " == sort/compare/skip "ba ab aa " 2 3 ;; sort using 2nd char
+	--assert "ba ab aa " == sort/compare/skip "ba ab aa " 3 3 ;; sort using 3rd char
+	--assert "ba aA aa ab " == sort/compare/skip "ba ab aA aa " 2 3
+	--assert "aA ba aa ab " == sort/compare/skip/case "ba ab aA aa " 2 3
+	--assert error? try [sort/compare/skip "ba ab aa " 4 3] ;; invalid offset
+	--assert error? try [sort/compare/skip "ba ab aa " 0 3] ;; invalid offset
+	--assert error? try [sort/compare/skip/all "ba ab aa " 1 3] ;; all is not compatible
 
 --test-- "SORT/compare string! (nested)"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2621
@@ -1740,6 +1752,12 @@ try/with [
 	--assert s1 == [4 3 2 1]
 	--assert s2 == ["a" "a" "B" "b"]
 
+--test-- "SORT/compare binary!"
+	comp: func [a b] [x: a a <= b]
+	--assert #{010100010200020100020200} == sort/compare/skip/all #{010200 020100 010100 020200} :comp 3
+	--assert binary? x
+	--assert #{010100010200020200020100} == sort/compare/skip     #{010200 020100 010100 020200} :comp 3
+	--assert char? x
 
 --test-- "SORT/skip/compare"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1152

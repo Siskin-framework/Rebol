@@ -391,8 +391,8 @@ Rebol [
 		comp: func [a b] [a > b]
 		--assert "🙂čbaaA" == sort/compare "bač🙂Aa" :comp
 		--assert "Aaabč🙂" == sort/compare/reverse "bač🙂Aa" :comp
-		comp: func [a b] [a - b]
-		--assert "Aa ab aa aá ba " == sort/compare/skip     "ab aa Aa aá ba " :comp 3
+		comp: func [a b] [a <= b]
+		--assert "Aa aá aa ab ba " == sort/compare/skip     "ab aa Aa aá ba " :comp 3 ;; compares only the first char
 		--assert "Aa aa ab aá ba " == sort/compare/skip/all "ab aa Aa aá ba " :comp 3
 
 ===end-group===
