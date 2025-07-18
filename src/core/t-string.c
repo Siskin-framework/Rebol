@@ -446,49 +446,59 @@ static int Compare_All_U32_Uncased_Rev(const void *v1, const void *v2) {
 static int Compare_Call(const void *p1, const void *p2) {
 	REBVAL *v1;
 	REBVAL *v2;
-	REBVAL *val;
-	REBVAL *tmp;
+	REBVAL *val = NULL;
 	REBVAL *func;
 	REBU64 flags;
+	REBCNT count;
+	REBINT offset = 0;
+	REBINT result = -1;
 
+	count = VAL_UNT64(DS_GET(DSP - 2)); // > 1 when /all is used
 	func  = DS_GET(DSP - 1);
 	flags = VAL_UNT64(DS_TOP);
+
+	if (!count) return 0;
+
 
 	DS_SKIP; v1 = DS_TOP;
 	DS_SKIP; v2 = DS_TOP;
 
-	if (GET_FLAG(flags, SORT_FLAG_WIDE)) {
-		SET_CHAR(v1, (int)(*(REBUNI*)p2));
-		SET_CHAR(v2, (int)(*(REBUNI*)p1));
-	} else {
-		SET_CHAR(v1, (int)(*(REBYTE*)p2));
-		SET_CHAR(v2, (int)(*(REBYTE*)p1));
-	}
-	
-	if (GET_FLAG(flags, SORT_FLAG_REVERSE)) {
-		tmp = v1;
-		v1 = v2;
-		v2 = tmp;
-	}
+	while (count-- > 0) {
+		// NOTE: We apply the custom compare function to 2 chars.
+		// In Red, when /all is used, it sends 2 strings to the compare function!
+		// That would require converting the U32 array back to UTF-8 for each comparison,
+		// so it's better to compare just chars for now (unless someone requests otherwise).
 
-	val = Apply_Func(0, func, v1, v2, 0);
+		if (GET_FLAG(flags, SORT_FLAG_WIDE)) {
+			SET_CHAR(v1, (int)(*((REBU32 *)p2 + offset)));
+			SET_CHAR(v2, (int)(*((REBU32 *)p1 + offset)));
+		}
+		else {
+			SET_CHAR(v1, (int)(*((REBYTE *)p2 + offset)));
+			SET_CHAR(v2, (int)(*((REBYTE *)p1 + offset)));
+		}
+		val = Apply_Func(0, func, v1, v2, 0);
+		if (VAL_INT64(val) != 0) break;
+		offset++;
+	}
 
 	// v1 and v2 no more needed...
 	DS_DROP;
 	DS_DROP;
 
 	if (IS_LOGIC(val)) {
-		if (IS_TRUE(val)) return 1;
+		if (IS_TRUE(val)) result = 1;
 	}
 	else if (IS_INTEGER(val)) {
-		if (VAL_INT64(val) < 0) return 1;
-		if (VAL_INT64(val) == 0) return 0;
+		if (VAL_INT64(val) < 0) result = 1;
+		if (VAL_INT64(val) == 0) result = 0;
 	}
 	else if (IS_DECIMAL(val)) {
-		if (VAL_DECIMAL(val) < 0) return 1;
-		if (VAL_DECIMAL(val) == 0) return 0;
+		if (VAL_DECIMAL(val) < 0) result = 1;
+		if (VAL_DECIMAL(val) == 0) result = 0;
 	}
-	return -1;
+	if (GET_FLAG(flags, SORT_FLAG_REVERSE)) result = -result;
+	return result;
 }
 
 typedef int (*cmp_func)(const void *, const void *);
@@ -562,6 +572,9 @@ static const cmp_func sfunc_table[2][2][2][2] = {
 	// Use fast quicksort library function:
 	if (skip > 1) len /= skip, size *= skip;
 
+	// Store the skip (used to implement /all)
+	DS_PUSH_INTEGER(all ? skip : 1);
+
 	if (ANY_FUNC(compv)) {
 		// Check argument types of the comparator function.
 		args = VAL_FUNC_ARGS(compv);
@@ -572,7 +585,7 @@ static const cmp_func sfunc_table[2][2][2][2] = {
 
 		REBU64 flags = 0;
 		if (rev) SET_FLAG(flags, SORT_FLAG_REVERSE);
-		//if (1 < SERIES_WIDE(VAL_SERIES(string))) SET_FLAG(flags, SORT_FLAG_WIDE);
+		if (IS_UTF8_SERIES(VAL_SERIES(string))) SET_FLAG(flags, SORT_FLAG_WIDE);
 		
 		// Store the comparator function and flags on the stack
 		DS_PUSH(compv);
@@ -580,10 +593,7 @@ static const cmp_func sfunc_table[2][2][2][2] = {
 		sfunc = Compare_Call;
 
 	} else {
-		if (all) {
-			if (!IS_NONE(compv)) Trap0(RE_BAD_REFINES);
-			DS_PUSH_INTEGER(skip);
-		}
+		if (all && !IS_NONE(compv)) Trap0(RE_BAD_REFINES);
 		sfunc = sfunc_table[all][ccase][wide != 1][rev];
 	}
 
@@ -592,6 +602,7 @@ static const cmp_func sfunc_table[2][2][2][2] = {
 		UTF32_To_UTF8(VAL_SERIES(string), str_bin, len*4*skip, OS_LITTLE_ENDIAN);
 	}
 
+	DS_DROP; // Stored skip
 	if (ANY_FUNC(compv)) {
 		// Stored comparator and flags are not needed anymore
 		DS_DROP;

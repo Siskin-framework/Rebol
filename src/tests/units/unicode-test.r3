@@ -386,6 +386,14 @@ Rebol [
 	--test-- "sort/skip/all"
 		--assert "aa ba bb " == sort/skip/all "bb ba aa " 3
 		--assert "aa ba b🙂 " == sort/skip/all "b🙂 ba aa " 3
+		--assert "Aa aa ab aá ba " == sort/skip/all/case "ab aa Aa aá ba " 3
+	--test-- "sort/compare"
+		comp: func [a b] [a > b]
+		--assert "🙂čbaaA" == sort/compare "bač🙂Aa" :comp
+		--assert "Aaabč🙂" == sort/compare/reverse "bač🙂Aa" :comp
+		comp: func [a b] [a - b]
+		--assert "Aa ab aa aá ba " == sort/compare/skip     "ab aa Aa aá ba " :comp 3
+		--assert "Aa aa ab aá ba " == sort/compare/skip/all "ab aa Aa aá ba " :comp 3
 
 ===end-group===
 
