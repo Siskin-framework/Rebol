@@ -204,7 +204,10 @@ Rebol [
 			]
 		]
 		try [delete %tmp2574]
-		--assert {"�"} = mold to string! #{F09F989C}
+
+	--test-- "mold/form string with char above Basic Multilingual Plane"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/683
+		--assert {"😜"} = mold to string! #{F09F989C}
 
 
 ===end-group=== 
@@ -272,6 +275,15 @@ Rebol [
 		--assert #{2322C2A022} == to binary! mold to char! 160
 ===end-group=== 
 
+
+===start-group=== "mold integer!"
+	--test-- "mold min integer"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2650
+		--assert "-9223372036854775808" == mold 0#8000000000000000
+	--test-- "mold max integer"
+		--assert "-9223372036854775807" == mold 0#7FFFFFFFFFFFFFFF
+
+===end-group=== 
 
 ===start-group=== "mold-all"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2159
