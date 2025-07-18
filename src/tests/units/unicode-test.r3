@@ -141,6 +141,12 @@ Rebol [
 		--assert all ["čb" == -- str  str == "🙂čb"]
 		--assert all ["🙂čb" == -- str  str == "🙂čb"]
 
+	--test-- "last"
+		--assert #"🙂" == last "ab🙂"
+
+	--test-- "first"
+		--assert #"🙂" == first "🙂ab"
+		--assert #"🙂" == first next "a🙂b"
 		
 		
 ===end-group===

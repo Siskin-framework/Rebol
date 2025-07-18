@@ -893,7 +893,11 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	if (ANY_SERIES(val)) {
 		t = VAL_TAIL(val);
 		if (VAL_INDEX(val) >= t) return R_NONE;
-		VAL_INDEX(val) = 0;
+		if (IS_UTF8_SERIES(VAL_SERIES(val))) {
+			VAL_INDEX(val) = UTF8_Prev_Char_Position(VAL_BIN_HEAD(val), t);
+			t = 1;
+		}
+		else VAL_INDEX(val) = 0;
 	}
 	else if (IS_TUPLE(val)) t = VAL_TUPLE_LEN(val);
 	else if (IS_GOB(val)) {
