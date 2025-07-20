@@ -65,7 +65,7 @@
 	}
 	else {
 		src = bp;
-		if (len == 0) len = LEN_BYTES(src);
+		if (len == UNKNOWN) len = LEN_BYTES(src);
 	}
 	
 	n = 0;
