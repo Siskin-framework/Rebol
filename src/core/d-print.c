@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -739,12 +739,11 @@ mold_value:
 			// Form the REBOL value into a reused buffer:
 			ser = Mold_Print_Value(vp, max, desc != 'v', TRUE);
 
-			l = Length_As_UTF8(UNI_HEAD(ser), SERIES_TAIL(ser), TRUE, OS_CRLF);
+			l = SERIES_TAIL(ser);
 			if (pad != 1 && l > pad) l = pad;
 			if (l+len >= max) l = max-len-1;
 
-			Encode_UTF8(bp, l, UNI_HEAD(ser), 0, TRUE, OS_CRLF);
-
+			COPY_MEM(bp, BIN_HEAD(ser), SERIES_TAIL(ser));
 			// Filter out CTRL chars:
 			for (; l > 0; l--, bp++) if (*bp < ' ') *bp = ' ';
 			break;
