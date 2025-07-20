@@ -123,8 +123,8 @@
 ***********************************************************************/
 {
 	ASSERT1(ANY_BINSTR(val), RP_MISC);
-	if (!VAL_BYTE_SIZE(val))
-		puts("Value_To_REBOL_Path expects UTF8 encode input!");
+	//if (!VAL_BYTE_SIZE(val))
+	//	puts("Value_To_REBOL_Path expects UTF8 encode input!");
 
 	return To_REBOL_Path(VAL_DATA(val), VAL_LEN(val), (REBOOL)!VAL_BYTE_SIZE(val), dir);
 }

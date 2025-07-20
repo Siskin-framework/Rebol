@@ -1218,7 +1218,7 @@ RL_API REBCNT RL_Encode_UTF8_Char(REBYTE *dst, REBCNT *src)
 **		src  - Unicode character.
 */
 {
-	return  Encode_UTF8_Char(&dst, src);
+	return  Encode_UTF8_Char(&dst, &src);
 }
 
 /***********************************************************************
@@ -1275,7 +1275,7 @@ RL_API REBCNT RL_Encode_UTF8_Char(REBYTE *dst, REBCNT *src)
 
 	if (!ser || index > SERIES_TAIL(ser)) return 0;
 	if (!BYTE_SIZE(ser)) {
-		puts("RL_To_Local_Path expects UTF8 encode input!");
+	//	puts("RL_To_Local_Path expects UTF8 encode input!");
 		return NULL;
 	}
 
