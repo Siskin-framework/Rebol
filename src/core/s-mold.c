@@ -317,7 +317,7 @@ STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 			if (state == 12) bp--;
 			REBLEN e = AS_REBLEN(bp - acc);
 			while (e-- > 0) {
-				c = bp[-e];
+				c = bp[e];
 				if (c >= 0x7f || c == 0x1e) {  // non ASCII or ^ must be (00) escaped
 					if (c < 0xA0 || c == 0x1e) { // do not AND with above
 						sf->invalid += 5;
