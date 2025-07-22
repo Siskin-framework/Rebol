@@ -39,7 +39,7 @@ typedef struct rebol_args {
 	REBYTE *boot;
 	REBYTE *exe_path;
 	REBYTE *current_dir;
-	REBCHR *args;         // value for the --args option
+	REBYTE *args;         // value for the --args option
 	REBCNT  argc;         // unprocessed argument count
 	REBCHR **argv;        // unprocessed arguments
 } REBARGS;

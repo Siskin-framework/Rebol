@@ -151,7 +151,7 @@
 	REBCNT i = 0;
 	REBCNT n = 0;
 	REBYTE *out;
-	REBCHR *lpath = NULL;
+	REBYTE *lpath = NULL;
 	REBCNT l = 0;
 
 	if (!bp) return NULL;
@@ -280,8 +280,6 @@ term_out:
 ***********************************************************************/
 {
 	ASSERT1(ANY_BINSTR(val), RP_MISC);
-	if (!VAL_BYTE_SIZE(val))
-		puts("Value_To_Local_Path expects UTF8 encode input!");
 	return To_Local_Path(VAL_DATA(val), VAL_LEN(val), OS_WIDE, full);
 }
 

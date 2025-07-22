@@ -113,7 +113,6 @@ static void free_crypt_cipher_context(CRYPT_CTX *ctx);
 /*
 ***********************************************************************/
 {
-	REBSER *ser;
 	REBCNT  len = 0;
 	REBYTE *bin = NULL;
 	if (val == NULL) return FALSE;

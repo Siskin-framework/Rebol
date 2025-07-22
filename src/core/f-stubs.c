@@ -816,8 +816,8 @@
 		}
 		else {
 			REBLEN new_index = UTF8_Bytes_For_Char_Count_Back(VAL_BIN(val), VAL_INDEX(val), -len);
-			if (new_index > (REBINT)VAL_INDEX(val)) 
-				new_index = (REBINT)VAL_INDEX(val);
+			if (new_index > VAL_INDEX(val)) 
+				new_index = VAL_INDEX(val);
 			len = VAL_INDEX(val) - new_index;
 			VAL_INDEX(val) = new_index;
 		}

@@ -410,7 +410,7 @@ FORCE_INLINE
 FORCE_INLINE
 /***********************************************************************
 **
-*/	REBSER *UTF8_Replace_Codepoint(REBSER *ser, REBLEN index, REBU32 codepoint)
+*/	void UTF8_Replace_Codepoint(REBSER *ser, REBLEN index, REBU32 codepoint)
 /*
 **		Replace codepoint at given index with a new one.
 **
@@ -571,7 +571,6 @@ done:
 	REBU32 codepoint;
 
 	const REBYTE *bp = str;
-	REBYTE *cp;
 
 	while (*bp) dst_len += (*bp++ & 0xC0) != 0x80;
 
@@ -601,11 +600,9 @@ done:
 {
 	REBLEN  dst_len = 0, i;
 	REBYTE *dst_bin;
-	REBU32 codepoint;
 
 	const REBU32 *uni = (REBU32*)str;
 	const REBLEN uni_len = len / 4;
-	REBYTE *cp;
 
 	for (i = 0; i < uni_len; i++) {
 		dst_len = UTF8_Codepoint_Size(uni[i]);

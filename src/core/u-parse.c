@@ -699,7 +699,6 @@ bad_target:
 	REBVAL *val;
 	REBINT i, e;
 	REBCNT c;
-	REBSER *ser;
 	REBSER *block = parse->collect->block; // Parse_Collect_Block(parse);
 	REBCNT index;
 

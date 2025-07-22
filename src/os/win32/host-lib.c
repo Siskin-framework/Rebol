@@ -477,7 +477,7 @@ void Dispose_Windows(void);
 
 /***********************************************************************
 **
-*/	REBOOL OS_Get_Boot_Path(REBCHR **name)
+*/	REBOOL OS_Get_Boot_Path(REBYTE **name)
 /*
 **		Used to determine the program file path for REBOL.
 **		This is the path stored in system->options->boot and
@@ -711,11 +711,11 @@ void Dispose_Windows(void);
 	real_path[len] = 0;
 
 	// convert result to UTF-8...
-	size_t utf8_len = WideCharToMultiByte(CP_UTF8, 0, real_path, len, NULL, 0, NULL, NULL);
+	size_t utf8_len = WideCharToMultiByte(CP_UTF8, 0, real_path, AS_INT(len), NULL, 0, NULL, NULL);
 	if (utf8_len == 0) return NULL;
 	REBYTE *utf8_path = malloc(utf8_len+1);
 	if (utf8_path == 0) return NULL;
-	WideCharToMultiByte(CP_UTF8, 0, real_path, len, utf8_path, utf8_len, NULL, NULL);
+	WideCharToMultiByte(CP_UTF8, 0, real_path, AS_INT(len), utf8_path, AS_INT(utf8_len), NULL, NULL);
 	utf8_path[utf8_len] = 0;
 	return utf8_path; // Be sure to copy and free!
 }
@@ -1510,18 +1510,18 @@ static INT CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 
 /***********************************************************************
 **
-*/	REBLEN OS_Wide_To_Multibyte(const REBCHR* wide, REBYTE **utf8, REBLEN len)
+*/	REBLEN OS_Wide_To_Multibyte(const REBU16* wide, REBYTE **utf8, REBLEN len)
 /*
 **		Return new utf-8 encoded string.
 **
 ***********************************************************************/
 {
-	if (len == (REBLEN)-1) len = wcslen(wide);
+	if (len == (REBLEN)-1) len = AS_REBLEN(wcslen(wide));
 	size_t needed = WideCharToMultiByte(CP_UTF8, 0, wide, len, NULL, 0, NULL, NULL);
 	REBYTE *out = (REBYTE*)malloc(needed+1);
 	*utf8 = out;
 	if (out == NULL || needed == 0) return 0;
-	WideCharToMultiByte(CP_UTF8, 0, wide, len, out, needed, NULL, NULL);
+	WideCharToMultiByte(CP_UTF8, 0, wide, AS_INT(len), out, AS_INT(needed), NULL, NULL);
 	out[needed] = 0;
 	return (REBLEN)needed;
 }
@@ -1535,13 +1535,13 @@ static INT CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 ***********************************************************************/
 {
 	size_t len = LEN_BYTES(utf8);
-	size_t needed = MultiByteToWideChar(CP_UTF8, 0, utf8, len, NULL, 0);
+	size_t needed = MultiByteToWideChar(CP_UTF8, 0, utf8, AS_INT(len), NULL, 0);
 	if (needed == 0) return 0;
-	REBUNI *out = (REBUNI *)malloc((needed + 1) * sizeof(REBCHR));
+	REBU16 *out = (REBU16 *)malloc((needed + 1) * sizeof(REBU16));
 	if (out == NULL) return 0;
-	MultiByteToWideChar(CP_UTF8, 0, utf8, len, out, needed);
+	MultiByteToWideChar(CP_UTF8, 0, utf8, AS_INT(len), out, AS_INT(needed));
 	out[needed] = 0;
-	*wide = out;
+	*wide = (REBYTE*)out;
 	return (REBLEN)needed;
 }
 

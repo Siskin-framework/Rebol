@@ -110,7 +110,7 @@ static REBREQ *Req_SIO;
 ***********************************************************************/
 {
 	Req_SIO->actual = 0;
-	Req_SIO->data = b_cast(bp);
+	Req_SIO->cdata = bp;
 	Req_SIO->length = (len == UNKNOWN) ? LEN_BYTES(bp) : len; // byte size of buffer
 	OS_DO_DEVICE(Req_SIO, RDC_WRITE);
 	if (Req_SIO->error) Crash(RP_IO_ERROR);

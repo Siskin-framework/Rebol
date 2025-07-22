@@ -627,7 +627,6 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 #ifdef TO_WINDOWS
 	REBSER *src_ser;
 	REBYTE *src_bin = VAL_BIN_AT(data);
-	REBSER *ucs2_ser;
 	REBCHR *ucs2_bin;
 	REBLEN  ucs2_len;
 	REBINT  dst_len = 0;

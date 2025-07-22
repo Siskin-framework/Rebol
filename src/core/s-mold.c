@@ -594,7 +594,6 @@ mold_constr:
 STOID Mold_File(REBVAL *value, REB_MOLD *mold)
 {
 	REBYTE *dp;
-	REBCNT n;
 	REBINT c;
 	REBCNT len = VAL_LEN(value);
 	REBSER *ser = VAL_SERIES(value);

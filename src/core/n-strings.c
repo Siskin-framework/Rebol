@@ -244,7 +244,7 @@ static struct digest {
 	REBINT sum;
 	REBINT i = 0;
 	REBCNT j;
-	REBSER *digest, *ser;
+	REBSER *digest;
 	REBCNT len, keylen;
 	REBYTE *bin;
 	REBYTE *keycp;
@@ -572,7 +572,6 @@ static struct digest {
 	REBVAL *arg = D_ARG(1);
 	REBINT base = VAL_INT32(D_ARG(2));
 	REBVAL *part = D_ARG(5);
-	REBCNT index;
 	REBCNT len = 0;
 
 	if (D_REF(4)) {
@@ -602,7 +601,6 @@ static struct digest {
 ***********************************************************************/
 {
 	REBSER *ser = NULL;
-	REBCNT index;
 	REBVAL *arg = D_ARG(1);
 	REBINT base = VAL_INT32(D_ARG(2));
 	REBCNT limit = NO_LIMIT;

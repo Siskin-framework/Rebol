@@ -53,7 +53,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *Make_Bitset(REBCNT len)
+*/	REBSER *Make_Bitset(REBLEN len)
 /*
 **		Return a bitset series (binary.
 **
@@ -115,15 +115,15 @@
 
 /***********************************************************************
 **
-*/	REBINT Find_Max_Bit(REBVAL *val)
+*/	REBCNT Find_Max_Bit(REBVAL *val)
 /*
 **		Return integer number for the maximum bit number defined by
 **		the value. Used to determine how much space to allocate.
 **
 ***********************************************************************/
 {
-	REBINT maxi = 0;
-	REBINT n;
+	REBCNT maxi = 0;
+	REBCNT n;
 
 	switch (VAL_TYPE(val)) {
 
@@ -132,7 +132,7 @@
 		break;
 
 	case REB_INTEGER:
-		maxi = Int32s(val, 0);
+		maxi = (REBCNT)Int32s(val, 0);
 		break;
 
 	case REB_STRING:
@@ -155,7 +155,7 @@
 		else {
 			//ASCII...
 			REBYTE *bp = VAL_BIN(val);
-			for (; n < (REBINT)VAL_TAIL(val); n++)
+			for (; n < VAL_TAIL(val); n++)
 				if (bp[n] > maxi) maxi = bp[n];
 		}
 		//maxi++; //@@ https://github.com/Oldes/Rebol-issues/issues/2415
@@ -169,7 +169,7 @@
 	case REB_BLOCK:
 		for (val = VAL_BLK_DATA(val); NOT_END(val); val++) {
 			n = Find_Max_Bit(val);
-			if (n > maxi) maxi = n;
+			if (n != NOT_FOUND && n > maxi) maxi = n;
 		}
 		//maxi++;
 		break;
@@ -645,7 +645,7 @@ scan_bits:
 	REBVAL *value = D_ARG(1);
 	REBVAL *arg = D_ARG(2);
 	REBSER *ser;
-	REBINT len;
+	REBLEN len;
 	REBINT diff;
 
 	//if (action != A_MAKE && action != A_TO)
@@ -685,7 +685,7 @@ scan_bits:
 		}
 		// Determine size of bitset. Returns -1 for errors.
 		len = Find_Max_Bit(arg);
-		if (len < 0 || len > 0x0FFFFFFF) Trap_Arg(arg);
+		if (len == UNKNOWN || len > 0x0FFFFFFF) Trap_Arg(arg);
 
 		ser = Make_Bitset(len);
 		Set_Series(REB_BITSET, value, ser);

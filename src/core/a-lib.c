@@ -1204,10 +1204,10 @@ RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
 **		len  - number of source bytes consumed.
 */
 {
-	return  UTF8_Decode_Codepoint(&str, &len);
+	return  UTF8_Decode_Codepoint(&str, len);
 }
 
-RL_API REBCNT RL_Encode_UTF8_Char(REBYTE *dst, REBCNT *src)
+RL_API REBCNT RL_Encode_UTF8_Char(REBYTE *dst, REBU32 chr)
 /*
 **	Converts a single char to UTF8 code-point.
 **
@@ -1215,10 +1215,10 @@ RL_API REBCNT RL_Encode_UTF8_Char(REBYTE *dst, REBCNT *src)
 **		Returns length of char stored in dst
 **	Arguments:
 **		dst  - UTF8 encoded data
-**		src  - Unicode character.
+**		chr  - Unicode character.
 */
 {
-	return  Encode_UTF8_Char(&dst, &src);
+	return  Encode_UTF8_Char(dst, chr);
 }
 
 /***********************************************************************

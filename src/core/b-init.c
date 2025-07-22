@@ -781,7 +781,7 @@ extern const REBYTE Str_Banner[];
 }
 
 
-static void Set_Option_String(REBCHR *str, REBCNT field)
+static void Set_Option_String(REBYTE *str, REBCNT field)
 {
 	REBVAL *val;
 	if (str) {
@@ -814,7 +814,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 {
 	REBSER *ser;
 	REBVAL *val;
-	ser = To_REBOL_Path(src, 0, 0, dir);
+	ser = To_REBOL_Path(src, UNKNOWN, 0, dir);
 	val = Get_System(SYS_OPTIONS, field);
 	Set_Series(REB_FILE, val, ser);
 }

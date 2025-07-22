@@ -536,7 +536,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 
 /***********************************************************************
 **
-*/	REBSER *Append_UTF8(REBSER *dst, const REBYTE *src, REBINT len)
+*/	REBSER *Append_UTF8(REBSER *dst, const REBYTE *src, REBLEN len)
 /*
 **		Appends bytes to a string.
 **
@@ -547,7 +547,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 ***********************************************************************/
 {
 	if (len == NO_LIMIT) {
-		len = strlen(src);
+		len = LEN_BYTES(src);
 	}
 	if (!dst) dst = Make_Binary(len);
 	REBCNT tail = SERIES_TAIL(dst);
@@ -574,7 +574,6 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 	REBVAL *val;
 	REBCNT tail = 0;
 	REBCNT len;
-	void *bp;
 
 	RESET_TAIL(series);
 

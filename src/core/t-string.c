@@ -418,8 +418,8 @@ static int Compare_All_U32_Uncased(const void *v1, const void *v2) {
 	REBINT result = 0;
 	REBU32 a, b;
 	while (size-- > 0 && result == 0) {
-		REBU32 a = *((REBU32 *)v1 + offset);
-		REBU32 b = *((REBU32 *)v2 + offset);
+		a = *((REBU32 *)v1 + offset);
+		b = *((REBU32 *)v2 + offset);
 		if (a < UNICODE_CASES) a = LO_CASE(a);
 		if (b < UNICODE_CASES) b = LO_CASE(b);
 		result = (int)a - (int)b;
@@ -433,8 +433,8 @@ static int Compare_All_U32_Uncased_Rev(const void *v1, const void *v2) {
 	REBINT result = 0;
 	REBU32 a, b;
 	while (size-- > 0 && result == 0) {
-		REBU32 a = *((REBU32 *)v1 + offset);
-		REBU32 b = *((REBU32 *)v2 + offset);
+		a = *((REBU32 *)v1 + offset);
+		b = *((REBU32 *)v2 + offset);
 		if (a < UNICODE_CASES) a = LO_CASE(a);
 		if (b < UNICODE_CASES) b = LO_CASE(b);
 		result = (int)b - (int)1;
@@ -668,7 +668,7 @@ static const cmp_func sfunc_table[2][2][2][2] = {
 FORCE_INLINE
 /***********************************************************************
 **
-*/	REBINT Skip_UTF8_String(REBVAL *str, REBINT chars)
+*/	REBLEN Skip_UTF8_String(REBVAL *str, REBINT chars)
 /*
 ***********************************************************************/
 {
@@ -701,7 +701,7 @@ FORCE_INLINE
 {
 	REBVAL *data = pvs->value;
 	REBVAL *val = pvs->setval;
-	REBINT n = 0;
+	REBLEN n = 0;
 	REBINT i;
 	REBINT c;
 	REBSER *ser = VAL_SERIES(data);
@@ -817,8 +817,8 @@ FORCE_INLINE
 {
 	REBVAL	*value = D_ARG(1);
 	REBVAL  *arg = D_ARG(2);
-	REBINT	index = 0;
-	REBINT	tail = 0;
+	REBLEN	index = 0;
+	REBLEN	tail = 0;
 	REBINT	len;
 	REBSER  *ser;
 	REBCNT  type;

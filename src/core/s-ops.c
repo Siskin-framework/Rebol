@@ -64,7 +64,7 @@
 
 /*********************************************************************
 **
-*/	REBYTE *Qualify_String(REBVAL *val, REBINT max_len, REBCNT *length, REBINT opts)
+*/	REBYTE *Qualify_String(REBVAL *val, REBLEN max_len, REBCNT *length, REBINT opts)
 /*
 **	Prequalifies a string before using it with a function that
 **	expects it to be 8-bits.
@@ -92,7 +92,6 @@
 	REBCNT tail = VAL_TAIL(val);
 	REBCNT index = VAL_INDEX(val);
 	REBCNT len = 0;
-	REBINT c;
 	REBYTE *dst, *src, *end;
 
 	if (index > tail) Trap0(RE_PAST_END);
@@ -753,7 +752,6 @@ static REBYTE seed_str[SEED_LEN] = {
 ***********************************************************************/
 {
 	REBCNT len;
-	REBCNT n;
 
 	*D_RET = *val;
 

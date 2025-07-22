@@ -212,6 +212,9 @@ typedef REBUNI          REBCHR;
 typedef REBYTE          REBCHR;
 #endif
 
+#define AS_REBLEN(v)  (REBLEN)(v)  // used to silence conversion from size_t warnings
+#define AS_INT(v)        (int)(v)  // used to silence conversion from size_t warnings
+
 #define MAX_UNI 0x10FFFF
 
 #define MIN_D64 ((double)-9.2233720368547758e18)

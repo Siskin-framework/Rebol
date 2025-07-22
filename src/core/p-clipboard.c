@@ -45,7 +45,6 @@
 	REBVAL *arg;
 	REBCNT refs = 0;	// refinement argument flags
 	REBINT len;
-	REBSER *ser;
 	REBOOL closed;
 
 	port = Validate_Port_With_Request(port_value, RDI_CLIPBOARD, &req);

@@ -67,7 +67,7 @@
 }
 #endif
 
-static int Check_Char_Range(REBVAL *val, REBINT limit)
+static int Check_Char_Range(REBVAL *val, REBCNT limit)
 {
 	REBCNT len;
 
