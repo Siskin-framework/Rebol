@@ -367,6 +367,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 	}
 #else
 	// On Linux/Unix we can use UTF-8 directly:
+	TERM_SERIES(VAL_SERIES(val)); // Make sure that it's null terminated
 	return VAL_BIN_DATA(val);
 #endif
 }
