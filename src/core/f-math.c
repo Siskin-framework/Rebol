@@ -238,7 +238,7 @@
 
 /***********************************************************************
 **
-*/	REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT decimal_digits)
+*/	REBLEN Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT decimal_digits)
 /*
 ***********************************************************************/
 {
@@ -256,7 +256,7 @@
 
 	sig = (REBYTE *) dtoa (d, 2, decimal_digits, &e, &sgn, (char **) &rve);
 
-	digits_obtained = rve - sig;
+	digits_obtained = AS_INT(rve - sig);
 
 	/* handle sign */
 	if (sgn) *cp++ = '-';
@@ -332,5 +332,5 @@
  	if (trim == DEC_MOLD_PERCENT) *cp++ = '%';
 end:
 	*cp = 0;
-	return cp - start;
+	return AS_REBLEN(cp - start);
 }

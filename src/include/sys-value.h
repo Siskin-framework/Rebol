@@ -635,7 +635,7 @@ typedef struct Reb_Series_Ref
 
 // Get a char, from either byte or unicode string:
 #define GET_ANY_CHAR(s,n)   (REBUNI)(BYTE_SIZE(s) ? BIN_HEAD(s)[n] : UNI_HEAD(s)[n])
-#define GET_UTF8_CHAR(s,n) (UTF32)(IS_UTF8_SERIES(s) ? UTF8_Get_Codepoint(BIN_SKIP(s, n)) : BIN_HEAD(s)[n])
+#define GET_UTF8_CHAR(s,n) (REBU32)(IS_UTF8_SERIES(s) ? UTF8_Get_Codepoint(BIN_SKIP(s, n)) : BIN_HEAD(s)[n])
 #define SET_ANY_CHAR(s,n,c) \
 		if (c > 0x7F || IS_UTF8_SERIES(s)) { \
 			UTF8_SERIES(s); \

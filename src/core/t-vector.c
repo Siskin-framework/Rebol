@@ -928,8 +928,6 @@ size_spec:
 	//REBINT dims;
 	
 	REBYTE *vp;
-	REBI64 i = 0;
-	REBDEC f = 0.0;
 
 	if (IS_INTEGER(sel) || IS_DECIMAL(sel)) {
 		n = Int32(sel);

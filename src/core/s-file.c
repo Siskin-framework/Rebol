@@ -146,7 +146,6 @@
 {
 	REBYTE c;
 	REBSER *dst;
-	REBSER *tmp = NULL;
 	REBYTE *src;
 	REBCNT i = 0;
 	REBCNT n = 0;

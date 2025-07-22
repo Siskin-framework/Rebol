@@ -513,7 +513,7 @@ static REBU64 base36_powers[BASE36_LENGTH] = {
 	if (count) goto err; // improper modulus
 
 	*bp = 0;
-	ser->tail = bp - STR_HEAD(ser);
+	ser->tail = AS_REBLEN(bp - STR_HEAD(ser));
 	return ser;
 
 err:
@@ -558,7 +558,7 @@ err:
 	if (count & 1) goto err; // improper modulus
 
 	*bp = 0;
-	ser->tail = bp - STR_HEAD(ser);
+	ser->tail = AS_REBLEN(bp - STR_HEAD(ser));
 	return ser;
 
 err:
@@ -667,7 +667,7 @@ start:
 	}
 
 	*bp = 0;
-	ser->tail = bp - STR_HEAD(ser);
+	ser->tail = AS_REBLEN(bp - STR_HEAD(ser));
 	return ser;
 
 err:
@@ -770,7 +770,6 @@ err:
 	const REBYTE* cp;
 	REBSER* ser;
 	REBCNT ser_size;
-	REBINT pad = 0;
 	REBU64 c = 0;
 	REBINT d = 0;
 	REBCNT i;

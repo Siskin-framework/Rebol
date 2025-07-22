@@ -90,7 +90,7 @@ static REBFLG find_in_uni(REBU32 *up, REBINT len, REBU32 c)
 			dst += Encode_UTF8_Char(dst, chr);
 		}
 	}
-	SERIES_TAIL(ser) = dst - BIN_HEAD(ser);
+	SERIES_TAIL(ser) = AS_REBLEN(dst - BIN_HEAD(ser));
 	TERM_SERIES(ser);
 }
 
@@ -206,7 +206,6 @@ static REBFLG find_in_uni(REBU32 *up, REBINT len, REBU32 c)
 	REBOOL append_line_feed = FALSE;
 	REBU32 chr;
 	const REBYTE *src = BIN_SKIP(ser, index);
-	REBYTE *dst = (REBYTE*)src;
 	REBCNT size;
 
 	// Skip head lines if required:

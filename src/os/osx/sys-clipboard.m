@@ -54,7 +54,7 @@ REBOOL GetClipboardStringData(REBREQ *req){
 					len = req->length;
 				
 				req->data = (REBYTE*)OS_Make(len+1);
-				req->actual = len;
+				req->actual = AS_REBLEN(len);
 				COPY_STR(req->data, [str UTF8String], len);
 				return TRUE;
 			}

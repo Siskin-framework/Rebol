@@ -133,7 +133,7 @@ static REBCNT find_string(REBVAL *value, REBCNT index, REBCNT end, REBVAL *targe
 	//O: not using ANY_BINSTR as TAG is now handled separately
 	if (VAL_TYPE(target) >= REB_BINARY && VAL_TYPE(target) < REB_TAG) {
 		// Do the optimal search or the general search?
-		if ((IS_BINARY(value) || !IS_UTF8_SERIES(series) && !IS_UTF8_SERIES(VAL_SERIES(target))) && !(flags & ~(AM_FIND_CASE|AM_FIND_MATCH|AM_FIND_TAIL))) {
+		if (((IS_BINARY(value) || !IS_UTF8_SERIES(series)) && !IS_UTF8_SERIES(VAL_SERIES(target))) && !(flags & ~(AM_FIND_CASE|AM_FIND_MATCH|AM_FIND_TAIL))) {
 			index = Find_Byte_Str(series, start, VAL_BIN_DATA(target), len, !GET_FLAG(flags, ARG_FIND_CASE-1), GET_FLAG(flags, ARG_FIND_MATCH-1));
 			if (flags & AM_FIND_TAIL && index != NOT_FOUND) index += len;
 			return index;
@@ -446,7 +446,6 @@ static int Compare_All_U32_Uncased_Rev(const void *v1, const void *v2) {
 static int Compare_Comp(const void *v1, const void *v2) {
 	REBINT offset = VAL_INT64(DS_GET(DSP - 1));
 	REBU64 flags  = VAL_UNT64(DS_TOP);
-	REBINT result = 0;
 	REBU32 a, b;
 	if (GET_FLAG(flags, SORT_FLAG_WIDE)) {
 		a = *((REBU32 *)v1 + offset);
@@ -472,7 +471,6 @@ static int Compare_Call(const void *p1, const void *p2) {
 	REBVAL *func;
 	REBU64 flags;
 	REBCNT count;
-	REBINT offset = 0;
 	REBINT result = -1;
 
 	count = VAL_UNT64(DS_GET(DSP - 2)); // > 1 when /all is used
@@ -573,7 +571,6 @@ static const cmp_func sfunc_table[2][2][2][2] = {
 	REBCNT skip = 1;
 	REBCNT size = 1;
 	REBSER *args;
-	REBVAL *uval = NULL;
 	REBYTE *str_bin;
 	REBCNT wide = 1;
 	REBU64 flags = 0;

@@ -220,8 +220,8 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 **
 ***********************************************************************/
 {
-	REBSER* hser = series->series; // can be null
-	REBCNT* hashes = NULL;
+//	REBSER* hser = series->series; // can be null
+//	REBCNT* hashes = NULL;
 	REBCNT n;
 	REBVAL* val;
 
@@ -450,9 +450,9 @@ done:
 {
 	REBVAL *val = DS_GET(DSP - 1);
 	REBU64 flags = VAL_UNT64(DS_TOP);
-	REBINT offset = 0;
+	REBLEN offset = 0;
 	REBINT result;
-	if (IS_INTEGER(val)) offset = VAL_INT64(val) - 1;
+	if (IS_INTEGER(val)) offset = AS_REBLEN(VAL_INT64(val) - 1);
 
 	result = Cmp_Value((REBVAL*)v1+offset, (REBVAL*)v2+offset, GET_FLAG(flags, SORT_FLAG_CASE));
 	if (GET_FLAG(flags, SORT_FLAG_REVERSE)) result = -result;

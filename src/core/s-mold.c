@@ -294,10 +294,8 @@ STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 	REBYTE *bp;
 	REBYTE *ep;
 	REBYTE *acc;
-	REBCNT c;
-
+	REBCNT c=0;
 	REBCNT state = 0;
-	REBCNT slen = 0;
 
 	bp = STR_SKIP(ser, idx);
 	ep = STR_TAIL(ser);
@@ -317,7 +315,7 @@ STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 			// uncomplete or invalid
 			
 			if (state == 12) bp--;
-			REBINT e = bp - acc;
+			REBLEN e = AS_REBLEN(bp - acc);
 			while (e-- > 0) {
 				c = bp[-e];
 				if (c >= 0x7f || c == 0x1e) {  // non ASCII or ^ must be (00) escaped
@@ -399,7 +397,7 @@ STOID Mold_Char(REBSER *dst, REBU32 chr, REBOOL molded)
 		*bp++ = '"';
 		bp = Emit_Mold_Char(bp, chr);
 		*bp++ = '"';
-		dst->tail = bp - STR_HEAD(dst);
+		dst->tail = AS_REBLEN(bp - STR_HEAD(dst));
 	}
 	STR_TERM(dst);
 }
@@ -412,9 +410,8 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 	const REBYTE *bp;
 	const REBYTE *ep;
 	REBYTE *dp;
-	REBOOL uni = !BYTE_SIZE(ser);
 	REBU32 c;
-	REBCNT len = VAL_LEN(value);
+	REBLEN len = VAL_LEN(value);
 	REBLEN dlen;
 	REBYTE *dend;
 
@@ -430,7 +427,7 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 
 	bp = STR_SKIP(ser, idx);
 	ep = STR_TAIL(ser);
-	REBCNT bytes = ep - bp;
+	REBLEN bytes = AS_REBLEN(ep - bp);
 
 	// If it is a short quoted string, emit it as "string":
 	if (sf.chars <= MAX_QUOTED_STR && sf.quote == 0 && sf.newline < 3) {
@@ -554,7 +551,6 @@ STOID Mold_Url(REBVAL *value, REB_MOLD *mold)
 	REBCNT len = VAL_LEN(value);
 	REBCNT idx = VAL_INDEX(value);
 	REBYTE *bp = VAL_BIN_HEAD(value);
-	REBSER *ser = VAL_SERIES(value);
 	REBYTE required = (VAL_TYPE(value) == REB_EMAIL ? '@' : ':');
 	REBCNT found = 0;
 
@@ -596,7 +592,6 @@ STOID Mold_File(REBVAL *value, REB_MOLD *mold)
 	REBYTE *dp;
 	REBINT c;
 	REBCNT len = VAL_LEN(value);
-	REBSER *ser = VAL_SERIES(value);
 	const REBYTE *bp;
 	REBCNT bytes = len;
 
@@ -1220,7 +1215,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 		// Special format for ALL string series when not at head:
 		if (GET_MOPT(mold, MOPT_MOLD_ALL)
-			&& (VAL_INDEX(value) != 0 || VAL_TYPE(value) >= REB_EMAIL && VAL_TAIL(value) == 0)) {
+			&& ((VAL_INDEX(value) != 0 || VAL_TYPE(value) >= REB_EMAIL) && VAL_TAIL(value) == 0)) {
 				Mold_All_String(value, mold);
 				return;
 		}

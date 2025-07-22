@@ -248,7 +248,7 @@ REBINT Mode_Syms[] = {
 
 /***********************************************************************
 **
-*/	static void Read_File_Port(REBREQ *file, REBVAL *path, REBCNT args, REBCNT len)
+*/	static void Read_File_Port(REBREQ *file, REBVAL *path, REBCNT args, REBLEN len)
 /*
 **		Read from a file port.
 **
@@ -270,7 +270,7 @@ resize:
 	if (res == -RFE_RESIZE_SERIES) {
 		// We are reading virtual file where the size was initialy reported as 0,
 		// but now we have the real size calculated, so allocate the buffer again.
-		len = file->file.size;
+		len = AS_REBLEN(file->file.size);
 		goto resize;
 	}
 	if (res < 0) return; // Trap_Port(RE_READ_ERROR, port, file->error);

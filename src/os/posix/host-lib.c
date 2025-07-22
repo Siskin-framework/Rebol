@@ -445,7 +445,6 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 {
 #ifdef TO_MACOS
 	REBCNT size = 0;
-	REBINT rv;
 	REBCHR *buf;
 	*path = NULL;
 	_NSGetExecutablePath(NULL, &size); // get size of the result
@@ -453,7 +452,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 	if (!buf) return FALSE;
 	if (0 == _NSGetExecutablePath(buf, &size)) {
 		// result from above still may be a relative path!
-		*path = realpath(buf, NULL); // needs FREE once not used!!
+		*path = (REBCHR*)realpath(cs_cast(buf), NULL); // needs FREE once not used!!
 	}
 	FREE_MEM(buf);
 #else

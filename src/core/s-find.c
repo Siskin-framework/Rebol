@@ -317,7 +317,7 @@
 				for (n = 1; n < l2; n++) {
 					if (b1[n] != b2[n]) break;
 				}
-				if (n == l2) return (b1 - BIN_HEAD(series));
+				if (n == l2) return AS_REBLEN(b1 - BIN_HEAD(series));
 			}
 			b1++;
 		}
@@ -331,7 +331,7 @@
 				for (n = 1; n < l2; n++) {
 					if (LO_CASE(b1[n]) != LO_CASE(b2[n])) break;
 				}
-				if (n == l2) return (b1 - BIN_HEAD(series));
+				if (n == l2) return AS_REBLEN(b1 - BIN_HEAD(series));
 			}
 			b1++;
 		}

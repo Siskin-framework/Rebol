@@ -173,7 +173,7 @@
 	}
 	*--out = 0;
 
-	return out-start;
+	return AS_REBLEN(out-start);
 }
 
 

@@ -56,7 +56,7 @@ static REBREQ Std_IO_Req;
 static REBYTE *inbuf;
 static REBCNT inbuf_len = 32*1024;
 
-static REBYTE *Get_Next_Line()
+static REBYTE *Get_Next_Line(void)
 {
 	REBYTE *bp = inbuf;
 	REBYTE *out;
@@ -79,7 +79,7 @@ static REBYTE *Get_Next_Line()
 	return 0; // more input needed
 }
 
-static int Fetch_Buf()
+static int Fetch_Buf(void)
 {
 	REBCNT len = (REBCNT)strlen(cs_cast(inbuf));
 

@@ -159,10 +159,10 @@ static const REBYTE utf8d_class_to_size[] = {
 	[11] = 4 // 4-byte lead
 };
 
-static REBYTE const u8_length[] = {
-	// 0 1 2 3 4 5 6 7 8 9 A B C D E F
-	   1,1,1,1,1,1,1,1,0,0,0,0,2,2,3,4
-};
+//static REBYTE const u8_length[] = {
+//	// 0 1 2 3 4 5 6 7 8 9 A B C D E F
+//	   1,1,1,1,1,1,1,1,0,0,0,0,2,2,3,4
+//};
 
 
 // Helper to write a UTF-32 code point with specified endianness
@@ -494,9 +494,9 @@ REBU32 Decode_Surrogate_Pair(const REBYTE *src) {
 		case UTF8_REJECT:
 			codepoint = Decode_Surrogate_Pair(str - 1);
 			if (codepoint != UNI_ERROR) {
-				REBLEN bytes = str - 1 - start;
+				REBLEN bytes = AS_REBLEN(str - 1 - start);
 				if (bytes > 0) {
-					Append_Bytes_Len(dst, cb_cast(start), bytes);
+					Append_Bytes_Len(dst, start, bytes);
 				}
 				Append_Byte(dst, codepoint);
 				str += 4;
@@ -507,12 +507,12 @@ REBU32 Decode_Surrogate_Pair(const REBYTE *src) {
 		}
 	}
 	if (state == UTF8_ACCEPT) {
-		if (start < str) Append_Bytes_Len(dst, cb_cast(start), str - start);
+		if (start < str) Append_Bytes_Len(dst, start, AS_REBLEN(str - start));
 		return dst;
 	}
 	else {
 		// if state is not accepted, we must have incomplete utf-8 sequence or error!
-		if (err) *err = (acc - start);
+		if (err) *err = AS_REBLEN(acc - start);
 		return NULL;
 	}
 	return dst;
@@ -587,7 +587,7 @@ done:
 		write_u32(dst_bin, codepoint, little_endian);
 		dst_bin+=4;
 	}
-	SERIES_TAIL(dst_ser) = (dst_bin - BIN_HEAD(dst_ser));
+	SERIES_TAIL(dst_ser) = AS_REBLEN(dst_bin - BIN_HEAD(dst_ser));
 	return dst_ser;
 }
 
@@ -619,7 +619,7 @@ done:
 	for (i = 0; i < uni_len; i++) {
 		dst_bin += Encode_UTF8_Char(dst_bin, uni[i]);
 	}
-	SERIES_TAIL(dst_ser) = (dst_bin - BIN_HEAD(dst_ser));
+	SERIES_TAIL(dst_ser) = AS_REBLEN(dst_bin - BIN_HEAD(dst_ser));
 	return dst_ser;
 }
 
@@ -711,7 +711,7 @@ done:
 		*dst++ = (REBUNI)ch;
 	}
 
-	return (dst - start) * flag;
+	return AS_INT(dst - start) * flag;
 }
 
 
@@ -729,9 +729,8 @@ done:
 **
 ***********************************************************************/
 {
-	REBU32 codepoint;
+	REBU32 codepoint=0;
 	REBYTE *dst;
-	REBCNT i = 0;
 	REBCNT unit_size;
 	REBFLG is_little_endian;
 
@@ -804,7 +803,7 @@ done:
 			codepoint = read_u32(bp, is_little_endian);
 			// Validate data input
 			if (codepoint > 0x10FFFF || (codepoint >= UNI_SUR_HIGH_START && codepoint <= UNI_SUR_LOW_END)) {
-				if (err) *err = (bp - start);
+				if (err) *err = AS_REBLEN(bp - start);
 				return NULL;
 			}
 			bp += 4;
@@ -813,14 +812,14 @@ done:
 
 		if (codepoint > 0x7F) UTF8_SERIES(BUF_SCAN);
 	}
-	len = dst - BIN_HEAD(BUF_SCAN);
+	len = AS_REBLEN(dst - BIN_HEAD(BUF_SCAN));
 	if (ccr) {
 		len = Replace_CRLF_to_LF_Bytes(BIN_HEAD(BUF_SCAN), len);
 	}
 	return Copy_String(BUF_SCAN, 0, len);
 
 u16_error:
-	if (err) *err = 2 * (bp - 2 - start);
+	if (err) *err = 2 * AS_REBLEN(bp - 2 - start);
 	return NULL;
 }
 
@@ -980,8 +979,8 @@ FORCE_INLINE
 				max -= n;
 			}
 		}
-		if (len) *len = dst - bs;
-		return up - (REBUNI*)src;
+		if (len) *len = AS_REBLEN(dst - bs);
+		return AS_REBLEN(up - (REBUNI*)src);
 	}
 	else {
 		bp = (REBYTE*)src;
@@ -1019,8 +1018,8 @@ FORCE_INLINE
 				max -= n;
 			}
 		}
-		if (len) *len = dst - bs;
-		return bp - (REBYTE*)src;
+		if (len) *len = AS_REBLEN(dst - bs);
+		return AS_REBLEN(bp - (REBYTE*)src);
 	}
 
 

@@ -730,7 +730,7 @@ static struct digest {
 	}
 
 	*dp = 0;
-	ser = Copy_String(BUF_SCAN, 0, dp - BIN_HEAD(BUF_SCAN));
+	ser = Copy_String(BUF_SCAN, 0, AS_REBLEN(dp - BIN_HEAD(BUF_SCAN)));
 
 	Set_Series(VAL_TYPE(arg), D_RET, ser);
 
@@ -842,7 +842,7 @@ static struct digest {
 		}
 	}
 	*dp = 0;
-	ser = Copy_String(BUF_SCAN, 0, dp - BIN_HEAD(BUF_SCAN));
+	ser = Copy_String(BUF_SCAN, 0, AS_REBLEN(dp - BIN_HEAD(BUF_SCAN)));
 	Set_Series(VAL_TYPE(arg), D_RET, ser);
 
 	return R_RET;
@@ -1100,7 +1100,7 @@ static struct digest {
 	bp = UTF8_Check(VAL_BIN_DATA(arg), VAL_LEN(arg), &surrogates);
 	if (bp == 0) return R_NONE;
 
-	VAL_INDEX(arg) = bp - VAL_BIN_HEAD(arg);
+	VAL_INDEX(arg) = AS_REBLEN(bp - VAL_BIN_HEAD(arg));
 	return R_ARG1;
 }
 
