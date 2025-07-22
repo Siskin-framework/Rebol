@@ -162,8 +162,8 @@
 		break;
 
 	case REB_BINARY:
-		maxi = VAL_LEN(val) * 8 - 1;
-		if (maxi < 0) maxi = 0;
+		maxi = VAL_LEN(val) * 8;
+		if (maxi > 0) maxi--;
 		break;
 
 	case REB_BLOCK:

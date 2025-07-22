@@ -59,8 +59,8 @@
 /*
 ***********************************************************************/
 {
-	REBINT	chr = VAL_CHAR(D_ARG(1));
-	REBINT	arg = 0;
+	REBCNT	chr = VAL_CHAR(D_ARG(1));
+	REBCNT	arg = 0;
 	REBVAL	*val;
 
 	if (IS_BINARY_ACT(action)) {
