@@ -75,7 +75,7 @@
 {
 	HANDLE data;
 	REBUNI *cp;
-	REBUNI *bin;
+	REBYTE *bin;
 	REBINT len;
 	REBCNT ok;
 
@@ -99,7 +99,7 @@
 		return DR_ERROR;
 	}
 
-	// Read the UTF-8 data:
+	// Read the UCS-2 data:
 	if ((data = GetClipboardData(CF_UNICODETEXT)) == NULL) {
 		CloseClipboard();
 		req->error = 30;
@@ -113,15 +113,18 @@
 		req->error = 40;
 		return DR_ERROR;
 	}
-	len = WideCharToMultiByte(CP_UTF8, 0, cp, (REBINT)LEN_STR(cp), NULL, 0, 0, 0);
+	// Convert to UTF-8
+	len = WideCharToMultiByte(CP_UTF8, 0, cp, AS_INT(LEN_STR(cp)), NULL, 0, 0, 0);
 	bin = OS_Make(len+1);
 	WideCharToMultiByte(CP_UTF8, 0, cp, len, bin, len, 0, 0);
 
 	GlobalUnlock(data);
 	CloseClipboard();
 
+	bin[len] = 0;
+
 	//SET_FLAG(req->flags, RRF_WIDE);
-	req->data = (REBYTE *)bin;
+	req->data = bin;
 	req->actual = len;
 	return DR_DONE;
 }

@@ -302,7 +302,7 @@
 
 /***********************************************************************
 **
-*/  static REBINT Scan_Char(const REBYTE **bp, SCAN_STATE *state)
+*/  static REBU32 Scan_Char(const REBYTE **bp, SCAN_STATE *state)
 /*
 **      Scan a char, handling ^A, ^/, ^(null), ^(1234)
 **
@@ -314,7 +314,7 @@
 **
 ***********************************************************************/
 {
-	REBINT n;
+	REBU32 n;
 	const REBYTE *cp;
 	REBYTE c;
 	REBYTE lex;
@@ -410,7 +410,7 @@
 {
 	REBINT nest = 0;
 	REBYTE term;
-	REBINT chr;
+	REBU32 chr;
 	REBCNT lines = 0;
 	REBSER *buf = BUF_SCAN;
 	REBCNT len = 0;
@@ -445,7 +445,7 @@
 				Append_Bytes_Len(buf, start, len);
 			}
 			chr = Scan_Char(&src, scan_state);
-			if (chr == -1) return 0;
+			if (chr == UNKNOWN) return 0;
 
 			len = UTF8_Codepoint_Size(chr);
 			Extend_Series(buf, len);
@@ -488,7 +488,7 @@
 ***********************************************************************/
 {
 //    REBOOL comm = FALSE;
-	REBINT chr;
+	REBU32 chr;
 	REBCNT lines = 0;
 	REBSER *buf = BUF_SCAN;
 
@@ -505,7 +505,7 @@
 			return 0; // Scan_state shows error location.
 		case '^':
 			chr = Scan_Char(&src, scan_state);
-			if (chr == -1) return 0;
+			if (chr == UNKNOWN) return 0;
 			src--;
             break;
 		case ';':
@@ -513,7 +513,7 @@
 				chr = *++src;
 				if (chr == '^') {
 					chr = Scan_Char(&src, scan_state);
-					if (chr == -1) return 0;
+					if (chr == UNKNOWN) return 0;
 					src--;
 				}
 				if (chr == LF ||  chr == CR) {
@@ -823,6 +823,7 @@ new_line:
 			cp++; n--;
 		}
 	}
+	else return 0;
 
 	return (n < m && IS_LEX_DELIMIT(*cp)) ? cp : 0;
 }
@@ -1282,7 +1283,7 @@ new_line:
 			}
 			if (*cp == '"') { /* CHAR #"C" */
 				cp++;
-				type = Scan_Char(&cp, scan_state);
+				type = (REBINT)Scan_Char(&cp, scan_state);
 				if (scan_state->invalid_utf)
 					return TOKEN_EOF;
 				if (type >= 0 && *cp == '"') {

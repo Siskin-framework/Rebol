@@ -45,9 +45,9 @@
 #include "reb-c.h"
 #include "reb-args.h"
 
-extern int OS_Get_Current_Dir(REBCHR **lp);
-extern REBOOL OS_Get_Boot_Path(REBCHR **path);
-extern REBLEN OS_Wide_To_Multibyte(const REBCHR *wide, REBYTE **utf8, REBLEN len);
+extern int OS_Get_Current_Dir(REBYTE **lp);
+extern REBOOL OS_Get_Boot_Path(REBYTE **path);
+extern REBLEN OS_Wide_To_Multibyte(const REBU16 *wide, REBYTE **utf8, REBLEN len);
 
 // REBOL Option --Words:
 

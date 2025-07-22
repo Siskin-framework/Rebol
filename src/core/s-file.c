@@ -61,7 +61,7 @@
 	REBYTE *src;
 
 	if (uni) {
-		len = OS_WIDE_TO_MULTIBYTE(bp, &src, len);
+		len = OS_WIDE_TO_MULTIBYTE((const REBUNI*)bp, &src, len);
 	}
 	else {
 		src = bp;

@@ -59,7 +59,7 @@
 /*
 ***********************************************************************/
 {
-	REBCNT	chr = VAL_CHAR(D_ARG(1));
+	REBU32	chr = VAL_CHAR(D_ARG(1));
 	REBCNT	arg = 0;
 	REBVAL	*val;
 

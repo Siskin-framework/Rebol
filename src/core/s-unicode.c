@@ -483,7 +483,7 @@ REBU32 Decode_Surrogate_Pair(const REBYTE *src) {
 	const REBYTE *start = str;
 	const REBYTE *end = str + len;
 	const REBYTE *acc = start;
-	REBCNT codepoint = 0;
+	REBU32 codepoint = 0;
 	REBCNT state = UTF8_ACCEPT;
 
 	REBSER *dst = Make_Series(len, 1, FALSE);
@@ -531,7 +531,7 @@ REBU32 Decode_Surrogate_Pair(const REBYTE *src) {
 ***********************************************************************/
 {
 	REBYTE *src = (REBYTE *)*str;
-	REBCNT codepoint = 0;
+	REBU32 codepoint = 0;
 	REBCNT state = 0;
 	REBCNT bytes = *len;
 
@@ -1105,7 +1105,7 @@ X*/	REBSER *Encode_UTF8_Value(REBVAL *arg, REBCNT len, REBFLG opts)
 	if (uni) {
 		REBYTE *utf8 = NULL;
 		// Uasing OS conversion, because the old Rebol UTF-8 encoder does not support surrogates yet!
-		size = OS_WIDE_TO_MULTIBYTE((const REBCHR *)src, &utf8, len);
+		size = OS_WIDE_TO_MULTIBYTE((const REBUNI *)src, &utf8, len);
 		if (no_copy) {
 			ser = BUF_SCAN;
 			cp = Reset_Buffer(ser, size); // +(GET_FLAG(opts, ENC_OPT_BOM) ? 3 : 0));

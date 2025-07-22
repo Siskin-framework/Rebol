@@ -197,7 +197,7 @@ X*/	REBINT CRC_String(REBVAL *val)
 **
 ***********************************************************************/
 {
-	REBINT m, n;
+	REBCNT m, n;
 	REBINT hash;
 
 	if (len == UNKNOWN) len = (REBINT)LEN_BYTES(str);
