@@ -181,6 +181,17 @@ static void write_u32(REBYTE *dst, REBU32 codepoint, int is_little_endian) {
 		dst[3] = (REBYTE)(codepoint & 0xFF);
 	}
 }
+FORCE_INLINE
+static void write_u16(REBYTE *dst, REBU32 codepoint, int is_little_endian) {
+	if (is_little_endian) {
+		dst[0] = (REBYTE)(codepoint & 0xFF);
+		dst[1] = (REBYTE)((codepoint >> 8) & 0xFF);
+	}
+	else {
+		dst[0] = (REBYTE)((codepoint >> 8) & 0xFF);
+		dst[1] = (REBYTE)(codepoint & 0xFF);
+	}
+}
 // Helper to read a 16-bit code unit with endianness
 FORCE_INLINE
 static REBU16 read_u16(const REBYTE *src, int is_little_endian) {
@@ -557,6 +568,70 @@ done:
 	*len = bytes;
 	*str = src;
 	return codepoint;
+}
+
+/***********************************************************************
+**
+*/	REBSER *UTF8_To_UTF16(REBSER *dst_ser, const REBYTE *str, REBCNT len, REBFLG little_endian)
+/*
+**		Converts UTF-8 encoded byte stream to UTF-16 (UCS2) array.
+**		If dst_ser is NULL, a new series is created.
+**		If len == -1, the input size is determined using a null char.
+**
+***********************************************************************/
+{
+	REBLEN  dst_len = 0; // expected destination length in bytes
+	REBLEN  src_len = 0;
+	REBYTE *dst_bin;
+	REBU32 codepoint;
+
+	const REBYTE *bp = str;
+
+	if (len == UNKNOWN) len = LEN_BYTES(str);
+
+	src_len = len;
+	// Count number of bytes needed...
+	while (src_len > 0) {
+		codepoint = UTF8_Decode_Codepoint(&bp, &src_len);
+		if (codepoint <= 0xFFFF) {
+			dst_len += 2; // BMP character
+		}
+		else if (codepoint <= 0x10FFFF) {
+			dst_len += 4; // Surrogate pair needed
+		}
+	}
+	dst_len += 2; // For NULL
+
+	if (!dst_ser)
+		dst_ser = Make_Series(dst_len, 1, FALSE);
+	else
+		Expand_Series(dst_ser, 0, dst_len);
+
+	dst_bin = BIN_HEAD(dst_ser);
+	src_len = len;
+	bp = str;
+
+	while (src_len > 0) {
+		codepoint = UTF8_Decode_Codepoint(&bp, &src_len);
+		if (codepoint <= 0xFFFF) {
+			// Skip codepoints in surrogate range?
+			// if (codepoint < 0xD800 || codepoint > 0xDFFF) ...
+			write_u16(dst_bin, codepoint, little_endian);
+			dst_bin += 2;
+		}
+		else if (codepoint <= 0x10FFFF) {
+			REBU32 temp = codepoint - 0x10000;  // Remove the offset for supplementary planes
+			write_u16(dst_bin, 0xD800 | (temp >> 10), little_endian);
+			dst_bin += 2;
+			write_u16(dst_bin, 0xDC00 | (temp & 0x3FF), little_endian);
+			dst_bin += 2;
+		}
+	}
+	SERIES_TAIL(dst_ser) = AS_REBLEN(dst_bin - BIN_HEAD(dst_ser));
+	// Terminate... (don't use UNI_TERM as the series is not really UNI)
+	write_u16(dst_bin, 0, little_endian);
+	dst_bin += 2;
+	return dst_ser;
 }
 
 

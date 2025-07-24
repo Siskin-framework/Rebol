@@ -2082,7 +2082,7 @@ exit_block:
 {
 	Set_Root_Series(TASK_BUF_EMIT, Make_Block(511), cb_cast("emit block"));
 //	Set_Root_Series(TASK_BUF_UTF8, Make_Binary(1020), cb_cast("utf8 buffer"));
-	Set_Root_Series(TASK_BUF_UCS2, Make_Unicode(1020), cb_cast("ucs2 buffer"));
+//	Set_Root_Series(TASK_BUF_UCS2, Make_Unicode(1020), cb_cast("ucs2 buffer"));
 	Set_Root_Series(TASK_BUF_SCAN, Make_Binary(1020), cb_cast("scan buffer"));
 }
 

@@ -2205,8 +2205,10 @@ try/with [
 
 --test-- "ICONV from UTF-16 with BOM"
 	;@@ https://github.com/Oldes/Rebol3/issues/19
-	--assert "Writer" = iconv #{FEFF005700720069007400650072} 'UTF-16BE
-	--assert "Writer" = iconv #{FFFE570072006900740065007200} 'UTF-16LE
+	--assert "Writer" = iconv #{FEFF005700720069007400650072} 'UTF-16
+	--assert "Writer" = iconv #{FFFE570072006900740065007200} 'UTF-16
+	--assert "^(FEFF)Writer" = iconv #{FEFF005700720069007400650072} 'UTF-16BE
+	--assert "^(FEFF)Writer" = iconv #{FFFE570072006900740065007200} 'UTF-16LE
 	--assert "Writer" = decode 'text #{FEFF005700720069007400650072}
 	--assert "Writer" = decode 'text #{FFFE570072006900740065007200}
 
@@ -2222,6 +2224,8 @@ try/with [
 	--assert  "sc" = iconv skip #{000000650000007300000063} 4 'UTF-32BE
 	--assert  "sc" = iconv skip #{650000007300000063000000} 4 'UTF-32LE
 --test-- "ICONV from UTF-32 with BOM"
+	--assert "ěšč" = iconv #{0000feff0000011b000001610000010d} 'UTF-32
+	--assert "ěšč" = iconv #{fffe00001b010000610100000d010000} 'UTF-32
 	--assert "^(FEFF)ěšč" = iconv #{0000feff0000011b000001610000010d} 'UTF-32BE
 	--assert "^(FEFF)ěšč" = iconv #{fffe00001b010000610100000d010000} 'UTF-32LE
 --test-- "ICONV from UTF-32 to UTF-8"	
@@ -2236,15 +2240,13 @@ try/with [
 	--assert #{0000011b000001610000010d} == iconv/to #{C49BC5A1C48D} 'utf-8 'utf-32be
 
 
---test-- "ICONV/TO (conversion to different codepage - binary result)"
-	bin: to binary! txt ; normaly conversion is done to UTF-8
-	--assert bin = iconv/to #{50F869686CE1736974} "ISO-8859-2" "utf8"
-	--assert bin = iconv/to #{50F869686CE1736974} 'ISO-8859-2  'utf8
-	--assert bin = iconv/to #{50F869686CE1736974} <ISO-8859-2> <UTF-8>
-	--assert bin = iconv/to #{50F869686CE1736974} 28592 65001
-
-	--assert #{C5A1C3A96D} = iconv/to #{9AE96D} 1250 65001 ; this one internally uses preallocated series data
-	--assert #{C5A1C3A96DC5A1C3A96D} = iconv/to #{9AE96D9AE96D} 1250 65001 ;this one internally extends series
+--test-- "ICONV/TO (conversion to UTF-8 - text result)"
+	--assert txt == iconv/to #{50F869686CE1736974} "ISO-8859-2" "utf8"
+	--assert txt == iconv/to #{50F869686CE1736974} 'ISO-8859-2  'utf8
+	--assert txt == iconv/to #{50F869686CE1736974} <ISO-8859-2> <UTF-8>
+	--assert txt == iconv/to #{50F869686CE1736974} 28592 65001
+	--assert "šém" == iconv/to #{9AE96D} 1250 65001 ; this one internally uses preallocated series data
+	--assert "šémšém" == iconv/to #{9AE96D9AE96D} 1250 65001 ;this one internally extends series
 
 --test-- "ICONV/TO (UTF-16 variants)"
 	;- UTF-16 handling must be coded specially on Windows, so adding these tests here

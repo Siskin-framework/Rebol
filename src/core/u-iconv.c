@@ -47,6 +47,17 @@
 
 #include "sys-core.h"
 
+#ifdef ENDIAN_LITTLE
+#define OS_UTF16_CODEPAGE 1200
+#define OS_UTF32_CODEPAGE 12000
+#else
+#define OS_UTF16_CODEPAGE 1201
+#define OS_UTF32_CODEPAGE 12001
+#endif
+// Using little-endian if user don't specify it
+#define DEFAULT_UTF16_CODEPAGE 1200
+#define DEFAULT_UTF32_CODEPAGE 12000
+
 
 // Codepage aliases borrowed from: https://github.com/win-iconv/win-iconv/blob/master/win_iconv.c
 // (slightly modified for preferences, because it looks some iconv posix variants does not recognize CP1200 etc)
@@ -86,27 +97,15 @@ static struct {
 	{12001, "UCS4BE"},
 	{12001, "CP12001"},
 
-#ifdef BIG_ENDIAN
-    // Big endian...
-    {1201, "UTF16"},
-    {1201, "UTF-16"},
-    {1201, "UCS2"},
-    {1201, "UCS-2"},
-    {12001, "UTF32"},
-    {12001, "UTF-32"},
-    {12001, "UCS-4"},
-    {12001, "UCS4"},
-#else
-    // Little endian variants
-	{1200, "UTF-16"},
-	{1200, "UTF16"},
-	{1200, "UCS-2"},
-	{1200, "UCS2"},
-	{12000, "UTF-32"},
-	{12000, "UTF32"},
-	{12000, "UCS-4"},
-	{12000, "UCS4"},
-#endif
+    // Unicodes without endian specification
+	{2, "UTF-16"},
+	{2, "UTF16"},
+	{2, "UCS-2"},
+	{2, "UCS2"},
+	{4, "UTF-32"},
+	{4, "UTF32"},
+	{4, "UCS-4"},
+	{4, "UCS4"},
 
 	/* copy from libiconv `iconv -l` */
 	/* !IsValidCodePage(367) */
@@ -587,13 +586,11 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 **  This function converts the input into numeric ID (as used on Windows)
 **  and than back to name, where prefered (supported) name should be first.
 **
-*/	static REBYTE* norm_codepage_name(REBVAL *cp)
+*/	static REBYTE* norm_codepage_name(REBINT id)
 /*
 ***********************************************************************/
 {
-	REBINT id;
 	REBYTE *name;
-	id = get_codepage_id(cp);
 	if (id == -1) return NULL;
 	for(int i = 0; codepage_alias[i].name != NULL; i++) {
 		if(codepage_alias[i].codepage == id)
@@ -627,7 +624,7 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 #ifdef TO_WINDOWS
 	REBSER *src_ser;
 	REBYTE *src_bin = VAL_BIN_AT(data);
-	REBCHR *ucs2_bin;
+	REBUNI *ucs2_bin = NULL;
 	REBLEN  ucs2_len;
 	REBINT  dst_len = 0;
 	REBINT cp, tp = CP_UTF8;
@@ -644,20 +641,52 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 			return R_NONE;
 		}
 	}
-
-	if (cp == 1200 || cp == 1201) { // data are already wide (UTF-16LE or UTF-16BE)
-		ucs2_len = src_len / 2;
-		ucs2_bin = (REBCHR *)Reset_Buffer(BUF_UCS2, ucs2_len);
-		COPY_MEM(ucs2_bin, src_bin, src_len);
+	if (cp == 2) { // data are said to be wide (UTF-16)
+		ucs2_bin = (REBUNI *)src_bin;
 		// Skip the BOM if exists...
 		// https://github.com/Oldes/Rebol3/issues/19
-		if (ucs2_bin[0] == 0xFEFF || ucs2_bin[0] == 0xFFFE) {
-			cp = ucs2_bin[0] == 0xFEFF ? 1200 : 1201;
+		if (ucs2_bin[0] == 0xFEFF) {
+			cp = 1200;
 			ucs2_bin++;
-			ucs2_len--;
+			src_len -= 2;
 		}
-		if (cp == 1201) {
-			Swap_Endianess_U16(ucs2_bin, ucs2_len);
+		else if (ucs2_bin[0] == 0xFFFE) {
+			cp = 1201;
+			src_bin += 2;
+			src_len -= 2;
+			ucs2_bin = NULL; // must be switched
+		}
+		else {
+			// no BOM, use little-endian
+			cp = DEFAULT_UTF16_CODEPAGE;
+		}
+	}
+	else if (cp == 4) { // data are said to be wide (UTF-32)
+		REBU32 tmp = *(REBU32 *)src_bin;
+		if (tmp == 0xFFFE0000) {
+			cp = 12001;
+			src_bin += 4;
+			src_len -= 4;
+		}
+		else if (tmp == 0x0000FEFF) {
+			cp = 12000;
+			src_bin += 4;
+			src_len -= 4;
+		}
+		else {
+			// no BOM, use little-endian
+			cp = DEFAULT_UTF32_CODEPAGE;
+		}
+	}
+	if (cp == 1200 || cp == 1201) { // data are already wide (UTF-16LE or UTF-16BE)
+		ucs2_len = src_len / 2;
+		if (!ucs2_bin) {
+			if (cp == 1201) {
+				ucs2_bin = (REBUNI *)Reset_Buffer(BUF_SCAN, ucs2_len);
+				COPY_MEM(ucs2_bin, src_bin, src_len);
+				Swap_Endianess_U16(ucs2_bin, ucs2_len);
+			}
+			else ucs2_bin = (REBUNI *)src_bin;
 		}
 		goto convert_to;
 	}
@@ -675,10 +704,17 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 		}
 	}
 
-	if (cp == CP_UTF8 && (tp == 12000 || tp == 12001)) {
-		dest = UTF8_To_UTF32(NULL, src_bin, src_len, (tp == 12000));
-		SET_BINARY(D_RET, dest);
-		return R_RET;
+	if (cp == CP_UTF8) {
+		if (tp == 1200 || tp == 1201) {
+			dest = UTF8_To_UTF16(NULL, src_bin, src_len, (tp == 1200));
+			SET_BINARY(D_RET, dest);
+			return R_RET;
+		}
+		if (tp == 12000 || tp == 12001) {
+			dest = UTF8_To_UTF32(NULL, src_bin, src_len, (tp == 12000));
+			SET_BINARY(D_RET, dest);
+			return R_RET;
+		}
 	}
 
 	if (src_len > 0) {
@@ -686,12 +722,12 @@ static REBYTE* get_codepage_name(REBVAL *cp)
 		ucs2_len = MultiByteToWideChar(cp, 0, src_bin, src_len, NULL, 0);
 		if (ucs2_len <= 0) return R_NONE; //@@ or error?
 		// Convert input to UCS2...
-		ucs2_bin = (REBCHR *)Reset_Buffer(BUF_UCS2, ucs2_len);
+		ucs2_bin = (REBUNI *)Reset_Buffer(BUF_SCAN, ucs2_len*2); // The SCAN buffer is not UNI (so *2)!
 		ucs2_len = MultiByteToWideChar(cp, 0, src_bin, src_len, ucs2_bin, ucs2_len);
 	} else {
 		// Empty input...
 		ucs2_len = 0;
-		ucs2_bin = (REBCHR *)Reset_Buffer(BUF_UCS2, 0);
+		ucs2_bin = (REBUNI *)Reset_Buffer(BUF_SCAN, 0);
 	}
 	
 convert_to:
@@ -699,7 +735,7 @@ convert_to:
 		SET_STRING(D_RET, Make_Series(1, 1, FALSE));
 		return R_RET;
 	}
-	if (ref_to) {
+	if (tp != 65001) {
 		// Convert to the target codepage...
 		if (tp == 1200 || tp ==  1201) {
 			if (tp == 1201) {
@@ -732,23 +768,68 @@ convert_to:
 #else
 	//FIXME: does all supported non Windows OSes have iconv?
 	iconv_t cd;
-	size_t src_size = (size_t)src_len;
+	size_t src_size;
 	size_t dst_size;
 	size_t nread;
 	REBCNT tail;
+	REBINT from_cp;
+
+	char *src_bin = (char*)VAL_BIN_DATA(data);
 
 	//TODO: currently only strings regisered in the aliases are supported
 	//      but iconv may support more variants, so we could try to convert
 	//      any given codepage names, and do normalization only when it fails!
+	from_cp = get_codepage_id(val_from);
 
-	const char *fromcode = cs_cast(norm_codepage_name(val_from));
+	if (from_cp == 2) { // data are said to be wide (UTF-16)
+		REBUNI tmp = *(REBUNI *)src_bin;
+		// Skip the BOM if exists...
+		// https://github.com/Oldes/Rebol3/issues/19
+		if (tmp == 0xFEFF) {
+			from_cp = 1200;
+			src_bin += 2;
+			src_len -= 2;
+		}
+		else if (tmp == 0xFFFE) {
+			from_cp = 1201;
+			src_bin += 2;
+			src_len -= 2;
+		}
+		else {
+			// no BOM, use little-endian
+			from_cp = DEFAULT_UTF16_CODEPAGE;
+		}
+	}
+	else if (from_cp == 4) { // data are said to be wide (UTF-16)
+		REBU32 tmp = *(REBU32 *)src_bin;
+		// Skip the BOM if exists...
+		// https://github.com/Oldes/Rebol3/issues/19
+		if (tmp == 0xFFFE0000) {
+			from_cp = 12001;
+			src_bin += 4;
+			src_len -= 4;
+		}
+		else if (tmp == 0x0000FEFF) {
+			from_cp = 12000;
+			src_bin += 4;
+			src_len -= 4;
+		}
+		else {
+			// no BOM, use little-endian
+			from_cp = DEFAULT_UTF32_CODEPAGE;
+		}
+	}
+
+	src_size = (size_t)src_len;
+
+	const char *fromcode = cs_cast(norm_codepage_name(from_cp));
 	const char *tocode;
 
 	if (!fromcode) {
 		Trap1(RE_INVALID_ARG, val_from);
 	}
 	if (ref_to) {
-		tocode = cs_cast(norm_codepage_name(val_to));
+		tocode = cs_cast(norm_codepage_name(get_codepage_id(val_to)));
 		if (!tocode) Trap1(RE_INVALID_ARG, val_to);
 	} else {
 		tocode = "UTF-8";
@@ -765,13 +846,12 @@ convert_to:
 	dst_size = SERIES_SPACE(dest);
 
 	
-	char *src = (char*)VAL_BIN_DATA(data);
 	char *dst = (char*)BIN_HEAD(dest);
 	//Reb_Opts->watch_expand = TRUE;
 	for(;;) {
 		//printf("iconv from: %s to: %s src_size: %d dst_size: %d\n", fromcode, tocode, src_size, dst_size);
 		//Dump_Series(dest, "dst");
-		nread = iconv(cd, &src, &src_size, &dst, &dst_size);
+		nread = iconv(cd, &src_bin, &src_size, &dst, &dst_size);
 		//printf("ret: %d src_size: %d dst_size: %d %d\n", nread, src_size, dst_size, (REBYTE *)dst - BIN_HEAD(dest));
 		if(nread == (size_t)-1) {
 			//printf("iconv failed: %d\n", errno );
@@ -806,7 +886,7 @@ convert_to:
 		if (src_size == 0) break;
 	}
 	SERIES_TAIL(dest) = (REBCNT)((REBYTE*)dst - BIN_HEAD(dest));
-	if (ref_to) {
+	if (tocode != "UTF-8") {
 		SET_BINARY(D_RET, dest);
 	}
 	else {
