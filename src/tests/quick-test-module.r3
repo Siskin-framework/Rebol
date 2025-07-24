@@ -130,7 +130,7 @@ as-red-only: does [
 assert: func [
 	assertion [logic! none!]
 ][
-? assertion
+	;? assertion
 	qt-file-asserts: qt-file-asserts + 1
 	qt-test-assert: qt-test-assert + 1
 	either assertion [

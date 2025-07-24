@@ -4,6 +4,7 @@ Rebol [
 	File:    %run-tests.r3
 	Needs:   [%quick-test-module.r3]
 ]
+? system/build
 
 ;- check speed of available checksum methods
 ;do %test-checksums.r3
