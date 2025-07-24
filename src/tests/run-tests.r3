@@ -69,7 +69,7 @@ dt [ ;- delta time
 		%units/time-test.r3
 		%units/tuple-test.r3
 		%units/typeset-test.r3
-;		%units/unicode-test.r3
+		%units/unicode-test.r3
 		%units/url-test.r3
 		%units/vector-test.r3
 		%units/word-test.r3
