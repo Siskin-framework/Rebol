@@ -890,6 +890,8 @@ convert_to:
 		SET_BINARY(D_RET, dest);
 	}
 	else {
+		// Mark result as series with UTF-8 encoding used, if needed!
+		if (!Is_ASCII(BIN_HEAD(dest), SERIES_TAIL(dest))) UTF8_SERIES(dest);
 		SET_STRING(D_RET, dest);
 	}
 	

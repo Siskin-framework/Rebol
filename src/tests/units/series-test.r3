@@ -2228,6 +2228,9 @@ try/with [
 	--assert "ěšč" = iconv #{fffe00001b010000610100000d010000} 'UTF-32
 	--assert "^(FEFF)ěšč" = iconv #{0000feff0000011b000001610000010d} 'UTF-32BE
 	--assert "^(FEFF)ěšč" = iconv #{fffe00001b010000610100000d010000} 'UTF-32LE
+	--assert 3 = length? iconv #{0000feff0000011b000001610000010d} 'UTF-32
+	--assert 4 = length? iconv #{0000feff0000011b000001610000010d} 'UTF-32BE
+
 --test-- "ICONV from UTF-32 to UTF-8"	
 	--assert "ěšč" = iconv/to #{1b010000610100000d010000} 'UTF-32LE 'UTF-8
 	--assert "ěšč" = iconv/to #{0000011b000001610000010d} 'UTF-32BE 'UTF-8
