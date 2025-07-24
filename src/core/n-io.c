@@ -979,6 +979,9 @@ chk_neg:
 	REB_MOLD mo = {0};
 	REBVAL *value;
 
+	// It is expected to have pairs of NAME and FILTER
+	if (VAL_BLK_LEN(blk) % 2 != 0) return NULL;
+
 	Reset_Mold(&mo);
 
 	for (value = VAL_BLK_DATA(blk); NOT_END(value); value++) {
@@ -987,7 +990,7 @@ chk_neg:
 	}
 	Append_Byte(mo.series, 0);
 
-	return Copy_Series(mo.series); // Unicode
+	return UTF8_To_UTF16(BUF_SCAN, BIN_HEAD(mo.series), SERIES_TAIL(mo.series), OS_LITTLE_ENDIAN);
 }
 
 
@@ -1005,7 +1008,7 @@ chk_neg:
 	REBSER *blk;
 	REBSER *dir;
 
-	while ((n = (REBCNT)LEN_STR(str))) {
+	while ((n = (REBLEN)LEN_STR(str))) {
 		len++;
 		str += n + 1; // next
 	}
@@ -1014,10 +1017,10 @@ chk_neg:
 
 	// First is a dir path or full file path:
 	str = start;
-	n = (REBCNT)LEN_STR(str);
+	n = (REBLEN)LEN_STR(str);
 
 	if (len == 1) {  // First is full file path
-		dir = To_REBOL_Path(str, n, OS_WIDE, 0);
+		dir = To_REBOL_Path((REBYTE*)str, n, OS_WIDE, 0);
 		Set_Series(REB_FILE, Append_Value(blk), dir);
 	}
 	else {  // First is dir path for the rest of the files
@@ -1025,8 +1028,11 @@ chk_neg:
 		str += n + 1; // next
 		len = dir->tail;
 		while ((n = (REBCNT)LEN_STR(str))) {
+			const REBYTE *utf8 = 0;
+			REBLEN sz = OS_WIDE_TO_MULTIBYTE((const REBUNI*)str, &utf8, n);
 			dir->tail = len;
-			Append_Uni_Uni(dir, str, n);
+			Append_Bytes_Len(dir, utf8, sz);
+			OS_FREE(utf8);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
 			str += n + 1; // next
 		}
@@ -1070,6 +1076,7 @@ chk_neg:
 
 	if (D_REF(ARG_REQUEST_FILE_FILTER)) {
 		ser = Block_To_String_List(D_ARG(ARG_REQUEST_FILE_LIST));
+		if (!ser) Trap_Arg(D_ARG(ARG_REQUEST_FILE_LIST));
 		fr.filter = (REBCHR*)(ser->data);
 	}
 
