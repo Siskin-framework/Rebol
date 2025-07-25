@@ -77,7 +77,7 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	static void Print_OS_Line(REBOOL err)
+*/	static void Print_Line(REBOOL err)
 /*
 **		Print a new line.
 **
@@ -101,17 +101,19 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	static void Prin_OS_String(const REBYTE *bp, REBLEN len, REBOOL uni, REBOOL err)
+*/	static void Prin_String(const REBYTE *bp, REBLEN len, REBOOL err)
 /*
 **		Print a string, but no line terminator or space.
 **
-**		The width of the input is specified by UNI.
+**		Expects UTF-8 encoded string!
 **
 ***********************************************************************/
 {
 	Req_SIO->actual = 0;
 	Req_SIO->cdata = bp;
 	Req_SIO->length = (len == UNKNOWN) ? LEN_BYTES(bp) : len; // byte size of buffer
+	if (err)
+		SET_FLAG(Req_SIO->flags, RRF_ERROR);
 	OS_DO_DEVICE(Req_SIO, RDC_WRITE);
 	if (Req_SIO->error) Crash(RP_IO_ERROR);
 }
@@ -124,7 +126,7 @@ static REBREQ *Req_SIO;
 ***********************************************************************/
 {
 	Print_Value(value, limit, mold, err); // higher level!
-	for (; lines > 0; lines--) Print_OS_Line(err);
+	for (; lines > 0; lines--) Print_Line(err);
 }
 
 
@@ -134,8 +136,8 @@ static REBREQ *Req_SIO;
 /*
 ***********************************************************************/
 {
-	Prin_OS_String(bp, UNKNOWN, 0, err);
-	for (; lines > 0; lines--) Print_OS_Line(err);
+	Prin_String(bp, UNKNOWN, err);
+	for (; lines > 0; lines--) Print_Line(err);
 }
 
 
@@ -191,7 +193,7 @@ static REBREQ *Req_SIO;
 		}
 
 		if (lines == 0) i += 2; // start of next line
-		Prin_OS_String(BIN_SKIP(Trace_Buffer, i), tail-i, 0, TRUE);
+		Prin_String(BIN_SKIP(Trace_Buffer, i), tail-i, TRUE);
 		//RESET_SERIES(Trace_Buffer);
 	}
 	else {
@@ -222,8 +224,8 @@ static REBREQ *Req_SIO;
 		for (; lines > 0; lines--) Append_Byte(Trace_Buffer, LF);
 	}
 	else {
-		Prin_OS_String(bp, len, uni, TRUE);
-		for (; lines > 0; lines--) Print_OS_Line(TRUE);
+		Prin_String(bp, len, TRUE);
+		for (; lines > 0; lines--) Print_Line(TRUE);
 	}
 }
 
@@ -797,7 +799,7 @@ mold_value:
 ***********************************************************************/
 {
 	REBSER *out = Mold_Print_Value(value, limit, mold, FALSE);
-	Prin_OS_String(out->data, out->tail, TRUE, err);
+	Prin_String(out->data, out->tail, err);
 }
 
 
@@ -811,7 +813,7 @@ mold_value:
 ***********************************************************************/
 {
 	Prin_Value(value, limit, mold, err);
-	Print_OS_Line(err);
+	Print_Line(err);
 }
 
 

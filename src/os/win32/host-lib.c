@@ -688,7 +688,7 @@ void Dispose_Windows(void);
 
 /***********************************************************************
 **
-*/	REBYTE* OS_Real_Path(const REBU16 *path)
+*/	REBYTE* OS_Real_Path(const REBCHR *path)
 /*
 **		Returns a null-terminated string containing the canonicalized
 **		absolute pathname corresponding to path. In the returned string,
