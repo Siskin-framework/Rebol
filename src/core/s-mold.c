@@ -501,7 +501,7 @@ STOID Mold_All_String(REBVAL *value, REB_MOLD *mold)
 	Post_Mold(value, mold);
 }
 
-// Same as Mold_All_String, but forcing contruction syntax like #[file ...]
+// Same as Mold_All_String, but forcing contruction syntax like #(file! ...)
 STOID Mold_All_Constr_String(REBVAL *value, REB_MOLD *mold)
 {
 	// The string that is molded for /all option:
@@ -1298,11 +1298,12 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	case REB_EMAIL:
 	case REB_URL:
-		if (GET_MOPT(mold, MOPT_MOLD_ALL)
-			&& NOT_FOUND == Find_Str_Char(VAL_SERIES(value), 0, 0,
+		if ((GET_MOPT(mold, MOPT_MOLD_ALL) && VAL_INDEX(value) != 0)
+			|| VAL_TAIL(value) == 0
+			|| NOT_FOUND == Find_Str_Char(VAL_SERIES(value), 0, 0,
 				VAL_TAIL(value), 1, VAL_TYPE(value) == REB_EMAIL ? '@' : ':', 0))
 		{
-			Mold_All_String(value, mold);
+			Mold_All_Constr_String(value, mold);
 			return;
 		}
 		Mold_Url(value, mold);
