@@ -50,6 +50,7 @@
 #include "sys-scan.h"
 
 #define BUF_SIZE (16*1024)		// MS restrictions apply
+#define UTF8_CHUNK_SIZE (BUF_SIZE / 4) // account for worst-case UTF-8 expansion
 
 #define SF_DEV_NULL 31			// local flag to mark NULL device
 
@@ -440,6 +441,37 @@ static void Close_StdIO_Local(void)
 	return DR_DONE;
 }
 
+// Find a Safe UTF-8 Boundary
+FORCE_INLINE
+static size_t utf8_chunk_end(const char *buf, size_t maxlen) {
+	size_t end = maxlen;
+	// Scan backward if needed (up to 3 bytes back)
+	while (end > 0 && (buf[end] & 0xC0) == 0x80) // 0x80-0xBF are UTF-8 continuation bytes
+		end--;
+	return end;
+}
+
+static size_t Write_UTF8_To_Console(const char *utf8, size_t utf8_len, size_t offset, HANDLE hOutput) {
+	BOOL ok = FALSE;
+	size_t chunk;
+
+	// Convert UTF-8 buffer to Win32 wide-char format for console.
+	// Write to Console in safe chunks...
+	while (offset < utf8_len) {
+		chunk = MIN(utf8_len - offset, UTF8_CHUNK_SIZE);
+		chunk = utf8_chunk_end(&utf8[offset], chunk);
+		if (chunk == 0) chunk = 1; // Avoid infinite loop on malformed data
+
+		int len = MultiByteToWideChar(CP_UTF8, 0, &utf8[offset], (int)chunk, Std_Buf, BUF_SIZE);
+		if (len > 0)
+			ok = WriteConsoleW(hOutput, Std_Buf, len, NULL, 0);
+		if (!ok) return -1;
+
+		offset += chunk;
+	}
+	return offset;
+}
+
 
 /***********************************************************************
 **
@@ -503,18 +535,15 @@ static void Close_StdIO_Local(void)
 				else { // for Windows SubSystem - must be converted to Win32 wide-char format
 					//if found, write to the console content before it starts, else everything
 					if (cp) {
-						len = MultiByteToWideChar(CP_UTF8, 0, cs_cast(bp), cp - bp, Std_Buf, BUF_SIZE);
+						len = Write_UTF8_To_Console(cs_cast(bp), cp-bp, 0, hOutput);
 					}
 					else {
-						len = MultiByteToWideChar(CP_UTF8, 0, cs_cast(bp), ep - bp, Std_Buf, BUF_SIZE);
+						len = Write_UTF8_To_Console(cs_cast(bp), ep-bp, 0, hOutput);
 						bp = ep;
 					}
-					if (len > 0) {// no error
-						ok = WriteConsoleW(hOutput, Std_Buf, len, &total, 0);
-						if (!ok) {
-							req->error = GetLastError();
-							return DR_ERROR;
-						}
+					if (len < 0) {
+						req->error = GetLastError();
+						return DR_ERROR;
 					}
 					//is escape char was found, parse the ANSI sequence...
 					if (cp) {
@@ -528,14 +557,11 @@ static void Close_StdIO_Local(void)
 				ok = WriteFile(hOutput, req->data, req->length, &total, 0);
 			}
 			else {
-				// Convert UTF-8 buffer to Win32 wide-char format for console.
-				// Thankfully, MS provides something other than mbstowcs();
-				// however, if our buffer overflows, it's an error. There's no
-				// efficient way at this level to split-up the input data,
-				// because its UTF-8 with variable char sizes.
-				len = MultiByteToWideChar(CP_UTF8, 0, cs_cast(req->data), req->length, Std_Buf, BUF_SIZE);
-				if (len > 0) // no error
-					ok = WriteConsoleW(hOutput, Std_Buf, len, &total, 0);
+				len = Write_UTF8_To_Console(cs_cast(req->data), req->length, req->actual, hOutput);
+				if (len < 0) {
+					req->error = GetLastError();
+					return DR_ERROR;
+				}
 			}
 		}
 		req->actual = req->length;  // do not use "total" (can be byte or wide)
