@@ -101,11 +101,11 @@ static REBREQ *Req_SIO;
 
 /***********************************************************************
 **
-*/	static void Prin_OS_String(const REBYTE *bp, REBLEN len, REBOOL uni, REBOOL err)
+*/	static void Prin_OS_String(const REBYTE *bp, REBLEN len, REBOOL err)
 /*
 **		Print a string, but no line terminator or space.
 **
-**		The width of the input is specified by UNI.
+**		Expects UTF-8 encoded string!
 **
 ***********************************************************************/
 {
@@ -136,7 +136,7 @@ static REBREQ *Req_SIO;
 /*
 ***********************************************************************/
 {
-	Prin_OS_String(bp, UNKNOWN, 0, err);
+	Prin_OS_String(bp, UNKNOWN, err);
 	for (; lines > 0; lines--) Print_OS_Line(err);
 }
 
@@ -193,7 +193,7 @@ static REBREQ *Req_SIO;
 		}
 
 		if (lines == 0) i += 2; // start of next line
-		Prin_OS_String(BIN_SKIP(Trace_Buffer, i), tail-i, 0, TRUE);
+		Prin_OS_String(BIN_SKIP(Trace_Buffer, i), tail-i, TRUE);
 		//RESET_SERIES(Trace_Buffer);
 	}
 	else {
@@ -224,7 +224,7 @@ static REBREQ *Req_SIO;
 		for (; lines > 0; lines--) Append_Byte(Trace_Buffer, LF);
 	}
 	else {
-		Prin_OS_String(bp, len, uni, TRUE);
+		Prin_OS_String(bp, len, TRUE);
 		for (; lines > 0; lines--) Print_OS_Line(TRUE);
 	}
 }
@@ -799,7 +799,7 @@ mold_value:
 ***********************************************************************/
 {
 	REBSER *out = Mold_Print_Value(value, limit, mold, FALSE);
-	Prin_OS_String(out->data, out->tail, TRUE, err);
+	Prin_OS_String(out->data, out->tail, err);
 }
 
 
