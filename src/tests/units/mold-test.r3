@@ -281,7 +281,7 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2650
 		--assert "-9223372036854775808" == mold 0#8000000000000000
 	--test-- "mold max integer"
-		--assert "-9223372036854775807" == mold 0#7FFFFFFFFFFFFFFF
+		--assert "9223372036854775807" == mold 0#7FFFFFFFFFFFFFFF
 
 ===end-group=== 
 
