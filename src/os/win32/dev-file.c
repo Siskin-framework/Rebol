@@ -270,7 +270,7 @@ static BOOL Seek_File_64(REBREQ *file)
 	h = CreateFile(file->file.path, access, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, create, attrib, 0);
 	if (h == INVALID_HANDLE_VALUE) {
 		file->error = -RFE_OPEN_FAIL;
-		wprintf(L"failed to open: %s\n", file->file.path);
+		//wprintf(L"failed to open: %s\n", file->file.path);
 		goto fail;
 	}
 
