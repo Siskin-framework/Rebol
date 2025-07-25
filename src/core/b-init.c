@@ -791,19 +791,14 @@ static void Set_Option_String(REBYTE *str, REBCNT field)
 	}
 }
 
-static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
+static REBCNT Set_Option_Word(REBYTE *str, REBCNT field)
 {
 	REBVAL *val;
-	REBYTE *bp;
-	REBYTE buf[40]; // option words always short ASCII strings
-	REBCNT n = 0;
-
+	REBLEN n = 0;
+	// The input string is already UTF8 encoded, so no need to clip Unicode
 	if (str) {
-		n = (REBCNT)LEN_STR(str); // WC correct
-		if (n > 38) return 0;
-		bp = &buf[0];
-		while ((*bp++ = (REBYTE)*str++)); // clips unicode
-		n = Make_Word(buf, n);
+		n = (REBLEN)LEN_BYTES(str);
+		n = Make_Word(str, n);
 		val = Get_System(SYS_OPTIONS, field);
 		Init_Word(val, n);
 	}
@@ -894,13 +889,15 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	if (rargs->args) {
 		// if used --args, store this value as a first one
 		new = Append_Value(ser);
-		Set_String(new, Copy_OS_Str(rargs->args, (REBINT)LEN_STR(rargs->args)));
+		// the string is already UTF-8 encoded
+		Set_String(new, Copy_Str(rargs->args, (REBINT)LEN_BYTES(rargs->args)));
 	}
 	// the rest of args, if there are any...
 	for (n = 0; n < rargs->argc; n++) {
 		arg = rargs->argv[n];
 		if (arg == 0) continue; // shell bug
 		new = Append_Value(ser);
+		// these arguments still have the system width
 		Set_String(new, Copy_OS_Str(arg, (REBINT)LEN_STR(arg)));
 		//if(arg[0]=='-')	VAL_SET_LINE(new);
 	}

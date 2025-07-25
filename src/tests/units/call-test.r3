@@ -16,7 +16,7 @@ rebol-cmd: func[cmd][
 	clear err-buffer
 	insert cmd join to-local-file system/options/boot #" "
 	call/shell/wait/output/error cmd out-buffer err-buffer
-] 
+]
 
 ===start-group=== "Command-Line Interface (/shell)"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2228
@@ -55,6 +55,10 @@ rebol-cmd: func[cmd][
 		--assert out-buffer = {["-v" "--" "-x"]^/["-v" "--" "-x"]^/}
 		--assert 0 = rebol-cmd {--args "a b" units/files/print-args.r3 -v}
 		--assert out-buffer = {["a b" "-v"]^/["a b"]^/}
+
+		--assert 0 = rebol-cmd {--args "á b" units/files/print-args.r3 -v}
+		--assert out-buffer = {["á b" "-v"]^/["á b"]^/}
+
 		; providing script using --script option
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2469
 		--assert 0 = rebol-cmd {--script units/files/print-args.r3 --args "a b" -- -v}
@@ -73,6 +77,9 @@ rebol-cmd: func[cmd][
 			--assert 0 = rebol-cmd {--do "print system/options/args quit" `seq 1 1000`}
 			--assert #{17900469C3C78A614B60FEE4E3851EF6BAF9D876} =  checksum out-buffer 'sha1
 		]
+	--test-- "--secure"
+		--assert 0 = rebol-cmd {--secure none --do "probe system/options/secure"}
+		--assert out-buffer == {none^/}
 ===end-group===
 
 
