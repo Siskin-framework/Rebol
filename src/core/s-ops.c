@@ -123,7 +123,7 @@
 
 	// Rest better be just spaces:
 	while (src < end) {
-		if (!IS_LEX_SPACE(*src)) Trap0(RE_INVALID_CHARS);
+		if (!IS_SPACE(*src)) Trap0(RE_INVALID_CHARS);
 		src++;
 	}
 	if (length) *length = len;
