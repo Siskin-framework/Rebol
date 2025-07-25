@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -513,7 +513,7 @@ static REBU64 base36_powers[BASE36_LENGTH] = {
 	if (count) goto err; // improper modulus
 
 	*bp = 0;
-	ser->tail = bp - STR_HEAD(ser);
+	ser->tail = AS_REBLEN(bp - STR_HEAD(ser));
 	return ser;
 
 err:
@@ -558,7 +558,7 @@ err:
 	if (count & 1) goto err; // improper modulus
 
 	*bp = 0;
-	ser->tail = bp - STR_HEAD(ser);
+	ser->tail = AS_REBLEN(bp - STR_HEAD(ser));
 	return ser;
 
 err:
@@ -667,7 +667,7 @@ start:
 	}
 
 	*bp = 0;
-	ser->tail = bp - STR_HEAD(ser);
+	ser->tail = AS_REBLEN(bp - STR_HEAD(ser));
 	return ser;
 
 err:
@@ -770,7 +770,6 @@ err:
 	const REBYTE* cp;
 	REBSER* ser;
 	REBCNT ser_size;
-	REBINT pad = 0;
 	REBU64 c = 0;
 	REBINT d = 0;
 	REBCNT i;

@@ -348,7 +348,7 @@
 			case SYM_SHA3_256:
 			case SYM_SHA3_384:
 			case SYM_SHA3_512:
-				SHA3_Update((mbedtls_sha3_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				SHA3_Update((mbedtls_sha3_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), AS_REBLEN(part));
 				break;
 #endif
 #ifdef INCLUDE_RIPEMD160
@@ -380,16 +380,16 @@
 #endif
 #ifdef INCLUDE_XXHASH
 			case SYM_XXH3:
-				XXH3_Update((XXH3_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				XXH3_Update((XXH3_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), AS_REBLEN(part));
 				break;
 			case SYM_XXH32:
-				XXH32_Update((XXH32_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				XXH32_Update((XXH32_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), AS_REBLEN(part));
 				break;
 			case SYM_XXH64:
-				XXH64_Update((XXH64_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				XXH64_Update((XXH64_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), AS_REBLEN(part));
 				break;
 			case SYM_XXH128:
-				XXH128_Update((XXH128_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				XXH128_Update((XXH128_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), AS_REBLEN(part));
 				break;
 #endif
 			}

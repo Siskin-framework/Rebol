@@ -53,7 +53,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *Make_Bitset(REBCNT len)
+*/	REBSER *Make_Bitset(REBLEN len)
 /*
 **		Return a bitset series (binary.
 **
@@ -115,15 +115,15 @@
 
 /***********************************************************************
 **
-*/	REBINT Find_Max_Bit(REBVAL *val)
+*/	REBCNT Find_Max_Bit(REBVAL *val)
 /*
 **		Return integer number for the maximum bit number defined by
 **		the value. Used to determine how much space to allocate.
 **
 ***********************************************************************/
 {
-	REBINT maxi = 0;
-	REBINT n;
+	REBCNT maxi = 0;
+	REBCNT n;
 
 	switch (VAL_TYPE(val)) {
 
@@ -132,7 +132,7 @@
 		break;
 
 	case REB_INTEGER:
-		maxi = Int32s(val, 0);
+		maxi = (REBCNT)Int32s(val, 0);
 		break;
 
 	case REB_STRING:
@@ -141,29 +141,33 @@
 	case REB_URL:
 	case REB_TAG:
 //	case REB_ISSUE:
-		n = VAL_INDEX(val);
-		if (VAL_BYTE_SIZE(val)) {
-			REBYTE *bp = VAL_BIN(val);
-			for (; n < (REBINT)VAL_TAIL(val); n++)
-				if (bp[n] > maxi) maxi = bp[n];
+		if (IS_UTF8_SERIES(VAL_SERIES(val))) {
+			REBU32 chr;
+			REBCNT sz = VAL_LEN(val);
+			const REBYTE *bp = VAL_BIN_DATA(val);
+			while (sz > 0) {
+				chr = UTF8_Decode_Codepoint(&bp, &sz);
+				if (chr > maxi) maxi = chr;
+			}
 		}
 		else {
-			REBUNI *up = VAL_UNI(val);
-			for (; n < (REBINT)VAL_TAIL(val); n++)
-				if (up[n] > maxi) maxi = up[n];
+			//ASCII...
+			REBYTE *bp = VAL_BIN(val);
+			for (n = VAL_INDEX(val); n < VAL_TAIL(val); n++)
+				if (bp[n] > maxi) maxi = bp[n];
 		}
 		//maxi++; //@@ https://github.com/Oldes/Rebol-issues/issues/2415
 		break;
 
 	case REB_BINARY:
-		maxi = VAL_LEN(val) * 8 - 1;
-		if (maxi < 0) maxi = 0;
+		maxi = VAL_LEN(val) * 8;
+		if (maxi > 0) maxi--;
 		break;
 
 	case REB_BLOCK:
 		for (val = VAL_BLK_DATA(val); NOT_END(val); val++) {
 			n = Find_Max_Bit(val);
-			if (n > maxi) maxi = n;
+			if (n != NOT_FOUND && n > maxi) maxi = n;
 		}
 		//maxi++;
 		break;
@@ -182,7 +186,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG Check_Bit(REBSER *bset, REBCNT c, REBFLG uncased)
+*/	REBFLG Check_Bit(const REBSER *bset, REBCNT c, REBFLG uncased)
 /*
 **		Check bit indicated. Returns TRUE if set.
 **		If uncased is TRUE, try to match either upper or lower case.
@@ -318,19 +322,23 @@ retry:
 /*
 ***********************************************************************/
 {
-	REBCNT n = VAL_INDEX(val);
+	REBCNT index = VAL_INDEX(val);
+	REBCNT sz=VAL_LEN(val);
+	REBU32 chr;
 
 	if(IS_PROTECT_SERIES(bset)) Trap0(RE_PROTECTED);
 
-	if (VAL_BYTE_SIZE(val)) {
-		REBYTE *bp = VAL_BIN(val);
-		for (; n < VAL_TAIL(val); n++)
-			Set_Bit(bset, bp[n], set);
+	if (IS_UTF8_SERIES(VAL_SERIES(val))) {
+		const REBYTE *bp = VAL_BIN_DATA(val);
+		while (sz > 0) {
+			chr = UTF8_Decode_Codepoint(&bp, &sz);
+			Set_Bit(bset, chr, set);
+		}
 	}
 	else {
-		REBUNI *up = VAL_UNI(val);
-		for (; n < VAL_TAIL(val); n++)
-			Set_Bit(bset, up[n], set);
+		REBYTE *bp = VAL_BIN(val);
+		for (; index < VAL_TAIL(val); index++)
+			Set_Bit(bset, bp[index], set);
 	}
 }
 
@@ -635,7 +643,7 @@ scan_bits:
 	REBVAL *value = D_ARG(1);
 	REBVAL *arg = D_ARG(2);
 	REBSER *ser;
-	REBINT len;
+	REBLEN len;
 	REBINT diff;
 
 	//if (action != A_MAKE && action != A_TO)
@@ -675,7 +683,7 @@ scan_bits:
 		}
 		// Determine size of bitset. Returns -1 for errors.
 		len = Find_Max_Bit(arg);
-		if (len < 0 || len > 0x0FFFFFFF) Trap_Arg(arg);
+		if (len == UNKNOWN || len > 0x0FFFFFFF) Trap_Arg(arg);
 
 		ser = Make_Bitset(len);
 		Set_Series(REB_BITSET, value, ser);

@@ -180,7 +180,6 @@ static REBFLG get_scalar(REBSTU *stu,
 ***********************************************************************/
 {
 	REBVAL* val = NULL;
-	REBVAL* type_blk = NULL;
 	REBSER* out, * dim;
 	REBSTF* field = STRUCT_FIELDS(stu);
 	REBCNT i, n, cnt;
@@ -663,13 +662,12 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 	REBVAL spec;
 	REBVAL *struct_specs = Get_System(SYS_CATALOG, CAT_STRUCTS);
 	REBCNT hash = 0, n = NOT_FOUND;
-	REBVAL *values = data + 1;
 	REBOOL new_spec = FALSE;
 
 	if (IS_INTEGER(data)) {
 		// Struct spec id used like:
 		// #(struct! 111111 [a: 1 b: 2])
-		hash = VAL_INT64(data);
+		hash = VAL_UNT32(data);
 	}
 	else if (IS_WORD(data)) {
 		// Struct spec as a registered struct name
@@ -892,11 +890,11 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 /*
 ***********************************************************************/
 {
-	REBINT n = VAL_STRUCT_FIELDS(s) - VAL_STRUCT_FIELDS(t);
+	REBINT n = AS_INT(VAL_STRUCT_FIELDS(s) - VAL_STRUCT_FIELDS(t));
 	if (n != 0) {
 		return n;
 	}
-	n = VAL_STRUCT_DATA(s) - VAL_STRUCT_DATA(t);
+	n = AS_INT(VAL_STRUCT_DATA(s) - VAL_STRUCT_DATA(t));
 	return n;
 }
 

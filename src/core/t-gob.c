@@ -84,7 +84,7 @@ const REBCNT Gob_Flag_Words[] = {
 {
 	REBINT n;
 
-	n = VAL_GOB(g2) - VAL_GOB(g1);
+	n = AS_INT(VAL_GOB(g2) - VAL_GOB(g1));
 	if (n != 0) return n;
 	n = VAL_GOB_INDEX(g2) - VAL_GOB_INDEX(g1);
 	if (n != 0) return n;

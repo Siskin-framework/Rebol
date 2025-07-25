@@ -220,8 +220,8 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 **
 ***********************************************************************/
 {
-	REBSER* hser = series->series; // can be null
-	REBCNT* hashes = NULL;
+//	REBSER* hser = series->series; // can be null
+//	REBCNT* hashes = NULL;
 	REBCNT n;
 	REBVAL* val;
 
@@ -416,14 +416,7 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 	}
 
 	// make from string! or binary! with tokenization
-	if (IS_STRING(arg)) {
-		REBCNT index, len = 0;
-		VAL_SERIES(arg) = Prep_Bin_Str(arg, &index, &len); // (keeps safe)
-		ser = Scan_Source(VAL_BIN(arg), VAL_LEN(arg));
-		goto done;
-	}
-
-	if (IS_BINARY(arg)) {
+	if (IS_STRING(arg) || IS_BINARY(arg)) {
 		ser = Scan_Source(VAL_BIN_DATA(arg), VAL_LEN(arg));
 		goto done;
 	}
@@ -457,9 +450,9 @@ done:
 {
 	REBVAL *val = DS_GET(DSP - 1);
 	REBU64 flags = VAL_UNT64(DS_TOP);
-	REBINT offset = 0;
+	REBLEN offset = 0;
 	REBINT result;
-	if (IS_INTEGER(val)) offset = VAL_INT64(val) - 1;
+	if (IS_INTEGER(val)) offset = AS_REBLEN(VAL_INT64(val) - 1);
 
 	result = Cmp_Value((REBVAL*)v1+offset, (REBVAL*)v2+offset, GET_FLAG(flags, SORT_FLAG_CASE));
 	if (GET_FLAG(flags, SORT_FLAG_REVERSE)) result = -result;

@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -109,42 +109,11 @@ static REBREQ *Req_SIO;
 **
 ***********************************************************************/
 {
-	#define BUF_SIZE 1024
-	REBYTE buffer[BUF_SIZE]; // on stack
-	REBYTE *buf = &buffer[0];
-	REBINT n;
-	REBCNT len2;
-	REBUNI *up = (REBUNI*)bp;
-
-	if (!bp) Crash(RP_NO_PRINT_PTR);
-
-	// Determine length if not provided:
-	if (len == UNKNOWN) len = (uni ? (REBLEN)wcslen((const wchar_t*)up) : LEN_BYTES(bp));
-
-	SET_FLAG(Req_SIO->flags, RRF_FLUSH);
-	if (err)
-		SET_FLAG(Req_SIO->flags, RRF_ERROR);
-
 	Req_SIO->actual = 0;
-	Req_SIO->data = buf;
-	buf[0] = 0; // for debug tracing
-
-	while ((len2 = len) > 0) {
-
-		Do_Signals();
-
-		// returns # of chars, size returns buf bytes output
-		n = Encode_UTF8(buf, BUF_SIZE-4, uni ? (void*)up : (void*)bp, &len2, uni, OS_CRLF);
-		if (n == 0) break;
-
-		Req_SIO->length = len2; // byte size of buffer
-
-		if (uni) up += n; else bp += n;
-		len -= n;
-
-		OS_DO_DEVICE(Req_SIO, RDC_WRITE);
-		if (Req_SIO->error) Crash(RP_IO_ERROR);
-	}
+	Req_SIO->cdata = bp;
+	Req_SIO->length = (len == UNKNOWN) ? LEN_BYTES(bp) : len; // byte size of buffer
+	OS_DO_DEVICE(Req_SIO, RDC_WRITE);
+	if (Req_SIO->error) Crash(RP_IO_ERROR);
 }
 
 
@@ -290,9 +259,9 @@ static REBREQ *Req_SIO;
 ***********************************************************************/
 {
 	REBCNT ul;
-	REBCNT bl;
 	REBYTE buf[1024];
 	REBUNI *up = UNI_HEAD(ser);
+	REBCNT bl = UNI_LEN(ser);
 	REBINT size = Length_As_UTF8(up, SERIES_TAIL(ser), TRUE, OS_CRLF);
 
 	while (size > 0) {
@@ -609,7 +578,7 @@ static REBREQ *Req_SIO;
 	return bp+2;
 }
 
-
+#ifdef unused
 /***********************************************************************
 **
 */	REBUNI *Form_Hex2_Uni(REBUNI *up, REBCNT val)
@@ -623,50 +592,50 @@ static REBREQ *Req_SIO;
 	up[2] = 0;
 	return up+2;
 }
-
+#endif
 
 /***********************************************************************
 **
-*/	REBUNI *Form_Hex_Esc_Uni(REBUNI *up, REBUNI c)
+*/	REBYTE *Form_Hex_Esc(REBYTE *bp, REBINT c)
 /*
 **		Convert byte int to %xx format (in unicode destination)
 **
 ***********************************************************************/
 {
-	up[0] = '%';
-	up[1] = Hex_Digits[(c & 0xf0) >> 4];
-	up[2] = Hex_Digits[c & 0xf];
-	up[3] = 0;
-	return up+3;
+	bp[0] = '%';
+	bp[1] = Hex_Digits[(c & 0xf0) >> 4];
+	bp[2] = Hex_Digits[c & 0xf];
+	bp[3] = 0;
+	return bp+3;
 }
 
 
 /***********************************************************************
 **
-*/	REBUNI *Form_RGB_Uni(REBUNI *up, REBCNT val)
+*/	REBYTE *Form_RGB(REBYTE *bp, REBCNT val)
 /*
 **		Convert 24 bit RGB to xxxxxx format.
 **
 ***********************************************************************/
 {
 #ifdef ENDIAN_LITTLE
-	up[0] = Hex_Digits[(val >>  4) & 0xf];
-	up[1] = Hex_Digits[val & 0xf];
-	up[2] = Hex_Digits[(val >> 12) & 0xf];
-	up[3] = Hex_Digits[(val >>  8) & 0xf];
-	up[4] = Hex_Digits[(val >> 20) & 0xf];
-	up[5] = Hex_Digits[(val >> 16) & 0xf];
+	bp[0] = Hex_Digits[(val >>  4) & 0xf];
+	bp[1] = Hex_Digits[val & 0xf];
+	bp[2] = Hex_Digits[(val >> 12) & 0xf];
+	bp[3] = Hex_Digits[(val >>  8) & 0xf];
+	bp[4] = Hex_Digits[(val >> 20) & 0xf];
+	bp[5] = Hex_Digits[(val >> 16) & 0xf];
 #else
-	up[0] = Hex_Digits[(val >>  28) & 0xf];
-	up[1] = Hex_Digits[(val >> 24) & 0xf];
-	up[2] = Hex_Digits[(val >> 20) & 0xf];
-	up[3] = Hex_Digits[(val >> 16) & 0xf];
-	up[4] = Hex_Digits[(val >> 12) & 0xf];
-	up[5] = Hex_Digits[(val >>  8) & 0xf];
+	bp[0] = Hex_Digits[(val >>  28) & 0xf];
+	bp[1] = Hex_Digits[(val >> 24) & 0xf];
+	bp[2] = Hex_Digits[(val >> 20) & 0xf];
+	bp[3] = Hex_Digits[(val >> 16) & 0xf];
+	bp[4] = Hex_Digits[(val >> 12) & 0xf];
+	bp[5] = Hex_Digits[(val >>  8) & 0xf];
 #endif
-	up[6] = 0;
+	bp[6] = 0;
 
-	return up+6;
+	return bp+6;
 }
 
 
@@ -770,12 +739,11 @@ mold_value:
 			// Form the REBOL value into a reused buffer:
 			ser = Mold_Print_Value(vp, max, desc != 'v', TRUE);
 
-			l = Length_As_UTF8(UNI_HEAD(ser), SERIES_TAIL(ser), TRUE, OS_CRLF);
+			l = SERIES_TAIL(ser);
 			if (pad != 1 && l > pad) l = pad;
 			if (l+len >= max) l = max-len-1;
 
-			Encode_UTF8(bp, l, UNI_HEAD(ser), 0, TRUE, OS_CRLF);
-
+			COPY_MEM(bp, BIN_HEAD(ser), SERIES_TAIL(ser));
 			// Filter out CTRL chars:
 			for (; l > 0; l--, bp++) if (*bp < ' ') *bp = ' ';
 			break;
@@ -915,5 +883,5 @@ mold_value:
 ***********************************************************************/
 {
 	Set_Root_Series(TASK_BUF_PRINT, Make_Binary(1000), cb_cast("print buffer"));
-	Set_Root_Series(TASK_BUF_FORM,  Make_Binary(64), cb_cast("form buffer"));
+	//Set_Root_Series(TASK_BUF_FORM,  Make_Binary(64), cb_cast("form buffer"));
 }
