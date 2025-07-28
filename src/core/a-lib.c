@@ -26,6 +26,10 @@
 **  Author:  Carl Sassenrath, Oldes
 **  Notes:
 **
+**		New functions must be added to end for backward compatibility
+**		with older extensions! Also existing functions should not
+**		be modified for the same reason!
+**
 ***********************************************************************/
 
 #include "sys-core.h"
@@ -1207,20 +1211,6 @@ RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
 	return  UTF8_Decode_Codepoint(&str, len);
 }
 
-RL_API REBCNT RL_Encode_UTF8_Char(REBYTE *dst, REBU32 chr)
-/*
-**	Converts a single char to UTF8 code-point.
-**
-**	Returns:
-**		Returns length of char stored in dst
-**	Arguments:
-**		dst  - UTF8 encoded data
-**		chr  - Unicode character.
-*/
-{
-	return  Encode_UTF8_Char(dst, chr);
-}
-
 /***********************************************************************
 **
 */	RL_API REBCNT RL_Register_Handle_Spec(const REBYTE *name, REBHSP *spec)
@@ -1318,6 +1308,20 @@ RL_API REBSER* RL_Struct_Spec(REBCNT id)
 	n = Find_Entry(VAL_SERIES(struct_specs), &key, 0, TRUE);
 	if (n == NOT_FOUND) return 0;
 	return VAL_SERIES(VAL_BLK_SKIP(struct_specs, n));
+}
+
+RL_API REBCNT RL_Encode_UTF8_Char(REBYTE *dst, REBU32 chr)
+/*
+**	Converts a single char to UTF8 code-point.
+**
+**	Returns:
+**		Returns length of char stored in dst
+**	Arguments:
+**		dst  - UTF8 encoded data
+**		chr  - Unicode character.
+*/
+{
+	return  Encode_UTF8_Char(dst, chr);
 }
 
 
