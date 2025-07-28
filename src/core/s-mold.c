@@ -312,22 +312,18 @@ STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 			break;
 		}
 		if (state != UTF8_ACCEPT) {
-			// uncomplete or invalid
-			
-			if (state == 12) bp--;
-			REBLEN e = AS_REBLEN(bp - acc);
-			while (e-- > 0) {
-				c = bp[e];
+			while (bp < ep && (*bp & 0xC0) == 0x80) {
+				c = *bp++;
 				if (c >= 0x7f || c == 0x1e) {  // non ASCII or ^ must be (00) escaped
 					if (c < 0xA0 || c == 0x1e) { // do not AND with above
-						sf->invalid += 5;
+						sf->invalid += 4;
 					}
-					else sf->invalid += UTF8_Codepoint_Size(c);
+					else
+						sf->invalid += UTF8_Codepoint_Size(c)-1;
 				}
-				if (IS_CHR_ESC(c)) {
-					sf->invalid += 2;
+				else if (IS_CHR_ESC(c)) {
+					sf->invalid += 1;
 				}
-				else sf->invalid += 1;
 			}
 			state = UTF8_ACCEPT;
 			continue;
@@ -411,7 +407,7 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 	const REBYTE *ep;
 	REBYTE *dp;
 	REBU32 c;
-	REBLEN len = VAL_LEN(value);
+	REBLEN len;
 	REBLEN dlen;
 	REBYTE *dend;
 
@@ -420,6 +416,7 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 		Append_Bytes(mold->series, "\"\"");  //Trap0(RE_PAST_END);
 		return;
 	}
+	len = VAL_LEN(value);
 	//TODO: check limit!!!
 	CHECK_MOLD_LIMIT(mold, len);
 
@@ -440,7 +437,7 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 		while (bp < ep && dp < dend) {
 			c = UTF8_Decode_Codepoint(&bp, &bytes);
 			if (c == UNI_ERROR)
-				c = UNI_REPLACEMENT_CHAR;
+				c = bp[-1]; // UNI_REPLACEMENT_CHAR;
 			dp = Emit_Mold_Char(dp, c);
 		}
 
