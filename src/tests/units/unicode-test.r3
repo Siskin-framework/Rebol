@@ -370,13 +370,37 @@ Rebol [
 		--assert all [(change o: "---" #"🙂") == "--"  o == "🙂--"]
 
 	--test-- "take"
-		--assert #"á" == take "áb"
-		--assert #"🙂" == take "🙂b"
-		--assert #"🙂" == take next "á🙂b"
+		--assert all [
+			#"á" == take s: "áb"
+			s == "b"
+		]
+		--assert all [
+			#"🙂" == take s: "🙂b"
+			s == "b"
+		]
+		--assert all [
+			#"🙂" == take next s: "á🙂b"
+			s == "áb"
+		]
 
+	--test-- "take/all"
 		--assert "áb" == take/all "áb"
 		--assert "🙂b" == take/all "🙂b"
 		--assert "🙂b" == take/all next "á🙂b"
+
+	--test-- "take/part"
+		--assert all [
+			"áb" == take/part s: "ábx" 2
+			s == "x"
+		]
+		--assert all [
+			"🙂b" == take/part s: "🙂bx" 2
+			s == "x"
+		]
+		--assert all [
+			"🙂b" == take/part next s: "á🙂bx" 2
+			s == "áx"
+		]
 
 	--test-- "remove"
 		--assert "b" == remove "áb"

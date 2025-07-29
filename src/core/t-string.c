@@ -1004,8 +1004,12 @@ zero_str:
 		if (!D_REF(ARG_TAKE_PART)) {
 			if (IS_BINARY(value)) {
 				SET_INTEGER(value, *VAL_BIN_SKIP(value, index));
-			} else
-				str_to_char(value, value, index);
+			}
+			else {
+				REBU32 chr = UTF8_Get_Codepoint(VAL_BIN_SKIP(value, index));
+				SET_CHAR(value, chr);
+				len = UTF8_Codepoint_Size(chr);
+			}
 		}
 		else Set_Series(VAL_TYPE(value), value, Copy_String(ser, index, len));
 		Remove_Series(ser, index, len);
