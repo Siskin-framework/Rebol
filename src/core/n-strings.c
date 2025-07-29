@@ -980,23 +980,7 @@ static struct digest {
 	REBCNT len;
 //	REBSER *series;
 	REBYTE buffer[MAX_TUPLE*2+4];  // largest value possible
-	REBYTE *buf;
-
-#ifdef removed
-	if (IS_INTEGER(arg)) len = MAX_HEX_LEN;
-	else if (IS_TUPLE(arg)) {
-		len = VAL_TUPLE_LEN(arg);
-		if (len < 3) len = 3;
-		len *= 2;
-	}
-	else Trap_Arg(arg);
-
-	else if (IS_DECIMAL(arg)) len = MAX_HEX_LEN;
-	else if (IS_MONEY(arg)) len = 24;
-	else if (IS_CHAR(arg)) len = (VAL_CHAR(arg) > 0x7f) ? 4 : 2;
-#endif
-
-	buf = &buffer[0];
+	REBYTE *buf = &buffer[0];
 
 	if (D_REF(2)) {	// /size
 		//@@ https://github.com/Oldes/Rebol-issues/issues/127
@@ -1004,10 +988,18 @@ static struct digest {
 			Trap_Arg(D_ARG(3));
 		len = VAL_UNT32(D_ARG(3));
 	}
+	else if (IS_CHAR(arg)) {
+		len = VAL_UNT32(arg);
+		if (len <= 0xFF) len = 2;
+		else if (len <= 0xFFFF) len = 4;
+		else if (len <= 0xFFFFFF) len = 6;
+		else len == 8;
+	}
 	else {
 		len = NO_LIMIT;
 	}
-	if (IS_INTEGER(arg)) { // || IS_DECIMAL(arg)) {
+
+	if (IS_INTEGER(arg) || IS_CHAR(arg)) {
 		if (len == NO_LIMIT || len > MAX_HEX_LEN) len = MAX_HEX_LEN;
 		Form_Hex_Pad(buf, VAL_INT64(arg), len);
 	}

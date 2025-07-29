@@ -35,10 +35,13 @@ Rebol [
 		--assert error? try [to-hex/size 1.2.3  0] 
 		--assert error? try [to-hex/size 1.2.3 -1] 
 
-	--test-- "to-hex char!" ; not supported by design!
+	--test-- "to-hex char!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1106
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1109
-		--assert error? try [to-hex #"a"]
+		--assert #61 = to-hex #"a"
+		--assert #E1 = to-hex #"á"
+		--assert #E1 = to-hex #"^(E1)"
+		--assert (to integer! #"á") = (to integer! to-hex #"á")
 
 	--test-- "to-hex money!" ; not supported by design!
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1023

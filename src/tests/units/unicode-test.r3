@@ -153,6 +153,10 @@ Rebol [
 		out: copy ""
 		foreach c str [append out c]
 		--assert str == out
+
+	--test-- "to-hex"
+		--assert #01F642 = to-hex #"🙂"
+		--assert #01F642 = to-hex #"^(01F642)"
 		
 ===end-group===
 

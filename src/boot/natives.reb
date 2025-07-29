@@ -565,7 +565,7 @@ set: native [
 
 to-hex: native [
 	{Converts numeric value to a hex issue! datatype (with leading # and 0's).}
-	value [integer! tuple!] {Value to be converted}
+	value [integer! char! tuple!] {Value to be converted}
 	/size {Specify number of hex digits in result}
 	len [integer!]
 ]
