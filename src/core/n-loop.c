@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -302,14 +302,15 @@ enum loop_each_mode {
 	REBSER *series;
 	REBSER *out = NULL;	// output block (for LM_MAP, mode = 2)
 
-	REBINT index;	// !!!! should these be REBCNT?
-	REBINT tail;
-	REBINT windex;	// write
-	REBINT rindex;	// read
-	REBINT err = 0;
+	REBLEN index;
+	REBLEN tail;
+	REBLEN windex;	// write
+	REBLEN rindex;	// read
+	REBLEN err = 0;
 	REBCNT i;
 	REBCNT j;
 	REBOOL return_count = FALSE;
+	REBLEN removed_uni = 0;
 
 	ASSERT2(mode >= 0 && mode < 4, RP_MISC);
 
@@ -437,6 +438,7 @@ enum loop_each_mode {
 							SET_INTEGER(vars, (REBI64)(BIN_HEAD(series)[index]));
 						}
 						else if (IS_IMAGE(value)) {
+							ASSERT1(index <= (MAX_REBLEN >> 2), RP_BAD_SIZE);
 							Set_Tuple_Pixel(BIN_SKIP(series, index<<2), vars);
 						}
 						else {
@@ -495,6 +497,9 @@ enum loop_each_mode {
 					windex += index - rindex;
 					// old: while (rindex < index) *BLK_SKIP(series, windex++) = *BLK_SKIP(series, rindex++);
 				}
+				else if (IS_UTF8_SERIES(series)) {
+					removed_uni++;
+				}
 			}
 			else
 				if (!IS_UNSET(ds)) Append_Val(out, ds); // (mode == LM_MAP)
@@ -508,8 +513,13 @@ skip_hidden: ;
 		if (windex < index) Remove_Series(series, windex, index - windex);
 		if (err == 2) return R_TOS1;  // If BREAK/RETURN
 		if (return_count) {
-			index -= windex;
-			SET_INTEGER(DS_RETURN, IS_MAP(value) ? index / 2 : index);
+			if (IS_UTF8_SERIES(series)) {
+				SET_INTEGER(DS_RETURN, removed_uni);
+			}
+			else {
+				index -= windex;
+				SET_INTEGER(DS_RETURN, IS_MAP(value) ? index / 2 : index);
+			}
 			return R_RET;
 		}
 		return R_ARG2;

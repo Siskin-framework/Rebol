@@ -171,6 +171,13 @@ Rebol [
 			out  == "a🙂čb"
 		]
 
+	--test-- "remove-each/count"
+		--assert all [
+			str: "a🙂čb"
+			2 == remove-each/count c str [c > 0#7f]
+			"ab" == str
+		]
+
 
 	--test-- "to-hex"
 		--assert #01F642 = to-hex #"🙂"

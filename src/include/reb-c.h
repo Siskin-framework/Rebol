@@ -219,6 +219,7 @@ typedef REBYTE          REBCHR;
 
 #define MIN_D64 ((double)-9.2233720368547758e18)
 #define MAX_D64 ((double) 9.2233720368547758e18)
+#define MAX_REBLEN 0xFFFFFFFF
 
 // Useful char constants:
 enum {
