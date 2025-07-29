@@ -218,6 +218,7 @@ enum loop_each_mode {
 **		0: forall
 **		1: forskip
 **
+**	NOTE: This math only works for index in positive ranges!
 ***********************************************************************/
 {
 	REBVAL *var;
@@ -230,6 +231,7 @@ enum loop_each_mode {
 
 	var = Get_Var(D_ARG(1));
 	if (IS_NONE(var)) return R_NONE;
+	if (!ANY_SERIES(var)) Trap_Arg(var);
 
 	// Save the starting var value:
 	*D_ARG(1) = *var;
@@ -242,14 +244,41 @@ enum loop_each_mode {
 	body = VAL_SERIES(D_ARG(mode+2));
 	bodi = VAL_INDEX(D_ARG(mode+2));
 
-	// Starting location when past end with negative skip:
-	if (inc < 0 && VAL_INDEX(var) >= VAL_TAIL(var)) {
-		VAL_INDEX(var) = (REBINT)VAL_TAIL(var) + inc;
-	}
-
-	// NOTE: This math only works for index in positive ranges!
-
-	if (ANY_SERIES(var)) {
+	if (IS_UTF8_STRING(var)) {
+		// Starting location when past end with negative skip:
+		if (inc < 0 && VAL_INDEX(var) >= VAL_TAIL(var)) {
+			VAL_INDEX(var) = idx = UTF8_Skip(VAL_SERIES(var), VAL_TAIL(var), inc);
+		}
+		while (TRUE) {
+			dat = VAL_SERIES(var);
+			idx = (REBINT)VAL_INDEX(var);
+			if (idx < 0) break;
+			if (idx >= (REBINT)SERIES_TAIL(dat)) {
+				if (inc >= 0) break;
+				idx = UTF8_Skip(dat, SERIES_TAIL(dat), inc);
+				if (idx < 0) break;
+				VAL_INDEX(var) = idx;
+			}
+			//----------------------------------------------------
+			ds = Do_Blk(body, bodi); // (may move stack)
+			if (THROWN(ds)) {	// Break, throw, continue, error.
+				if (Check_Error(ds) >= 0) {
+					*DS_RETURN = *DS_NEXT; // use thrown result as a return
+					return R_RET; // does not resets series position
+				}
+			}
+			*DS_RETURN = *ds;
+			// Evaluation may swap the var series...
+			if (VAL_TYPE(var) != type) Trap_Arg(var);
+			//----------------------------------------------------
+cont_utf8:
+			VAL_INDEX(var) = UTF8_Skip(dat, VAL_INDEX(var), inc);
+		}
+	} else {
+		// Starting location when past end with negative skip:
+		if (inc < 0 && VAL_INDEX(var) >= VAL_TAIL(var)) {
+			VAL_INDEX(var) = (REBINT)VAL_TAIL(var) + inc;
+		}
 		while (TRUE) {
 			dat = VAL_SERIES(var);
 			idx = (REBINT)VAL_INDEX(var);
@@ -260,9 +289,8 @@ enum loop_each_mode {
 				if (idx < 0) break;
 				VAL_INDEX(var) = idx;
 			}
-
+			//----------------------------------------------------
 			ds = Do_Blk(body, bodi); // (may move stack)
-
 			if (THROWN(ds)) {	// Break, throw, continue, error.
 				if (Check_Error(ds) >= 0) {
 					*DS_RETURN = *DS_NEXT; // use thrown result as a return
@@ -270,13 +298,16 @@ enum loop_each_mode {
 				}
 			}
 			*DS_RETURN = *ds;
-
+			// Evaluation may swap the var series...
 			if (VAL_TYPE(var) != type) Trap_Arg(var);
+			//----------------------------------------------------
+			// ... or convert the series to the Unicode one!
+			if (IS_UTF8_STRING(var))
+				goto cont_utf8;
 
 			VAL_INDEX(var) += inc;
 		}
 	}
-	else Trap_Arg(var);
 
 	*var = *DS_ARG(1); // restores starting value position
 	return R_RET;
@@ -349,7 +380,7 @@ enum loop_each_mode {
 	else {
 		series = VAL_SERIES(value);
 		index  = VAL_INDEX(value);
-		if (index >= (REBINT)SERIES_TAIL(series)) {
+		if (index >= SERIES_TAIL(series)) {
 			if (mode == LM_REMOVE) {
 				if(return_count)
 					SET_INTEGER(D_RET, 0);

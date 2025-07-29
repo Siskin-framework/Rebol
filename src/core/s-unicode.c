@@ -340,9 +340,11 @@ FORCE_INLINE
 		}
 	}
 	else {
-		while (chars++ < 0 && index > 0) {
+		while (index > 0 && chars < 0) {
+			chars++;
 			index -= UTF8_Prev_Char_Size(head, index);
 		}
+		if (chars != 0) index = UNKNOWN;
 	}
 	return index;
 }

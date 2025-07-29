@@ -178,6 +178,67 @@ Rebol [
 			"ab" == str
 		]
 
+	--test-- "forall"
+		--assert all [
+			str: next "xáb🙂"
+			out: copy ""
+			n: 0
+			3 == forall str [append out str/1 n: n + 1]
+			out == str
+		]
+		--assert all [
+			str: tail "xáb🙂"
+			out: copy ""
+			n: 0
+			none? forall str [append out str/1 n: n + 1]
+			empty? out
+		]
+
+	--test-- "forall + take"
+		--assert all [
+			str: "ááb"
+			out: copy ""
+			n: 0
+			2 == forall str [if str/1 >= 127 [append out take str] n: n + 1]
+			str == "áb" ;; by design that only one "á" was removed
+			out == "á"  ;; because `take` modifies the index!
+		]
+
+
+	--test-- "forskip"
+		--assert all [
+			str: next "xáb🙂d"
+			out: copy ""
+			n: 0
+			2 == forskip str 2 [append out str/1 n: n + 1]
+			out == "á🙂"
+		]
+
+		--assert all [
+			str: back tail "xáb🙂d"
+			out: copy ""
+			n: 0
+			1 == forskip str 2 [str append out str/1 n: n + 1]
+			out == "d"
+		]
+
+		--assert all [
+			s1: "abcd"
+			s2: "ABCDEF"
+			out: copy ""
+			n: 0
+			3 == forskip s1 2 [append out s1/1 s1: at s2 index? s1 n: n + 1]
+			out == "aCE"
+		]
+		--assert all [
+			s1: "abcd"
+			s2: "ABČDEF"
+			out: copy ""
+			n: 0
+			3 == forskip s1 2 [probe s1 append out s1/1 s1: at s2 index? s1 n: n + 1]
+			out == "aČE"
+		]
+
 
 	--test-- "to-hex"
 		--assert #01F642 = to-hex #"🙂"
