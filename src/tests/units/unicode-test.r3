@@ -154,6 +154,16 @@ Rebol [
 		foreach c str [append out c]
 		--assert str == out
 
+	--test-- "remove-each"
+		--assert all [
+			str: "a🙂čb"
+			out: copy ""
+			"ab" == remove-each c str [append out c  c > 0#7f]
+			"ab" == str
+			out  == "a🙂čb"
+		]
+
+
 	--test-- "to-hex"
 		--assert #01F642 = to-hex #"🙂"
 		--assert #01F642 = to-hex #"^(01F642)"
