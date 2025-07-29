@@ -149,10 +149,18 @@ Rebol [
 		--assert #"🙂" == first next "a🙂b"
 	
 	--test-- "foreach"
-		str: "áb🙂"
-		out: copy ""
-		foreach c str [append out c]
-		--assert str == out
+		--assert all [
+			str: "áb🙂"
+			out: copy ""
+			foreach c str [append out c]
+			str == out
+		]
+		--assert all [
+			str: "a🙂čb"
+			out: copy ""
+			foreach [a b] str [append append out b a]
+			out == "🙂abč"
+		]
 
 	--test-- "remove-each"
 		--assert all [
