@@ -117,12 +117,28 @@ enum loop_each_mode {
 	if (ei >= (REBINT)VAL_TAIL(start)) ei = (REBINT)VAL_TAIL(start);
 	if (ei < 0) ei = 0;
 
-	for (; (ii > 0) ? si <= ei : si >= ei; si += ii) {
-		VAL_INDEX(var) = si;
-		result = Do_Blk(body, 0);
-		if (THROWN(result) && Check_Error(result) >= 0) break;
-		if (VAL_TYPE(var) != type) Trap1(RE_INVALID_TYPE, var);
-		si = VAL_INDEX(var);
+	if (IS_UTF8_STRING(var)) {
+		// Using number of codepoints, not byte indexes
+		REBI64 sp = (REBI64)UTF8_Index_To_Position(VAL_BIN(start),si);
+		REBI64 ep = (REBI64)UTF8_Index_To_Position(VAL_BIN(start),ei);
+
+		for (; (ii > 0) ? sp <= ep : sp >= ep; sp += ii) {
+			VAL_INDEX(var) = si;
+			result = Do_Blk(body, 0);
+			if (THROWN(result) && Check_Error(result) >= 0) break;
+			if (VAL_TYPE(var) != type) Trap1(RE_INVALID_TYPE, var);
+			si = VAL_INDEX(var);
+			si = UTF8_Skip(VAL_SERIES(var),si,ii);
+		}
+	}
+	else {
+		for (; (ii > 0) ? si <= ei : si >= ei; si += ii) {
+			VAL_INDEX(var) = si;
+			result = Do_Blk(body, 0);
+			if (THROWN(result) && Check_Error(result) >= 0) break;
+			if (VAL_TYPE(var) != type) Trap1(RE_INVALID_TYPE, var);
+			si = VAL_INDEX(var);
+		}
 	}
 }
 
@@ -743,7 +759,10 @@ skip_hidden: ;
 	SET_NONE(DS_NEXT); // in case nothing below happens
 
 	if (ANY_SERIES(count)) {
-		Loop_Series(var, body, count, VAL_TAIL(count)-1, 1);
+		REBLEN end = (IS_UTF8_STRING(count))
+			? UTF8_Skip(VAL_SERIES(count), VAL_TAIL(count), -1)
+			: VAL_TAIL(count) - 1;
+		Loop_Series(var, body, count, end, 1);
 	}
 	else if (IS_INTEGER(count)) {
 		Loop_Integer(var, body, 1, VAL_INT64(count), 1);

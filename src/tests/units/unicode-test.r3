@@ -239,6 +239,38 @@ Rebol [
 			out == "aČE"
 		]
 
+	--test-- "repeat"
+		--assert all [
+			str: next "xáb🙂d"
+			out: copy ""
+			repeat x str [append out x/1]
+			out == "áb🙂d"
+		]
+
+	--test-- "for"
+		--assert all [
+			str: next "xáb🙂d"
+			out: copy ""
+			none? for x str 1 1 [append out x/1]
+		]
+		--assert all [
+			str: next "xáb🙂d"
+			out: copy ""
+			for x str 2 1 [append out x/1]
+			out == "á"
+		]
+		--assert all [
+			str: next "xáb🙂d"
+			out: copy ""
+			for x str 100 1 [append out x/1]
+			out == "áb🙂dnone" ;; none, because the last value is empty
+		]
+		--assert all [
+			str: back tail "xáb🙂d"
+			out: copy ""
+			for x str 1 -1 [append out x/1]
+			out == "d🙂báx"
+		]
 
 	--test-- "to-hex"
 		--assert #01F642 = to-hex #"🙂"
