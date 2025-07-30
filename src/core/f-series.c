@@ -75,7 +75,7 @@
 
 	case A_NEXT:
 		if (index < tail) {
-			if (IS_UTF8_SERIES(VAL_SERIES(value)))
+			if (IS_UTF8_STRING(value))
 				VAL_INDEX(value) += UTF8_Next_Char_Size(VAL_BIN(value), VAL_INDEX(value));
 			else
 				VAL_INDEX(value)++;
@@ -85,7 +85,7 @@
 
 	case A_BACK:
 		if (index > 0) {
-			if (IS_UTF8_SERIES(VAL_SERIES(value)))
+			if (IS_UTF8_STRING(value))
 				VAL_INDEX(value) = UTF8_Prev_Char_Position(VAL_BIN(value), index);
 			else
 				VAL_INDEX(value)--;
@@ -97,7 +97,7 @@
 	case A_ATZ:
 		len = Get_Num_Arg(arg);
 		{
-			if (IS_UTF8_SERIES(VAL_SERIES(value))) {
+			if (IS_UTF8_STRING(value)) {
 				if (action == A_SKIP) {
 					if (IS_LOGIC(arg)) len--;
 				}
@@ -142,14 +142,14 @@
 	
 	case A_INDEXZQ:
 	case A_INDEXQ:
-		if (IS_UTF8_SERIES(VAL_SERIES(value)))
+		if (IS_UTF8_STRING(value))
 			index = (REBI64)UTF8_Index_To_Position(VAL_BIN(value), index);
 		if (action == A_INDEXQ) index++;
 		SET_INTEGER(DS_RETURN, ((REBI64)index));
 		return R_RET;
 
 	case A_LENGTHQ:
-		if (IS_UTF8_SERIES(VAL_SERIES(value))) {
+		if (IS_UTF8_STRING(value)) {
 			SET_INTEGER(DS_RETURN, tail > index ? Length_As_UTF8_Code_Points(VAL_BIN_DATA(value)) : 0);
 		}
 		else {
@@ -171,7 +171,7 @@
 				len = Partial(value, 0, DS_ARG(3), 0);
 			}
 			else {
-				len = (IS_UTF8_SERIES(VAL_SERIES(value)))
+				len = (IS_UTF8_STRING(value))
 					? UTF8_Next_Char_Size(VAL_BIN_HEAD(value), VAL_INDEX(value))
 					: 1;
 			}

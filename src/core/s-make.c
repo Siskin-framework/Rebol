@@ -345,7 +345,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 	if (VAL_BYTE_SIZE(val)) {
 		REBSER *up;
 		// On windows, we need to convert byte to wide:
-		if (IS_UTF8_SERIES(VAL_SERIES(val))) {
+		if (IS_UTF8_STRING(val)) {
 			REBYTE *wide = NULL;
 			REBLEN len = OS_MULTIBYTE_TO_WIDE(VAL_BIN_DATA(val), &wide);
 			if (!wide) return NULL;

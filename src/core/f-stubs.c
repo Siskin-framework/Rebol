@@ -594,7 +594,7 @@
 ***********************************************************************/
 {
 	if (VAL_INDEX(value) >= VAL_TAIL(value)) return 0;
-	if (IS_UTF8_SERIES(VAL_SERIES(value))) {
+	if (IS_UTF8_STRING(value)) {
 		return Length_As_UTF8_Code_Points(VAL_BIN_DATA(value));
 	}
 	return VAL_TAIL(value) - VAL_INDEX(value);
@@ -794,7 +794,7 @@
 			Trap1(RE_INVALID_PART, lval);
 			return 0; // silent compiler's warning
 		}
-		if (IS_UTF8_SERIES(VAL_SERIES(val))) {
+		if (IS_UTF8_STRING(val)) {
 			len = (REBINT)VAL_INDEX(lval) - (REBINT)VAL_INDEX(val);
 			if (len < 0) {
 				len = -len;
@@ -810,7 +810,7 @@
 	if (!val) val = aval;
 
 	// Restrict length to the size available:
-	if (IS_UTF8_SERIES(VAL_SERIES(val))) {
+	if (IS_UTF8_STRING(val)) {
 		if (len >= 0) {
 			len = UTF8_Bytes_For_Char_Count(VAL_BIN_DATA(val), VAL_LEN(val), len);
 		}

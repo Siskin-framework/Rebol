@@ -141,7 +141,7 @@
 	case REB_URL:
 	case REB_TAG:
 //	case REB_ISSUE:
-		if (IS_UTF8_SERIES(VAL_SERIES(val))) {
+		if (IS_UTF8_STRING(val)) {
 			REBU32 chr;
 			REBCNT sz = VAL_LEN(val);
 			const REBYTE *bp = VAL_BIN_DATA(val);
@@ -328,7 +328,7 @@ retry:
 
 	if(IS_PROTECT_SERIES(bset)) Trap0(RE_PROTECTED);
 
-	if (IS_UTF8_SERIES(VAL_SERIES(val))) {
+	if (IS_UTF8_STRING(val)) {
 		const REBYTE *bp = VAL_BIN_DATA(val);
 		while (sz > 0) {
 			chr = UTF8_Decode_Codepoint(&bp, &sz);

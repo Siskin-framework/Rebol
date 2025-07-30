@@ -85,7 +85,7 @@ static void reverse_string(REBVAL *value, REBCNT len)
 	REBCNT m;
 	REBUNI c;
 
-	if (IS_UTF8_SERIES(VAL_SERIES(value))) {
+	if (IS_UTF8_STRING(value)) {
 		REBYTE *out = Reset_Buffer(BUF_SCAN, len);
 		const REBYTE *bp = VAL_BIN(value);
 		REBUNI index = VAL_TAIL(value);
@@ -133,7 +133,7 @@ static REBCNT find_string(REBVAL *value, REBCNT index, REBCNT end, REBVAL *targe
 	//O: not using ANY_BINSTR as TAG is now handled separately
 	if (VAL_TYPE(target) >= REB_BINARY && VAL_TYPE(target) < REB_TAG) {
 		// Do the optimal search or the general search?
-		if (IS_BINARY(value) || (!IS_UTF8_SERIES(series) && !IS_UTF8_SERIES(VAL_SERIES(target))) && !(flags & ~(AM_FIND_CASE|AM_FIND_MATCH|AM_FIND_TAIL))) {
+		if (IS_BINARY(value) || (!IS_UTF8_SERIES(series) && !IS_UTF8_STRING(target)) && !(flags & ~(AM_FIND_CASE|AM_FIND_MATCH|AM_FIND_TAIL))) {
 			index = Find_Byte_Str(series, start, VAL_BIN_DATA(target), len, !GET_FLAG(flags, ARG_FIND_CASE-1), GET_FLAG(flags, ARG_FIND_MATCH-1));
 			if (flags & AM_FIND_TAIL && index != NOT_FOUND) index += len;
 			return index;
@@ -582,7 +582,7 @@ static const cmp_func sfunc_table[2][2][2][2] = {
 	len = Partial(string, 0, part, 0);
 	if (len <= 1) return;
 
-	if (IS_UTF8_SERIES(VAL_SERIES(string))) {
+	if (IS_UTF8_STRING(string)) {
 		UTF8_To_UTF32(BUF_SCAN, VAL_DATA(string), len, OS_LITTLE_ENDIAN);
 		str_bin = BIN_HEAD(BUF_SCAN);
 		wide = 4;
@@ -604,7 +604,7 @@ static const cmp_func sfunc_table[2][2][2][2] = {
 	if (!IS_NONE(compv)) {
 		if (rev) SET_FLAG(flags, SORT_FLAG_REVERSE);
 		if (all) SET_FLAG(flags, SORT_FLAG_ALL);
-		if (IS_UTF8_SERIES(VAL_SERIES(string))) SET_FLAG(flags, SORT_FLAG_WIDE);
+		if (IS_UTF8_STRING(string)) SET_FLAG(flags, SORT_FLAG_WIDE);
 	}
 	if (ANY_FUNC(compv)) {
 		// Check argument types of the comparator function.
@@ -927,7 +927,7 @@ find:
 	case A_PICK:
 	case A_POKE:
 		len = Get_Num_Arg(arg); // Position
-		if (IS_UTF8_SERIES(VAL_SERIES(value))) {
+		if (IS_UTF8_STRING(value)) {
 			if (len == 0) Trap_Range(arg);
 			if (len > 0) len--;
 			index = Skip_UTF8_String(value, len);
@@ -1022,7 +1022,7 @@ zero_str:
 				VAL_TAIL(value) = (REBCNT)index;
 				TERM_SERIES(VAL_SERIES(value));
 			}
-			if (IS_UTF8_SERIES(VAL_SERIES(value)) && Is_ASCII(VAL_BIN(value), VAL_TAIL(value))) {
+			if (IS_UTF8_STRING(value) && Is_ASCII(VAL_BIN(value), VAL_TAIL(value))) {
 				SERIES_CLR_FLAG(VAL_SERIES(value), SER_UTF8);
 			}
 		}

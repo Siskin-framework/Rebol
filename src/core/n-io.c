@@ -846,7 +846,7 @@ chk_neg:
 	if (output_type == STRING_TYPE || output_type == BINARY_TYPE) {
 		if (output != NULL && output_len > 0) {
 			Append_Bytes_Len(VAL_SERIES(output), os_output, output_len);
-			if (output_type == STRING_TYPE && !IS_UTF8_SERIES(VAL_SERIES(output)) && !Is_ASCII(os_output, output_len))
+			if (output_type == STRING_TYPE && !IS_UTF8_STRING(output) && !Is_ASCII(os_output, output_len))
 				UTF8_SERIES(VAL_SERIES(output));
 			OS_FREE(os_output);
 		}
@@ -855,7 +855,7 @@ chk_neg:
 	if (err_type == STRING_TYPE || err_type == BINARY_TYPE) {
 		if (err != NULL	&& err_len > 0) {
 			Append_Bytes_Len(VAL_SERIES(err), os_err, err_len);
-			if (err_type == STRING_TYPE && !IS_UTF8_SERIES(VAL_SERIES(err)) && !Is_ASCII(os_err, err_len))
+			if (err_type == STRING_TYPE && !IS_UTF8_STRING(err) && !Is_ASCII(os_err, err_len))
 				UTF8_SERIES(VAL_SERIES(err));
 			OS_FREE(os_err);
 		}

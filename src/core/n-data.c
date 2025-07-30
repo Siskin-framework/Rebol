@@ -893,7 +893,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	if (ANY_SERIES(val)) {
 		t = VAL_TAIL(val);
 		if (VAL_INDEX(val) >= t) return R_NONE;
-		if (IS_UTF8_SERIES(VAL_SERIES(val))) {
+		if (IS_UTF8_STRING(val)) {
 			VAL_INDEX(val) = UTF8_Prev_Char_Position(VAL_BIN_HEAD(val), t);
 			t = 1;
 		}
@@ -934,7 +934,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	*D_ARG(1) = *value;
 	index = VAL_INDEX(value); // same for VAL_GOB_INDEX
 	if (index < tail) {
-		VAL_INDEX(value) += IS_UTF8_SERIES(VAL_SERIES(value)) ? UTF8_Next_Char_Size(VAL_BIN_HEAD(value), index) : 1;
+		VAL_INDEX(value) += IS_UTF8_STRING(value) ? UTF8_Next_Char_Size(VAL_BIN_HEAD(value), index) : 1;
 	}
 	return Do_Ordinal(ds, 1);
 }
@@ -963,7 +963,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	else if (ANY_SERIES(value)) {
 		n = VAL_INDEX(value);
 		if (n < VAL_TAIL(value)) {
-			VAL_INDEX(value) += IS_UTF8_SERIES(VAL_SERIES(value)) ? UTF8_Next_Char_Size(VAL_BIN_HEAD(value), n) : 1;
+			VAL_INDEX(value) += IS_UTF8_STRING(value) ? UTF8_Next_Char_Size(VAL_BIN_HEAD(value), n) : 1;
 		}
 	}
 	else if (IS_DECIMAL(value)) {
@@ -999,7 +999,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	else if (ANY_SERIES(value)) {
 		n = VAL_INDEX(value);
 		if (n > 0) {
-			VAL_INDEX(value) -= IS_UTF8_SERIES(VAL_SERIES(value)) ? UTF8_Prev_Char_Size(VAL_BIN_HEAD(value), n) : 1;
+			VAL_INDEX(value) -= IS_UTF8_STRING(value) ? UTF8_Prev_Char_Size(VAL_BIN_HEAD(value), n) : 1;
 		}
 	}
 	else if (IS_DECIMAL(value)) {
