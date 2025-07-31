@@ -294,7 +294,7 @@ Rebol [
 
 	--test-- "string with surrogates"
 		;; UTF-16 surrogates are not allowed in UTF-8
-		;; so this is not a valid string: "^^(D834)"
+		;; so this is not a valid string: "^(D834)"
 		--assert all [
 			error? e: transcode/one/error #{225E28443833342922}
 			e/id = 'invalid
