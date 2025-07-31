@@ -438,7 +438,14 @@ FORCE_INLINE
 	Encode_UTF8_Char(STR_SKIP(ser, index), codepoint);
 }
 
-REBU32 Decode_Surrogate_Pair(const REBYTE *src) {
+/***********************************************************************
+**
+*/	REBU32 Decode_Surrogate_Pair(const REBYTE *src)
+/*
+**		Returns codepoint decoded from surrogate pair or UNI_ERROR.
+**
+***********************************************************************/
+{
 	REBU32 c1 = ((src[0] & 0x0F) << 12) | ((src[1] & 0x3F) << 6) | (src[2] & 0x3F);
 	REBU32 c2 = ((src[3] & 0x0F) << 12) | ((src[4] & 0x3F) << 6) | (src[5] & 0x3F);
 	if (c1 >= 0xD800 && c1 <= 0xDBFF && c2 >= 0xDC00 && c2 <= 0xDFFF) {
@@ -498,10 +505,11 @@ REBU32 Decode_Surrogate_Pair(const REBYTE *src) {
 	const REBYTE *acc = start;
 	REBU32 codepoint = 0;
 	REBCNT state = UTF8_ACCEPT;
+	REBLEN nlen = 0; // Used to shorten the original length in case of surrogate pairs
 
 	REBSER *dst = Make_Series(len, 1, FALSE);
 
-	for (; str < end; ++str) {
+	for (; str < end; str++) {
 		switch (UTF8_Decode_Step(&state, &codepoint, *str)) {
 		case UTF8_ACCEPT: acc = str + 1; break; // remember last accepted char position
 		case UTF8_REJECT:
@@ -509,10 +517,12 @@ REBU32 Decode_Surrogate_Pair(const REBYTE *src) {
 			if (codepoint != UNI_ERROR) {
 				REBLEN bytes = AS_REBLEN(str - 1 - start);
 				if (bytes > 0) {
+					// Copy all already validated chars to the outpout
 					Append_Bytes_Len(dst, start, bytes);
 				}
 				Append_Byte(dst, codepoint);
-				str += 4;
+				str += 5;
+				nlen += 6 - UTF8_Codepoint_Size(codepoint);
 				start = str;
 				state = UTF8_ACCEPT;
 			}
@@ -520,7 +530,7 @@ REBU32 Decode_Surrogate_Pair(const REBYTE *src) {
 		}
 	}
 	if (state == UTF8_ACCEPT) {
-		if (start < str) Append_Bytes_Len(dst, start, AS_REBLEN(str - start));
+		if (start < end) Append_Bytes_Len(dst, start, AS_REBLEN(end - start));
 		return dst;
 	}
 	else {
@@ -528,6 +538,7 @@ REBU32 Decode_Surrogate_Pair(const REBYTE *src) {
 		if (err) *err = AS_REBLEN(acc - start);
 		return NULL;
 	}
+	SERIES_TAIL(dst) -= nlen;
 	return dst;
 	
 }

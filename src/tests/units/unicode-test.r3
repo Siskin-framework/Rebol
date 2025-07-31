@@ -49,6 +49,9 @@ Rebol [
 			e/id = 'invalid-utf
 			e/arg1 = #{C500}
 		]
+		;; surrogates...
+		--assert "𝄢" == to string! #{EDA0B4EDB4A2}
+		
  	--test-- "to block!"
 		--assert [šáh 🙂] == make block! "šáh 🙂"
 	--test-- "to char!"
