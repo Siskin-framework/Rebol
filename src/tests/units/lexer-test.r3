@@ -166,6 +166,10 @@ Rebol [
 
 	--test-- "Invalid char"
 		--assert all [error? e: try [load {2#"a"}] e/id = 'invalid]
+		--assert all [
+			error? e: transcode/one/error #{23225E28443833342922} ;; #"^(D834)"
+			e/id = 'invalid
+		]
 
 	--test-- "Path construction not using words"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/863

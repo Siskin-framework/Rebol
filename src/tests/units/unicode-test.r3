@@ -291,6 +291,24 @@ Rebol [
 	--test-- "ref!"
 		--assert @šč == transcode/one #{40C5A1C48D}
 		--assert @🙂b == transcode/one #{40F09F998262}
+
+	--test-- "string with surrogates"
+		;; UTF-16 surrogates are not allowed in UTF-8
+		;; so this is not a valid string: "^^(D834)"
+		--assert all [
+			error? e: transcode/one/error #{225E28443833342922}
+			e/id = 'invalid
+		]
+		--assert all [
+			error? e: transcode/one/error #{225E2844383334295E28444432322922} ;; "^(D834)^(DD22)"
+			e/id = 'invalid
+		]
+	--test-- "string with a char over Unicode range"
+		--assert all [
+			error? e: transcode/one/error #{225E28313130303030292922} ;; "^(110000)"
+			e/id = 'invalid
+		]
+
 ===end-group===
 
 

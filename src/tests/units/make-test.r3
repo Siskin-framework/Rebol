@@ -37,6 +37,12 @@ Rebol [
 		--assert 30 = to integer! #"^(1E)"
 		--assert 94 = to integer! #"^^"
 
+	--test-- "to char! surrogates"
+		--assert all [
+			error? err: try [make char! 55348]
+			err/id = 'bad-make-arg
+		]
+		
 	--test-- "to char! issue!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1130
 		--assert all [

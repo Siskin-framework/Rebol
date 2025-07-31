@@ -445,7 +445,8 @@
 				Append_Bytes_Len(buf, start, len);
 			}
 			chr = Scan_Char(&src, scan_state);
-			if (chr == UNKNOWN) return 0;
+			if (chr == UNKNOWN || chr > MAX_UNI || IS_SURROGATE(chr))
+				return 0;
 
 			len = UTF8_Codepoint_Size(chr);
 			Extend_Series(buf, len);
@@ -505,7 +506,7 @@
 			return 0; // Scan_state shows error location.
 		case '^':
 			chr = Scan_Char(&src, scan_state);
-			if (chr == UNKNOWN) return 0;
+			if (chr == UNKNOWN || chr > MAX_UNI || IS_SURROGATE(chr)) return 0;
 			src--;
             break;
 		case ';':
@@ -513,7 +514,7 @@
 				chr = *++src;
 				if (chr == '^') {
 					chr = Scan_Char(&src, scan_state);
-					if (chr == UNKNOWN) return 0;
+					if (chr == UNKNOWN || chr > MAX_UNI || IS_SURROGATE(chr)) return 0;
 					src--;
 				}
 				if (chr == LF ||  chr == CR) {
@@ -1288,6 +1289,7 @@ new_line:
 					return TOKEN_EOF;
 				if (type >= 0 && *cp == '"') {
 					scan_state->end = cp+1;
+					if (type > MAX_UNI || IS_SURROGATE(type)) return -TOKEN_CHAR;
 					return TOKEN_CHAR;
 				} else {        /* try to recover at next new line... */
 					for (cp = (scan_state->begin)+1; NOT_NEWLINE(*cp); cp++);

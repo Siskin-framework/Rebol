@@ -126,7 +126,7 @@
 		case REB_INTEGER:
 		case REB_DECIMAL:
 			arg = Int32(val);
-			if (arg > MAX_UNI || arg < 0) goto bad_make;
+			if (arg > MAX_UNI || arg < 0 || IS_SURROGATE(arg)) goto bad_make;
 			chr = arg;
 			break;
 	

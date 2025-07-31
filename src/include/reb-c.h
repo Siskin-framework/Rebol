@@ -216,6 +216,7 @@ typedef REBYTE          REBCHR;
 #define AS_INT(v)        (int)(v)  // used to silence conversion from size_t warnings
 
 #define MAX_UNI 0x10FFFF
+#define IS_SURROGATE(c) (c >= 0xD800 && c <= 0xDFFF)
 
 #define MIN_D64 ((double)-9.2233720368547758e18)
 #define MAX_D64 ((double) 9.2233720368547758e18)
