@@ -200,6 +200,7 @@ Access: [
 	process-not-found: 	[{process not found:} :arg1]
 
 	invalid-utf:		[{invalid Unicode encoding:} :arg1]
+	invalid-char:		[{invalid UTF-8 character:} :arg1]
 
 ]
 

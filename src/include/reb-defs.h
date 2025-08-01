@@ -109,5 +109,7 @@ enum encoding_opts {
 
 #define UTF8_ACCEPT 0
 #define UTF8_REJECT 12
+#define IS_SURROGATE(c) (c >= 0xD800 && c <= 0xDFFF)
+#define IS_INVALID_CHAR(c) (c == UNKNOWN || c > MAX_UNI || IS_SURROGATE(c))
 
 #endif

@@ -445,7 +445,7 @@
 				Append_Bytes_Len(buf, start, len);
 			}
 			chr = Scan_Char(&src, scan_state);
-			if (chr == UNKNOWN || chr > MAX_UNI || IS_SURROGATE(chr))
+			if (IS_INVALID_CHAR(chr))
 				return 0;
 
 			len = UTF8_Codepoint_Size(chr);
@@ -506,7 +506,7 @@
 			return 0; // Scan_state shows error location.
 		case '^':
 			chr = Scan_Char(&src, scan_state);
-			if (chr == UNKNOWN || chr > MAX_UNI || IS_SURROGATE(chr)) return 0;
+			if (IS_INVALID_CHAR(chr)) return 0;
 			src--;
             break;
 		case ';':
@@ -514,7 +514,7 @@
 				chr = *++src;
 				if (chr == '^') {
 					chr = Scan_Char(&src, scan_state);
-					if (chr == UNKNOWN || chr > MAX_UNI || IS_SURROGATE(chr)) return 0;
+					if (IS_INVALID_CHAR(chr)) return 0;
 					src--;
 				}
 				if (chr == LF ||  chr == CR) {

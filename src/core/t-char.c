@@ -111,7 +111,9 @@
 			return R_UNSET;
 		}
 		if (chr == 0) break;
-		chr = (REBINT)(1 + ((REBCNT)Random_Int(D_REF(3)) % chr)); // /secure
+		do {
+			chr = (REBINT)(1 + ((REBCNT)Random_Int(D_REF(3)) % chr)); // /secure
+		} while (IS_INVALID_CHAR(chr));
 		break;
 
 	case A_MAKE:
@@ -126,7 +128,7 @@
 		case REB_INTEGER:
 		case REB_DECIMAL:
 			arg = Int32(val);
-			if (arg > MAX_UNI || arg < 0 || IS_SURROGATE(arg)) goto bad_make;
+			if (arg < 0) goto bad_make;
 			chr = arg;
 			break;
 	
@@ -167,8 +169,10 @@ bad_make:
 	default:
 		Trap_Action(REB_CHAR, action);
 	}
-
-	//if ((chr >> 16) != 0 && (chr >> 16) != 0xffff) Trap1(RE_TYPE_LIMIT, Get_Type(REB_CHAR)); 
+	if (IS_INVALID_CHAR(chr)) {
+		SET_INTEGER(DS_RETURN, chr);
+		Trap1(RE_INVALID_CHAR, DS_RETURN);
+	}
 	SET_CHAR(DS_RETURN, chr);
 	return R_RET;
 

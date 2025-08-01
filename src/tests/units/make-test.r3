@@ -40,9 +40,21 @@ Rebol [
 	--test-- "to char! surrogates"
 		--assert all [
 			error? err: try [make char! 55348]
-			err/id = 'bad-make-arg
+			err/arg1 = 55348
+			err/id = 'invalid-char
 		]
-		
+		--assert all [
+			error? err: try [#"^A" + 55348]
+			err/arg1 = 55349
+			err/id = 'invalid-char
+		]
+	--test-- "to char! over range"
+		--assert all [
+			error? err: try [to char! 0#110000]
+			err/arg1 = 0#110000
+			err/id = 'invalid-char
+		]
+
 	--test-- "to char! issue!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1130
 		--assert all [
