@@ -1,10 +1,10 @@
 REBOL [
 	Title: "runicode4"
 	Author: @ldci
-	Version: 4.1
+	Version: 4.2
 	History: [
 		4.0 "Original"
-		4.1 "Updated by Oldes"
+		4.2 "Updated by Oldes"
 	]
 ]
 
@@ -22,6 +22,12 @@ print-unicode-codes: function/with [
 	start: to integer! start
 	tail:  to integer! tail
 	if start < 32 [start: 32]    ;; Skip unprintable chars (< 32)
+	if find [55296 56192 56320] start  [
+		;; Surrogate pairs are used in UTF-16 encoding
+		;; and are not allowed in UTF-8!
+		print ajoin as-purple ["Reserved UTF-16 chars:" label "(" start #"-" tail ")"]
+		exit
+	]
 	i: start
 	while [i <= tail] [
 		print ajoin ["Unicode " i ": " to char! i " [" label "]"]
