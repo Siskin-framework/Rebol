@@ -32,6 +32,21 @@ Rebol [
 	--assert  0 = v/1
 	--assert 98 = v/5
 
+--test-- "Make vector with get-words"
+	data: [1 2 3 4]
+	size: 2
+	--assert {#(uint8! [1 2 3 4])}   == mold make vector! [uint8! :data]
+	--assert {#(uint8! [1 2])}       == mold make vector! [uint8! :size :data]
+	index: 3
+	--assert {#(uint8! [3 4])}       == mold make vector! [uint8! :data :index]
+	size: 4
+	--assert {#(uint8! [3 4])}       == mold make vector! [uint8! :size [1 2 3 4 5] :index]
+	--assert {#(uint8! [1 2 3 4] 3)} == mold/all make vector! [uint8! :size [1 2 3 4 5] :index]
+
+--test-- "Make vector using direct values"
+	--assert (make vector! [1 2 3 4]) == #(int64! [1 2 3 4])
+	--assert (make vector! [1.0 2]) == #(float64! [1.0 2.0])
+
 --test-- "Random shuffle of vector vs. block"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/910
 	;@@ https://github.com/Oldes/Rebol-issues/issues/947
@@ -115,8 +130,9 @@ Rebol [
 	--assert none? v/3
 	--assert 1 = length? v: make vector! [integer! 16 1 #{01000200}]
 	--assert none? v/2
-	--assert 1 = length? v: #(i16! 1 #{01000200})
-	--assert none? v/2
+	;- It's not supported to specify size with the construction syntax anymore
+	;--assert 1 = length? v: #(i16! 1 #{01000200})
+	;--assert none? v/2
 
 --test-- "Extending input specification when size and series is provided"
 	--assert 4 = length? v: make vector! [integer! 16 4 [1 2]]
@@ -135,13 +151,13 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/756
 	--assert "#(int32! [0 0])" = mold make vector! [signed integer! 32 2]
 	--assert "#(uint32! [0 0])" = mold make vector! [unsigned integer! 32 2]
-	--assert "#(vector! integer! 32 2 [0 0])" = mold/all make vector! [signed integer! 32 2]
-	--assert "#(vector! unsigned integer! 32 2 [0 0])" = mold/all make vector! [unsigned integer! 32 2]
+	--assert "#(int32! [0 0])" = mold/all make vector! [signed integer! 32 2]
+	--assert "#(uint32! [0 0])" = mold/all make vector! [unsigned integer! 32 2]
 
 --test-- "MOLD/flat on vector"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2349
 	--assert (mold/flat make vector! [integer! 8 12]) = {#(int8! [0 0 0 0 0 0 0 0 0 0 0 0])}
-	--assert (mold/all/flat make vector! [integer! 8 12]) = "#(vector! integer! 8 12 [0 0 0 0 0 0 0 0 0 0 0 0])"
+	--assert (mold/all/flat make vector! [integer! 8 12]) = "#(int8! [0 0 0 0 0 0 0 0 0 0 0 0])"
 	--assert (mold make vector! [integer! 8  2]) = "#(int8! [0 0])"
 	--assert (mold make vector! [integer! 8 20]) = {#(int8! [
     0 0 0 0 0 0 0 0 0 0
@@ -230,28 +246,30 @@ Rebol [
 ===start-group=== "VECTOR compact construction"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2396
 	--test-- "Compact construction syntax (empty)"
-		--assert (mold #(i8! ))  == "#(int8! [])"
-		--assert (mold #(i16!))  == "#(int16! [])"
-		--assert (mold #(i32!))  == "#(int32! [])"
-		--assert (mold #(i64!))  == "#(int64! [])"
-		--assert (mold #(u8! ))  == "#(uint8! [])"
-		--assert (mold #(u16!))  == "#(uint16! [])"
-		--assert (mold #(u32!))  == "#(uint32! [])"
-		--assert (mold #(u64!))  == "#(uint64! [])"
-		--assert (mold #(f32! )) == "#(float32! [])"
-		--assert (mold #(f64! )) == "#(float64! [])"
+		;- Not supported anymore!
+		;--assert (mold #(i8! ))  == "#(int8! [])"
+		;--assert (mold #(i16!))  == "#(int16! [])"
+		;--assert (mold #(i32!))  == "#(int32! [])"
+		;--assert (mold #(i64!))  == "#(int64! [])"
+		;--assert (mold #(u8! ))  == "#(uint8! [])"
+		;--assert (mold #(u16!))  == "#(uint16! [])"
+		;--assert (mold #(u32!))  == "#(uint32! [])"
+		;--assert (mold #(u64!))  == "#(uint64! [])"
+		;--assert (mold #(f32! )) == "#(float32! [])"
+		;--assert (mold #(f64! )) == "#(float64! [])"
 
 	--test-- "Compact construction syntax (size)"
-		--assert (mold #(i8!  3)) == "#(int8! [0 0 0])"
-		--assert (mold #(i16! 3)) == "#(int16! [0 0 0])"
-		--assert (mold #(i32! 3)) == "#(int32! [0 0 0])"
-		--assert (mold #(i64! 3)) == "#(int64! [0 0 0])"
-		--assert (mold #(u8!  3)) == "#(uint8! [0 0 0])"
-		--assert (mold #(u16! 3)) == "#(uint16! [0 0 0])"
-		--assert (mold #(u32! 3)) == "#(uint32! [0 0 0])"
-		--assert (mold #(u64! 3)) == "#(uint64! [0 0 0])"
-		--assert (mold #(f32! 3)) == "#(float32! [0.0 0.0 0.0])"
-		--assert (mold #(f64! 3)) == "#(float64! [0.0 0.0 0.0])"
+		;- Not supported anymore!
+		;--assert (mold #(i8!  3)) == "#(int8! [0 0 0])"
+		;--assert (mold #(i16! 3)) == "#(int16! [0 0 0])"
+		;--assert (mold #(i32! 3)) == "#(int32! [0 0 0])"
+		;--assert (mold #(i64! 3)) == "#(int64! [0 0 0])"
+		;--assert (mold #(u8!  3)) == "#(uint8! [0 0 0])"
+		;--assert (mold #(u16! 3)) == "#(uint16! [0 0 0])"
+		;--assert (mold #(u32! 3)) == "#(uint32! [0 0 0])"
+		;--assert (mold #(u64! 3)) == "#(uint64! [0 0 0])"
+		;--assert (mold #(f32! 3)) == "#(float32! [0.0 0.0 0.0])"
+		;--assert (mold #(f64! 3)) == "#(float64! [0.0 0.0 0.0])"
 
 	--test-- "Compact construction syntax (data)"
 		--assert (mold #(i8!  [1 2])) == "#(int8! [1 2])"

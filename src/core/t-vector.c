@@ -781,10 +781,74 @@ REBOOL Get_Vector_Spec_From_Symbol(REBCNT sym, REBINT *type, REBINT *sign, REBIN
 
 /***********************************************************************
 **
-*/	REBVAL *Make_Vector_Spec(REBVAL *bp, REBVAL *value)
+*/	REBVAL *Construct_Vector(REBVAL *bp, REBVAL *value)
 /*
-**	Make a vector from a block spec.
+**     Vector construction syntax. Supports only the new short variants.
+**     #(type size data index)
 **
+**     Fields:
+**          type:  uint8!, uint16!, uint32!, uint64!,
+**                 int8!, int16!, int32!, int64!,
+*                  float32!, float64!
+**    		size:  integer units
+**    		data:  block of values or binary data
+**          index: index in the created vector series
+**
+***********************************************************************/
+{
+	REBINT type = -1; // 0 = int,    1 = float
+	REBINT sign = -1; // 0 = signed, 1 = unsigned
+	REBINT dims = 1;
+	REBINT bits = 32;
+	REBCNT size = 0;
+	REBVAL *iblk = 0;
+	REBSER *vect;
+
+	// Vector type:
+	if (!IS_WORD(bp)) return 0;
+	if (VAL_WORD_CANON(bp) == SYM_VECTOR_TYPE) {
+		// allow #(vector! uint8! [1 2 3])
+		bp++;
+		if (!IS_WORD(bp)) return 0;
+	}
+	if (!Get_Vector_Spec_From_Symbol(VAL_WORD_CANON(bp), &type, &sign, &bits)) return 0;
+	bp++;
+	// Initial data:
+	if (IS_BLOCK(bp) || IS_BINARY(bp)) {
+		REBCNT len = VAL_LEN(bp);
+		if (IS_BINARY(bp)) len /= (bits >> 3);
+		if (len > size && size == 0) size = len;
+		iblk = bp;
+		bp++;
+	}
+	else return 0;
+	// Index offset:
+	if (IS_INTEGER(bp)) {
+		VAL_INDEX(value) = (Int32s(bp, 1) - 1);
+	}
+
+	vect = Make_Vector(type, sign, dims, bits, size);
+	if (!vect) return 0;
+	if (iblk) Set_Vector_Row(vect, iblk);
+
+	SET_TYPE(value, REB_VECTOR);
+	VAL_SERIES(value) = vect;
+	// index set earlier
+
+	return value;
+}
+
+/***********************************************************************
+**
+*/	REBVAL *Make_Vector_Spec(REBVAL *spec, REBVAL *value)
+/*
+**	Make a vector from an extended block spec.
+**
+**     make vector! [uint8! [1 2 3]]
+**     make vector! [uint8! :data]
+**     make vector! [uint8! :size :data :index]
+**
+**     ; backwards compatibility versions:
 **     make vector! [integer! 32 100]
 **     make vector! [decimal! 64 100]
 **     make vector! [unsigned integer! 32]
@@ -796,26 +860,44 @@ REBOOL Get_Vector_Spec_From_Symbol(REBCNT sym, REBINT *type, REBINT *sign, REBIN
 **    		size:       integer units
 **    		init:		block of values
 **
+**     ; it is possible to use also data directly like:
+**     make vector! [1 2 3] ; 64bit signed integers
+**     make vector! [1.0 2] ; 64bit decimals
+**
 ***********************************************************************/
 {
+	REBVAL *bp = VAL_BLK_DATA(spec);
 	REBINT type = -1; // 0 = int,    1 = float
 	REBINT sign = -1; // 0 = signed, 1 = unsigned
 	REBINT dims = 1;
-	REBINT bits = 32;
+	REBINT bits = 64;
 	REBCNT size = 0;
+	REBLEN index = 0;
 	REBSER *vect;
 	REBVAL *iblk = 0;
+	REBVAL *val;
 
-	// SIGNED / UNSIGNED
 	if (IS_WORD(bp)) {
+		// Using the prefered type like: make vector! [uint8! ...]
 		if (Get_Vector_Spec_From_Symbol(VAL_WORD_CANON(bp), &type, &sign, &bits)) {
 			bp++;
 			goto size_spec;
 		}
+		// Old specification like: make vector! [unsigned integer! 8 ...]
 		switch (VAL_WORD_CANON(bp)) {
 		case SYM_UNSIGNED: sign = 1; bp++; break;
 		case SYM_SIGNED:   sign = 0; bp++; break;
 		}
+	}
+	else if (IS_INTEGER(bp) || IS_DECIMAL(bp)) {
+		// make vector! [1 2 3]
+		// make vector! [1.0 2.0 3.0]
+		// using signed and 64 bits as a default
+		type = IS_INTEGER(bp) ? 0 : 1;
+		sign = 0;
+		size = VAL_LEN(spec);
+		iblk = spec;
+		goto data_spec;
 	}
 
 	// INTEGER! or DECIMAL!
@@ -845,40 +927,47 @@ REBOOL Get_Vector_Spec_From_Symbol(REBCNT sym, REBINT *type, REBINT *sign, REBIN
 	} else return 0;
 
 size_spec:
-
+	// For size, data and index one can use get-words
+	// eg: make vector! [uint8! :size :data :index]
+	// All these values are optional!
+	val = bp;
+	if (IS_GET_WORD(val))
+		val = Get_Var(val);
 	// SIZE
-	if (IS_INTEGER(bp)) {
-		size = Int32(bp);
+	if (IS_INTEGER(val)) {
+		size = Int32(val);
 		if (size < 0) return 0;
-		bp++;
+		val = ++bp;
+		if (IS_GET_WORD(val))
+			val = Get_Var(val);
 	}
-
 	// Initial data:
-	if (IS_BLOCK(bp) || IS_BINARY(bp)) {
-		REBCNT len = VAL_LEN(bp);
-		if (IS_BINARY(bp)) len /= (bits >> 3);
+	if (IS_BLOCK(val) || IS_BINARY(val)) {
+		REBCNT len = VAL_LEN(val);
+		if (IS_BINARY(val)) len /= (bits >> 3);
 		if (len > size && size == 0) size = len;
-		iblk = bp;
-		bp++;
+		iblk = val;
+		val = ++bp;
+		if (IS_GET_WORD(val))
+			val = Get_Var(val);
 	}
 
 	// Index offset:
-	if (IS_INTEGER(bp)) {
-		VAL_INDEX(value) = (Int32s(bp, 1) - 1);
-		bp++;
+	if (IS_INTEGER(val) || IS_DECIMAL(val)) {
+		index = Int32s(val, 1) - 1;
+		val = ++bp;
+		if (IS_GET_WORD(val)) val = Get_Var(val);
 	}
-	else VAL_INDEX(value) = 0;
 
-	if (NOT_END(bp)) return 0;
-
+	if (NOT_END(val)) return 0;
+data_spec:
 	vect = Make_Vector(type, sign, dims, bits, size);
 	if (!vect) return 0;
-
 	if (iblk) Set_Vector_Row(vect, iblk);
 
 	SET_TYPE(value, REB_VECTOR);
 	VAL_SERIES(value) = vect;
-	// index set earlier
+	VAL_INDEX(value) = index;
 
 	return value;
 }
@@ -888,9 +977,12 @@ size_spec:
 **
 */	REBFLG MT_Vector(REBVAL *out, REBVAL *data, REBCNT type)
 /*
+**	NOTE: data are on stack, it is not a BLOCK value,
+**        so it is not possible to use macros like VAL_TAIL
+**
 ***********************************************************************/
 {
-	if (Make_Vector_Spec(data, out)) return TRUE;
+	if (Construct_Vector(data, out)) return TRUE;
 	return FALSE;
 }
 
@@ -1078,7 +1170,7 @@ static void reverse_vector(REBVAL *value, REBCNT len)
 
 	case A_TO:
 		// CASE: make vector! [...]
-		if (IS_BLOCK(arg) && Make_Vector_Spec(VAL_BLK_DATA(arg), value)) break;
+		if (IS_BLOCK(arg) && Make_Vector_Spec(arg, value)) break;
 		goto bad_make;
 
 	case A_LENGTHQ:
@@ -1224,15 +1316,15 @@ bad_make:
 	}
 
 	if (molded) {
-		REBCNT type = (bits >= VTSF32) ? REB_DECIMAL : REB_INTEGER;
-		if (GET_MOPT(mold, MOPT_MOLD_ALL)) {
-			Emit(mold, "#(T ", value);
-			if (bits >= VTUI08 && bits <= VTUI64) Append_Bytes(mold->series, "unsigned ");
-			Emit(mold, "N I I [", type + 1, VECT_BIT_SIZE(bits), len);
-		}
-		else {
+//		REBCNT type = (bits >= VTSF32) ? REB_DECIMAL : REB_INTEGER;
+//		if (GET_MOPT(mold, MOPT_MOLD_ALL)) {
+//			Emit(mold, "#(T ", value);
+//			if (bits >= VTUI08 && bits <= VTUI64) Append_Bytes(mold->series, "unsigned ");
+//			Emit(mold, "N I I [", type + 1, VECT_BIT_SIZE(bits), len);
+//		}
+//		else {
 			Emit(mold, "#(S [", Get_Sym_Name(SYM_INT8X + bits));
-		}
+//		}
 		if (indented && len > 10) {
 			mold->indent++;
 			New_Indented_Line(mold);
