@@ -784,13 +784,12 @@ REBOOL Get_Vector_Spec_From_Symbol(REBCNT sym, REBINT *type, REBINT *sign, REBIN
 */	REBVAL *Construct_Vector(REBVAL *bp, REBVAL *value)
 /*
 **     Vector construction syntax. Supports only the new short variants.
-**     #(type size data index)
+**     #(type data index)
 **
 **     Fields:
 **          type:  uint8!, uint16!, uint32!, uint64!,
 **                 int8!, int16!, int32!, int64!,
 *                  float32!, float64!
-**    		size:  integer units
 **    		data:  block of values or binary data
 **          index: index in the created vector series
 **
