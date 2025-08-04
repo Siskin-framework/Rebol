@@ -57,20 +57,20 @@ power: action [
 
 and~: action [
 	{Returns the first value ANDed with the second.}
-	value1 [logic! integer! char! tuple! binary! bitset! typeset! datatype!]
-	value2 [logic! integer! char! tuple! binary! bitset! typeset! datatype!]
+	value1 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair!]
+	value2 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair!]
 ]
 
 or~: action [
 	{Returns the first value ORed with the second.}
-	value1 [logic! integer! char! tuple! binary! bitset! typeset! datatype!]
-	value2 [logic! integer! char! tuple! binary! bitset! typeset! datatype!]
+	value1 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair!]
+	value2 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair!]
 ]
 
 xor~: action [
 	{Returns the first value exclusive ORed with the second.}
-	value1 [logic! integer! char! tuple! binary! bitset! typeset! datatype!]
-	value2 [logic! integer! char! tuple! binary! bitset! typeset! datatype!]
+	value1 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair!]
+	value2 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair!]
 ]
 
 ;-- Unary

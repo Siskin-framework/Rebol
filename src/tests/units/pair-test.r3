@@ -172,37 +172,55 @@ Rebol [
 		
 ===end-group===
 
-;@@ not implemented in Rebol
-;===start-group=== "pair - and"
-;	
-;	--test-- "pand-1"		--assert equal? 0x0 (1x1 and 0x0)
-;	--test-- "pand-2"		--assert equal? 1x1 (1x1 and 1x1)
-;	--test-- "pand-3"   	--assert equal? 1x0 (1x1 and 1x0)
-;	--test-- "pand-4" 		--assert equal? 16x0 (16x16 and 16x4)
-;	--test-- "pand-5"		--assert equal? 7x4	(7x7 and 7x4)
-;
-;===end-group===
-;
-;
-;===start-group=== "pair - or"
-;
-;	--test-- "por-1"		--assert equal? 1x1 (1x1 or 0x0)
-;	--test-- "por-2"		--assert equal? 1x1 (1x1 or 1x1)
-;	--test-- "por-3"   		--assert equal? 1x1 (1x1 or 1x0)
-;	--test-- "por-4" 		--assert equal? 16x20 (16x16 or 16x4)
-;	--test-- "por-5"		--assert equal? 7x7	(7x7 or 7x4)
-;
-;===end-group===
-;
-;===start-group=== "pair - xor"
-;
-;	--test-- "pxor-1"		--assert equal? 1x1 (1x1 xor 0x0)
-;	--test-- "pxor-2"		--assert equal? 0x0 (1x1 xor 1x1)
-;	--test-- "pxor-3"   	--assert equal? 0x1 (1x1 xor 1x0)
-;	--test-- "pxor-4" 		--assert equal? 0x20 (16x16 xor 16x4)
-;	--test-- "pxor-5"		--assert equal? 0x3	(7x7 xor 7x4)
-;
-;===end-group===
+;@@ https://github.com/Oldes/Rebol-issues/issues/2524
+===start-group=== "pair - and"
+	--test-- "pand-1"
+		--assert equal? 0x0 (1x1 and 0)
+		--assert equal? 0x0 (1x1 and 0x0)
+	--test-- "pand-2"
+		--assert equal? 1x1 (1x1 and 1)
+		--assert equal? 1x1 (1x1 and 1x1)
+	--test-- "pand-3"  
+		--assert equal? 1x0 (1x1 and 1x0)
+	--test-- "pand-4" 
+		--assert equal? 16x0 (16x16 and 16x4)
+	--test-- "pand-5"
+		--assert equal? 7x4	(7x7 and 7x4)
+===end-group===
+
+===start-group=== "pair - or"
+	--test-- "por-1"
+		--assert equal? 1x1 (1x1 or 0)
+		--assert equal? 1x1 (1x1 or 0x0)
+	--test-- "por-2"
+		--assert equal? 1x1 (1x1 or 1)
+		--assert equal? 1x1 (1.2x1 or 1)
+		--assert equal? 1x1 (1x1 or 1x1)
+	--test-- "por-3"
+		--assert equal? 1x1 (1x1 or 1x0)
+	--test-- "por-4"
+		--assert equal? 16x20 (16x16 or 16x4)
+		--assert equal? 16x20 (16x15.6 or 16x4)
+	--test-- "por-5"
+		--assert equal? 7x7	(7x7 or 7x4)
+===end-group===
+
+===start-group=== "pair - xor"
+	--test-- "pxor-1"
+		--assert equal? 1x1 (1x1 xor 0)
+		--assert equal? 1x1 (1x1 xor 0x0)
+	--test-- "pxor-2"
+		--assert equal? 0x0 (1x1 xor 1)
+		--assert equal? 0x0 (1x1 xor 1x1)
+	--test-- "pxor-3"
+		--assert equal? 0x1 (1x1 xor 1x0)
+	--test-- "pxor-4"
+		--assert equal? 0x20 (16x16 xor 16x4)
+		--assert equal? 0x20 (16x15.9 xor 16x4)
+	--test-- "pxor-5"
+		--assert equal? 0x3	(7x7 xor 7x4)
+===end-group===
+
 
 ===start-group=== "pair - reverse"
 

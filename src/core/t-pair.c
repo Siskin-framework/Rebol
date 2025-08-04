@@ -235,6 +235,19 @@
 				y1 = (REBD32)fmod(y1, y2);
 			}
 			goto setPair;
+
+		case A_OR:
+			x1 = ROUND_TO_INT(x1) | ROUND_TO_INT(x2);
+			y1 = ROUND_TO_INT(y1) | ROUND_TO_INT(y2);
+			goto setPair;
+		case A_XOR:
+			x1 = ROUND_TO_INT(x1) ^ ROUND_TO_INT(x2);
+			y1 = ROUND_TO_INT(y1) ^ ROUND_TO_INT(y2);
+			goto setPair;
+		case A_AND:
+			x1 = ROUND_TO_INT(x1) & ROUND_TO_INT(x2);
+			y1 = ROUND_TO_INT(y1) & ROUND_TO_INT(y2);
+			goto setPair;
 		}
 		Trap_Math_Args(REB_PAIR, action);
 	}
