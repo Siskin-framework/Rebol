@@ -187,7 +187,6 @@
 	case A_DIVIDE:
 		if (IS_VECTOR(value)) return -1; // allow vector for actions above
 		//continue...
-	case A_REMAINDER:
 	case A_POWER:
 	case A_ODDQ:
 	case A_EVENQ:

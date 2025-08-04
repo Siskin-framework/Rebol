@@ -482,6 +482,60 @@ Rebol [
 	--assert (2 + skip v 2) = #(i8![5 6])
 	--assert v = #(i8![1 2 5 6])
 
+
+;@@ https://github.com/Oldes/Rebol-issues/issues/2524
+--test-- "VECTOR or"
+	--assert (#(int8!  [1 2 3 4]) or 2) == #(int8!  [3 2 3 6])
+	--assert (#(int16! [1 2 3 4]) or 2) == #(int16! [3 2 3 6])
+	--assert (#(int32! [1 2 3 4]) or 2) == #(int32! [3 2 3 6])
+	--assert (#(int64! [1 2 3 4]) or 2) == #(int64! [3 2 3 6])
+	--assert (#(uint8!  [1 2 3 4]) or 2) == #(uint8!  [3 2 3 6])
+	--assert (#(uint16! [1 2 3 4]) or 2) == #(uint16! [3 2 3 6])
+	--assert (#(uint32! [1 2 3 4]) or 2) == #(uint32! [3 2 3 6])
+	--assert (#(uint64! [1 2 3 4]) or 2) == #(uint64! [3 2 3 6])
+	--assert all [error? e: try [#(float32! [1 2]) or 1]  e/id = 'not-related]
+	--assert all [error? e: try [#(float64! [1 2]) or 1]  e/id = 'not-related]
+
+--test-- "VECTOR and"
+	--assert (#(int8!  [1 2 3 4]) and 10) == #(int8!  [0 2 2 0])
+	--assert (#(int16! [1 2 3 4]) and 10) == #(int16! [0 2 2 0])
+	--assert (#(int32! [1 2 3 4]) and 10) == #(int32! [0 2 2 0])
+	--assert (#(int64! [1 2 3 4]) and 10) == #(int64! [0 2 2 0])
+	--assert (#(uint8!  [1 2 3 4]) and 10) == #(uint8!  [0 2 2 0])
+	--assert (#(uint16! [1 2 3 4]) and 10) == #(uint16! [0 2 2 0])
+	--assert (#(uint32! [1 2 3 4]) and 10) == #(uint32! [0 2 2 0])
+	--assert (#(uint64! [1 2 3 4]) and 10) == #(uint64! [0 2 2 0])
+	--assert all [error? e: try [#(float32! [1 2]) and 1]  e/id = 'not-related]
+	--assert all [error? e: try [#(float64! [1 2]) and 1]  e/id = 'not-related]
+
+--test-- "VECTOR xor"
+	--assert (#(int8!  [1 2 3 4]) xor 2) == #(int8!  [3 0 1 6])
+	--assert (#(int16! [1 2 3 4]) xor 2) == #(int16! [3 0 1 6])
+	--assert (#(int32! [1 2 3 4]) xor 2) == #(int32! [3 0 1 6])
+	--assert (#(int64! [1 2 3 4]) xor 2) == #(int64! [3 0 1 6])
+	--assert (#(uint8!  [1 2 3 4]) xor 2) == #(uint8!  [3 0 1 6])
+	--assert (#(uint16! [1 2 3 4]) xor 2) == #(uint16! [3 0 1 6])
+	--assert (#(uint32! [1 2 3 4]) xor 2) == #(uint32! [3 0 1 6])
+	--assert (#(uint64! [1 2 3 4]) xor 2) == #(uint64! [3 0 1 6])
+	--assert all [error? e: try [#(float32! [1 2]) xor 2]  e/id = 'not-related]
+	--assert all [error? e: try [#(float64! [1 2]) xor 2]  e/id = 'not-related]
+
+--test-- "VECTOR remainder"
+	--assert (#(int8!  [1 2 3 4]) % 2) == #(int8!  [1 0 1 0])
+	--assert (#(int16! [1 2 3 4]) % 2) == #(int16! [1 0 1 0])
+	--assert (#(int32! [1 2 3 4]) % 2) == #(int32! [1 0 1 0])
+	--assert (#(int64! [1 2 3 4]) % 2) == #(int64! [1 0 1 0])
+	--assert (#(uint8!  [1 2 3 4]) % 2) == #(uint8!  [1 0 1 0])
+	--assert (#(uint16! [1 2 3 4]) % 2) == #(uint16! [1 0 1 0])
+	--assert (#(uint32! [1 2 3 4]) % 2) == #(uint32! [1 0 1 0])
+	--assert (#(uint64! [1 2 3 4]) % 2) == #(uint64! [1 0 1 0])
+	--assert (#(float32! [1 2 3 4]) % 2) == #(float32! [1 0 1 0])
+	--assert (#(float64! [1 2 3 4]) % 2) == #(float64! [1 0 1 0])
+--test-- "VECTOR remainder with zero"
+	--assert all [error? e: try [#(int8! [1 2]) % 0]  e/id = 'zero-divide]
+	--assert all [error? e: try [#(float32! [1 2]) % 0]  e/id = 'zero-divide]
+	--assert all [error? e: try [#(float64! [1 2]) % 0]  e/id = 'zero-divide]
+
 ===end-group===
 
 
