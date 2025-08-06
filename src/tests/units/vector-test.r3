@@ -484,6 +484,7 @@ Rebol [
 
 
 ;@@ https://github.com/Oldes/Rebol-issues/issues/2524
+;@@ https://github.com/Oldes/Rebol-issues/issues/2617
 --test-- "VECTOR or"
 	--assert (#(int8!  [1 2 3 4]) or 2) == #(int8!  [3 2 3 6])
 	--assert (#(int16! [1 2 3 4]) or 2) == #(int16! [3 2 3 6])
@@ -876,6 +877,224 @@ Rebol [
 		--assert  all [
 			error? e: try [sort/compare #(i8!  [2 4 1 3]) func[a b][a < b]]
 			e/id = 'feature-na
+		]
+===end-group===
+
+
+===start-group=== "Vector modification actions"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1326
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2527
+	--test-- "APPEND vector number"
+		--assert (append #(i8! [1 2]) 3) == #(i8! [1 2 3])
+		--assert (append next #(i16! [1 2]) 3) == #(i16! [1 2 3])
+		--assert (append #(i32! [1 2]) 3.5) == #(i32! [1 2 3])
+		--assert (append/part #(i64! [1 2]) 3 2) == #(i64! [1 2 3])
+		--assert (append/dup #(f32! [1 2]) 3 2) == #(f32! [1 2 3 3])
+	
+	--test-- "APPEND vector block"
+		--assert (append #(i8! [1 2]) [3 4]) == #(i8! [1 2 3 4])
+		--assert (append #(i16! [1 2]) [3.5 4.1]) == #(i16! [1 2 3 4])
+		--assert (append next #(i32! [1 2]) [3 4]) == #(i32! [1 2 3 4])
+		--assert (append/part #(i64! [1 2]) [3 4] 1) == #(i64! [1 2 3])
+		--assert (append/part #(f32! [1 2]) [3 4] 3) == #(f32! [1 2 3 4])
+		--assert (append/dup  #(f64! [1 2]) [3 4] 2) == #(f64! [1 2 3 4 3 4])
+
+	--test-- "APPEND vector vector"
+		--assert (append #(i8! [1 2]) #(i8! [3 4])) == #(i8! [1 2 3 4])
+		--assert (append #(i16! [1 2]) #(f32! [3.5 4.1])) == #(i16! [1 2 3 4])
+		--assert (append next #(i32! [1 2]) #(i8! [3 4])) == #(i32! [1 2 3 4])
+		--assert (append/part #(i64! [1 2]) #(i8! [3 4]) 1) == #(i64! [1 2 3])
+		--assert (append/part #(f32! [1 2]) #(i8! [3 4]) 3) == #(f32! [1 2 3 4])
+		--assert (append/dup  #(f64! [1 2]) #(i8! [3 4]) 2) == #(f64! [1 2 3 4 3 4])
+
+	--test-- "APPEND vector binary"
+		--assert (append #(i8! [1 2]) #{0304}) == #(i8! [1 2 3 4])
+		--assert (append #(i16! [1 2]) #{03000400})   == #(i16! [1 2 3 4])
+		--assert (append next #(i8! [1 2]) #{0304})   == #(i8! [1 2 3 4])
+		--assert (append/part #(i8! [1 2]) #{0304} 1) == #(i8! [1 2 3])
+		--assert (append/part #(i8! [1 2]) #{0304} 3) == #(i8! [1 2 3 4])
+		--assert (append/dup  #(i8! [1 2]) #{0304} 2) == #(i8! [1 2 3 4 3 4])
+	--test-- "APPEND vector binary (invalid)"
+		--assert all [
+			error? e: try [append #(i16! [1 2]) #{03}]
+			e/id = 'invalid-data
+			e/arg1 = #{03}
+		]
+		--assert all [
+			error? e: try [append/part #(i16! [1 2]) #{0304} 1]
+			e/id = 'invalid-data
+			e/arg1 = #{0304}
+		]
+
+	--test-- "INSERT vector number"
+		--assert all [
+			(insert v: #(i8! [1 2]) 3) == #(i8! [1 2])
+			v == #(i8! [3 1 2])
+		]
+		--assert all [
+			(insert next v: #(i8! [1 2]) 3) == #(i8! [2])
+			v == #(i8! [1 3 2])
+		]
+		--assert all [
+			(insert v: #(i8! [1 2]) 3.5) == #(i8! [1 2])
+			v == #(i8! [3 1 2])
+		]
+		--assert all [
+			(insert/part v: #(i8! [1 2]) 3 2) == #(i8! [1 2])
+			v == #(i8! [3 1 2])
+		]
+		--assert all [
+			(insert/dup v: #(i8! [1 2]) 3 2) == #(i8! [1 2])
+			v == #(i8! [3 3 1 2])
+		]
+
+	--test-- "INSERT vector block"
+		--assert all [
+			(insert v: #(i8! [1 2]) [3 4]) == #(i8! [1 2])
+			v == #(i8! [3 4 1 2])
+		]
+		--assert all [
+			(insert v: #(i8! [1 2]) [3.5 4.1]) == #(i8! [1 2])
+			v == #(i8! [3 4 1 2])
+		]
+		--assert all [
+			(insert next v: #(i8! [1 2]) [3 4]) == #(i8! [2])
+			v == #(i8! [1 3 4 2])
+		]
+		--assert all [
+			(insert/part v: #(i8! [1 2]) [3 4] 1) == #(i8! [1 2])
+			v == #(i8! [3 1 2])
+		]
+		--assert all [
+			(insert/part v: #(i8! [1 2]) [3 4] 3) == #(i8! [1 2])
+			v == #(i8! [3 4 1 2])
+		]
+		--assert all [
+			(insert/dup v: #(i8! [1 2]) [3 4] 2) == #(i8! [1 2])
+			v == #(i8! [3 4 3 4 1 2])
+		]
+
+	--test-- "INSERT vector vector"
+		--assert all [
+			(insert v: #(i8! [1 2]) #(i8! [3 4])) == #(i8! [1 2])
+			v == #(i8! [3 4 1 2])
+		]
+		--assert all [
+			(insert v: #(i16! [1 2]) #(f32! [3.5 4.1])) == #(i16! [1 2])
+			v == #(i16! [3 4 1 2])
+		]
+		--assert all [
+			(insert next v: #(i32! [1 2]) #(i8! [3 4])) == #(i32! [2])
+			v == #(i32! [1 3 4 2])
+		]
+		--assert all [
+			(insert/part v: #(i64! [1 2]) #(i8! [3 4]) 1) == #(i64! [1 2])
+			v == #(i64! [3 1 2])
+		]
+		--assert all [
+			(insert/part v: #(f32! [1 2]) #(i8! [3 4]) 3) == #(f32! [1 2])
+			v == #(f32! [3 4 1 2])
+		]
+		--assert all [
+			(insert/dup v: #(f64! [1 2]) #(i8! [3 4]) 2) == #(f64! [1 2])
+			v == #(f64! [3 4 3 4 1 2])
+		]
+
+	--test-- "CHANGE vector number"
+		--assert all [
+			(change v: #(i8! [1 2]) 3) == #(i8! [2])
+			v == #(i8! [3 2])
+		]
+		--assert all [
+			(change next v: #(i8! [1 2 3]) 4) == #(i8! [3])
+			v == #(i8! [1 4 3])
+		]
+		--assert all [
+			(change/part v: #(i8! [1 2]) 3 1) == #(i8! [2])
+			v == #(i8! [3 2])
+		]
+		--assert all [
+			(change/part v: #(i8! [1 2]) 3 3) == #(i8! [])
+			v == #(i8! [3])
+		]
+		--assert all [
+			(change/dup v: #(i8! [1 2]) 3 2) == #(i8! [])
+			v == #(i8! [3 3])
+		]
+
+	--test-- "CHANGE vector block"
+		--assert all [
+			(change v: #(i8! [1 2]) [3 4]) == #(i8! [])
+			v == #(i8! [3 4])
+		]
+		--assert all [
+			(change v: #(i8! [1 2]) [3.5 4.1]) == #(i8! [])
+			v == #(i8! [3 4])
+		]
+		--assert all [
+			(change v: #(i8! [1 2 3]) [3 4]) == #(i8! [3])
+			v == #(i8! [3 4 3])
+		]
+		--assert all [
+			(change next v: #(i8! [1 2 3]) [3 4]) == #(i8! [])
+			v == #(i8! [1 3 4])
+		]
+		--assert all [
+			(change/part v: #(i8! [1 2]) [3 4] 1) == #(i8! [2])
+			v == #(i8! [3 4 2])
+		]
+		--assert all [
+			(change/part v: #(i8! [1 2]) [3 4] 3) == #(i8! [])
+			v == #(i8! [3 4])
+		]
+		--assert all [
+			(change/dup v: #(i8! [1 2]) [3 4] 2) == #(i8! [])
+			v == #(i8! [3 4 3 4])
+		]
+		--assert all [
+			(change/dup v: #(i8! [1 2 3 4 5]) [6 7] 2) == #(i8! [5])
+			v == #(i8! [6 7 6 7 5])
+		]
+
+	--test-- "CHANGE vector vector"
+		--assert all [
+			(change v: #(i8! [1 2]) #(i8! [3 4])) == #(i8! [])
+			v == #(i8! [3 4])
+		]
+		--assert all [
+			(change v: #(i16! [1 2]) #(f32! [3.5 4.1])) == #(i16! [])
+			v == #(i16! [3 4])
+		]
+		--assert all [
+			(change v: #(i32! [1 2 3]) #(i8! [3 4])) == #(i32! [3])
+			v == #(i32! [3 4 3])
+		]
+		--assert all [
+			(change next v: #(i64! [1 2 3]) #(i8! [3 4])) == #(i64! [])
+			v == #(i64! [1 3 4])
+		]
+		--assert all [
+			(change/part v: #(f32! [1 2]) #(i8! [3 4]) 1) == #(f32! [2])
+			v == #(f32! [3 4 2])
+		]
+		--assert all [
+			(change/part v: #(f64! [1 2]) #(i8! [3 4]) 3) == #(f64! [])
+			v == #(f64! [3 4])
+		]
+		--assert all [
+			(change/dup v: #(i8! [1 2]) #(u16! [3 4]) 2) == #(i8! [])
+			v == #(i8! [3 4 3 4])
+		]
+		--assert all [
+			(change/dup v: #(i16! [1 2 3 4 5]) #(u32! [6 7]) 2) == #(i16! [5])
+			v == #(i16! [6 7 6 7 5])
+		]
+
+	--test-- "CLEAR vector"
+		--assert all [
+			v: #(i8! [1 2])
+			(clear v) == #(i8! [])
+			empty? v
 		]
 ===end-group===
 

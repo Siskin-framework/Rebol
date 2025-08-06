@@ -1168,6 +1168,7 @@ static void reverse_vector(REBVAL *value, REBCNT len)
 	REBVAL *arg = D_ARG(2);
 	REBINT type;
 	REBCNT size, bits;
+	REBLEN index;
 	REBSER *vect;
 	REBSER *ser;
 	REBSER *blk;
@@ -1333,6 +1334,29 @@ static void reverse_vector(REBVAL *value, REBCNT len)
 			SET_OBJECT(value, obj);
 		}
 		break;
+	
+	//-- Modification:
+	case A_APPEND:
+	case A_INSERT:
+	case A_CHANGE:
+		// Length of target (may modify index): (arg can be anything)
+		len = Partial1((action == A_CHANGE) ? value : arg, DS_ARG(AN_LENGTH));
+		index = VAL_INDEX(value);
+		REBFLG args = 0;
+		if (DS_REF(AN_PART)) SET_FLAG(args, AN_PART);
+		index = Modify_Vector(action, VAL_SERIES(value), index, arg, args, len, DS_REF(AN_DUP) ? Int32(DS_ARG(AN_COUNT)) : 1);
+		VAL_INDEX(value) = index;
+		break;
+
+	case A_CLEAR:
+		index = VAL_INDEX(value);
+		if (index < VAL_TAIL(value)) {
+			// Null all values.
+			CLEAR(VAL_BIN_DATA(value, index), VAL_TAIL(value) - index);
+			// Set new tail.
+			VAL_TAIL(value) = index;
+		}
+		break;
 
 	default:
 		Trap_Action(VAL_TYPE(value), action);
@@ -1345,6 +1369,111 @@ bad_make:
 	Trap_Make(REB_VECTOR, arg);
 }
 
+
+/***********************************************************************
+**
+*/	REBCNT Modify_Vector(REBCNT action, REBSER *vect, REBCNT index, REBVAL *src_val, REBCNT flags, REBINT dst_len, REBINT dups)
+/*
+**		action: INSERT, APPEND, CHANGE
+**
+**		vect:	    target
+**		index:      position (in values)
+**		src_val:	source
+**		flags:		AN_PART
+**		dst_len:	length to remove (in bytes)
+**		dups:		dup count
+**
+**		return: new dst_idx
+**
+***********************************************************************/
+{
+	REBSER *src_ser = 0;
+	REBCNT src_idx = 0;
+	REBCNT src_len = 0;
+	REBCNT tail = SERIES_TAIL(vect);
+	REBCNT type = VECT_TYPE(vect);
+	REBCNT bpv = VECT_BYTE_SIZE(type); // bytes per value
+	REBINT size;  // total to insert/append/change (includes dups)
+	REBVAL *val = NULL;
+
+	if (dups < 0) return (action == A_APPEND) ? 0 : index;
+	if (action == A_APPEND || index > tail) index = tail;
+
+	// Use SCAN buffer as a temporary buffer.
+	src_ser = BUF_SCAN;
+	if (IS_VECTOR(src_val)) {
+		REBLEN index = MIN(VAL_TAIL(src_val), VAL_INDEX(src_val));
+		REBLEN part = VAL_TAIL(src_val) - index;
+		if (action != A_CHANGE && GET_FLAG(flags, AN_PART) && dst_len < part)
+			part = dst_len;
+		if (type == VECT_TYPE(VAL_SERIES(src_val))) {
+			// same vector types...
+			src_ser = VAL_SERIES(src_val);
+			src_idx = index;
+			src_len = part;
+		}
+		else {
+			// Make sure that the temp buffer is large enough.
+			RESIZE_SERIES(src_ser, part * bpv);
+			// Encode values from the source vector to the temp buffer.
+			for (REBVAL tmp; src_len < part; index++) {
+				Get_Vector_Value(&tmp, VAL_SERIES(src_val), index);
+				Set_Vector_Value(type, src_ser->data, src_len++, &tmp);
+			}
+		}
+	}
+	else if (IS_BINARY(src_val)) {
+		src_ser = VAL_SERIES(src_val);
+		src_idx = VAL_INDEX(src_val);
+		src_len = (VAL_TAIL(src_val) - src_idx);
+		if (action != A_CHANGE && GET_FLAG(flags, AN_PART) && dst_len < src_len)
+			src_len = dst_len;
+		src_len /= bpv;
+		if (src_len == 0) Trap1(RE_INVALID_DATA, src_val);
+	}
+	else if (IS_BLOCK(src_val)) {
+		REBLEN index = MIN(VAL_TAIL(src_val), VAL_INDEX(src_val));
+		REBLEN part = VAL_TAIL(src_val) - index;
+		// For INSERT or APPEND with /PART use the dst_len not src_len:
+		if (action != A_CHANGE && GET_FLAG(flags, AN_PART))
+			part = dst_len;
+		// Make sure that the temp buffer is large enough.
+		RESIZE_SERIES(src_ser, part * bpv);
+		// Encode values from the block vector to the temp buffer.
+		for (val = VAL_BLK_DATA(src_val); src_len < part; val++) {
+			Set_Vector_Value(type, src_ser->data, src_len++, val);
+		}
+	}
+	else {
+		// Encode single value into the temp buffer.
+		Set_Vector_Value(type, src_ser->data, src_len++, src_val);
+	}
+
+	// Total to insert:
+	size = dups * src_len;
+
+	if (action != A_CHANGE) {
+		// Always expand vect for INSERT and APPEND actions:
+		Expand_Series(vect, index, size);
+	}
+	else {
+		// CHANGE action...
+		if (size > dst_len)
+			Expand_Series(vect, index, size - dst_len);
+		else if (size < dst_len &&GET_FLAG(flags, AN_PART))
+			Remove_Series(vect, index, dst_len - size);
+	}
+
+	// For dup count:
+	for (; dups > 0; dups--) {
+		// Don't use Insert_String as we may be inserting to a binary!
+		// Destination is already expanded above.
+		COPY_MEM(BIN_SKIP(vect, index * bpv), BIN_SKIP(src_ser, src_idx), src_len * bpv);
+		index += src_len;
+	}
+
+	return (action == A_APPEND) ? 0 : index;
+}
 
 /***********************************************************************
 **
