@@ -1352,7 +1352,7 @@ static void reverse_vector(REBVAL *value, REBCNT len)
 		index = VAL_INDEX(value);
 		if (index < VAL_TAIL(value)) {
 			// Null all values.
-			CLEAR(VAL_BIN_DATA(value, index), VAL_TAIL(value) - index);
+			CLEAR(VAL_BIN_DATA(value), VAL_TAIL(value) - index);
 			// Set new tail.
 			VAL_TAIL(value) = index;
 		}
