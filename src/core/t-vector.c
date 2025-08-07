@@ -549,7 +549,7 @@ return_number:
 		right = v1;
 	} else {
 		Trap_Action(VAL_TYPE(v1), action);
-		return NULL;
+		return;
 	}
 
 	vect = VAL_SERIES(left);
