@@ -132,6 +132,8 @@ Script: [
 	invalid-handle:     {invalid handle}
 	invalid-value-for:  [{invalid value} :arg1 {for:} :arg2]
 	handle-exists:      [{handle already exists under id} :arg1 "and have different size"]
+
+	vector-not-compatible: [{Vectors not compatible for operation}]
 ]
 
 Math: [

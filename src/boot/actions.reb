@@ -45,8 +45,8 @@ divide: action [
 
 remainder: action [
 	{Returns the remainder of first value divided by second.}
-	value1 [scalar!]
-	value2 [scalar!]
+	value1 [scalar! vector!]
+	value2 [scalar! vector!]
 ]
 
 power: action [
@@ -57,20 +57,20 @@ power: action [
 
 and~: action [
 	{Returns the first value ANDed with the second.}
-	value1 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair!]
-	value2 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair!]
+	value1 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair! vector!]
+	value2 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair! vector!]
 ]
 
 or~: action [
 	{Returns the first value ORed with the second.}
-	value1 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair!]
-	value2 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair!]
+	value1 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair! vector!]
+	value2 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair! vector!]
 ]
 
 xor~: action [
 	{Returns the first value exclusive ORed with the second.}
-	value1 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair!]
-	value2 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair!]
+	value1 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair! vector!]
+	value2 [logic! integer! char! tuple! binary! bitset! typeset! datatype! pair! vector!]
 ]
 
 ;-- Unary

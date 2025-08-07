@@ -522,13 +522,14 @@ return_number:
 
 /***********************************************************************
 **
-*/	REBVAL* Math_Op_Vector(REBVAL *v1, REBVAL *v2, REBCNT action)
+*/	void Math_Op_Vector(REBVAL *out, REBVAL *v1, REBVAL *v2, REBCNT action)
 /*
 **		Do basic math operation on a vector
 **
 ***********************************************************************/
 {
 	REBSER *vect = NULL;
+	REBSER *dest;
 	REBYTE *data;
 	REBCNT bits;
 	REBCNT len;
@@ -540,19 +541,29 @@ return_number:
 	REBDEC f = 0;
 	REBCNT n = 0;
 
+	int vector_mode = 0; // 0: vector-scalar, 1: vector-vector
+
 	if (IS_VECTOR(v1) && IS_NUMBER(v2)) {
 		left = v1;
 		right = v2;
 	} else if (IS_VECTOR(v2) && IS_NUMBER(v1)) {
 		left = v2;
 		right = v1;
-	} else {
+	}
+	else if (IS_VECTOR(v1) && IS_VECTOR(v2)) {
+		vector_mode = 1;
+		left = v1;
+		right = v2;
+	}
+	else {
 		Trap_Action(VAL_TYPE(v1), action);
 		return NULL;
 	}
+
 	vect = VAL_SERIES(left);
 	bits = VECT_TYPE(vect);
-	data = vect->data;
+	len = VAL_LEN(left);
+
 
 	if (IS_INTEGER(right)) {
 		i = VAL_INT64(right);
@@ -562,8 +573,12 @@ return_number:
 		i = (REBI64)f;
 	}
 
-	n = VAL_INDEX(left);
-	len = n + VAL_LEN(left);
+	dest = Copy_Series_Part(vect, VAL_INDEX(left), len);
+	dest->size = vect->size; // attributes
+	data = dest->data;
+	SET_VECTOR(out, dest);
+	n = 0;
+
 
 	switch (action) {
 	case A_ADD:
@@ -678,9 +693,175 @@ return_number:
 		}
 		break;
 	}
-	return left;
+	return;
 }
 #undef VEC_OP_LOOP
+
+// Helper macro for elementwise vector ops
+#define VEC_OP_LOOP(type, op) \
+    do { \
+		type *o = (type*)data; \
+        type *p = (type*)data1; \
+        type *q = (type*)data2; \
+        for (REBCNT j = n; j < len; ++j) o[j] = p[idx1 + j] op q[idx2 + j]; \
+    } while (0)
+#define VEC_OP_LOOP_NO_ZERO(type, op) \
+    do { \
+		type *o = (type*)data; \
+        type *p = (type*)data1; \
+        type *q = (type*)data2; \
+        for (REBCNT j = n; j < len; ++j) {\
+			if (q[idx2 + j] == 0) Trap0(RE_ZERO_DIVIDE);\
+			o[j] = p[idx1 + j] op q[idx2 + j];} \
+    } while (0)
+
+/***********************************************************************
+**
+*/	void Math_Op_Vector_Vector(REBVAL *out, REBVAL *v1, REBVAL *v2, REBCNT action)
+/*
+**		Do basic math operation on a vector
+**
+***********************************************************************/
+{
+	REBSER *vect1 = VAL_SERIES(v1);
+	REBSER *vect2 = VAL_SERIES(v2);
+	REBLEN len1 = VAL_LEN(v1);
+	REBLEN len2 = VAL_LEN(v2);
+	REBLEN len, n;
+	REBLEN idx1 = VAL_INDEX(v1);
+	REBLEN idx2 = VAL_INDEX(v2);
+	REBINT bits1 = VECT_TYPE(vect1);
+	REBINT bits2 = VECT_TYPE(vect2);
+	REBSER *dest;
+	REBYTE *data;
+	REBYTE *data1 = vect1->data;
+	REBYTE *data2 = vect2->data;
+
+	len = MIN(len1, len2);
+
+	if (bits1 != bits2)	Trap0(RE_VECTOR_NOT_COMPATIBLE);
+	dest = Make_Series(MAX(len,1), SERIES_WIDE(vect1), FALSE);
+	dest->size = vect1->size; // attributes
+	data = dest->data;
+	SERIES_TAIL(dest) = len;
+	SET_VECTOR(out, dest);
+	n = 0;
+
+	switch (action) {
+	case A_ADD:
+		switch (bits1) {
+		case VTSI08: VEC_OP_LOOP(i8, +); break;
+		case VTSI16: VEC_OP_LOOP(i16, +); break;
+		case VTSI32: VEC_OP_LOOP(i32, +); break;
+		case VTSI64: VEC_OP_LOOP(i64, +); break;
+		case VTUI08: VEC_OP_LOOP(u8, +); break;
+		case VTUI16: VEC_OP_LOOP(u16, +); break;
+		case VTUI32: VEC_OP_LOOP(u32, +); break;
+		case VTUI64: VEC_OP_LOOP(u64, +); break;
+		case VTSF32: VEC_OP_LOOP(float, +); break;
+		case VTSF64: VEC_OP_LOOP(double, +); break;
+		}
+		break;
+	case A_SUBTRACT:
+		switch (bits1) {
+		case VTSI08: VEC_OP_LOOP(i8, -); break;
+		case VTSI16: VEC_OP_LOOP(i16, -); break;
+		case VTSI32: VEC_OP_LOOP(i32, -); break;
+		case VTSI64: VEC_OP_LOOP(i64, -); break;
+		case VTUI08: VEC_OP_LOOP(u8, -); break;
+		case VTUI16: VEC_OP_LOOP(u16, -); break;
+		case VTUI32: VEC_OP_LOOP(u32, -); break;
+		case VTUI64: VEC_OP_LOOP(u64, -); break;
+		case VTSF32: VEC_OP_LOOP(float, -); break;
+		case VTSF64: VEC_OP_LOOP(double, -); break;
+		}
+		break;
+	case A_MULTIPLY:
+		switch (bits1) {
+		case VTSI08: VEC_OP_LOOP(i8, *); break;
+		case VTSI16: VEC_OP_LOOP(i16, *); break;
+		case VTSI32: VEC_OP_LOOP(i32, *); break;
+		case VTSI64: VEC_OP_LOOP(i64, *); break;
+		case VTUI08: VEC_OP_LOOP(u8, *); break;
+		case VTUI16: VEC_OP_LOOP(u16, *); break;
+		case VTUI32: VEC_OP_LOOP(u32, *); break;
+		case VTUI64: VEC_OP_LOOP(u64, *); break;
+		case VTSF32: VEC_OP_LOOP(float, *); break;
+		case VTSF64: VEC_OP_LOOP(double, *); break;
+		}
+		break;
+	case A_DIVIDE:
+		switch (bits1) {
+		case VTSI08: VEC_OP_LOOP_NO_ZERO(i8, /); break;
+		case VTSI16: VEC_OP_LOOP_NO_ZERO(i16, /); break;
+		case VTSI32: VEC_OP_LOOP_NO_ZERO(i32, /); break;
+		case VTSI64: VEC_OP_LOOP_NO_ZERO(i64, /); break;
+		case VTUI08: VEC_OP_LOOP_NO_ZERO(u8, /); break;
+		case VTUI16: VEC_OP_LOOP_NO_ZERO(u16, /); break;
+		case VTUI32: VEC_OP_LOOP_NO_ZERO(u32, /); break;
+		case VTUI64: VEC_OP_LOOP_NO_ZERO(u64, /); break;
+		case VTSF32: VEC_OP_LOOP_NO_ZERO(float, /); break;
+		case VTSF64: VEC_OP_LOOP_NO_ZERO(double, /); break;
+		}
+		break;
+	case A_AND:
+		switch (bits1) {
+		case VTSI08: VEC_OP_LOOP(i8, &); break;
+		case VTSI16: VEC_OP_LOOP(i16, &); break;
+		case VTSI32: VEC_OP_LOOP(i32, &); break;
+		case VTSI64: VEC_OP_LOOP(i64, &); break;
+		case VTUI08: VEC_OP_LOOP(u8, &); break;
+		case VTUI16: VEC_OP_LOOP(u16, &); break;
+		case VTUI32: VEC_OP_LOOP(u32, &); break;
+		case VTUI64: VEC_OP_LOOP(u64, &); break;
+		default: Trap_Math_Args(REB_DECIMAL, action);
+		}
+		break;
+	case A_OR:
+		switch (bits1) {
+		case VTSI08: VEC_OP_LOOP(i8, |); break;
+		case VTSI16: VEC_OP_LOOP(i16, |); break;
+		case VTSI32: VEC_OP_LOOP(i32, |); break;
+		case VTSI64: VEC_OP_LOOP(i64, |); break;
+		case VTUI08: VEC_OP_LOOP(u8, |); break;
+		case VTUI16: VEC_OP_LOOP(u16, |); break;
+		case VTUI32: VEC_OP_LOOP(u32, |); break;
+		case VTUI64: VEC_OP_LOOP(u64, |); break;
+		default: Trap_Math_Args(REB_DECIMAL, action);
+		}
+		break;
+	case A_XOR:
+		switch (bits1) {
+		case VTSI08: VEC_OP_LOOP(i8, ^); break;
+		case VTSI16: VEC_OP_LOOP(i16, ^); break;
+		case VTSI32: VEC_OP_LOOP(i32, ^); break;
+		case VTSI64: VEC_OP_LOOP(i64, ^); break;
+		case VTUI08: VEC_OP_LOOP(u8, ^); break;
+		case VTUI16: VEC_OP_LOOP(u16, ^); break;
+		case VTUI32: VEC_OP_LOOP(u32, ^); break;
+		case VTUI64: VEC_OP_LOOP(u64, ^); break;
+		default: Trap_Math_Args(REB_DECIMAL, action);
+		}
+		break;
+	case A_REMAINDER:
+		switch (bits1) {
+		case VTSI08: VEC_OP_LOOP_NO_ZERO(i8, %); break;
+		case VTSI16: VEC_OP_LOOP_NO_ZERO(i16, %); break;
+		case VTSI32: VEC_OP_LOOP_NO_ZERO(i32, %); break;
+		case VTSI64: VEC_OP_LOOP_NO_ZERO(i64, %); break;
+		case VTUI08: VEC_OP_LOOP_NO_ZERO(u8, %); break;
+		case VTUI16: VEC_OP_LOOP_NO_ZERO(u16, %); break;
+		case VTUI32: VEC_OP_LOOP_NO_ZERO(u32, %); break;
+		case VTUI64: VEC_OP_LOOP_NO_ZERO(u64, %); break;
+		case VTSF32: for (REBCNT j = n; j < len; ++j) ((float *)data)[j] = fmodf(((float *)data1)[idx1 + j], ((float *)data2)[idx2 + j]); break;
+		case VTSF64: for (REBCNT j = n; j < len; ++j) ((double *)data)[j] = fmod(((double *)data1)[idx1 + j], ((double *)data2)[idx2+j]); break;
+		}
+		break;
+	}
+	return;
+}
+#undef VEC_OP_LOOP
+#undef VEC_OP_LOOP_NO_ZERO
 #endif
 
 /***********************************************************************
@@ -1203,8 +1384,11 @@ static void reverse_vector(REBVAL *value, REBCNT len)
 	case A_AND:
 	case A_XOR:
 	case A_REMAINDER:
-		Math_Op_Vector(value, arg, action);
-		break;
+		if (IS_VECTOR(value) && IS_VECTOR(arg))
+			Math_Op_Vector_Vector(D_RET, value, arg, action);
+		else 
+			Math_Op_Vector(D_RET, value, arg, action);
+		return R_RET;
 #endif
 
 	case A_MAKE:
