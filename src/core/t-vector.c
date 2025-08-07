@@ -541,21 +541,13 @@ return_number:
 	REBDEC f = 0;
 	REBCNT n = 0;
 
-	int vector_mode = 0; // 0: vector-scalar, 1: vector-vector
-
 	if (IS_VECTOR(v1) && IS_NUMBER(v2)) {
 		left = v1;
 		right = v2;
 	} else if (IS_VECTOR(v2) && IS_NUMBER(v1)) {
 		left = v2;
 		right = v1;
-	}
-	else if (IS_VECTOR(v1) && IS_VECTOR(v2)) {
-		vector_mode = 1;
-		left = v1;
-		right = v2;
-	}
-	else {
+	} else {
 		Trap_Action(VAL_TYPE(v1), action);
 		return NULL;
 	}
