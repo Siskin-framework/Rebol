@@ -333,45 +333,33 @@ void Find_Minimum_Of_Vector(REBSER *vect, REBVAL *ret) {
 	SET_NONE(ret);
 	if (len == 0) return;
 
-#define FIND_MIN_INT(type) {             \
+#define FIND_MIN(type, set) {             \
         type *typed_data = (type *)data;     \
         type min_value = typed_data[0];      \
         for (REBLEN i = 1; i < len; i++) {   \
-            if (typed_data[i] < min_value)   \
-                min_value = typed_data[i];   \
+            min_value = (typed_data[i] < min_value) \
+			          ?  typed_data[i] : min_value; \
         }                                    \
-        SET_INTEGER(ret, min_value);         \
-        return;                              \
-    }
-
-#define FIND_MIN_DEC(type) {             \
-        type *typed_data = (type *)data;     \
-        type min_value = typed_data[0];      \
-        for (REBLEN i = 1; i < len; i++) {   \
-            if (typed_data[i] < min_value)   \
-                min_value = typed_data[i];   \
-        }                                    \
-        SET_DECIMAL(ret, min_value);         \
+        set(ret, min_value);         \
         return;                              \
     }
 
 	data = SERIES_DATA(vect);
 
 	switch (VECT_TYPE(vect)) {
-	case VTSI08: FIND_MIN_INT(i8); break;
-	case VTSI16: FIND_MIN_INT(i16); break;
-	case VTSI32: FIND_MIN_INT(i32); break;
-	case VTSI64: FIND_MIN_INT(i64); break;
-	case VTUI08: FIND_MIN_INT(u8); break;
-	case VTUI16: FIND_MIN_INT(u16); break;
-	case VTUI32: FIND_MIN_INT(u32); break;
-	case VTUI64: FIND_MIN_INT(u64); break;
-	case VTSF32: FIND_MIN_DEC(float); break;
-	case VTSF64: FIND_MIN_DEC(double); break;
+	case VTSI08: FIND_MIN(i8, SET_INTEGER); break;
+	case VTSI16: FIND_MIN(i16, SET_INTEGER); break;
+	case VTSI32: FIND_MIN(i32, SET_INTEGER); break;
+	case VTSI64: FIND_MIN(i64, SET_INTEGER); break;
+	case VTUI08: FIND_MIN(u8, SET_INTEGER); break;
+	case VTUI16: FIND_MIN(u16, SET_INTEGER); break;
+	case VTUI32: FIND_MIN(u32, SET_INTEGER); break;
+	case VTUI64: FIND_MIN(u64, SET_INTEGER); break;
+	case VTSF32: FIND_MIN(float, SET_DECIMAL); break;
+	case VTSF64: FIND_MIN(double, SET_DECIMAL); break;
 	}
 
-#undef FIND_MIN_INT
-#undef FIND_MIN_DEC
+#undef FIND_MIN
 }
 
 void Find_Maximum_Of_Vector(REBSER *vect, REBVAL *ret) {
@@ -383,45 +371,33 @@ void Find_Maximum_Of_Vector(REBSER *vect, REBVAL *ret) {
 	SET_NONE(ret);
 	if (len == 0) return;
 
-#define FIND_MAX_INT(type) {             \
+#define FIND_MAX(type, set) {             \
         type *typed_data = (type *)data;     \
         type max_value = typed_data[0];      \
         for (REBLEN i = 1; i < len; i++) {   \
-            if (typed_data[i] > max_value)   \
-                max_value = typed_data[i];   \
+            max_value = (typed_data[i] > max_value) \
+                      ?  typed_data[i] : max_value; \
         }                                    \
-        SET_INTEGER(ret, max_value);         \
-        return;                              \
-    }
-
-#define FIND_MAX_DEC(type) {             \
-        type *typed_data = (type *)data;     \
-        type max_value = typed_data[0];      \
-        for (REBLEN i = 1; i < len; i++) {   \
-            if (typed_data[i] > max_value)   \
-                max_value = typed_data[i];   \
-        }                                    \
-        SET_DECIMAL(ret, max_value);         \
+        set(ret, max_value);         \
         return;                              \
     }
 
 	data = SERIES_DATA(vect);
 
 	switch (VECT_TYPE(vect)) {
-	case VTSI08: FIND_MAX_INT(i8); break;
-	case VTSI16: FIND_MAX_INT(i16); break;
-	case VTSI32: FIND_MAX_INT(i32); break;
-	case VTSI64: FIND_MAX_INT(i64); break;
-	case VTUI08: FIND_MAX_INT(u8); break;
-	case VTUI16: FIND_MAX_INT(u16); break;
-	case VTUI32: FIND_MAX_INT(u32); break;
-	case VTUI64: FIND_MAX_INT(u64); break;
-	case VTSF32: FIND_MAX_DEC(float); break;
-	case VTSF64: FIND_MAX_DEC(double); break;
+	case VTSI08: FIND_MAX(i8, SET_INTEGER); break;
+	case VTSI16: FIND_MAX(i16, SET_INTEGER); break;
+	case VTSI32: FIND_MAX(i32, SET_INTEGER); break;
+	case VTSI64: FIND_MAX(i64, SET_INTEGER); break;
+	case VTUI08: FIND_MAX(u8, SET_INTEGER); break;
+	case VTUI16: FIND_MAX(u16, SET_INTEGER); break;
+	case VTUI32: FIND_MAX(u32, SET_INTEGER); break;
+	case VTUI64: FIND_MAX(u64, SET_INTEGER); break;
+	case VTSF32: FIND_MAX(float, SET_DECIMAL); break;
+	case VTSF64: FIND_MAX(double, SET_DECIMAL); break;
 	}
 
-#undef FIND_MAX_INT
-#undef FIND_MAX_DEC
+#undef FIND_MAX
 }
 
 
