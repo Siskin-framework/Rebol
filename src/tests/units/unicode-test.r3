@@ -278,7 +278,60 @@ Rebol [
 	--test-- "to-hex"
 		--assert #01F642 = to-hex #"🙂"
 		--assert #01F642 = to-hex #"^(01F642)"
-		
+
+	--test-- "difference"
+		--assert (difference "ač" "čbš") == "abš"
+		--assert (difference "ač🙂" "čbš") == "a🙂bš"
+		--assert (difference "ač🙂" "🙂čbš") == "abš"
+		--assert (difference "ab" "čbš🙂") == "ačš🙂"
+		--assert (difference "čbš🙂" "ab") == "čš🙂a"
+	--test-- "difference/skip"
+		--assert (difference/skip "ač" "čbš" 2) == "aččbš"
+		--assert (difference/skip "ač" "čbčbš" 2) == "aččbš"
+		--assert (difference/skip "a🙂" "čbčba🙂" 2) == "čb"
+
+	--test-- "union"
+		--assert (union "ač" "čbš") == "ačbš"
+		--assert (union "ač🙂" "čbš") == "ač🙂bš"
+		--assert (union "ač🙂" "🙂čbš") == "ač🙂bš"
+		--assert (union "ab" "čbš🙂") == "abčš🙂"
+		--assert (union "čbš🙂" "ab") == "čbš🙂a"
+	--test-- "union/skip"
+		--assert "ábča"   = unique/skip "ábábča" 2
+		--assert "ábabca" = unique/skip s: "ábabcaába" 3
+		--assert s = "ábabcaába"
+
+	--test-- "exclude"
+		--assert (exclude "ač" "čbš") == "a"
+		--assert (exclude "ač🙂" "čbš") == "a🙂"
+		--assert (exclude "ač🙂" "🙂čbš") == "a"
+		--assert (exclude "ab" "čbš🙂") == "a"
+		--assert (exclude "čbš🙂" "ab") == "čš🙂"
+	--test-- "exclude/skip"
+		--assert (exclude/skip "aččb" "čbš" 2) == "ač"
+		--assert (exclude/skip "aččb" "čbčbš" 2) == "ač"
+		--assert (exclude/skip "a🙂" "čbčba🙂" 2) == ""
+		--assert (exclude/skip "a🙂🙂a" "čbčba🙂" 2) == "🙂a"
+
+	--test-- "intersect"
+		--assert (intersect "ač" "čbš") == "č"
+		--assert (intersect "ač🙂" "čbš") == "č"
+		--assert (intersect "ač🙂" "🙂čbš") == "č🙂"
+		--assert (intersect "ab" "čbš🙂") == "b"
+		--assert (intersect "čbš🙂" "ab🙂") == "b🙂"
+	--test-- "intersect/skip"
+		--assert (intersect/skip "aččb" "čbš" 2) == "čb"
+		--assert (intersect/skip "aččb" "čbčbš" 2) == "čb"
+		--assert (intersect/skip "a🙂" "čbčba🙂" 2) == "a🙂"
+		--assert (intersect/skip "a🙂🙂a" "čbčba🙂" 2) == "a🙂"
+
+	--test-- "unique"
+		--assert (unique "ača") == "ač"
+		--assert (unique "ač🙂🙂č") == "ač🙂"
+	--test-- "unique/skip"
+		--assert (unique/skip "baaččbač" 2) == "baaččb"
+		--assert (unique/skip "b🙂aččb🙂č" 2) == "b🙂aččb🙂č"
+
 ===end-group===
 
 

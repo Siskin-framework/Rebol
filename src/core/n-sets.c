@@ -61,7 +61,8 @@ enum {
 	REBCNT i;
 	REBINT h = TRUE;
 	REBCNT skip = 1;	// record size
-	REBCNT cased = 0;	// case sensitive when TRUE
+	REBOOL cased = 0;	// case sensitive when TRUE
+	REBOOL utf8 = 0;    // if any of series contains Unicode chars
 
 	SET_NONE(D_RET);
 	val1 = D_ARG(1);
@@ -145,22 +146,39 @@ enum {
 		Reset_Buffer(retser, i);
 		RESET_TAIL(retser);
 
-		do {
-			REBUNI uc;
+		cased = cased ? AM_FIND_CASE : 0;
+		utf8 = IS_UTF8_STRING(val1) || (val2 && IS_UTF8_STRING(val2));
 
-			cased = cased ? AM_FIND_CASE : 0;
+		do {
+			REBU32 chr;
 
 			// Iterate over first series:
 			ser = VAL_SERIES(val1);
 			i = VAL_INDEX(val1);
-			FOR_SER(ser, val, i, skip) {
-				uc = GET_ANY_CHAR(ser, i);
-				if (GET_FLAG(flags, SOP_CHECK)) {
-					h = Find_Str_Char(VAL_SERIES(val2), 0, VAL_INDEX(val2), VAL_TAIL(val2), skip, uc, cased) != NOT_FOUND;
-					if (GET_FLAG(flags, SOP_INVERT)) h = !h;
+			if (utf8) {
+				REBLEN bytes = skip;
+				for (; i < SERIES_TAIL(ser); i += bytes) {
+					chr = UTF8_Get_Codepoint(BIN_SKIP(ser, i));
+					bytes = UTF8_Skip(ser, i, skip) - i;
+					if (GET_FLAG(flags, SOP_CHECK)) {
+						h = Find_Str_Char(VAL_SERIES(val2), 0, VAL_INDEX(val2), VAL_TAIL(val2), skip, chr, cased) != NOT_FOUND;
+						if (GET_FLAG(flags, SOP_INVERT)) h = !h;
+					}
+					if (h && (Find_Str_Char(retser, 0, 0, SERIES_TAIL(retser), skip, chr, cased) == NOT_FOUND)) {
+						Append_String(retser, ser, i, bytes);
+					}
 				}
-				if (h && (Find_Str_Char(retser, 0, 0, SERIES_TAIL(retser), skip, uc, cased) == NOT_FOUND)) {
-					Append_String(retser, ser, i, skip);
+			}
+			else {
+				for (; i < SERIES_TAIL(ser); i += skip) {
+					chr = BIN_HEAD(ser)[i];
+					if (GET_FLAG(flags, SOP_CHECK)) {
+						h = Find_Str_Char(VAL_SERIES(val2), 0, VAL_INDEX(val2), VAL_TAIL(val2), skip, chr, cased) != NOT_FOUND;
+						if (GET_FLAG(flags, SOP_INVERT)) h = !h;
+					}
+					if (h && (Find_Str_Char(retser, 0, 0, SERIES_TAIL(retser), skip, chr, cased) == NOT_FOUND)) {
+						Append_String(retser, ser, i, skip);
+					}
 				}
 			}
 
