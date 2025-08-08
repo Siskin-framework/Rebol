@@ -2511,6 +2511,10 @@ try/with [
 	--assert error? try [latin1? #{}]
 	--assert error? try [ascii? #{}]
 
+--test-- "copy binary!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2660
+	--assert 2 = length? copy #{8000}
+	
 --test-- "copy/part binary!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/138
 	b: make binary! 10

@@ -318,7 +318,7 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 	//No need to terminate the series, because Make_Series guarantees completely cleared memory.
 	//TERM_SERIES(dst);
 
-	if (!Is_ASCII(BIN_DATA(dst), length))
+	if (IS_UTF8_SERIES(src) && !Is_ASCII(BIN_DATA(dst), length))
 		UTF8_SERIES(dst);
 
 	return dst;
