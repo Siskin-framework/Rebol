@@ -144,21 +144,6 @@ static const REBYTE utf8d[] = {
   12,36,12,12,12,12,12,12,12,12,12,12, 
 };
 
-static const REBYTE utf8d_class_to_size[] = {
-	[0] = 1, // ASCII
-	[1] = 1, // Continuation
-	[2] = 2, // 2-byte lead
-	[3] = 3, // 3-byte lead
-	[4] = 4, // 4-byte lead
-	[5] = 1, // Invalid
-	[6] = 1, // Invalid
-	[7] = 1, // Continuation
-	[8] = 1, // Continuation
-	[9] = 1, // Invalid
-	[10] = 3,// 3-byte lead
-	[11] = 4 // 4-byte lead
-};
-
 //static REBYTE const u8_length[] = {
 //	// 0 1 2 3 4 5 6 7 8 9 A B C D E F
 //	   1,1,1,1,1,1,1,1,0,0,0,0,2,2,3,4
@@ -238,14 +223,12 @@ FORCE_INLINE
 ***********************************************************************/
 {
 	REBYTE c = str[index];
-	REBYTE class = utf8d[c];
-	return utf8d_class_to_size[class];
 
-//	if ((c & 0x80) == 0) return 1;     // ASCII (0xxxxxxx)
-//	if ((c & 0xE0) == 0xC0) return 2;   // 2-byte sequence (110xxxxx)
-//	if ((c & 0xF0) == 0xE0) return 3;   // 3-byte sequence (1110xxxx)
-//	if ((c & 0xF8) == 0xF0) return 4;   // 4-byte sequence (11110xxx)
-//	return 1; // Fallback for invalid/continuation bytes
+	if ((c & 0x80) == 0) return 1;     // ASCII (0xxxxxxx)
+	if ((c & 0xE0) == 0xC0) return 2;   // 2-byte sequence (110xxxxx)
+	if ((c & 0xF0) == 0xE0) return 3;   // 3-byte sequence (1110xxxx)
+	if ((c & 0xF8) == 0xF0) return 4;   // 4-byte sequence (11110xxx)
+	return 1; // Fallback for invalid/continuation bytes
 }
 
 FORCE_INLINE

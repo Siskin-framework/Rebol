@@ -702,6 +702,9 @@ Rebol [
 		--assert parse "<á🙂>" [thru <á🙂>]
 		--assert parse "<á🙂>" [to <á🙂> to end]
 
+	--test-- "parse skip"
+		--assert parse "핕" [skip]
+
 
 ===end-group===
 
