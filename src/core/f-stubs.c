@@ -716,7 +716,13 @@
 		if (VAL_INDEX(sval) >= VAL_TAIL(sval)) return 0;
 		return (VAL_TAIL(sval) - VAL_INDEX(sval));
 	}
-	if (IS_INTEGER(lval) || IS_DECIMAL(lval)) len = Int32(lval);
+	if (IS_INTEGER(lval) || IS_DECIMAL(lval)) {
+		len = Int32(lval);
+		if (IS_UTF8_STRING(sval)) {
+			// Convert number of chars to length in bytes
+			len = UTF8_Skip(VAL_SERIES(sval), VAL_INDEX(sval), len);
+		}
+	}
 	else {
 		if (is_ser && VAL_TYPE(sval) == VAL_TYPE(lval) && VAL_SERIES(sval) == VAL_SERIES(lval))
 			len = (REBINT)VAL_INDEX(lval) - (REBINT)VAL_INDEX(sval);

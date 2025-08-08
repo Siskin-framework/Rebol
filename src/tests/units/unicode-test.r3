@@ -431,7 +431,7 @@ Rebol [
 		--assert #{C3A1} == append #{} #"á"
 		--assert #{F09F9982} == append #{} #"🙂"
 		--assert #{C3A1F09F9982} == append #{} "á🙂"
-		--assert #{C3} == append/part #{} "á" 1
+		--assert #{C3A1} == append/part #{} "á" 1
 
 	--test-- "insert string"
 		--assert "šabc" == head insert "abc" "š"
@@ -443,6 +443,18 @@ Rebol [
 		--assert "🙂ábč" == head insert "ábč" "🙂"
 		--assert "ášbč" == head insert next "ábč" "š"
 		--assert "á🙂bč" == head insert next "ábč" "🙂"
+
+	--test-- "insert/part string"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2659
+		--assert all [(insert/part o: "éee" "a" 1) == "éee"  o == "aéee"]
+		--assert all [(insert/part o: "éee" "á" 1) == "éee" o == "áéee"]
+		--assert all [(insert/part o: "éee" "🙂" 1) == "éee"  o == "🙂éee"]
+		--assert all [(insert/part o: "éee" "aaa" 2) == "éee"  o == "aaéee"]
+		--assert all [(insert/part o: "éee" "ááá" 2) == "éee"  o == "ááéee"]
+		--assert all [(insert/part o: "éee" "🙂🙂" 2) == "éee"  o == "🙂🙂éee"]
+		--assert all [(insert/part o: "éee" "a" 20) == "éee"  o == "aéee"]
+		--assert all [(insert/part o: "éee" "á" 20) == "éee"  o == "áéee"]
+		--assert all [(insert/part o: "éee" "🙂" 20) == "éee"  o == "🙂éee"]
 
 	--test-- "insert char"
 		--assert "šábč" == head insert "ábč" #"š"
@@ -478,6 +490,18 @@ Rebol [
 		--assert all [(change/dup o: "🙂bc" "a" 2) == "c"  o == "aac"]
 		--assert all [(change/dup o: "🙂bc" "a" 3) == ""   o == "aaa"]
 		--assert all [(change/dup o: "🙂bc" "a" 4) == ""   o == "aaaa"]
+
+	--test-- "change/part string!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2659
+		--assert all [(change/part o: "éee" "a" 1) == "ee"  o == "aee"]
+		--assert all [(change/part o: "éee" "á" 1) == "ee"  o == "áee"]
+		--assert all [(change/part o: "éee" "🙂" 1) == "ee"  o == "🙂ee"]
+		--assert all [(change/part o: "éee" "a" 2) == "e"  o == "ae"]
+		--assert all [(change/part o: "éee" "á" 2) == "e"  o == "áe"]
+		--assert all [(change/part o: "éee" "🙂" 2) == "e"  o == "🙂e"]
+		--assert all [(change/part o: "éee" "a" 20) == ""  o == "a"]
+		--assert all [(change/part o: "éee" "á" 20) == ""  o == "á"]
+		--assert all [(change/part o: "éee" "🙂" 20) == ""  o == "🙂"]
 
 	--test-- "change char!"
 		--assert all [(change o: "---" #"╔") == "--"  o == "╔--"]
