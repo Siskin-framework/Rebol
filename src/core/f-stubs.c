@@ -718,7 +718,7 @@
 	}
 	if (IS_INTEGER(lval) || IS_DECIMAL(lval)) {
 		len = Int32(lval);
-		if (IS_UTF8_STRING(sval)) {
+		if (is_ser && IS_UTF8_STRING(sval)) {
 			// Convert number of chars to length in bytes
 			len = UTF8_Skip(VAL_SERIES(sval), VAL_INDEX(sval), len);
 		}
