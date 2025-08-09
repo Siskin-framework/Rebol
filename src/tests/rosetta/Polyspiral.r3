@@ -13,6 +13,7 @@ import blend2d ;; Import Blend2D extension used to draw
 incr: 0.0                            ;; Initialize increment variable to 0.0
 image: make image! 800x800           ;; Create an 800x800 pixel image canvas
 pi2: 2 * PI                          ;; Calculate 2π (full circle in radians), for angle calculations
+random/seed 4
 
 ;; animation loop (repeats 4 times to create progressive spiral states)
 loop 4 [
@@ -22,7 +23,8 @@ loop 4 [
   incr: (incr + 5) % pi2             ;; Increment the angle step (modulo 2π to ensure it wraps correctly)
   angle: incr
   commands: clear []                 ;; Clear previous drawing commands
-  append commands [line-width 1 pen gray line]  ;; Start a new line with width 1 and gray pen
+  color: 100.100.100 + random 155.155.155
+  append commands [line-width 1 pen :color line] ;; Start a new line with width 1 and gray pen
 
   ;; spiral loop (generates points for the spiral)
   loop 150 [
