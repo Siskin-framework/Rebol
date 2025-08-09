@@ -914,7 +914,7 @@ STOID Form_Block_Series(REBSER *blk, REBCNT index, REB_MOLD *mold, REBSER *frame
 		else {
 			// Add a space if needed:
 			if (n < len 
-				&& (!mold->series->tail || *UNI_LAST(mold->series) != LF)
+				&& (!mold->series->tail || *STR_LAST(mold->series) != LF)
 				&& !GET_MOPT(mold, MOPT_TIGHT)
 			)
 				Append_Byte(mold->series, ' ');
