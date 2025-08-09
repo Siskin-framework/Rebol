@@ -61,8 +61,8 @@ enum {
 	REBCNT i;
 	REBINT h = TRUE;
 	REBCNT skip = 1;	// record size
-	REBOOL cased = 0;	// case sensitive when TRUE
-	REBOOL utf8 = 0;    // if any of series contains Unicode chars
+	REBFLG cased = 0;	// case sensitive when TRUE
+	REBFLG utf8 = 0;    // if any of series contains Unicode chars
 
 	SET_NONE(D_RET);
 	val1 = D_ARG(1);
