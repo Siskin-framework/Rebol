@@ -469,8 +469,6 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 		case '"':
 			*dp++ = c;
 			break;
-		case '\0':
-			c = *bp++;
 		default:
 			dp = Emit_Mold_Char(dp, c);
 		}
