@@ -210,8 +210,8 @@ Rebol [
 		--assert {"😜"} = mold to string! #{F09F989C}
 
 	--test-- "mold string with null char"
-		--assert {"^^@a"} mold {^@a}
-		--assert {{^^@"}} mold {^@"}
+		--assert {"^^@a"} == mold {^@a}
+		--assert {{^^@"}} == mold {^@"}
 
 
 ===end-group=== 
