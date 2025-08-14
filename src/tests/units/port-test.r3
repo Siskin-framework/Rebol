@@ -632,6 +632,10 @@ if all [system/platform != 'Windows exists? %/proc/cpuinfo] [
 			port? delete %empty
 		]
 
+	--test-- "Query empty file name"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2661
+		--assert none? query %"" 'type
+
 ===end-group===
 
 

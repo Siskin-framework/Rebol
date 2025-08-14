@@ -616,6 +616,7 @@ resize:
 			return R_RET;
 		}
 		if (!IS_OPEN(file)) {
+			if (VAL_LEN(path) == 0) return R_NONE;
 			Setup_File(file, 0, path);
 			if (OS_DO_DEVICE(file, RDC_QUERY) < 0) return R_NONE;
 			opened = TRUE;
