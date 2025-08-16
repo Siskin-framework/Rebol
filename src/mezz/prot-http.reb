@@ -12,9 +12,9 @@ REBOL [
 		Licensed under the Apache License, Version 2.0
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-	Version: 0.7.0
+	Version: 0.7.3
 	Needs: 3.18.5 ;; because using the new log-* functions
-	Date: 18-Mar-2025
+	Date: 15-Jun-2025
 	File: %prot-http.r3
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -267,7 +267,11 @@ escape-query: function/with [
 		some allowed
 		| #"%" 2 hex-digits ;; already escaped
 		| change #" " #"+" 
-		| change set c: skip (ajoin [#"%" enbase to binary! c 16])
+		| change set c: skip (
+			c: enbase to binary! c 16
+			while [not tail? c][c: skip insert c #"%" 2]
+			head c
+		)
 	]]
 	query
 ][
@@ -288,9 +292,9 @@ make-http-request: func [
 
 	request: ajoin [
 		uppercase form :method SP
-		mold as url! :path        ;; `mold as url!` is used because it produces correct escaping
+		enhex/uri :path
 	]
-	if :target [append request mold as url! :target]
+	if :target [append request enhex/uri :target]
 	if :query  [append append request #"?" escape-query :query]
 
 	if cookies-to-send: get-cookies spec/host path [
@@ -737,10 +741,13 @@ decode-result: func[
 			parse content-type [["text/" | "application/json"] to end]
 		]
 	][
-		code-page: any [code-page "utf-8"]
-		log-info 'HTTP ["Trying to decode from code-page:^[[m" code-page]
-		; using also deline to normalize possible CRLF to LF
-		try [result/3: deline iconv result/3 code-page]
+		either all [code-page code-page != "utf-8"] [
+			log-info 'HTTP ["Trying to decode from code-page:^[[m" code-page]
+			; using also deline to normalize possible CRLF to LF
+			try [result/3: deline iconv result/3 code-page]
+		][
+			result/3: to string! result/3
+		]
 	]
 	result
 ]
@@ -962,10 +969,11 @@ sys/make-scheme [
 				state
 				state/info/status-code
 			][
-				either field [
-					either word? field [
+				case [
+					word? field [
 						select state/info field
-					][
+					]
+					block? field [
 						result: make block! length? field
 						foreach word field [
 							if any-word? word [
@@ -975,7 +983,10 @@ sys/make-scheme [
 						]
 						result
 					]
-				][	state/info ]
+					field = #(object!) [ state/info ]
+					field = #(map!)   [to map! state/info ]
+					field = #(block!) [to block! state/info ]
+				]
 			][	none ]
 		]
 		length?: func [

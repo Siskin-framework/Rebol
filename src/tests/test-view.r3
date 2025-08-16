@@ -42,7 +42,7 @@ pr2: make gob! [size: 200x9   offset: 200x300 widget: [progress 50%]]     ;BUG: 
 txt: make gob! [size: 200x30  offset: 200x320 widget: [text "Some text"]] ;BUG: strange background when over an image
 red-image: make image! [300x300 255.0.0.100]
 img: make gob! [offset: 150x150 image: red-image]
-? img/image ;BUG: shows `none`, but it should be the image!
+? img/image
 sl1: make gob! [size: 300x29  offset: 150x450 widget: [slider 0.8]]
 sl2: make gob! [size: 29x300  offset: 450x150 widget: [slider 0.2]]
 are: make gob! [size: 300x99  offset: 150x30  widget: [area "bla bla bla"]]

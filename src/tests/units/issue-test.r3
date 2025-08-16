@@ -35,10 +35,13 @@ Rebol [
 		--assert error? try [to-hex/size 1.2.3  0] 
 		--assert error? try [to-hex/size 1.2.3 -1] 
 
-	--test-- "to-hex char!" ; not supported by design!
+	--test-- "to-hex char!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1106
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1109
-		--assert error? try [to-hex #"a"]
+		--assert #61 = to-hex #"a"
+		--assert #E1 = to-hex #"á"
+		--assert #E1 = to-hex #"^(E1)"
+		--assert (to integer! #"á") = (to integer! to-hex #"á")
 
 	--test-- "to-hex money!" ; not supported by design!
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1023
@@ -56,7 +59,11 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1199
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1201
 		--assert all [error? e: try [make issue! "a a"] e/id = 'invalid-chars]
-		--assert all [error? e: try [make issue! "^(01)a"] e/id = 'invalid-chars]
+		--assert all [error? e: try [make issue! "a^(01)a"] e/id = 'invalid-chars]
+		--assert all [error? e: try [make issue! "     "] e/id = 'too-short]
+		--assert all [error? e: try [make issue! "^(01)"] e/id = 'too-short]
+		--assert #a = try [make issue! "^(01)a"] ;; because #"^(01)" is ignored at head as a space
+		--assert all [error? e: try [make issue! "a^(01)"] e/id = 'invalid-chars]
 		
 
 ===end-group===

@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -220,8 +220,8 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 **
 ***********************************************************************/
 {
-	REBSER* hser = series->series; // can be null
-	REBCNT* hashes = NULL;
+//	REBSER* hser = series->series; // can be null
+//	REBCNT* hashes = NULL;
 	REBCNT n;
 	REBVAL* val;
 
@@ -416,14 +416,7 @@ static void No_Nones_Or_Logic(REBVAL *arg) {
 	}
 
 	// make from string! or binary! with tokenization
-	if (IS_STRING(arg)) {
-		REBCNT index, len = 0;
-		VAL_SERIES(arg) = Prep_Bin_Str(arg, &index, &len); // (keeps safe)
-		ser = Scan_Source(VAL_BIN(arg), VAL_LEN(arg));
-		goto done;
-	}
-
-	if (IS_BINARY(arg)) {
+	if (IS_STRING(arg) || IS_BINARY(arg)) {
 		ser = Scan_Source(VAL_BIN_DATA(arg), VAL_LEN(arg));
 		goto done;
 	}
@@ -457,13 +450,32 @@ done:
 {
 	REBVAL *val = DS_GET(DSP - 1);
 	REBU64 flags = VAL_UNT64(DS_TOP);
-	REBINT offset = 0;
-	if (IS_INTEGER(val)) offset = VAL_INT64(val) - 1;
+	REBLEN offset = 0;
+	REBINT result;
+	if (IS_INTEGER(val)) offset = AS_REBLEN(VAL_INT64(val) - 1);
 
-	if (GET_FLAG(flags, SORT_FLAG_REVERSE))
-		return Cmp_Value((REBVAL*)v2+offset, (REBVAL*)v1+offset, GET_FLAG(flags, SORT_FLAG_CASE));
-	else
-		return Cmp_Value((REBVAL*)v1+offset, (REBVAL*)v2+offset, GET_FLAG(flags, SORT_FLAG_CASE));
+	result = Cmp_Value((REBVAL*)v1+offset, (REBVAL*)v2+offset, GET_FLAG(flags, SORT_FLAG_CASE));
+	if (GET_FLAG(flags, SORT_FLAG_REVERSE)) result = -result;
+	return result;
+}
+
+/***********************************************************************
+**
+*/	static int Compare_All_Val(const void *v1, const void *v2)
+/*
+***********************************************************************/
+{
+	REBCNT size = VAL_UNT32(DS_GET(DSP - 1));
+	REBU64 flags = VAL_UNT64(DS_TOP);
+	REBINT offset = 0;
+	REBINT result = 0;
+
+	while (size-- > 0 && result == 0) {
+		result = Cmp_Value((REBVAL *)v1 + offset, (REBVAL *)v2 + offset, GET_FLAG(flags, SORT_FLAG_CASE));
+		offset++;
+	}
+	if (GET_FLAG(flags, SORT_FLAG_REVERSE)) result = -result;
+	return result;
 }
 
 
@@ -540,13 +552,6 @@ done:
 	REBCNT size = sizeof(REBVAL);
 //	int (*sfunc)(const void *v1, const void *v2);
 
-	REBU64 flags = 0;
-	if (ccase) SET_FLAG(flags, SORT_FLAG_CASE);
-	if (rev)   SET_FLAG(flags, SORT_FLAG_REVERSE);
-
-	DS_PUSH(compv);
-	DS_PUSH_INTEGER(flags);
-
 	// Determine length of sort:
 	len = Partial1(block, part);
 	if (len <= 1) return;
@@ -558,13 +563,26 @@ done:
 			Trap_Range(skipv);
 	}
 
+	REBU64 flags = 0;
+	if (ccase) SET_FLAG(flags, SORT_FLAG_CASE);
+	if (rev)   SET_FLAG(flags, SORT_FLAG_REVERSE);
+	
+	if (all) {
+		if (!IS_NONE(compv)) Trap0(RE_BAD_REFINES);
+		DS_PUSH_INTEGER(skip);
+	}
+	else {
+		DS_PUSH(compv);
+	}
+	DS_PUSH_INTEGER(flags);
+
 	// Use fast quicksort library function:
 	if (skip > 1) len /= skip, size *= skip;
 
 	if (ANY_FUNC(compv))
 		reb_qsort((void *)VAL_BLK_DATA(block), len, size, Compare_Call);
 	else
-		reb_qsort((void *)VAL_BLK_DATA(block), len, size, Compare_Val);
+		reb_qsort((void *)VAL_BLK_DATA(block), len, size, (all && skip > 1) ? Compare_All_Val : Compare_Val);
 
 	// Stored comparator and flags are not needed anymore
 	DS_DROP;

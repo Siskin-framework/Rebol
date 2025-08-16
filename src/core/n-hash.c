@@ -29,43 +29,9 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include "sys-hash.h"
 #include "sys-xxhash.h"
 
-//-----------------------------------------------------------------------------
-// MurmurHash3 was written by Austin Appleby, and is placed in the public
-// domain. The author hereby disclaims copyright to this source code.
-
-#define MURMUR_HASH_3_X86_32_C1		0xcc9e2d51
-#define MURMUR_HASH_3_X86_32_C2		0x1b873593
-
-//-----------------------------------------------------------------------------
-// Block read - if your platform needs to do endian-swapping or can only
-// handle aligned reads, do the conversion here
-FORCE_INLINE REBCNT getblock32(const REBCNT* p, int i) {
-	return p[i];
-}
-/*-----------------------------------------------------------------------------
-// Block mix - mix the key block, combine with hash block, mix the hash block,
-// repeat. */
-
-FORCE_INLINE void bmix(REBCNT* h1, REBCNT* k1)
-{
-	*k1 *= MURMUR_HASH_3_X86_32_C1;
-	*k1 = ROTL32(*k1, 15);
-	*k1 *= MURMUR_HASH_3_X86_32_C2;
-	*h1 ^= *k1;
-	*h1 = ROTL32(*h1, 13); *h1 = *h1 * 5 + 0xe6546b64;
-}
-//-----------------------------------------------------------------------------
-// Finalization mix - force all bits of a hash block to avalanche
-FORCE_INLINE REBCNT fmix32(REBCNT h) {
-	h ^= h >> 16;
-	h *= 0x85ebca6b;
-	h ^= h >> 13;
-	h *= 0xc2b2ae35;
-	h ^= h >> 16;
-	return h;
-}
 //-----------------------------------------------------------------------------
 REBCNT MurmurHash3_x86_32(const void* key, int len, REBCNT seed)
 {
@@ -202,7 +168,7 @@ FORCE_INLINE
 **
 */	REBCNT Hash_Block_Value(REBVAL *block)
 /*
-**		Return a case sensitive hash value for the block.
+**		Return a case insensitive hash value for the block.
 **
 ***********************************************************************/
 {
@@ -274,7 +240,6 @@ FORCE_INLINE
 
 }
 
-
 /***********************************************************************
 **
 */	REBCNT Hash_Word(const REBYTE* str, REBLEN len)
@@ -285,15 +250,14 @@ FORCE_INLINE
 {
 	REBCNT ch;
 	REBCNT hash=0;
+	REBLEN bytes;
 
 	if (len == UNKNOWN) len = LEN_BYTES(str);
+	bytes = len;
 
-	for (; len > 0; str++, len--) {
-		ch = *str;
-		if (ch > 127) {
-			ch = Decode_UTF8_Char(&str, &len); // mods str, ulen
-			if (!ch) Trap0(RE_INVALID_CHARS);
-		}
+	for (; bytes > 0; str++) {
+		ch = UTF8_Decode_Codepoint(&str, &bytes); // mods str, ulen
+		if (!ch) Trap0(RE_INVALID_CHARS);
 		if (ch < UNICODE_CASES) ch = LO_CASE(ch);
 		bmix(&hash, &ch);
 	}

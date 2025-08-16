@@ -25,6 +25,14 @@ start: func [
 
 	;** Note ** We need to make this work for lower boot levels too!
 
+	if any [
+		no-color
+		no-color: get-env 'NO_COLOR ;; https://no-color.org/
+	][
+		;; remove ANSI escape color sequences
+		foreach [k v] ansi [clear v]
+	]
+
 	;-- DEBUG: enable these lines for debug or related testing
 	sys/log/debug 'REBOL ["Starting... boot level:" boot-level]
 	;trace 1
@@ -114,7 +122,6 @@ start: func [
 		sys/log/error 'REBOL "`date` field as a result from `query` on file ports is deprecated, use `modified`!"
 		self/module-paths: reduce [modules]
 	]
-
 	if file? script [ ; Get the path (needed for SECURE setup)
 		script: any [to-real-file script script]
 		script-path: split-path script

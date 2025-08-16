@@ -371,4 +371,12 @@ Rebol [
 		--assert (b / a) = round/to (f / count) 0.1
 ===end-group===
 
+
+===start-group=== "PRIME?"
+	--test-- "prime?"
+		--assert not prime? 42
+		--assert prime? 43
+		--assert prime? 99'504'028'301'131
+===end-group===
+
 ~~~end-file~~~

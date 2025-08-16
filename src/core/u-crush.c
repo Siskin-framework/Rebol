@@ -151,7 +151,6 @@ static inline int get_penalty(int a, int b) {
 	CRUSH  ctx;
 	REBSER *ser;
 	REBYTE *buf = BIN_SKIP(input, index);
-	REBCNT tail = 0;
 	REBCNT p;
 	REBINT len, offset, chain_len, s, i;
 	REBINT h1 = 0, h2 = 0;

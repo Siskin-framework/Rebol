@@ -297,18 +297,19 @@ if system/platform = 'Windows [
 		--assert "á^M^M^/" = to string! read write/binary %tmp "á^M^M^/"
 		--assert "a^M^/^/" = to string! read write/binary %tmp "a^M^/^/"
 		--assert "á^M^/^/" = to string! read write/binary %tmp "á^M^/^/"
-		either system/platform = 'Windows [
-			;; on Windows `write` converts LF to CRLF by default (if the input is string!)
-			--assert     #{0D0A} = read write %tmp next "a^/"
-			--assert     #{0D0A} = read write %tmp next "á^/"
-			;; when there is already CRLF, it does not write it like CRCRLF!
-			--assert     #{0D0A} = read write %tmp next "a^M^/"
-			--assert     #{0D0A} = read write %tmp next "á^M^/"
-			--assert   #{0D0D0A} = read write %tmp next "a^M^M^/"
-			--assert   #{0D0D0A} = read write %tmp next "á^M^M^/"
-			--assert #{0D0A0D0A} = read write %tmp next "a^M^/^/"
-			--assert #{0D0A0D0A} = read write %tmp next "á^M^/^/"
-		][
+;@@ Should we keep this conversion? Now (since 3.19.5) it is not enabled.
+;-		either system/platform = 'Windows [
+;-			;; on Windows `write` converts LF to CRLF by default (if the input is string!)
+;-			--assert     #{0D0A} = read write %tmp next "a^/"
+;-			--assert     #{0D0A} = read write %tmp next "á^/"
+;-			;; when there is already CRLF, it does not write it like CRCRLF!
+;-			--assert     #{0D0A} = read write %tmp next "a^M^/"
+;-			--assert     #{0D0A} = read write %tmp next "á^M^/"
+;-			--assert   #{0D0D0A} = read write %tmp next "a^M^M^/"
+;-			--assert   #{0D0D0A} = read write %tmp next "á^M^M^/"
+;-			--assert #{0D0A0D0A} = read write %tmp next "a^M^/^/"
+;-			--assert #{0D0A0D0A} = read write %tmp next "á^M^/^/"
+;-		][
 			;; on all other platforms it doesn't modify!
 			--assert     #{0A} = read write %tmp next "a^/"
 			--assert     #{0A} = read write %tmp next "á^/"
@@ -318,7 +319,7 @@ if system/platform = 'Windows [
 			--assert #{0D0D0A} = read write %tmp next "á^M^M^/"
 			--assert #{0D0A0A} = read write %tmp next "a^M^/^/"
 			--assert #{0D0A0A} = read write %tmp next "á^M^/^/"
-		]
+;-		]
 		;; read/string converts CRLF (or plain CR) to LF
 		--assert   "^/" = read/string write/binary %tmp next "a^/"
 		--assert   "^/" = read/string write/binary %tmp next "á^/"
@@ -630,6 +631,10 @@ if all [system/platform != 'Windows exists? %/proc/cpuinfo] [
 			0 = length? read/part %empty 1000
 			port? delete %empty
 		]
+
+	--test-- "Query empty file name"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2661
+		--assert none? query %"" 'type
 
 ===end-group===
 

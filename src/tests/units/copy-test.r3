@@ -29,7 +29,7 @@ copyable-data: make object! [
 	object:   #(object! [a: 1])
 	image:    #(image! 1x1 #{FFFFFF})
 	bitset:   #(bitset! #{FF})
-	vector:   #(u32! 3)
+	vector:   #(u32! [])
 	error:    try [1 / 0]
 	;TODO: struct,
 ]

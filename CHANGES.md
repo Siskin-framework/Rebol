@@ -2,10 +2,81 @@
 
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
+
+## 2025 July
+
+### Features:
+
+* [`668bdc`](https://github.com/Oldes/Rebol3/commit/668bdcec0c599257b090c0f9e04f24461581319f) Using UTF-8 internal string encoding
+* [`d4ccfc`](https://github.com/Oldes/Rebol3/commit/d4ccfca0a6a35aac30d3e7874aa5e334d2dfcf02) Implement pair comparison
+
+### Changes:
+
+* [`b18491`](https://github.com/Oldes/Rebol3/commit/b18491181836a83a8aa53673e9e363705ca185d9) Rename 'Print_OS_Line' to 'Print_Line' and 'Prin_OS_String' to 'Prin_String'
+* [`acd15f`](https://github.com/Oldes/Rebol3/commit/acd15ff2d33c5bd2e2a2b32b7e45a3db762a7c5a) Remove unused 'uni' argument from Prin_OS_String
+* [`a93ae3`](https://github.com/Oldes/Rebol3/commit/a93ae36d1157b5b8e11dd8885245694c140e70af) Replace internal variable-width character handling with UTF-8 strings
+
+  All Rebol code now uses UTF-8 strings internally. Conversion to UCS-2 is performed only when required, such as for Windows API calls. This replaces the previous approach of switching internal character widths. Unicode code points above the Basic Multilingual Plane are now handled correctly.
+
+
+### Fixes:
+
+* [`f0b565`](https://github.com/Oldes/Rebol3/commit/f0b5659043647eb5fc8abc0555a4ffde42655394) Output to console when content exceeds buffer size on Windows
+* [`574a77`](https://github.com/Oldes/Rebol3/commit/574a773b54dd27ed1cf4914d313c0bd823731763) Re-enable 'μs' string in the format-time
+* [`641a74`](https://github.com/Oldes/Rebol3/commit/641a74c85bf5a36edab54696305a55bbd2cecf22) Re-enable dir-tree lines
+* [`32a396`](https://github.com/Oldes/Rebol3/commit/32a3965f1452bf76aac4701235517271b1893fe8) Print Rebol error messages to stderr
+* [`1ae8b4`](https://github.com/Oldes/Rebol3/commit/1ae8b4348c6093e42ed29def25dae9d5eaf0ecbc) Mold of minimum 64-bit integer value on Posix
+* [`258af8`](https://github.com/Oldes/Rebol3/commit/258af8a2269a178316bccccf45946fc057ed6bfe) Mold of minimum 64-bit integer value on Posix"
+* [`4525bc`](https://github.com/Oldes/Rebol3/commit/4525bc6bad81c0a1f354218ca4df97ba893e13e7) Mold of minimum 64-bit integer value on Posix
+
+## 2025 June
+
+### Features:
+
+* [`b2d3be`](https://github.com/Oldes/Rebol3/commit/b2d3be2abeee35730da3ec66096ba3a5939e5053) Implement statistical queries on vectors
+* [`2c863c`](https://github.com/Oldes/Rebol3/commit/2c863c89682bb15a69e6f8d7c2b18b20963cf953) Implement SORT for vectors
+* [`616786`](https://github.com/Oldes/Rebol3/commit/616786183ee6bbf353ed39ad4585563ff494bd92) Improve vector setter/getter calls
+* [`0583e5`](https://github.com/Oldes/Rebol3/commit/0583e535c694d21a1a4f58bd0d9b2a59c91f0fa0) Used shorter code
+* [`c73b2d`](https://github.com/Oldes/Rebol3/commit/c73b2de4fe012f4e70450201e2e6f3855db29713) Implement `sort/skip/all` on blocks
+* [`1cb094`](https://github.com/Oldes/Rebol3/commit/1cb09431a38b366359811b1798b996a06222ed3a) Introduced `--no-color` argument which reduces use of ANSI color escape sequences
+
+### Changes:
+
+* [`ebe607`](https://github.com/Oldes/Rebol3/commit/ebe607c6ac22d5d678293516c8673b524dd2b32c) Don't auto-resolve percent encoded characters within URLs
+
+### Fixes:
+
+* [`799a80`](https://github.com/Oldes/Rebol3/commit/799a80f281af8c91934e52e2a6ef084e9129e11a) Resolve regression in output color reduction
+* [`1ea985`](https://github.com/Oldes/Rebol3/commit/1ea985ca2503130a916b70a6edd2efad762b3948) Handle GET request with Unicode character in query
+* [`79729c`](https://github.com/Oldes/Rebol3/commit/79729c711e7433f8a6ac2de64c96a818696b426b) Resolving image data from a gob
+* [`6de41e`](https://github.com/Oldes/Rebol3/commit/6de41ed8401c1c7ce2c9adfe1b6cd95ccb878c79) `query` on URL using datatype as field
+* [`b2f058`](https://github.com/Oldes/Rebol3/commit/b2f058bb174a62fcb54ab57767b9b0306f52a1eb) Removed unused condition
+
+## 2025 May
+
+### Features:
+
+* [`390fb2`](https://github.com/Oldes/Rebol3/commit/390fb2dda7b0223d9e728696417b99bbf87dce19) Braille text codec
+* [`1296dd`](https://github.com/Oldes/Rebol3/commit/1296dd11adebaf92c2e16048a4d1daf1937ee1c5) Normalize vector and struct type names; improved struct comparison using computed field type hashes.
+
+### Changes:
+
+* [`3d8a00`](https://github.com/Oldes/Rebol3/commit/3d8a00bb4f4c5ae2b492d764891e21c31669358e) Reimplement `struct!` datatype
+* [`c180de`](https://github.com/Oldes/Rebol3/commit/c180de4ad95ec3b44fcbcbb64a62538732e43771) Vector values are always molded using a construction syntax
+* [`112c9d`](https://github.com/Oldes/Rebol3/commit/112c9d3f75b3da161d3f1551221e736be5c13669) Series map keys are protected
+
+### Fixes:
+
+* [`9e1db2`](https://github.com/Oldes/Rebol3/commit/9e1db21fd96646bfcf289c541b20a34fe292233e) Deeply nested structs
+
+
 ## 2025 April
 
 ### Features:
 
+* [`9970db`](https://github.com/Oldes/Rebol3/commit/9970dbebcb2731b6f00465a48ce04974478531a7) Entab/detab accepting binary input
+* [`846e44`](https://github.com/Oldes/Rebol3/commit/846e44ddd1367555f6bb7354137edb55d8186865) Included link to the text-to-speach (Speak) extension
+* [`1ffbf2`](https://github.com/Oldes/Rebol3/commit/1ffbf20ba2fad84149373b42de0e283eb32f204d) Add function to remove ANSI color escape codes from string or binary
 * [`42a79c`](https://github.com/Oldes/Rebol3/commit/42a79cae193fa67d89e3b20edd5705b0d69b5651) Add 'identify' module for file type detection
 
 ### Changes:

@@ -37,6 +37,24 @@ Rebol [
 		--assert 30 = to integer! #"^(1E)"
 		--assert 94 = to integer! #"^^"
 
+	--test-- "to char! surrogates"
+		--assert all [
+			error? err: try [make char! 55348]
+			err/arg1 = 55348
+			err/id = 'invalid-char
+		]
+		--assert all [
+			error? err: try [#"^A" + 55348]
+			err/arg1 = 55349
+			err/id = 'invalid-char
+		]
+	--test-- "to char! over range"
+		--assert all [
+			error? err: try [to char! 0#110000]
+			err/arg1 = 0#110000
+			err/id = 'invalid-char
+		]
+
 	--test-- "to char! issue!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1130
 		--assert all [
@@ -349,7 +367,7 @@ Rebol [
 		--assert error? try [make pair! quote #FF        ] ; issue!
 		--assert error? try [make pair! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [make pair! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [make pair! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [make pair! quote #(uint32! [0 0]) ] ; vector!
 		--assert error? try [make pair! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [make pair! quote #(typeset! [integer! percent!]) ] ; typeset!
 	--test-- "to pair! .."
@@ -386,7 +404,7 @@ Rebol [
 		--assert error? try [to pair! quote #FF           ] ; issue!
 		--assert error? try [to pair! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [to pair! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [to pair! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [to pair! quote #(uint32! [0 0]) ] ; vector!
 		--assert error? try [to pair! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [to pair! quote #(typeset! [integer! percent!]) ] ; typeset!
 	--test-- "to pair! string! (long)"
@@ -435,7 +453,7 @@ Rebol [
 		--assert #(true)  = try [make logic! quote #FF ] ; issue!
 		--assert #(true)  = try [make logic! quote #(bitset! #{FF}) ] ; bitset!
 		--assert #(true)  = try [make logic! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert #(true)  = try [make logic! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert #(true)  = try [make logic! quote #(uint32! [0 0]) ] ; vector!
 		--assert #(true)  = try [make logic! quote #(object! [a: 1]) ] ; object!
 		--assert #(true)  = try [make logic! quote #(typeset! [integer! percent!]) ] ; typeset!
 	--test-- "to logic! .."
@@ -471,7 +489,7 @@ Rebol [
 		--assert #(true)  = try [to logic! quote #FF ] ; issue!
 		--assert #(true)  = try [to logic! quote #(bitset! #{FF}) ] ; bitset!
 		--assert #(true)  = try [to logic! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert #(true)  = try [to logic! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert #(true)  = try [to logic! quote #(uint32! [0 0]) ] ; vector!
 		--assert #(true)  = try [to logic! quote #(object! [a: 1]) ] ; object!
 		--assert #(true)  = try [to logic! quote #(typeset! [integer! percent!]) ] ; typeset!
 ===end-group===
@@ -532,7 +550,7 @@ Rebol [
 		--assert  error?  try [make block! quote #FF        ] ; issue!
 		--assert  error?  try [make block! quote #(bitset! #{FF})        ] ; bitset!
 		--assert  error?  try [make block! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert  [0 0] = try [make block! quote #(u32! 2 [0 0])        ] ; vector!
+		--assert  [0 0] = try [make block! quote #(uint32! [0 0])        ] ; vector!
 		--assert [a: 1] = try [make block! quote #(object! [a: 1])       ] ; object!
 		--assert  error?  try [make block! #(typeset! [integer! percent!]) ] ; typeset!
 
@@ -565,7 +583,7 @@ Rebol [
 		--assert [a b]        = try [to block! quote :a/b          ] ; get-path!
 		--assert [/ref]       = try [to block! quote /ref          ] ; refinement!
 		--assert [#FF]        = try [to block! quote #FF           ] ; issue!
-		--assert [0 0]        = try [to block! quote #(vector! integer! 32 2 [0 0])        ] ; vector!
+		--assert [0 0]        = try [to block! quote #(uint32! [0 0])        ] ; vector!
 		--assert [a: 1]       = try [to block! quote #(object! [a: 1])                     ] ; object!
 		--assert [#(bitset! #{FF})]         = try [to block! quote #(bitset! #{FF})        ] ; bitset!
 		--assert [#(image! 1x1 #{FFFFFF})]  = try [to block! quote #(image! 1x1 #{FFFFFF}) ] ; image!
@@ -610,7 +628,7 @@ Rebol [
 		--assert error? try [make path! quote #FF ] ; issue!
 		--assert error? try [make path! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [make path! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert  path? try [make path! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert  path? try [make path! quote #(uint32! [0 0]) ] ; vector!
 		--assert  path? try [make path! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [make path! quote #(typeset! [integer! percent!]) ] ; typeset!
 
@@ -647,7 +665,7 @@ Rebol [
 		--assert  path? try [to path! quote #FF ] ; issue!
 		--assert  path? try [to path! quote #(bitset! #{FF}) ] ; bitset!
 		--assert  path? try [to path! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert  path? try [to path! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert  path? try [to path! quote #(uint32! [0 0]) ] ; vector!
 		--assert  path? try [to path! quote #(object! [a: 1]) ] ; object!
 		--assert  path? try [to path! quote #(typeset! [integer! percent!]) ] ; typeset!
 ===end-group===
@@ -688,7 +706,7 @@ Rebol [
 		--assert error? try [make map! quote #FF ] ; issue!
 		--assert error? try [make map! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [make map! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [make map! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [make map! quote #(uint32! [0 0]) ] ; vector!
 		--assert   map? try [make map! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [make map! quote #(typeset! [integer! percent!]) ] ; typeset!
 	--test-- "to map! .."
@@ -724,7 +742,7 @@ Rebol [
 		--assert error? try [to map! quote #FF ] ; issue!
 		--assert error? try [to map! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [to map! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [to map! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [to map! quote #(uint32! [0 0]) ] ; vector!
 		--assert   map? try [to map! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [to map! quote #(typeset! [integer! percent!]) ] ; typeset!
 ===end-group===
@@ -767,7 +785,7 @@ Rebol [
 		--assert "a/b"        = try [make string! quote 'a/b       ] ; lit-path!
 		--assert "ref"        = try [make string! quote /ref       ] ; refinement!
 		--assert "FF"         = try [make string! quote #FF        ] ; issue!
-		--assert "0 0"        = try [make string! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert "0 0"        = try [make string! quote #(uint32! [0 0]) ] ; vector!
 		--assert "a: 1"       = try [make string! quote #(object! [a: 1]) ] ; object!
 		--assert "make bitset! #{FF}"  = try [make string! quote #(bitset! #{FF}) ] ; bitset!
 		--assert "make image! [1x1 #{FFFFFF}]"  = try [make string! quote #(image! 1x1 #{FFFFFF}) ] ; image!
@@ -809,16 +827,15 @@ Rebol [
 		--assert "a/b"        = try [to string! quote 'a/b       ] ; lit-path!
 		--assert "ref"        = try [to string! quote /ref       ] ; refinement!
 		--assert "FF"         = try [to string! quote #FF        ] ; issue!
-		--assert "0 0"        = try [to string! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert "0 0"        = try [to string! quote #(uint32! [0 0]) ] ; vector!
 		--assert "a: 1"       = try [to string! quote #(object! [a: 1]) ] ; object!
 		--assert "make bitset! #{FF}"  = try [to string! quote #(bitset! #{FF}) ] ; bitset!
 		--assert "make image! [1x1 #{FFFFFF}]"  = try [to string! quote #(image! 1x1 #{FFFFFF}) ] ; image!
 		--assert "integer! percent!"  = try [to string! quote #(typeset! [integer! percent!]) ] ; typeset!
 
 	--test-- "to string! with chars outside the BMP"
-		;; current Rebol is able to use only 16bit Unicode..
-		--assert #{EFBFBD} = to binary! to string! #{F09F989A}
-		--assert #{EFBFBD} = to binary! to string! #{F09F989C}
+		--assert #{F09F989A} = to binary! to string! #{F09F989A}
+		--assert #{F09F989C} = to binary! to string! #{F09F989C}
 ===end-group===
 
 ===start-group=== "make/to tag"
@@ -857,7 +874,7 @@ Rebol [
 		--assert <FF>   = try [make tag! quote #FF ] ; issue!
 		--assert <make bitset! #{FF}>  = try [make tag! quote #(bitset! #{FF}) ] ; bitset!
 		--assert <make image! [1x1 #{FFFFFF}]>  = try [make tag! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert <0 0>  = try [make tag! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert <0 0>  = try [make tag! quote #(uint32! [0 0]) ] ; vector!
 		--assert <a: 1>  = try [make tag! quote #(object! [a: 1]) ] ; object!
 		--assert <integer! percent!>  = try [make tag! quote #(typeset! [integer! percent!]) ] ; typeset!
 	--test-- "to tag! .."
@@ -894,7 +911,7 @@ Rebol [
 		--assert <FF>   = try [to tag! quote #FF ] ; issue!
 		--assert <make bitset! #{FF}>  = try [to tag! quote #(bitset! #{FF}) ] ; bitset!
 		--assert <make image! [1x1 #{FFFFFF}]>  = try [to tag! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert <0 0>  = try [to tag! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert <0 0>  = try [to tag! quote #(uint32! [0 0]) ] ; vector!
 		--assert <a: 1>  = try [to tag! quote #(object! [a: 1]) ] ; object!
 		--assert <integer! percent!>  = try [to tag! quote #(typeset! [integer! percent!]) ] ; typeset!
 ===end-group===
@@ -935,7 +952,7 @@ Rebol [
 		--assert error? try [make typeset! quote #FF ] ; issue!
 		--assert error? try [make typeset! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [make typeset! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [make typeset! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [make typeset! quote #(uint32! [0 0]) ] ; vector!
 		--assert error? try [make typeset! quote #(object! [a: 1]) ] ; object!
 		--assert #(typeset! [integer! percent!])  = try [make typeset! quote #(typeset! [integer! percent!]) ] ; typeset!
 	--test-- "to typeset! .."
@@ -972,7 +989,7 @@ Rebol [
 		--assert error? try [to typeset! quote #FF ] ; issue!
 		--assert error? try [to typeset! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [to typeset! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [to typeset! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [to typeset! quote #(uint32! [0 0]) ] ; vector!
 		--assert error? try [to typeset! quote #(object! [a: 1]) ] ; object!
 		--assert #(typeset! [integer! percent!])  = try [to typeset! quote #(typeset! [integer! percent!]) ] ; typeset!
 ===end-group===
@@ -1013,7 +1030,7 @@ Rebol [
 		--assert error? try [make event! quote #FF ] ; issue!
 		--assert error? try [make event! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [make event! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [make event! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [make event! quote #(uint32! [0 0]) ] ; vector!
 		--assert error? try [make event! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [make event! quote #(typeset! [integer! percent!]) ] ; typeset!
 	--test-- "to event! .."
@@ -1050,7 +1067,7 @@ Rebol [
 		--assert error? try [to event! quote #FF ] ; issue!
 		--assert error? try [to event! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [to event! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [to event! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [to event! quote #(uint32! [0 0]) ] ; vector!
 		--assert error? try [to event! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [to event! quote #(typeset! [integer! percent!]) ] ; typeset!
 ===end-group===
@@ -1093,7 +1110,7 @@ Rebol [
 		--assert 'FF  = try [make word! quote #FF ] ; issue!
 		--assert error? try [make word! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [make word! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [make word! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [make word! quote #(uint32! [0 0]) ] ; vector!
 		--assert error? try [make word! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [make word! quote #(typeset! [integer! percent!]) ] ; typeset!
 	--test-- "to word! ..."
@@ -1131,7 +1148,7 @@ Rebol [
 		--assert 'FF  = try [to word! quote #FF ] ; issue!
 		--assert error? try [to word! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [to word! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [to word! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [to word! quote #(uint32! [0 0]) ] ; vector!
 		--assert error? try [to word! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [to word! quote #(typeset! [integer! percent!]) ] ; typeset!
 ===end-group===

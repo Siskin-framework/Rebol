@@ -58,13 +58,7 @@ jobs:
         path: ./rebol3-*.exe
 
   linux:
-    strategy:
-      fail-fast: true
-      matrix:
-        os: [ubuntu-20.04]
-        #os: [ubuntu-20.04, ubuntu-18.04]
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3

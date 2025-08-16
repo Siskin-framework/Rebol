@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,6 +48,7 @@
 #include "reb-host.h"
 #include "host-lib.h"
 #include "sys-value.h"
+#include "reb-struct.h"
 
 extern RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
@@ -88,6 +89,7 @@ enum test_cmd_words {
 	CMD_str0,
 	CMD_echo,
 	CMD_path,
+	CMD_stru,
 };
 char *RX_Spec =
 	"REBOL [\n"
@@ -119,11 +121,12 @@ char *RX_Spec =
 	"str0:   command [{return a constructed string}]\n"
 	"echo:   command [{return the input value} value]\n"
 	"path:   command [{converts Rebol file to OS file as string or binary} f [file!] /full {full path} /utf8]\n"
+	"stru:   command [{test struct passing} val [struct!]]\n"
 
 	"init-words [id data length] protect/hide 'init-words\n"
 	"a: b: c: h: x: y: none\n"
 	"i: make image! 2x2\n"
-	"s: #(struct! [r [uint8!]])\n"
+	"s: #(struct! [a [uint8!]])\n"
 	"xtest: does [\n"
 		"foreach blk [\n"
 			"[x: hob1 #{0102}]"
@@ -174,6 +177,8 @@ char *RX_Spec =
 
 			"[{foo} == path %foo]\n"
 			"[#{66C3AD6B} == path/utf8 to file! #{66C3AD6B}]\n"
+
+			"[probe s stru s]\n"
 		"][\n"
 			"print [{^/^[[7mtest:^[[0m^[[1;32m} mold blk {^[[0m}]\n"
 			//"replace {x} {x} {y}\n"
@@ -448,9 +453,29 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 		RXA_SERIES(frm, 1) = ser;
 		RXA_TYPE(frm, 1) = RXA_REF(frm, 3) ? RXT_BINARY : RXT_STRING;
 		RXA_INDEX(frm, 1) = 0;
-	}
 		break;
+	}
 
+	case CMD_stru: //command [{test struct passing} val [struct!]]
+	{
+		REBYTE *bin = RXA_STRUCT_BIN(frm,1);
+		// Using any struct... just must have at least 1 byte
+		if (RXA_STRUCT_LEN(frm, 1) > 0) {
+			bin[0] = bin[0] + 1;
+		}
+		// Testing access to struct's specification...
+		REBSER *spec = RXA_STRUCT_SPEC(frm, 1);
+		if (spec && spec->series) {
+			REBSTI *info = (REBSTI *)BIN_HEAD(spec->series);
+			REBSTF *field = (REBSTF *)info + 1;
+			printf("struct id: %u fields: %u\n", info->id, info->count);
+			for (REBCNT i = 0; i < info->count; ++i, ++field) {
+				printf(" field name: %s\n", RL_WORD_STRING(field->sym));
+				printf("       type: %u size: %u\n", field->type, field->size);
+			}
+		}
+		return RXR_VALUE;
+	}
 	case CMD_init: // init words
 		x_arg_words = RL_MAP_WORDS(RXA_SERIES(frm,1));
 		return RXR_TRUE;

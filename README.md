@@ -1,5 +1,4 @@
-[![rebol](https://github.com/user-attachments/assets/a51b0c99-660e-49b2-a859-eed156ab1a61)](https://rebol.tech)
-
+[![rebol-3](https://github.com/user-attachments/assets/8b71fff1-b421-4254-a1c0-eea4f4791cc5)](https://rebol.tech)
 
 [![Rebol CI](https://github.com/Oldes/Rebol3/actions/workflows/main.yml/badge.svg)](https://github.com/Oldes/Rebol3/actions/workflows/main.yml)
 [![Build Rebol](https://github.com/Oldes/Rebol3/actions/workflows/build-all.yml/badge.svg)](https://github.com/Oldes/Rebol3/actions/workflows/build-all.yml)
@@ -52,6 +51,7 @@ It is possible to extend Rebol functionality using external modules (native or w
 * [Rebol/Names](https://github.com/Oldes/Rebol-Names) - Random names generator scheme
 * [Rebol/RDAP](https://github.com/Oldes/Rebol-RDAP) - Registration Data Access Protocol (RDAP) scheme
 * [Rebol/Scheduler](https://github.com/Oldes/Rebol-Scheduler) - Task scheduling library with dialect
+* [Rebol/Speak](https://github.com/Oldes/Rebol-Speak) - Rebol text-to-speach native extension
 * [Rebol/Spotify](https://github.com/Oldes/Rebol-Spotify) - Spotify Web API
 * [Rebol/OpenCV](https://github.com/Oldes/Rebol-OpenCV) - Computer Vision Library
 * [Rebol/SQLite](https://github.com/Siskin-framework/Rebol-SQLite) - SQL database engine

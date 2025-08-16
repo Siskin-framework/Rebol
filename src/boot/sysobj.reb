@@ -67,6 +67,18 @@ options: object [  ; Options supplied to REBOL during startup
 		tar:  1
 	]
 	domain-name: none ; Specifies system's domain name (used in SMTP scheme so far)
+	no-color: false
+	ansi: #[
+		gray:   "^[[1;30m"
+		red:    "^[[1;31m"
+		green:  "^[[1;32m"
+		yellow: "^[[1;33m"
+		blue:   "^[[1;34m"
+		purple: "^[[1;35m"
+		cyan:   "^[[1;36m"
+		white:	"^[[1;37m"
+		reset:  "^[[0m"
+	]
 ]
 
 catalog: object [
@@ -90,7 +102,7 @@ catalog: object [
 	boot-flags: [
 		script args do import version debug secure
 		help vers quiet verbose
-		secure-min secure-max trace halt cgi boot-level no-window
+		secure-min secure-max trace halt cgi boot-level no-window no-color
 	]
 	bitsets: object [
 		crlf:          #(bitset! #{0024})                             ;charset "^/^M"
@@ -106,6 +118,7 @@ catalog: object [
 		uri-component: #(bitset! #{0000000041E6FFC07FFFFFE17FFFFFE2}) ;A-Z a-z 0-9 !'()*-._~
 		quoted-printable: #(bitset! #{FFFFFFFFFFFFFFFBFFFFFFFFFFFFFFFF})
 	]
+	structs: make map! [] ;; filled using `register` native function
 	checksums: [
 		; will be filled on boot from `Init_Crypt` in `n-crypt.c
 	]
@@ -113,6 +126,9 @@ catalog: object [
 	elliptic-curves: [
 		; will be filled on boot from `Init_Crypt` in `n-crypt.c`
 	]
+	filters: [
+		; image resizing filters filled from u-image-resize.c
+	] 
 	ciphers: [
 		; will be filled on boot from `Init_Crypt` in `n-crypt.c`
 	]
@@ -157,8 +173,8 @@ catalog: object [
 		alt-up 
 		aux-down 
 		aux-up 
-		key
-		key-up ; Move above when version changes!!!
+		key    ;; Key down event (with a physical key information)
+		key-up ;; Key up event
 
 		scroll-line
 		scroll-page
@@ -173,6 +189,8 @@ catalog: object [
 
 		control    ;; used to pass control key events to a console port
 		control-up ;; only on Windows?
+
+		char ;; 
 	]
 	event-keys: [
 		; Event types. Order dependent for C and REBOL.
@@ -248,6 +266,7 @@ modules: object [
 	easing:        https://github.com/Siskin-framework/Rebol-Easing/releases/download/1.0.0/
 	mathpresso:    https://github.com/Siskin-framework/Rebol-MathPresso/releases/download/0.1.0/
 	miniaudio:     https://github.com/Oldes/Rebol-MiniAudio/releases/download/0.11.18.0/
+	speak:         https://github.com/Oldes/Rebol-Speak/releases/download/0.0.1/
 	sqlite:        https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.46.0.0/
 	triangulate:   https://github.com/Siskin-framework/Rebol-Triangulate/releases/download/1.6.0.0/
 	webp:          https://github.com/Oldes/Rebol-WebP/releases/download/1.4.0.0/
@@ -494,6 +513,13 @@ standard: object [
 		length:     ; number of values
 		minimum:
 		maximum:
+		range:      ; maximum - minimum
+		sum:
+		mean:       ; average
+		median:
+		variance:
+		population-deviation:
+		sample-deviation:
 	]
 
 	date-info: construct [

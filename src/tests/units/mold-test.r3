@@ -204,7 +204,14 @@ Rebol [
 			]
 		]
 		try [delete %tmp2574]
-		--assert {"�"} = mold to string! #{F09F989C}
+
+	--test-- "mold/form string with char above Basic Multilingual Plane"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/683
+		--assert {"😜"} = mold to string! #{F09F989C}
+
+	--test-- "mold string with null char"
+		--assert {"^^@a"} == mold {^@a}
+		--assert {{^^@"}} == mold {^@"}
 
 
 ===end-group=== 
@@ -213,23 +220,34 @@ Rebol [
 	
 	--test-- "mold url"
 		--assert "ftp://"  = mold ftp://
-		--assert "ftp://%C5%A1" = mold ftp://š
+		--assert "ftp://š" = mold ftp://š
 		--assert "ftp://+" = mold ftp://+
-		--assert "ftp://+" = mold ftp://%2b
-		--assert "ftp://+" = mold ftp://%2B
+		--assert "ftp://%2b" = mold ftp://%2b
+		--assert "ftp://%2B" = mold ftp://%2B
 		--assert "ftp://%20" = mold ftp://%20
 	--test-- "mold append url"
 		--assert "ftp://a" = mold append ftp:// #"a"
 		--assert "ftp://a" = mold append ftp://  "a"
-		--assert "ftp://%C5%A1" = mold append ftp://  "š"
+		--assert "ftp://š" = mold append ftp://  "š"
 		--assert "ftp://+" = mold append ftp://  "+"
-		--assert "ftp://%2528" = mold append ftp:// "%28"
-		--assert "ftp://%28" = dehex mold append ftp:// "%28"
+		--assert "ftp://%28" = mold append ftp:// "%28"
+		--assert "ftp://(" = dehex mold append ftp:// "%28"
 	--test-- "mold url escaping"
 		for i 0 255 1 [
 			f2: try [load mold f1: append copy a:/ to char! i]
-			--assert f1 == f2
+			--assert f2 == f1
 		]
+	--test-- "url with construction syntax needed"
+		--assert {#(url! "")}  == mold clear ftp://
+		--assert {#(url! "a")} == mold as url! "a"
+		--assert {#(url! "a:")} == mold as url! "a:"
+		--assert {#(url! ":a")} == mold as url! ":a"
+		--assert {#(url! "::a")} == mold as url! "::a"
+		--assert "a::"  == mold as url! "a::"
+		--assert "a::a" == mold as url! "a::a"
+		--assert "a:a"  == mold as url! next "aa:a"
+		--assert {#(url! "aa:a" 2)} == mold/all as url! next "aa:a"
+		--assert {#(url! "a:a" 2)} == mold as url! next "a:a"
 
 ===end-group=== 
 
@@ -261,6 +279,15 @@ Rebol [
 		--assert #{2322C2A022} == to binary! mold to char! 160
 ===end-group=== 
 
+
+===start-group=== "mold integer!"
+	--test-- "mold min integer"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2650
+		--assert "-9223372036854775808" == mold 0#8000000000000000
+	--test-- "mold max integer"
+		--assert "9223372036854775807" == mold 0#7FFFFFFFFFFFFFFF
+
+===end-group=== 
 
 ===start-group=== "mold-all"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2159
@@ -474,6 +501,14 @@ Rebol [
 	system/options/binary-base: bb
 ===end-group===
 
+
+===start-group=== "reform"
+	--test-- "reform binary!"
+		--assert "Number of input words:  25104 ^/" == reform ["Number of input words: " 25104 LF]
+		--assert "dab is reversed: bad" == reform ["dab" "is reversed:" "bad"]
+===end-group===
+
+
 ===start-group=== "form binary!"
 	;-- form on binary! removes decoration..
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2413
@@ -488,13 +523,21 @@ Rebol [
 ===start-group=== "mold email!"
 	--test-- "issue-159"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/159
-		--assert "a@b" = mold a@b
+		--assert "a@b" == mold a@b
 	--test-- "issue-2406"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2406
-		--assert "a@%C5%A1i%C5%A1ka" = mold a@šiška
-		--assert "a@šiška"           = form a@šiška
-		--assert "a@%C5%A1" = mold a@%C5%A1
-		--assert "a@š"      = form a@%C5%A1
+		--assert "a@šiška" == mold a@šiška
+		--assert "a@šiška" == form a@šiška
+		--assert "a@š"     == mold a@%C5%A1
+		--assert "a@š"     == form a@%C5%A1
+	--test-- "email with construction syntax needed"
+		--assert {#(email! "")}  == mold clear a@b
+		--assert {#(email! "a")} == mold as email! "a"
+		--assert {#(email! "@a")} == mold as email! "@a"
+		--assert {#(email! "a@")} == mold as email! "a@"
+		--assert {#(email! "a@/")} == mold as email! "a@/"
+		--assert {#(email! "a@@")} == mold as email! "a@@"
+		--assert {#(email! "a@b@")} == mold as email! "a@b@"
 ===end-group===
 
 ===start-group=== "mold ref!"

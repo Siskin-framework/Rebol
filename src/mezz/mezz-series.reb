@@ -432,6 +432,7 @@ format: function [
 	p: any [p #" "]
 	unless block? :rules  [rules:  reduce [:rules ]]
 	unless block? :values [values: reduce [:values]]
+	no-color: system/options/no-color
 
 	; Compute size of output (for better mem usage):
 	val: 0
@@ -441,7 +442,7 @@ format: function [
 			integer! [abs rule]
 			string!  [length? rule]
 			char!    [1]
-			money!   [2 + length? form rule]
+			money!   [either no-color [0][2 + length? form rule]]
 			tag!     [length? rule] ;@@ does not handle variadic length results (for example month names)!
 		][0]
 	]
@@ -467,7 +468,11 @@ format: function [
 			]
 			string!  [out: change out rule]
 			char!    [out: change out rule]
-			money!   [out: change out replace ajoin ["^[[" next form rule #"m"] #"." #";"]
+			money!   [
+				unless no-color [
+					out: change out replace ajoin ["^[[" next form rule #"m"] #"." #";"
+				]
+			]
 			tag! [
 				out: change out switch/default type?/word val: first+ values [
 					date! time! [

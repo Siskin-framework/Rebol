@@ -192,6 +192,7 @@ struct rebol_devreq {
 	union {
 		REBYTE *data;		// data to transfer
 		REBREQ *sock;		// temp link to related socket
+		const REBYTE *cdata;
 	};
 	u32  length;			// length to transfer
 	u32  actual;			// length actually transferred

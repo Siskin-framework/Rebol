@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -234,6 +234,16 @@ enum {
 	LOAD_REQUIRE		// Header is required, else error
 };
 
+// Protect function flags:
+enum {
+	PROT_SET,
+	PROT_DEEP,
+	PROT_HIDE,
+	PROT_WORD,
+	PROT_WORDS,
+	PROT_LOCK
+};
+
 // General constants:
 #define NOT_FOUND ((REBLEN)-1)
 #define UNKNOWN   ((REBLEN)-1)
@@ -352,15 +362,17 @@ enum {
 #define BUF_EMIT  VAL_SERIES(TASK_BUF_EMIT)
 #define BUF_WORDS VAL_SERIES(TASK_BUF_WORDS)
 #define BUF_PRINT VAL_SERIES(TASK_BUF_PRINT)
-#define BUF_FORM  VAL_SERIES(TASK_BUF_FORM)
+//#define BUF_FORM  VAL_SERIES(TASK_BUF_FORM)
 #define BUF_MOLD  VAL_SERIES(TASK_BUF_MOLD)
-#define BUF_UTF8  VAL_SERIES(TASK_BUF_UTF8)
+#define BUF_SCAN  VAL_SERIES(TASK_BUF_SCAN)
+//#define BUF_UTF8  VAL_SERIES(TASK_BUF_UTF8)
+#define BUF_UCS2  VAL_SERIES(TASK_BUF_UCS2)
 #define MOLD_LOOP VAL_SERIES(TASK_MOLD_LOOP)
 
 #ifdef OS_WIDE_CHAR
 #define BUF_OS_STR BUF_MOLD
 #else
-#define BUF_OS_STR BUF_FORM
+#define BUF_OS_STR BUF_MOLD
 #endif
 
 // Save/Unsave Macros:

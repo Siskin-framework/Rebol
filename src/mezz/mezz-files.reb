@@ -161,7 +161,9 @@ dir-tree: func [
 			exit
 		]
 		set [directory value] split-path directory
-		prin "^[[31;1m"
+		unless system/options/no-color [
+			prin system/options/ansi/red
+		]
 	]
 
 	prefix:       any [prefix ""]
@@ -176,7 +178,9 @@ dir-tree: func [
 			formed: either :on-value [
 				on-value directory/:value depth
 			][	join either dir? value [" ^[[32;1m"][" ^[[33;1m"][value "^[[m"] ]
-			print ajoin [indent prefix "[^[[m" formed ]
+			formed: ajoin [indent prefix "[^[[m" formed ]
+			any [if system/options/no-color [formed: sys/remove-ansi formed] true]
+			print formed
 		]
 		all [
 			dir? value									; if this is directory
@@ -198,10 +202,10 @@ dir-tree: func [
 	unless block? value [exit]
 
 	str: [
-		"^[[31;1m├───"
-		"^[[31;1m│   "
-		"^[[31;1m└───"
-		"^[[31;1m    "
+		"^[[31;1m    " ;├───"
+		"^[[31;1m    " ;│   "
+		"^[[31;1m    " ;└───"
+		"^[[31;1m    " ;    "
 	]
 
 	sort/compare value func[a b][

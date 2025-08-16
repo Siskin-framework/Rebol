@@ -445,14 +445,14 @@ enline: native [
 
 detab: native [
 	"Converts tabs to spaces (default tab size is 4)."
-	string [any-string!] {(modified)}
+	string [any-string! binary!] {(modified)}
 	/size  "Specifies the number of spaces per tab"
 	number [integer!]
 ]
 
 entab: native [
 	"Converts spaces to tabs (default tab size is 4)."
-	string [any-string!] {(modified)}
+	string [any-string! binary!] {(modified)}
 	/size "Specifies the number of spaces per tab"
 	number [integer!]
 ]
@@ -565,7 +565,7 @@ set: native [
 
 to-hex: native [
 	{Converts numeric value to a hex issue! datatype (with leading # and 0's).}
-	value [integer! tuple!] {Value to be converted}
+	value [integer! char! tuple!] {Value to be converted}
 	/size {Specify number of hex digits in result}
 	len [integer!]
 ]

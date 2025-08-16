@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.19.0
+version: 3.19.5
 
 #if Linux?   [ defines: TO_LINUX   ]
 #if macOS?   [ defines: TO_MACOS   ]
@@ -353,6 +353,7 @@ mezz-sys-files: [
 ]
 mezz-lib-files: [
 ;-- lib: mid-level lib context:
+	%mezz/mezz-ansi.reb
 	%mezz/mezz-secure.reb
 	%mezz/mezz-types.reb
 	%mezz/mezz-func.reb
@@ -946,7 +947,7 @@ include-native-oid: [core-files: %core/n-oid.c] ; `form-oid` native (used in DER
 ;- Product specifications                                                       
 
 include-rebol-core: [
-	:include-mezz-ansi
+;	:include-mezz-ansi
 	:include-clipboard
 	:include-cryptography
 	:include-bincode

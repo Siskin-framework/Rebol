@@ -84,7 +84,7 @@ const REBCNT Gob_Flag_Words[] = {
 {
 	REBINT n;
 
-	n = VAL_GOB(g2) - VAL_GOB(g1);
+	n = AS_INT(VAL_GOB(g2) - VAL_GOB(g1));
 	if (n != 0) return n;
 	n = VAL_GOB_INDEX(g2) - VAL_GOB_INDEX(g1);
 	if (n != 0) return n;
@@ -513,10 +513,12 @@ const REBCNT Gob_Flag_Words[] = {
 
 	case SYM_IMAGE:
 		if (GOB_TYPE(gob) == GOBT_IMAGE) {
-			// image
+			SET_IMAGE(val, GOB_CONTENT(gob));
+			VAL_IMAGE_WIDE(val) = GOB_W(gob);
+			VAL_IMAGE_HIGH(val) = GOB_H(gob);
+			break;
 		}
-		else goto is_none;
-		break;
+		goto is_none;
 
 #ifdef HAS_WIDGET_GOB
 	case SYM_WIDGET:
