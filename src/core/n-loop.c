@@ -522,7 +522,7 @@ cont_utf8:
 		ds = Do_Blk(body, 0);
 
 		if (THROWN(ds)) {
-			if ((err = Check_Error(ds)) >= 0) {
+			if ((err = Check_Error(ds)) != NOT_FOUND) {
 				index = rindex;
 				break;
 			}
