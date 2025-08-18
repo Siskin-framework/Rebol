@@ -649,6 +649,10 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1162
 		s: copy "abcde"
 		--assert "bcdee" = replace/all s copy/part s 4 skip s 1
+
+	--test-- "unicode string"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2665
+		--assert (replace/all "<á]] <é]]" "]]" #">") == "<á> <é>"
 		
 ===end-group===
 
