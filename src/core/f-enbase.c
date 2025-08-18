@@ -892,6 +892,7 @@ err:
 		if ((i+1) % 8 == 0 && brk)
 			*p++ = LF;
 	}
+	if (len == 8) --p; // remove LF when len has 8 bytes
 	*p = 0;
 
 	//if (*(p-1) != LF && len > 9 && brk) *p++ = LF; // adds LF before closing bracket
