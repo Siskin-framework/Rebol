@@ -720,7 +720,8 @@
 		len = Int32(lval);
 		if (is_ser && IS_UTF8_STRING(sval)) {
 			// Convert number of chars to length in bytes
-			len = UTF8_Skip(VAL_SERIES(sval), VAL_INDEX(sval), len);
+			REBLEN idx = VAL_INDEX(sval);
+			len = UTF8_Skip(VAL_SERIES(sval), idx, len) - idx;
 		}
 	}
 	else {

@@ -555,6 +555,8 @@ Rebol [
 		--assert all [(change/part o: "éee" "a" 20) == ""  o == "a"]
 		--assert all [(change/part o: "éee" "á" 20) == ""  o == "á"]
 		--assert all [(change/part o: "éee" "🙂" 20) == ""  o == "🙂"]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2665
+		--assert all [(change/part o: next "éeeé" "🙂" 2) == "é"  o == "🙂é"  (head o) == "é🙂é"]
 
 	--test-- "change char!"
 		--assert all [(change o: "---" #"╔") == "--"  o == "╔--"]
