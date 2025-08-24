@@ -134,10 +134,10 @@
 	//printf("Requested HOB for %s (%u) of size %u\n", SYMBOL_TO_NAME(sym), sym, size);
 	hob = (REBHOB*)Make_Node(HOB_POOL);
 	// Allocate new memory only if the requested size is greater than the pointer size.
-	if (size > sizeof(void *)) {
+	//if (size > sizeof(void *)) {
 		hob->data = Make_Managed_CMem(1, size);
 		if (!hob->data) Trap0(RE_NO_MEMORY);
-	}
+	//}
 	hob->index = idx;
 	hob->flags = HANDLE_CONTEXT;
 	hob->sym   = sym;
