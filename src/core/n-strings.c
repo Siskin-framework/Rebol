@@ -34,8 +34,7 @@
 #include "sys-checksum.h"
 
 REBCNT z_adler32_z(REBCNT adler, REBYTE *buf, REBCNT len);
-
-
+REBSER *Make_Binary_BE64(REBVAL *arg);
 
 // Table of hash functions and parameters:
 static struct digest {
@@ -607,6 +606,12 @@ static struct digest {
 	REBVAL *part = D_ARG(5);
 	REBOOL brk = !D_REF(6);
 
+	if (IS_INTEGER(arg)) {
+		SET_BINARY(arg, Make_Binary_BE64(arg));
+		REBCNT i = 0;
+		while (i <= 7 && VAL_BIN_HEAD(arg)[i]==0) { ++i; }
+		VAL_INDEX(arg) = i;
+	}
 	if (D_REF(4)) {
 		limit = Partial(arg, 0, part, 0); // Can modify value index.
 		if (limit == 0) {

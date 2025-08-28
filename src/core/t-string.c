@@ -203,7 +203,7 @@ static REBSER *make_string(REBVAL *arg, REBOOL make)
 	return ser;
 }
 
-static REBSER *Make_Binary_BE64(REBVAL *arg)
+REBSER *Make_Binary_BE64(REBVAL *arg)
 {
 	REBSER *ser = Make_Binary(9);
 	REBI64 n = VAL_INT64(arg);
