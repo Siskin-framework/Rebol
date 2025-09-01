@@ -141,6 +141,7 @@ Rebol [
 	--assert     none? find/match/tail #{0001} #{01}
 	--assert     none? find #{000102} #{03}
 	--assert     none? find/tail #{000102} #{03}
+	--assert #{FF00} = find/last #{FF00FF00FF00} #{FF}
 
 --test-- "FIND binary! char!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1161

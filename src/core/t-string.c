@@ -133,7 +133,7 @@ static REBCNT find_string(REBVAL *value, REBCNT index, REBCNT end, REBVAL *targe
 	//O: not using ANY_BINSTR as TAG is now handled separately
 	if (VAL_TYPE(target) >= REB_BINARY && VAL_TYPE(target) < REB_TAG) {
 		// Do the optimal search or the general search?
-		if (IS_BINARY(value) || (!IS_UTF8_SERIES(series) && !IS_UTF8_STRING(target)) && !(flags & ~(AM_FIND_CASE|AM_FIND_MATCH|AM_FIND_TAIL))) {
+		if ((IS_BINARY(value) || (!IS_UTF8_SERIES(series) && !IS_UTF8_STRING(target))) && !(flags & ~(AM_FIND_CASE|AM_FIND_MATCH|AM_FIND_TAIL))) {
 			index = Find_Byte_Str(series, start, VAL_BIN_DATA(target), len, !GET_FLAG(flags, ARG_FIND_CASE-1), GET_FLAG(flags, ARG_FIND_MATCH-1));
 			if (flags & AM_FIND_TAIL && index != NOT_FOUND) index += len;
 			return index;
