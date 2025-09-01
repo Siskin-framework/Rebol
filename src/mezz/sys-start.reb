@@ -118,9 +118,8 @@ start: func [
 			join dirize to-rebol-file data %Rebol/
 		]
 		;; Other systems: use a hidden .rebol folder in user's home directory
-		all [
-			home
-			data: join home %.rebol/
+		home [
+			join home %.rebol/
 		]
 	]
 
