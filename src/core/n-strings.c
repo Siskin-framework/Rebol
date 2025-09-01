@@ -607,7 +607,9 @@ static struct digest {
 	REBOOL brk = !D_REF(6);
 
 	if (IS_INTEGER(arg)) {
+		// Convert integer to binary...
 		SET_BINARY(arg, Make_Binary_BE64(arg));
+		// ...and trim leading zeros...
 		REBCNT i = 0;
 		while (i <= 7 && VAL_BIN_HEAD(arg)[i]==0) { ++i; }
 		VAL_INDEX(arg) = i;
