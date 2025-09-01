@@ -100,20 +100,47 @@ start: func [
 	]
 	;-  3. /home - preferably one of environment variables or current starting dir         
 	home: dirize to-rebol-file any [
-		get-env "REBOL_HOME"  ; User can set this environment variable with own location
-		get-env "HOME"        ; Default user's home directory on Linux
-		get-env "USERPROFILE" ; Default user's home directory on Windows
-		path                  ; Directory where we started (O: not sure with this one)
+		get-env "HOME"        ;; Default user's home directory on Linux
+		get-env "USERPROFILE" ;; Default user's home directory on Windows
 	]
 
 	;- 4. /data - directory of any application data (modules, cache...)
-	data: either system/platform = 'Windows [
-		append dirize to-rebol-file any [get-env "APPDATA" home] %Rebol/
-	][	append copy home %.rebol/]
+	data: case [
+		;; When user wants to define exact location using REBOL_HOME...
+		get-env "REBOL_HOME" [
+			dirize to-rebol-file get-env "REBOL_HOME"
+		]
+		;; On Windows, use APPDATA environment variable and append /Rebol/
+		all [
+			system/platform = 'Windows
+			data: get-env "APPDATA"
+		][
+			join dirize to-rebol-file data %Rebol/
+		]
+		;; Other systems: use a hidden .rebol folder in user's home directory
+		all [
+			home
+			data: join home %.rebol/
+		]
+	]
+
+	either data [
+		;; Attempt to create the data directory if it doesn't exist, log error if failed
+		try/with [
+			;; make-dir does own test if path already exists!
+			make-dir/deep data
+		][
+			sys/log/error 'REBOL ["Could not establish a data folder:" to-local-file data]
+		]
+	][
+		;; Log error if no valid data directory could be resolved
+		sys/log/error 'REBOL "Could not locate a data folder"
+	]
 
 	;- 5. /modules - directory of extension module files
-	;; Use try to handle cases where creating a new directory is not permitted in the environment. 
-	try [make-dir/deep modules: append copy data %modules/]
+	;; Use try to handle cases where creating a new directory is not permitted in the environment.
+	;; The folder does not have to exist so ignore possible error.
+	modules: attempt [make-dir/deep join data %modules/]
 
 	;; for now keep the old `module-paths`, but let user know, that it's deprecated now!
 	module-paths: does [
@@ -222,9 +249,9 @@ start: func [
 	append tmp reduce ['REBOL :system 'lib-local :tmp]
 	system/contexts/user: tmp
 
-	sys/log/info 'REBOL ["Checking for user.reb file in" home]
-	if exists? home/user.reb [
-		try/with [do home/user.reb][sys/log/error 'REBOL system/state/last-error]
+	sys/log/info 'REBOL ["Checking for user.reb file in" data]
+	if all [data exists? data/user.reb] [
+		try/with [do data/user.reb][sys/log/error 'REBOL system/state/last-error]
 	]
 
 
