@@ -98,10 +98,12 @@ start: func [
 			boot: none
 		]
 	]
-	;-  3. /home - preferably one of environment variables or current starting dir         
-	home: dirize to-rebol-file any [
+	;-  3. /home - preferably one of environment variables or current starting dir
+	if home: any [
 		get-env "HOME"        ;; Default user's home directory on Linux
 		get-env "USERPROFILE" ;; Default user's home directory on Windows
+	][
+		home: dirize to-rebol-file home
 	]
 
 	;- 4. /data - directory of any application data (modules, cache...)
