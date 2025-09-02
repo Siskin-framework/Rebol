@@ -1090,7 +1090,7 @@ child_error:
 
 		if (stdin_pipe[W] > 0) {
 			//printf("stdin_pipe[W]: %d\n", stdin_pipe[W]);
-			input_size = strlen((char*)input); /* the passed in input_len is in character, not in bytes */
+			input_size = input_len;
 			input_len = 0;
 			pfds[nfds++] = (struct pollfd){.fd = stdin_pipe[W], .events = POLLOUT};
 			close(stdin_pipe[R]);

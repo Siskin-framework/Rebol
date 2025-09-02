@@ -15,7 +15,7 @@ rebol-cmd: func[cmd][
 	clear out-buffer
 	clear err-buffer
 	insert cmd join to-local-file system/options/boot #" "
-	call/shell/wait/output/error cmd out-buffer err-buffer
+	call/shell/output/error cmd out-buffer err-buffer
 ]
 
 ===start-group=== "Command-Line Interface (/shell)"
@@ -183,24 +183,44 @@ rebol-cmd: func[cmd][
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2614
 		--assert all [
 			0 = rebol-cmd rejoin [
-				{--do "prin {}" | }
+				{ --cgi --do "prin {}" | }
 				to-local-file system/options/boot 
-				{ --do "prin query system/ports/input 'length"} 
+				{ --cgi --do "prin query system/ports/input 'length"} 
 			]
 			out-buffer == "0"
 			err-buffer == ""
 		]
 		--assert all [
 			0 = rebol-cmd rejoin [
-				{--do "prin {1}" | }
+				{ --cgi --do "prin {1}" | }
 				to-local-file system/options/boot 
-				{ --do "prin query system/ports/input 'length"} 
+				{ --cgi --do "prin query system/ports/input 'length"} 
 			]
 			out-buffer == "1"
 			err-buffer == ""
 		]
 		? out-buffer
 		? err-buffer
+	--test-- "Input with null byte"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2668
+		clear out-buffer
+		--assert all [
+			0 = call/shell/output/input rejoin [
+				to-local-file system/options/boot
+				{ --cgi --do "prin length? read system/ports/input"}
+			] out-buffer #{cafe001e} 
+			out-buffer == "4"
+		]
+		? out-buffer
+		clear out-buffer
+		--assert all [
+			0 = call/shell/output/input rejoin [
+				to-local-file system/options/boot
+				{ --cgi --do "prin length? read system/ports/input"}
+			] out-buffer "one^@two"
+			out-buffer == "7"
+		]
+		? out-buffer
 ===end-group===
 
 ~~~end-file~~~
