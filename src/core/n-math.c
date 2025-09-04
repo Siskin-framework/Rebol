@@ -986,14 +986,11 @@ compare:
 
 
 int is_prime(REBI64 n) {
-	if (n % 2 == 0) return n == 2;
-	if (n % 3 == 0) return n == 3;
-	REBI64 d = 5;
-	while (d * d <= n) {
-		if (n % d == 0) return 0;
-		d += 2;
-		if (n % d == 0) return 0;
-		d += 4;
+	if (n < 2) return 0;
+	if (n == 2 || n == 3) return 1;
+	if (n % 2 == 0 || n % 3 == 0) return 0;
+	for (REBI64 d = 5; d * d <= n; d += 6) {
+		if (n % d == 0 || n % (d + 2) == 0) return 0;
 	}
 	return 1;
 }
