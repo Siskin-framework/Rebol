@@ -411,12 +411,12 @@ span_bits:
 			else Set_Bit(bset, n, set);
 			break;
 
-		case REB_BINARY:
 		case REB_STRING:
 		case REB_FILE:
 		case REB_EMAIL:
 		case REB_URL:
 		case REB_TAG:
+		case REB_REF:
 //		case REB_ISSUE:
 			Set_Bit_Str(bset, val, set);
 			break;
@@ -426,13 +426,19 @@ span_bits:
 			if (!IS_SAME_WORD(val, SYM_BITS)) return 0;
 			val++;
 			if (!IS_BINARY(val)) return 0;
+			// fall thru...
+		case REB_BINARY:
 			n = VAL_LEN(val);
 			c = bset->tail;
 			if (n >= c) {
 				Expand_Series(bset, c, (n - c));
 				CLEAR(BIN_SKIP(bset, c), (n - c));
 			}
-			memcpy(BIN_HEAD(bset), VAL_BIN_DATA(val), n);
+			REBYTE *b = BIN_HEAD(bset);
+			REBYTE *s = VAL_BIN_DATA(val);
+			for (int i = 0; i < n; i++) {
+				b[i] = b[i] | s[i];
+			}
 			break;
 
 		default:

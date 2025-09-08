@@ -45,6 +45,7 @@ Rebol [
 		--assert #(bitset! #{40}) = charset #"^(01)"
 		--assert #(bitset! #{000000000000FFC0}) = charset "0123456789"
 		--assert #(bitset! #{F0}) = charset [0 1 2 3]
+		--assert #(bitset! #{F0}) = make bitset! #{F0}
 		--assert error? try [make bitset! [-1]]
 
 	--test-- "make with ranges"	
@@ -65,12 +66,18 @@ Rebol [
 		--assert #(bitset! #{8000}) = charset/length #"^@" 16
 
 	--test-- "make bitset! from block"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/1335
-		--assert #(bitset! #{6000}) = make bitset! [#{0102}]
 		--assert #(bitset! #{60}) = make bitset! [1 2]
-		--assert #(bitset! #{700000}) = make bitset! [#{010203}]
-		--assert #(bitset! #{00008000800080}) = make bitset! [#{102030}]
-		--assert #(bitset! #{7C00800080008000}) = make bitset! [#{0102030405102030}]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/1335
+		--assert #(bitset! #{0102})   = make bitset! [#{0102}]
+		--assert #(bitset! #{010203}) = make bitset! [#{010203}]
+		--assert #(bitset! #{102030}) = make bitset! [#{102030}]
+		--assert #(bitset! #{0102030405102030}) = make bitset! [#{0102030405102030}]
+		--assert #(bitset! not #{102030}) = make bitset! [not #{102030}]
+		--assert #(bitset! #{0102}) = make bitset! [#{0002} #{0100}]
+		--assert #(bitset! #{0102}) = make bitset! [#{00} #{0100} #{0002}]
+		--assert #(bitset! not #{0102}) = make bitset! [not #{0002} #{0100}]
+		--assert #(bitset! #{01020000000000000000000040}) = make bitset! [#{0002} #{0100} #"a"]
+		--assert error? try [make bitset! [#{0002} #{0100} not]]
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1226
 		--assert #(bitset! #{FFFE}) = make bitset! [#"^(00)" - #"^(0E)"]
 
