@@ -563,8 +563,11 @@ Rebol [
 	--test-- "sign-before-block"	--assert  [- []] = (load {-[]})
 	;and can be used correctly in charsets
 	--test-- "lexer-charset-with-tight-range"
-		--assert "make bitset! #{0000000000000000000000007FFFFFE0}" = mold charset [#"a"-#"z"] ;this failed before fix of #2319
-		--assert "make bitset! #{0000000000000000000000007FFFFFE0}" = mold charset [#"a" - #"z"]
+		--assert all [
+			bitset? b1: try load {charset [#"a"-#"z"]} ;this failed before fix of #2319
+			bitset? b2: try load {charset [#"a" - #"z"]}
+			b1 = b2
+		]
 
 ===end-group===
 
@@ -669,6 +672,14 @@ Rebol [
  		--assert logic? transcode/one {#(false)}
  		--assert none?  transcode/one {#(none)}
  		--assert unset? transcode/one {#(unset)}
+
+ 	--test-- "bitset!"
+ 	 	--assert bitset? transcode/one/error {#(bitset! #{FF})}
+ 	 	--assert bitset? transcode/one/error {#(bitset! not #{FF})}
+ 		--assert  error? transcode/one/error {#(bitset! foo)}
+ 		--assert  error? transcode/one/error {#(bitset! #{FF} 1)}          ;; this used to be legal!
+ 		--assert  error? transcode/one/error {#(bitset! #{FF} #{FF})}      ;; this used to be legal!
+ 		--assert  error? transcode/one/error {#(bitset! [not bits #{FF}])} ;; this used to be legal!
 
 ===end-group===
 

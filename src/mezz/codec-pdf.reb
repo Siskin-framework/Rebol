@@ -31,21 +31,22 @@ bytes: end: len: year: month: day: hour: minute: second: z: none
 sec-pad: #{28BF4E5E4E758A4164004E56FFFA01082E2E00B6D0683E802F0CA9FE6453697A}
 
 ;- Rules
+;; not using construction syntax for bitsets for higher backwards compatibility
 rl_newline: [CRLF | LF | CR]
-ch_number:        #(bitset! #{000000000000FFC0})                    ;charset "0123456789"
-ch_delimiter:     #(bitset! #{0000000004C1000A0000001400000014})    ;charset "()<>[]{}/%"
-ch_str-valid:     #(bitset! [not bits #{00EC000000C0000000000008}]) ;complement charset "^/^M^-^H^L()\"
-ch_sp:            #(bitset! #{0040000080})                          ;charset " ^-"
-ch_newline:       #(bitset! #{0024})                                ;charset CRLF
-ch_spnl:          #(bitset! #{0064000080})                          ;charset " ^-^/^L^M"
-ch_hex:           #(bitset! #{000000000000FFC07FFFFFE07FFFFFE0})    ;charset [#"0" - #"9" #"a" - #"z" #"A" - #"Z"]
-ch_hex-str:       #(bitset! #{006400008000FFC07FFFFFE07FFFFFE0})    ;union union ch_hex sp ch_newline
-ch_str:           #(bitset! [not bits #{0000000000C0000000000008}]) ;complement charset "\()"
-ch_str-esc:       #(bitset! #{0000000000C0000000000008220228})      ;charset "nrtbf()\"
-ch_not-hash:      #(bitset! [not bits #{0000000010}])               ;complement charset "#"
-ch_not-newline:   #(bitset! [not bits #{0024}])                     ;complement ch_newline
-ch_not-delimiter: #(bitset! [not bits #{0000000004C1000A0000001400000014}]) ;complement ch_delimiter
-ch_name:          #(bitset! [not bits #{0064000084C1000A0000001400000014}]) ;complement union ch_delimiter ch_spnl
+ch_number:        to bitset! #{000000000000FFC0}                    ;charset "0123456789"
+ch_delimiter:     to bitset! #{0000000004C1000A0000001400000014}    ;charset "()<>[]{}/%"
+ch_str-valid:     to bitset! [not #{00EC000000C0000000000008}]      ;complement charset "^/^M^-^H^L()\"
+ch_sp:            to bitset! #{0040000080}                          ;charset " ^-"
+ch_newline:       to bitset! #{0024}                                ;charset CRLF
+ch_spnl:          to bitset! #{0064000080}                          ;charset " ^-^/^L^M"
+ch_hex:           to bitset! #{000000000000FFC07FFFFFE07FFFFFE0}    ;charset [#"0" - #"9" #"a" - #"z" #"A" - #"Z"]
+ch_hex-str:       to bitset! #{006400008000FFC07FFFFFE07FFFFFE0}    ;union union ch_hex sp ch_newline
+ch_str:           to bitset! [not #{0000000000C0000000000008}]      ;complement charset "\()"
+ch_str-esc:       to bitset! #{0000000000C0000000000008220228}      ;charset "nrtbf()\"
+ch_not-hash:      to bitset! [not #{0000000010}]                    ;complement charset "#"
+ch_not-newline:   to bitset! [not #{0024}]                          ;complement ch_newline
+ch_not-delimiter: to bitset! [not #{0000000004C1000A0000001400000014}] ;complement ch_delimiter
+ch_name:          to bitset! [not #{0064000084C1000A0000001400000014}] ;complement union ch_delimiter ch_spnl
 
 rl_comment: [#"%" not #"%" copy value some ch_not-newline rl_newline]
 rl_boolean: ["true" (value: true) | "false" (value: false)]

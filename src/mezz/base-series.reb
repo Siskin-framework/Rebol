@@ -51,13 +51,11 @@ ellipsize: func [
 	str [string!] "(modified)"
 	len [integer!] "Max length"
 	/one-line "Escape line breaks"
-	/local chars
-][
+] bind [
 	if one-line [
-		chars: #(bitset! [not bits #{0024}])
 		parse str [
 			any [
-				some chars
+				some not-crlf
 				| change #"^/" "^^/"
 				| change #"^M" "^^M"
 			]
@@ -66,6 +64,5 @@ ellipsize: func [
 	if len < length? str [
 		append clear skip str (len - 3) "..."
 	]
-
 	str
-]
+] system/catalog/bitsets

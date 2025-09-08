@@ -82,9 +82,8 @@
 {
 	REBSER *ser = VAL_SERIES(value);
 
-	if (BITS_NOT(ser)) Append_Bytes(mold->series, "[not bits ");
+	if (BITS_NOT(ser)) Append_Bytes(mold->series, "not ");
 	Mold_Binary(value, mold);
-	if (BITS_NOT(ser)) Append_Byte(mold->series, ']');
 }
 
 
@@ -92,24 +91,22 @@
 **
 */	REBFLG MT_Bitset(REBVAL *out, REBVAL *data, REBCNT type)
 /*
+**	Construct a bitset, e.g.: #(bitset! #{FF}) or #(bitset! not #{FF})
+**
+**	NOTE: data are on stack, it is not a BLOCK value,
+**        so it is not possible to use macros like VAL_TAIL
+**
 ***********************************************************************/
 {
-	//REBFLG is_not = 0;
-	
-	if (IS_BLOCK(data)) {
-		REBINT len = Find_Max_Bit(data);
-		REBSER *ser;
-		if (len < 0 || len > 0xFFFFFF) Trap_Arg(data);
-		ser = Make_Bitset(len);
-		Set_Bits(ser, data, TRUE);
-		Set_Series(REB_BITSET, out, ser);
-		return TRUE;
+	REBFLG is_not = 0;
+	if (IS_WORD(data)) {
+		if (VAL_WORD_CANON(data++) == SYM_NOT) is_not = 1;
+		else return FALSE;
 	}
-
 	if (!IS_BINARY(data)) return FALSE;
-	Set_Series(REB_BITSET, out, Copy_Series_Value(data));
-	BITS_NOT(VAL_SERIES(out)) = 0;
-	return TRUE;
+	Set_Series(REB_BITSET, out, VAL_SERIES(data));
+	BITS_NOT(VAL_SERIES(out)) = is_not;
+	return IS_END(++data);
 }
 
 
