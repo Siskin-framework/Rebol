@@ -498,7 +498,7 @@ chk_neg:
 		return R_NONE;
 	}
 	// Try to call realpath on posix or _fullpath on Windows
-	tmp = OS_REAL_PATH(SERIES_DATA(ser)); // returns UTF-8 encoded data
+	tmp = OS_REAL_PATH((const REBCHR *)SERIES_DATA(ser)); // returns UTF-8 encoded data
 	Free_Series(ser);
 	if (!tmp) return R_NONE;
 
@@ -1024,7 +1024,7 @@ chk_neg:
 		Set_Series(REB_FILE, Append_Value(blk), dir);
 	}
 	else {  // First is dir path for the rest of the files
-		dir = To_REBOL_Path(str, n, OS_WIDE, TRUE);
+		dir = To_REBOL_Path((REBYTE*)str, n, OS_WIDE, TRUE);
 		str += n + 1; // next
 		len = dir->tail;
 		while ((n = (REBCNT)LEN_STR(str))) {
@@ -1032,7 +1032,7 @@ chk_neg:
 			REBLEN sz = OS_WIDE_TO_MULTIBYTE((const REBUNI*)str, &utf8, n);
 			dir->tail = len;
 			Append_Bytes_Len(dir, utf8, sz);
-			OS_FREE(utf8);
+			OS_FREE((void*)utf8);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
 			str += n + 1; // next
 		}
@@ -1089,7 +1089,7 @@ chk_neg:
 			Set_Block(D_RET, ser);
 		}
 		else {
-			ser = To_REBOL_Path(fr.files, (REBCNT)LEN_STR(fr.files), OS_WIDE, 0);
+			ser = To_REBOL_Path((REBYTE*)fr.files, (REBCNT)LEN_STR(fr.files), OS_WIDE, 0);
 			Set_Series(REB_FILE, D_RET, ser);
 		}
 	} else
@@ -1148,7 +1148,7 @@ chk_neg:
 			fr.files[len++]  = '\\';
 			fr.files[len  ]  = 0;
 		}
-		ser = To_REBOL_Path(fr.files, len, OS_WIDE, 0);
+		ser = To_REBOL_Path((REBYTE *)fr.files, len, OS_WIDE, 0);
 		Set_Series(REB_FILE, D_RET, ser);
 	} else
 		ser = 0;

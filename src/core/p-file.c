@@ -110,7 +110,7 @@
 		Set_File_Date(file->file.modified_time, ret);
 		break;
 	case SYM_NAME:
-		Set_Series(REB_FILE, ret, To_REBOL_Path(file->file.path, UNKNOWN, OS_WIDE, 0));
+		Set_Series(REB_FILE, ret, To_REBOL_Path((REBYTE *)file->file.path, UNKNOWN, OS_WIDE, 0));
 		break;
 	case SYM_ACCESSED:
 		Set_File_Date(file->file.accessed_time, ret);
@@ -744,20 +744,20 @@ is_false:
 
 
 #ifdef low_usage
-	// was in Read_File above...
-	if (args & AM_READ_LINES) {
-		REBYTE *bp = BIN_HEAD(ser);
-		REBYTE *lp;
-		REBSER *blk = Make_Block(1 + Count_Lines(bp, len));
-		REBVAL *val = Append_Value(blk);
-		Set_Binary(val, ser); // temp - keep it save from GC
-		Set_Block(ds, blk); // accounts for GC
-		while (*bp) {
-			lp = bp;
-			len = Next_Line(&bp);
-			val = Append_Value(blk);
-			Set_String(val, Decode_UTF8_Series(lp, len));
-		}
-		Remove_Series(blk, 0, 1); // remove temp binary
-	}
+//	// was in Read_File above...
+//	if (args & AM_READ_LINES) {
+//		REBYTE *bp = BIN_HEAD(ser);
+//		REBYTE *lp;
+//		REBSER *blk = Make_Block(1 + Count_Lines(bp, len));
+//		REBVAL *val = Append_Value(blk);
+//		Set_Binary(val, ser); // temp - keep it save from GC
+//		Set_Block(ds, blk); // accounts for GC
+//		while (*bp) {
+//			lp = bp;
+//			len = Next_Line(&bp);
+//			val = Append_Value(blk);
+//			Set_String(val, Decode_UTF8_Series(lp, len));
+//		}
+//		Remove_Series(blk, 0, 1); // remove temp binary
+//	}
 #endif

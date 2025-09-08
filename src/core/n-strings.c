@@ -1000,7 +1000,7 @@ static struct digest {
 		if (len <= 0xFF) len = 2;
 		else if (len <= 0xFFFF) len = 4;
 		else if (len <= 0xFFFFFF) len = 6;
-		else len == 8;
+		else len = 8;
 	}
 	else {
 		len = NO_LIMIT;
