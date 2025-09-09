@@ -29,7 +29,7 @@ fractal-tree: function/with [
     scaleFactor: ;; Branch scaling factor (closed over)
     forkAngle:   ;; Branching angle (closed over)
     baseLen:     ;; Base branch length (closed over)
-    size:        ;; Image size (closed over)
+    size: none   ;; Image size (closed over)
 
     draw-tree: function [
         pos     [pair!]     ;; Current position as pair! (x y)
@@ -56,7 +56,7 @@ fractal-tree: function/with [
 
 ;; Usage example:
 img: fractal-tree [size: 800x600 depth: 10]
-save %fractal.png img
+save %fractal-tree.png img
 if cv [
     cv/imshow/name :img "Fractal Tree"
     cv/waitKey 0
