@@ -1210,7 +1210,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 		// Special format for ALL string series when not at head:
 		if (GET_MOPT(mold, MOPT_MOLD_ALL)
-			&& ((VAL_INDEX(value) != 0 || VAL_TYPE(value) >= REB_EMAIL) && VAL_TAIL(value) == 0)) {
+			&& (VAL_INDEX(value) != 0 || (VAL_TYPE(value) >= REB_EMAIL && VAL_TAIL(value) == 0))) {
 				Mold_All_String(value, mold);
 				return;
 		}
