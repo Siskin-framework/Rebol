@@ -436,7 +436,7 @@ span_bits:
 			}
 			REBYTE *b = BIN_HEAD(bset);
 			REBYTE *s = VAL_BIN_DATA(val);
-			for (int i = 0; i < n; i++) {
+			for (REBCNT i = 0; i < n; i++) {
 				b[i] = b[i] | s[i];
 			}
 			break;
