@@ -2754,7 +2754,7 @@ try/with [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/400
 	--assert "123" = union "12" "13"
 --test-- "union with none and unset"
-	--assert [#(none) #(unset)] = union [#(none)] [#(unset)]
+	--assert [_ #(unset)] = union [#(none)] [#(unset)]
 
 --test-- "union/skip"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2520
