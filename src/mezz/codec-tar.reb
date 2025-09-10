@@ -3,7 +3,7 @@ REBOL [
 	name: tar
 	type: module
 	version: 0.0.1
-	author: rights: "Oldes"
+	author: "Oldes"
 	specification: https://en.wikipedia.org/wiki/Tar_%28computing%29
 	history: [20-Mar-2019 "Oldes" {Initial version of the TAR decoder}]
 	todo: {
