@@ -1277,14 +1277,6 @@ new_line:
             type = TOKEN_WORD;
             goto scanword;
 
-		case LEX_SPECIAL_UNDERSCORE:    /* Literal NONE! */
-			if (IS_LEX_DELIMIT(cp[1]) || IS_LEX_ANY_SPACE(cp[1]))
-				return TOKEN_NONE;
-			if (cp[1] == ':')
-				return -TOKEN_SET;
-			type = TOKEN_WORD;
-			goto scanword;
-
         case LEX_SPECIAL_POUND:
             cp++;
 /*        hex:
@@ -1332,6 +1324,12 @@ new_line:
 			}
 			if (cp-1 == scan_state->begin) return TOKEN_ISSUE;
 			else return -TOKEN_INTEGER;
+
+		case LEX_SPECIAL_UNDERSCORE:    /* Literal NONE! */
+			if (IS_LEX_DELIMIT(cp[1])) return TOKEN_NONE;
+			if (cp[1] == ':') return -TOKEN_SET;  // no _:
+			type = TOKEN_WORD;
+			goto scanword;
 
         case LEX_SPECIAL_DOLLAR:
             if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) return TOKEN_EMAIL;
