@@ -802,7 +802,6 @@ failed:
 ***********************************************************************/
 {
 	REBINT  ret = CRYPT_OK;
-	REBCNT  counter;
 
 	CLEAR_SERIES(ctx->buffer);
 	SERIES_TAIL(ctx->buffer) = 0;
@@ -921,7 +920,7 @@ failed:
 	case SYM_CHACHA20:
 		ret = mbedtls_chacha20_setkey((mbedtls_chacha20_context *)ctx->cipher_ctx, ctx->key);
 		if (ret) return ret;
-		counter = MBEDTLS_GET_UINT32_BE(ctx->IV, 12);
+		REBCNT counter = MBEDTLS_GET_UINT32_BE(ctx->IV, 12);
 		ret = mbedtls_chacha20_starts((mbedtls_chacha20_context *)ctx->cipher_ctx, ctx->IV, counter);
 		break;
 	#endif
