@@ -221,7 +221,7 @@ const struct arg_chr arg_chars2[] = {
 	if (0 == OS_Get_Boot_Path(&rargs->exe_path)) {
 		// First arg is path to executable (on most systems):
 #ifdef OS_WIDE_CHAR
-		OS_Wide_To_Multibyte(*argv, &rargs->exe_path);
+		OS_Wide_To_Multibyte(*argv, &rargs->exe_path, -1);
 #else
 		rargs->exe_path = *argv;
 #endif
