@@ -693,6 +693,7 @@ include-cryptography: [
 	config: MBEDTLS_ENTROPY_C    ; The platform-specific entropy code.
 	config: MBEDTLS_OID_C        ; Required for RSA
 	config: MBEDTLS_PKCS1_V15
+	config: MBEDTLS_PKCS1_V21
 
 	core-files: [
 		%core/n-crypt.c
