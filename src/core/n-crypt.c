@@ -397,16 +397,19 @@ static const REBYTE Map_Sym_to_MD_type[] = {
 */	REBNATIVE(rsa)
 /*
 //  rsa: native [
-//		"Encrypt/decrypt/sign/verify data using RSA cryptosystem. Only one refinement must be used!"
-//		rsa-key [handle!] "RSA context created using `rsa-init` function"
-//		data    [binary!] "Data to work with."
-//		/encrypt  "Use public key to encrypt data"
-//		/decrypt  "Use private key to decrypt data"
-//		/sign     "Use private key to sign data. Result is PKCS1 v1.5 binary"
-//		/verify   "Use public key to verify signed data (returns TRUE or FALSE)"
-//		 signature [binary!] "Result of the /sign call"
-//		/hash     "Signature's message digest algorithm"
-//		 algorithm [word! none!]
+//    "Encrypt, decrypt, sign, or verify data using the RSA cryptosystem."
+//    "Only one of the action refinements may be used per call."
+//    rsa-key   [handle!]             "RSA context created via rsa-init"
+//    data      [binary! any-string!] "Input data or ciphertext"
+//    /encrypt                        "Encrypt with public key (PKCS#1 v1.5 or RSAES-OAEP if /oaep)"
+//    /decrypt                        "Decrypt with private key (PKCS#1 v1.5 or RSAES-OAEP if /oaep)"
+//    /sign                           "Sign with private key"
+//    /verify                         "Verify with public key (returns TRUE or FALSE)"
+//     signature [binary!]            "Signature for /verify"
+//    /hash                           "Specify digest algorithm (for sign/verify)"
+//     algorithm [word! none!]        "Hash algorithm (e.g. SHA256) or NONE"
+//    /oaep                           "Enable RSAES-OAEP for encrypt/decrypt"
+//    /pss                            "Enable RSASSA-PSS for sign/verify"
 //  ]
 ***********************************************************************/
 {
@@ -422,6 +425,7 @@ static const REBYTE Map_Sym_to_MD_type[] = {
 	REBVAL *val_sign    = D_ARG(7);
 	REBOOL  refHash     = D_REF(8);
 	REBVAL *val_hash    = D_ARG(9);
+	REBOOL  padding     = D_REF(10) || D_REF(11);
 
 	RSA_CTX *rsa;
 	REBSER  *data;
@@ -432,14 +436,16 @@ static const REBYTE Map_Sym_to_MD_type[] = {
 	REBCNT   inBytes;
 	REBCNT   outBytes;
 	REBINT   err = 0;
-	mbedtls_md_type_t md_alg;
+	mbedtls_md_type_t md_alg = MBEDTLS_MD_NONE;
 
-	// make sure that only one refinement is used!
 	if(
-		(refEncrypt && (refDecrypt || refSign    || refVerify || refHash)) ||
-		(refDecrypt && (refEncrypt || refSign    || refVerify || refHash)) ||
+		// make sure that only one refinement is used!
+		(refEncrypt && (refDecrypt || refSign    || refVerify || (refHash && !padding))) ||
+		(refDecrypt && (refEncrypt || refSign    || refVerify || (refHash && !padding))) ||
 		(refSign    && (refDecrypt || refEncrypt || refVerify)) ||
-		(refVerify  && (refDecrypt || refSign    || refEncrypt))
+		(refVerify  && (refDecrypt || refSign    || refEncrypt)) ||
+		// don't use /pss, /oaep or /hash without main refinements!
+		((padding || refHash) && !(refEncrypt || refDecrypt || refSign || refVerify)) ||
 	) {
 		Trap0(RE_BAD_REFINES);
 	}
@@ -478,10 +484,16 @@ static const REBYTE Map_Sym_to_MD_type[] = {
 				return R_NONE;
 			}
 		}
-		if (refVerify) {
-			err = mbedtls_rsa_rsassa_pkcs1_v15_verify(rsa, md_alg, inBytes, inBinary, VAL_BIN_AT(val_sign));
-			return (err == 0) ? R_TRUE : R_FALSE;
-		}
+	}
+	else if (padding) {
+		hashSym = IS_NONE(val_hash) ? SYM_SHA256 : VAL_WORD_CANON(val_hash);
+		md_alg = Map_Sym_to_MD_type[hashSym - SYM_MD5];
+	}
+	
+	mbedtls_rsa_set_padding(rsa, padding ? MBEDTLS_RSA_PKCS_V21 : MBEDTLS_RSA_PKCS_V15, md_alg);
+	if (refVerify) {
+		err = mbedtls_rsa_pkcs1_verify(rsa, md_alg, inBytes, inBinary, VAL_BIN_AT(val_sign));
+		return (err == 0) ? R_TRUE : R_FALSE;
 	}
 
 	//allocate new binary!
@@ -490,14 +502,14 @@ static const REBYTE Map_Sym_to_MD_type[] = {
 	outBinary = BIN_DATA(data);
 
 	if (refSign) {
-		err = mbedtls_rsa_rsassa_pkcs1_v15_sign(rsa, mbedtls_ctr_drbg_random, &ctr_drbg, md_alg, inBytes, inBinary, outBinary);
+		err = mbedtls_rsa_pkcs1_sign(rsa, mbedtls_ctr_drbg_random, &ctr_drbg, md_alg, inBytes, inBinary, outBinary);
 	}
 	else if (refEncrypt) {
-		err = mbedtls_rsa_rsaes_pkcs1_v15_encrypt(rsa, mbedtls_ctr_drbg_random, &ctr_drbg, inBytes, inBinary, outBinary);
+		err = mbedtls_rsa_pkcs1_encrypt(rsa, mbedtls_ctr_drbg_random, &ctr_drbg, inBytes, inBinary, outBinary);
 	}
 	else {
 		size_t olen = 0;
-		err = mbedtls_rsa_rsaes_pkcs1_v15_decrypt(rsa, mbedtls_ctr_drbg_random, &ctr_drbg, &olen, inBinary, outBinary, outBytes);
+		err = mbedtls_rsa_pkcs1_decrypt(rsa, mbedtls_ctr_drbg_random, &ctr_drbg, &olen, inBinary, outBinary, outBytes);
 		outBytes = (REBLEN)olen;
 	}
 	if (err) goto error;

@@ -76,25 +76,54 @@ Rebol [
 	;-- note: you could use key-pri only as it contains the public properties too
 	;-- the key-pub is there just to simulate situation, where user have only the public parts
 	bin-data: #{41686F6A21}
-	--test-- "RSA encrypt"
+	--test-- "RSA encrypt (PKCS#1 v1.5)"
 		;you can use both keys for encryption (only the public parts are used)
 		--assert binary? secret: rsa/encrypt key-pub bin-data
 		--assert binary?         rsa/encrypt key-pri bin-data
 
-	--test-- "RSA decrypt"
+	--test-- "RSA decrypt (PKCS#1 v1.5)"
 		;decrypting needs private parts in the key
 		--assert bin-data = rsa/decrypt key-pri secret 
 		--assert    none?   rsa/decrypt key-pub secret ;because private key is needed
 
-	--test-- "RSA signing"
+	--test-- "RSA signing (PKCS#1 v1.5)"
 		;signing needs private parts in the key
 		--assert binary? sign-hash: rsa/sign key-pri bin-data
 		--assert              none? rsa/sign key-pub bin-data ;because private key is needed
 
-	--test-- "RSA verification"
+	--test-- "RSA verification (PKCS#1 v1.5)"
 		;you can use both keys for verification (only the public parts are used)
 		--assert rsa/verify key-pub bin-data sign-hash
 		--assert rsa/verify key-pri bin-data sign-hash
+
+	;- With RSA-OAEP (Optimal Asymmetric Encryption Padding) Probabilistic Signature Scheme
+	--test-- "RSA-OAEP encrypt"
+		;you can use both keys for encryption (only the public parts are used)
+		--assert binary? secret: rsa/encrypt/oaep key-pub bin-data
+		--assert binary?         rsa/encrypt/oaep key-pri bin-data
+
+	--test-- "RSA-OAEP decrypt"
+		;decrypting needs private parts in the key
+		--assert bin-data = rsa/decrypt/oaep key-pri secret 
+		--assert    none?   rsa/decrypt/oaep key-pub secret ;because private key is needed
+
+	;- With Probabilistic Signature Scheme
+	--test-- "RSASSA-PSS signing"
+		;signing needs private parts in the key
+		--assert binary? signature1: rsa/sign/pss key-pri bin-data
+		--assert binary? signature2: rsa/sign/pss key-pri bin-data
+		--assert none? rsa/sign/pss key-pub bin-data ;because private key is needed
+		;signatures made with /pss are always different
+		--assert not equal? signature1 signature2
+
+	--test-- "RSASSA-PSS verification"
+		;you can use both keys for verification (only the public parts are used)
+		--assert rsa/verify/pss key-pub bin-data signature1
+		--assert rsa/verify/pss key-pri bin-data signature1
+		;both signatures should be valid
+		--assert rsa/verify/pss key-pub bin-data signature2
+		--assert rsa/verify/pss key-pri bin-data signature2
+
 
 	--test-- "RSA key release"
 		;once RSA key is not needed, release its resources
