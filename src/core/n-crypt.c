@@ -445,7 +445,7 @@ static const REBYTE Map_Sym_to_MD_type[] = {
 		(refSign    && (refDecrypt || refEncrypt || refVerify)) ||
 		(refVerify  && (refDecrypt || refSign    || refEncrypt)) ||
 		// don't use /pss, /oaep or /hash without main refinements!
-		((padding || refHash) && !(refEncrypt || refDecrypt || refSign || refVerify)) ||
+		((padding || refHash) && !(refEncrypt || refDecrypt || refSign || refVerify))
 	) {
 		Trap0(RE_BAD_REFINES);
 	}
