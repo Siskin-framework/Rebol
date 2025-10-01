@@ -53,6 +53,7 @@ It is possible to extend Rebol functionality using external modules (native or w
 * [Rebol/Scheduler](https://github.com/Oldes/Rebol-Scheduler) - Task scheduling library with dialect
 * [Rebol/Speak](https://github.com/Oldes/Rebol-Speak) - Rebol text-to-speach native extension
 * [Rebol/Spotify](https://github.com/Oldes/Rebol-Spotify) - Spotify Web API
+* [Rebol/Spotify](https://github.com/Oldes/Rebol-TLS) - Transport Layer Security (TLS) scheme
 * [Rebol/OpenCV](https://github.com/Oldes/Rebol-OpenCV) - Computer Vision Library
 * [Rebol/SQLite](https://github.com/Siskin-framework/Rebol-SQLite) - SQL database engine
 * [Rebol/Triangulate](https://github.com/Siskin-framework/Rebol-Triangulate) - Two-Dimensional Quality Mesh Generator and Delaunay Triangulator
