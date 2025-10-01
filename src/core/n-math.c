@@ -326,7 +326,7 @@ enum {SINE, COSINE, TANGENT};
 /*
 //	number?: native [
 //		{Returns TRUE if the value is any type of number and not a NaN. }
-//		value
+//		value [any-type! unset!]
 //	]
 ***********************************************************************/
 {
