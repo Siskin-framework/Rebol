@@ -1,5 +1,5 @@
 REBOL [
-    version: 0.10.1
+    version: 0.10.2
     title: "TLS Protocol"
     name: tls
     date: 2-Oct-2025
@@ -1286,7 +1286,6 @@ TLS-client-awake: function [
                             ctx/state = 'FINISHED
                             ctx/version == 772
                         ] [
-                            print "??????????????????????????????????????????"
                             prepare-finished-message ctx
                             do-TCP-write ctx
                             return false
