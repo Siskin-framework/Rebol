@@ -3,15 +3,96 @@
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
 
+## 2025 October
+
+### Features:
+
+* [`f190da`](https://github.com/Oldes/Rebol3/commit/f190dae17d08af2f47e593103e660ff4803e08ce) Add TLS v1.3 protocol support
+
+
+### Changes:
+
+* [`72af36`](https://github.com/Oldes/Rebol3/commit/72af3618de6c75e24324d7db1e7f19f5df90bda4) Allow 'number?' to accept 'unset!' value
+
+### Fixes:
+
+* [`969f3d`](https://github.com/Oldes/Rebol3/commit/969f3d2d93b2249f2b775cb9db8d2a913e4f64a0) Handle HTTP redirects to prevent bad requests in some cases
+* [`6ef022`](https://github.com/Oldes/Rebol3/commit/6ef022934a5ee91cb92cfbb6a00d7a0af33c8754) Correct 'find' behavior for tags in strings
+
+## 2025 September
+
+### Features:
+
+* [`1d769f`](https://github.com/Oldes/Rebol3/commit/1d769f610c006bcfff9d3fff71274e758133c1dd) Add support for RSASSA-PSS sign/verify and RSA-OAEP encrypt/decrypt
+* [`46e522`](https://github.com/Oldes/Rebol3/commit/46e522bfa76c68c63a491686727d3643ded3e1fb) Literal none value: `_`
+
+### Changes:
+
+* [`f2326f`](https://github.com/Oldes/Rebol3/commit/f2326fb8e1c43c710ed32f7c0cf27072e48cfc74) Enable MBEDTLS_PKCS1_V21
+* [`86b96f`](https://github.com/Oldes/Rebol3/commit/86b96fcccf3fe0dd6d6a3987ae1aedd3b23d1049) Use hexadecimal integers instead of binaries in the TLS protocol
+* [`8efd14`](https://github.com/Oldes/Rebol3/commit/8efd1466f0bef64ab5b281de4bc793ee07fdc8c8) Update binary value interpretation in `make bitset!` dialect
+* [`550346`](https://github.com/Oldes/Rebol3/commit/55034692842808672e21351293ac93648471c720) Use strict construction syntax for bitsets
+* [`858ba8`](https://github.com/Oldes/Rebol3/commit/858ba82a8a69ce1f0d9ffabf18bad986cb14fe82) `~` used as `system/options/data` (REBOL_HOME) and not as user's home directory
+* [`669b39`](https://github.com/Oldes/Rebol3/commit/669b390758012d17180ece9ac8317dd5586080e4) Separate concepts of HOME and REBOL_HOME
+
+### Fixes:
+
+* [`ddc71c`](https://github.com/Oldes/Rebol3/commit/ddc71c002f600ac69f643b5d1e872ac1220d8e07) Regression when compiling with RAW_MAIN_ARGS defined
+* [`6b9326`](https://github.com/Oldes/Rebol3/commit/6b93262fc7c8e5bb79a38edbd9053c24d2013eda) Minor 'prebol' update with improved script header handling
+* [`4f5fd4`](https://github.com/Oldes/Rebol3/commit/4f5fd40a2a11aabccab6464a9b1886c6c4cdc2cc) Regression in 'mold/all' string handling
+* [`5c7924`](https://github.com/Oldes/Rebol3/commit/5c79242c10b3911b8622e39de19aed64063062f8) Silence several MSVC warnings
+* [`027ebe`](https://github.com/Oldes/Rebol3/commit/027ebe14725afd564419f5921ace96af7d09f7dd) Use robust prime tester to handle small and negative numbers
+* [`76204c`](https://github.com/Oldes/Rebol3/commit/76204c4b389fac9fa09691f01d7941588e7c8098) Loud errors when no "HOME" variable exists
+* [`2e7e0f`](https://github.com/Oldes/Rebol3/commit/2e7e0fc9e1d22c205a40833c54adb9bbb3db2b75) CALL/INPUT truncates values containing a null character
+* [`732098`](https://github.com/Oldes/Rebol3/commit/732098eaa878583ebd7c519b16c7ad5ec9c08fd1) `find/last` binary regression
+
+## 2025 August
+
+### Features:
+
+* [`39252b`](https://github.com/Oldes/Rebol3/commit/39252b403f5c8941c975825b72459499570ce444) Allow `enbase` to accept integer values for encoding
+* [`c5b014`](https://github.com/Oldes/Rebol3/commit/c5b01422ee6c777646cb541de2bf755b6c09935e) Include `prime?` native returning TRUE if number is a prime number
+* [`f287b8`](https://github.com/Oldes/Rebol3/commit/f287b8b95c601be1537496cdfa2ea106ae4d1281) Implement APPEND, INSERT, CHANGE and CLEAR actions on vector
+* [`66191c`](https://github.com/Oldes/Rebol3/commit/66191c1a0eae92397dda944b816dfbd4f00a4a6b) Implement AND, OR and XOR operations for pair datatype
+* [`8d2849`](https://github.com/Oldes/Rebol3/commit/8d28499811dd8db7cb5f8380372863a1bfa9367b) Implement AND, OR, XOR, and REMAINDER operations for vector datatype
+
+
+### Changes:
+
+* [`985db7`](https://github.com/Oldes/Rebol3/commit/985db7b6c09df06c5af1bae96228697511b106a9) Vector min/max code reduction
+* [`34c836`](https://github.com/Oldes/Rebol3/commit/34c83686780e4f629cb7eac288eba3569e8431e5) Implement vector-vector math; Vector math now always creates a new vector!
+* [`23d3d4`](https://github.com/Oldes/Rebol3/commit/23d3d4f8a61096f4aa9f0fbf9c756b01e7b95206) Display length of vectors in the help output
+* [`729b7e`](https://github.com/Oldes/Rebol3/commit/729b7e97c3b77ec6b369a6e83ce42bfbbcabb1f2) New strict vector construction, extended make/to vector spec
+
+### Fixes:
+
+* [`c0adbc`](https://github.com/Oldes/Rebol3/commit/c0adbccaed5fed6a61dd723b8f52bd451da23e6f) For now always allocate HOB's data memory even for pointers
+* [`e06182`](https://github.com/Oldes/Rebol3/commit/e06182dffb4f38146b13aa4ba87a7f28f0093c37) Don't include trailing LF when enbase 8 bytes with base 2
+* [`1973a6`](https://github.com/Oldes/Rebol3/commit/1973a668603ca67e4594e96446c392665caa2f3a) `change/part` with an Unicode string
+* [`881ad1`](https://github.com/Oldes/Rebol3/commit/881ad10fa2057d6ac6595e5a9b419621c26aef5e) `continue` inside `foreach` loop regression
+* [`b9fa81`](https://github.com/Oldes/Rebol3/commit/b9fa81294a1d56c237a57775cb72a695c61cd0fb) Query on empty file path
+* [`22ce4e`](https://github.com/Oldes/Rebol3/commit/22ce4eab2694e8c59beab49828995a39572b3089) Mold string containing null character
+* [`944990`](https://github.com/Oldes/Rebol3/commit/944990b9435a05b3ad3598c1b715a857c81c326f) Prevent occasional missing spaces in REFORM output
+* [`783377`](https://github.com/Oldes/Rebol3/commit/783377a8afbeba018675c4cadcd753005ba0de98) Detect UTF-8 series when copying from SCAN buffer
+* [`a4f3e4`](https://github.com/Oldes/Rebol3/commit/a4f3e4317803349ce8ed562760a810d551c35aac) Handle set operations correctly with Unicode strings
+* [`4b38b0`](https://github.com/Oldes/Rebol3/commit/4b38b022a397720165c07142b03ffe1705885aa8) Correct /part length when modifying Unicode strings
+* [`f8c29d`](https://github.com/Oldes/Rebol3/commit/f8c29d88e2dc85c675e231d9813f55ef04492090) Correct binary length after copy
+* [`23c7d5`](https://github.com/Oldes/Rebol3/commit/23c7d5b09018feea7c60e0cd37ef8d90545e5332) Use safer method to decode Unicode character size
+* [`acd9f7`](https://github.com/Oldes/Rebol3/commit/acd9f723ea80bdec1bb1d268bb9d6101eb008729) Prevent creation of invalid UTF-8 characters
+
+
 ## 2025 July
 
 ### Features:
 
+* [`4afdac`](https://github.com/Oldes/Rebol3/commit/4afdac52e285a09fd37f6c2ea568e59a4a4408e3) Enable conversion from char to issue using `to-hex`
 * [`668bdc`](https://github.com/Oldes/Rebol3/commit/668bdcec0c599257b090c0f9e04f24461581319f) Using UTF-8 internal string encoding
 * [`d4ccfc`](https://github.com/Oldes/Rebol3/commit/d4ccfca0a6a35aac30d3e7874aa5e334d2dfcf02) Implement pair comparison
 
 ### Changes:
 
+* [`78801a`](https://github.com/Oldes/Rebol3/commit/78801acfa49f6cc0ae98195d51c1bbd6782bc85d) Disallow UTF-16 surrogate codepoints in strings and characters
+* [`c3beaf`](https://github.com/Oldes/Rebol3/commit/c3beafe2e0f917d9a7706ca5bef8f1cd6b5f2b98) Use of 'IS_UTF8_STRING' macro
 * [`b18491`](https://github.com/Oldes/Rebol3/commit/b18491181836a83a8aa53673e9e363705ca185d9) Rename 'Print_OS_Line' to 'Print_Line' and 'Prin_OS_String' to 'Prin_String'
 * [`acd15f`](https://github.com/Oldes/Rebol3/commit/acd15ff2d33c5bd2e2a2b32b7e45a3db762a7c5a) Remove unused 'uni' argument from Prin_OS_String
 * [`a93ae3`](https://github.com/Oldes/Rebol3/commit/a93ae36d1157b5b8e11dd8885245694c140e70af) Replace internal variable-width character handling with UTF-8 strings
@@ -21,6 +102,14 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`8ce894`](https://github.com/Oldes/Rebol3/commit/8ce894e69451d6fff80e26adafd7d618d0aad440) Conversion to string from Unicode surrogate pairs
+* [`299fee`](https://github.com/Oldes/Rebol3/commit/299fee48065460073ca3b87d9844c443b9b01e43) Handle 'for' and 'repeat' correctly with Unicode strings
+* [`4b310b`](https://github.com/Oldes/Rebol3/commit/4b310b3255060814b95709f480280bc5338b8168) Handle 'forskip' and 'forall' correctly on Unicode strings
+* [`896aa6`](https://github.com/Oldes/Rebol3/commit/896aa67a3cc9c717596bfada5b466d3484249ce0) Handle 'take' correctly on Unicode strings
+* [`ac8eb5`](https://github.com/Oldes/Rebol3/commit/ac8eb5b88388c341ef5067af23058a9d3c362344) Handle 'remove-each/count' correctly on Unicode strings
+* [`52d2c9`](https://github.com/Oldes/Rebol3/commit/52d2c90328ffa72885542d1113cef51cfb0578d4) Crash when molding not valid Unicode string
+* [`951e76`](https://github.com/Oldes/Rebol3/commit/951e7628a3f1ebccd48c345dd1410cbd8edc38bf) Crash when loading existing extensions
+* [`e05f42`](https://github.com/Oldes/Rebol3/commit/e05f42cbb5a797e8c5a79fc07071869be1adc9e2) Handle 'foreach' correctly on Unicode strings
 * [`f0b565`](https://github.com/Oldes/Rebol3/commit/f0b5659043647eb5fc8abc0555a4ffde42655394) Output to console when content exceeds buffer size on Windows
 * [`574a77`](https://github.com/Oldes/Rebol3/commit/574a773b54dd27ed1cf4914d313c0bd823731763) Re-enable 'μs' string in the format-time
 * [`641a74`](https://github.com/Oldes/Rebol3/commit/641a74c85bf5a36edab54696305a55bbd2cecf22) Re-enable dir-tree lines
