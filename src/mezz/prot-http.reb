@@ -12,9 +12,9 @@ REBOL [
 		Licensed under the Apache License, Version 2.0
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-	Version: 0.7.3
+	Version: 0.7.4
 	Needs: 3.18.5 ;; because using the new log-* functions
-	Date: 15-Jun-2025
+	Date: 14-Oct-2025
 	File: %prot-http.r3
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -565,7 +565,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 	][
 		;; Some servers may have invalid location (missing slash) - Rebol-issues/issues/2604
 		if new-uri/1 != #"/" [insert new-uri #"/"]
-		spec/path: new-uri
+		spec/path: new-uri: as file! new-uri
 		;; If it's redirection under same url, we can reuse the opened connection
 		if "keep-alive" = select state/info/headers 'Connection [
 			do-request port
