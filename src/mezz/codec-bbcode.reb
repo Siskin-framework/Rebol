@@ -30,13 +30,13 @@ tmp: pos: none
 ;--------------------
 ;- charsets & rules -
 ;--------------------
-
-ch_space:      #(bitset! #{7FFFFFFF800000000000000000000001})    ; charset [#"^A" - #" " #"^(7F)"]
-ch_normal:     #(bitset! [not bits #{002400000000000800000010}]) ; complement charset "[<^M^/"
-ch_attribute:  #(bitset! [not bits #{000000002100000A00000004}]) ; complement charset {"'<>]}
-ch_attribute1: #(bitset! [not bits #{000000000100000A00000004}]) ; complement charset {'<>]}
-ch_attribute2: #(bitset! [not bits #{000000002000000A00000004}]) ; complement charset {"<>]}
-ch_attribute3: #(bitset! [not bits #{000000008000000A00000004}]) ; complement charset { <>]}
+;; not using construction syntax for bitsets for higher backwards compatibility
+ch_space:      to bitset! #{7FFFFFFF800000000000000000000001} ; charset [#"^A" - #" " #"^(7F)"]
+ch_normal:     to bitset! [not #{002400000000000800000010}]   ; complement charset "[<^M^/"
+ch_attribute:  to bitset! [not #{000000002100000A00000004}]   ; complement charset {"'<>]}
+ch_attribute1: to bitset! [not #{000000000100000A00000004}]   ; complement charset {'<>]}
+ch_attribute2: to bitset! [not #{000000002000000A00000004}]   ; complement charset {"<>]}
+ch_attribute3: to bitset! [not #{000000008000000A00000004}]   ; complement charset { <>]}
 ch_digits: charset [#"0" - #"9"]
 ch_hexa:   charset [#"a" - #"f" #"A" - #"F" #"0" - #"9"]
 ch_name:   charset [#"a" - #"z" #"A" - #"Z" #"*" #"0" - #"9"]

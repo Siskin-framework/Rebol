@@ -1210,7 +1210,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 		// Special format for ALL string series when not at head:
 		if (GET_MOPT(mold, MOPT_MOLD_ALL)
-			&& ((VAL_INDEX(value) != 0 || VAL_TYPE(value) >= REB_EMAIL) && VAL_TAIL(value) == 0)) {
+			&& (VAL_INDEX(value) != 0 || (VAL_TYPE(value) >= REB_EMAIL && VAL_TAIL(value) == 0))) {
 				Mold_All_String(value, mold);
 				return;
 		}
@@ -1218,7 +1218,7 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	switch (VAL_TYPE(value)) {
 	case REB_NONE:
-		Append_Bytes(ser, molded ? "#(none)" : "none");
+		Append_Bytes(ser, molded ? "_" : "none");
 		break;
 
 	case REB_LOGIC:
@@ -1316,16 +1316,10 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 //		break;
 
 	case REB_BITSET:
-		// // uses always construction syntax
-		// Emit(mold, "#(T ", value);
-		// Mold_Bitset(value, mold);
-		// Append_Byte(mold->series, ')');
-		// break;
-		// Above code makes some problem when preprocessing Rebol source!
-		// So reverting back to the old result...
-		Pre_Mold(value, mold); // #[bitset! or make bitset!
+		// uses always construction syntax
+		Emit(mold, "#(T ", value);
 		Mold_Bitset(value, mold);
-		End_Mold(mold);
+		Append_Byte(mold->series, ')');
 		break;
 
 	case REB_IMAGE:

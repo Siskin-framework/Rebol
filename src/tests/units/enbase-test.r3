@@ -35,6 +35,18 @@ Rebol [
 	--test-- "enbase-64" --assert #{00FF00} = debase enbase next bin 64 64
 ===end-group===
 
+===start-group=== "enbase integer"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2667
+	--test-- "enbase-2"
+		--assert "00010111" == enbase 2#00010111 2
+		--assert "0000000100000000" == enbase 256 2
+	--test-- "enbase-16"
+		--assert   "17" == enbase 0#17 16
+		--assert "01FF" == enbase 0#01FF 16
+	--test-- "enbase-64"
+		--assert "AQA=" == enbase 256 64
+===end-group===
+
 ===start-group=== "enbase/flat"
 	bin: read/binary %units/files/rbgw.gif
 	--test-- "enbase/flat 2"
@@ -146,8 +158,11 @@ AAACAAIAAAMDCCGTADs=}
 
 ===end-group===
 
-===start-group=== "debase 2"
-
+===start-group=== "en/debase 2"
+	--test-- "enbase 2"
+		--assert (enbase to binary! 5 2)
+			== {0000000000000000000000000000000000000000000000000000000000000101} ;no LF
+	
 	--test-- "debase 2 1"          
 		--assert strict-equal? 
 			"^(04)^(01)" 

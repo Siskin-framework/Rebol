@@ -287,8 +287,8 @@ static void Close_StdIO_Local(void)
 	GetConsoleTitle((LPWSTR)pszOldWindowTitle, MY_BUFSIZE>>1); // size is in wide chars, not bytes!
 
 	// Format a "unique" NewWindowTitle.
-	wsprintf((LPWSTR)pszNewWindowTitle, (LPCWSTR)"%d/%d",
-		GetTickCount(),
+	wsprintf((LPWSTR)pszNewWindowTitle, L"%llu/%d",
+		GetTickCount64(),
 		GetCurrentProcessId());
 
 	// Change current window title.
@@ -535,10 +535,10 @@ static size_t Write_UTF8_To_Console(const char *utf8, size_t utf8_len, size_t of
 				else { // for Windows SubSystem - must be converted to Win32 wide-char format
 					//if found, write to the console content before it starts, else everything
 					if (cp) {
-						len = Write_UTF8_To_Console(cs_cast(bp), cp-bp, 0, hOutput);
+						len = AS_REBLEN(Write_UTF8_To_Console(cs_cast(bp), cp-bp, 0, hOutput));
 					}
 					else {
-						len = Write_UTF8_To_Console(cs_cast(bp), ep-bp, 0, hOutput);
+						len = AS_REBLEN(Write_UTF8_To_Console(cs_cast(bp), ep-bp, 0, hOutput));
 						bp = ep;
 					}
 					if (len < 0) {
@@ -557,7 +557,7 @@ static size_t Write_UTF8_To_Console(const char *utf8, size_t utf8_len, size_t of
 				ok = WriteFile(hOutput, req->data, req->length, &total, 0);
 			}
 			else {
-				len = Write_UTF8_To_Console(cs_cast(req->data), req->length, req->actual, hOutput);
+				len = AS_REBLEN(Write_UTF8_To_Console(cs_cast(req->data), req->length, req->actual, hOutput));
 				if (len < 0) {
 					req->error = GetLastError();
 					return DR_ERROR;

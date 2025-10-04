@@ -23,7 +23,7 @@ func: funco [
 ]
 
 ;- some shortcuts (aliases)
-~: system/options/home
+~: system/options/data
 codecs: :system/codecs 
 keys-of: :words-of ; as it sounds better when used with some objects
 

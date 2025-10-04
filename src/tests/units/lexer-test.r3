@@ -237,6 +237,68 @@ Rebol [
 
 ===end-group===
 
+
+===start-group=== "Literal none"
+;@@ https://github.com/Oldes/Rebol-issues/issues/2669
+	--test-- "/_"
+		--assert all [
+			block? blk: transcode/error "/_"
+			word? first blk   ;== /
+			none? second blk  ;== _
+		]
+		--assert all [
+			block? blk: transcode/error "/_/_"
+			5 = length? blk
+			word? first blk   ;== /
+			none? second blk  ;== _
+		]
+		--assert all [
+			block? blk: transcode/error "/__"
+			refinement? first blk ;== /__
+		]
+		--assert all [
+			block? blk: transcode/error "/a_"
+			refinement? first blk
+		]
+	--test-- "'_"
+		--assert all [
+			error? e: transcode/error/one "'_"
+			e/id = 'invalid
+			e/arg1 = "word-lit"
+		]
+		--assert all [
+			error? e: transcode/error/one "'_[]"
+			e/id = 'invalid
+			e/arg1 = "word-lit"
+		]
+		--assert lit-word? transcode/error/one "'__"
+	--test-- ":_"
+		--assert all [
+			error? e: transcode/error/one ":_"
+			e/id = 'invalid
+			e/arg1 = "word-get"
+		]
+		--assert all [
+			error? e: transcode/error/one ":_[]"
+			e/id = 'invalid
+			e/arg1 = "word-get"
+		]
+		--assert get-word? transcode/error/one ":__"
+	--test-- "_:"
+		--assert all [
+			error? e: transcode/error/one "_:"
+			e/id = 'invalid
+			e/arg1 = "word-set"
+		]
+		--assert all [
+			error? e: transcode/error/one "_:[]"
+			e/id = 'invalid
+			e/arg1 = "word-set"
+		]
+		--assert set-word? transcode/error/one "__:"
+===end-group===
+
+
 ===start-group=== "Special arrow-like words"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1302
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1318
@@ -563,8 +625,11 @@ Rebol [
 	--test-- "sign-before-block"	--assert  [- []] = (load {-[]})
 	;and can be used correctly in charsets
 	--test-- "lexer-charset-with-tight-range"
-		--assert "make bitset! #{0000000000000000000000007FFFFFE0}" = mold charset [#"a"-#"z"] ;this failed before fix of #2319
-		--assert "make bitset! #{0000000000000000000000007FFFFFE0}" = mold charset [#"a" - #"z"]
+		--assert all [
+			bitset? b1: try load {charset [#"a"-#"z"]} ;this failed before fix of #2319
+			bitset? b2: try load {charset [#"a" - #"z"]}
+			b1 = b2
+		]
 
 ===end-group===
 
@@ -669,6 +734,14 @@ Rebol [
  		--assert logic? transcode/one {#(false)}
  		--assert none?  transcode/one {#(none)}
  		--assert unset? transcode/one {#(unset)}
+
+ 	--test-- "bitset!"
+ 	 	--assert bitset? transcode/one/error {#(bitset! #{FF})}
+ 	 	--assert bitset? transcode/one/error {#(bitset! not #{FF})}
+ 		--assert  error? transcode/one/error {#(bitset! foo)}
+ 		--assert  error? transcode/one/error {#(bitset! #{FF} 1)}          ;; this used to be legal!
+ 		--assert  error? transcode/one/error {#(bitset! #{FF} #{FF})}      ;; this used to be legal!
+ 		--assert  error? transcode/one/error {#(bitset! [not bits #{FF}])} ;; this used to be legal!
 
 ===end-group===
 

@@ -3,7 +3,7 @@ REBOL [
 	Type:    module
 	Options: [delay]
 	Exports: [process-source]
-	Version: 1.1.4
+	Version: 1.1.6
 	Title:   "Prebol - Official REBOL Preprocessor"
 	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/modules/prebol.reb
 	Author: ["Carl Sassenrath" "Holger Kruse" "Oldes"]
@@ -62,7 +62,7 @@ REBOL [
 
 error: func [msg] [
 	if block? msg [msg: reform msg]
-	sys/log/error 'prebol msg
+	sys/log/error 'PREBOL msg
 	halt
 ]
 
@@ -89,31 +89,31 @@ process-source: func [
 
 	include-cmds: [
 		#include [ ; REBOL code or data or loaded images or sounds.
-			data: load/all file
-			if data/1 = 'rebol [
-				header: make object! [
-					title: ""
-					author: ""
-				]
-				header: make header data/2
-				remove/part data 2
+			data: load/header file
+			if header: take data [
 				if include-source-comment? [
-					insert data compose [
-comment (rejoin [{
-#### Include: } mold file {
-#### Title:   } mold header/title  {
-#### Author:  } mold header/author {
-----}])
-]
+					if :header/author [
+						insert data compose [
+							comment (join {## Author:  } mold :header/author)
+						]
+					]
+					if :header/title [
+						insert data compose [
+							comment (join {## Title:   } mold :header/title)
+						]
+					]
+					insert insert data compose [
+						comment (join {## Include: } mold file)
+					]
 					insert tail data compose [
-comment (rejoin [{---- end of include } mold file { ----}])
-]
+						comment (join {-- End of:  } mold file)
+					]
 				]
 			]
 			data ; return it
 		]
 		#include-string [ ; Raw text data string
-			read file
+			read/string file
 		]
 		#include-binary [ ; Raw binary data (unloaded images, sounds).
 			read/binary file
@@ -145,6 +145,8 @@ comment (rejoin [{---- end of include } mold file { ----}])
 				if paren? :file [
 					file: do-expr to block! :file
 				]
+
+				sys/log/info 'PREBOL ["Including file:" as-green file]
 
 				; Include requires a file argument:
 				if not file? file [error ["Invalid" mold cmd "file expression:" mold file]]

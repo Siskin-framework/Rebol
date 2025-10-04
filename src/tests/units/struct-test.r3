@@ -46,7 +46,7 @@ if system/version >= 3.19.1 [
 	--assert (mold/all/flat u64) = "#(struct! [a [uint64!]] [a: 0])"
 	--assert (mold/all/flat f32) = "#(struct! [a [float32!]] [a: 0.0])"
 	--assert (mold/all/flat f64) = "#(struct! [a [float64!]] [a: 0.0])"
-	--assert (mold/all/flat w)   = "#(struct! [a [word!]] [a: #(none)])"
+	--assert (mold/all/flat w)   = "#(struct! [a [word!]] [a: _])"
 
 --test-- "Struct single value (dimensional) construction"
 	--assert not error? try [
@@ -95,7 +95,7 @@ if system/version >= 3.19.1 [
 	--assert (mold/all/flat u64x2) = "#(struct! [a [uint64! [2]]] [a: [0 0]])"
 	--assert (mold/all/flat f32x2) = "#(struct! [a [float32! [2]]] [a: [0.0 0.0]])"
 	--assert (mold/all/flat f64x2) = "#(struct! [a [float64! [2]]] [a: [0.0 0.0]])"
-	--assert (mold/all/flat wx2)   = "#(struct! [a [word! [2]]] [a: [#(none) #(none)]])"
+	--assert (mold/all/flat wx2)   = "#(struct! [a [word! [2]]] [a: [_ _]])"
 
 --test-- "Resolving multi-dimensional value"
 	;; vectors for numeric values

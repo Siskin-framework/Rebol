@@ -141,6 +141,7 @@ Rebol [
 	--assert     none? find/match/tail #{0001} #{01}
 	--assert     none? find #{000102} #{03}
 	--assert     none? find/tail #{000102} #{03}
+	--assert #{FF00} = find/last #{FF00FF00FF00} #{FF}
 
 --test-- "FIND binary! char!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1161
@@ -157,6 +158,7 @@ Rebol [
 --test-- "FIND string! tag!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1160
 	--assert "<a>"  = find "<a>" <a>
+	--assert "<a>"  = find "<<a>" <a>
 	--assert "b"    = find/tail "<a>b" <a>
 	--assert "<a>3" = find/last "1<a>2<a>3" <a>
 	--assert "<a>b" = find/match "<a>b" <a>
@@ -167,6 +169,22 @@ Rebol [
 	--assert "<a>b" = find/skip "aa<a>b" <a> 2
 	--assert "<A>"  = find/case "<a><A>" <A>
 	--assert "<a href=''>" = find "foo<a href=''>" <a href=''>
+	--assert "<a>x" = find/skip "x<a><b>x<a>x" <a> 4
+
+--test-- "FIND string! string!"
+	--assert "<a>"  = find "<a>" "<a>"
+	--assert "<a>"  = find "<<a>" "<a>"
+	--assert "b"    = find/tail "<a>b" "<a>"
+	--assert "<a>3" = find/last "1<a>2<a>3" "<a>"
+	--assert "<a>b" = find/match "<a>b" "<a>"
+	--assert "b"    = find/match/tail "<a>b" "<a>"
+	--assert "<a>b" = find/match next "a<a>b" "<a>"
+	--assert "<a>b" = find/reverse tail "a<a>b" "<a>"
+	--assert none?    find/skip "a<a>b" "<a>" 2
+	--assert "<a>b" = find/skip "aa<a>b" "<a>" 2
+	--assert "<A>"  = find/case "<a><A>" "<A>"
+	--assert "<a href=''>" = find "foo<a href=''>" "<a href=''>"
+	--assert "<a>x" = find/skip "x<a><b>x<a>x" "<a>" 4
 
 --test-- "FIND %file %file"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/624
@@ -2753,7 +2771,7 @@ try/with [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/400
 	--assert "123" = union "12" "13"
 --test-- "union with none and unset"
-	--assert [#(none) #(unset)] = union [#(none)] [#(unset)]
+	--assert [_ #(unset)] = union [#(none)] [#(unset)]
 
 --test-- "union/skip"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2520

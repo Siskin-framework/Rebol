@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.19.5
+version: 3.19.8
 
 #if Linux?   [ defines: TO_LINUX   ]
 #if macOS?   [ defines: TO_MACOS   ]
@@ -693,6 +693,7 @@ include-cryptography: [
 	config: MBEDTLS_ENTROPY_C    ; The platform-specific entropy code.
 	config: MBEDTLS_OID_C        ; Required for RSA
 	config: MBEDTLS_PKCS1_V15
+	config: MBEDTLS_PKCS1_V21
 
 	core-files: [
 		%core/n-crypt.c

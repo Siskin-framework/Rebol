@@ -417,6 +417,7 @@ Rebol [
 
 	--test-- "find tag!"
 		--assert "<b>🙂čx" == find "ač<b>🙂čx" <b>
+		--assert "<b>č" == find "🙂<<b>č" <b>
 		--assert "<🙂>čx" == find "ačb<🙂>čx" <🙂>
 		--assert "<b🙂>čx" == find "ač<b🙂>čx" <b🙂>
 		--assert "🙂čx" == find/tail "ač<b>🙂čx" <b>
@@ -425,6 +426,7 @@ Rebol [
 		--assert "<🙂>čx" == find/match "<🙂>čx" <🙂>
 		--assert none? find/match "a<🙂>čx" <🙂>
 		--assert "<b>čx" == find/last "a<b>🙂<b>čx" <b>
+		--assert "<a>🙂" == find/skip "🙂<a><b>🙂<a>🙂" <a> 4
 
 	--test-- "find bitset!"
 		bits: charset #"x"

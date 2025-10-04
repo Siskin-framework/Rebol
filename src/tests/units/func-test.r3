@@ -101,6 +101,7 @@ Rebol [
 
 --test-- "apply :do [:func]"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1950
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2135
 	--assert 2 = try [apply :do [:add 1 1]]
 
 --test-- "apply 'path/to/func []"

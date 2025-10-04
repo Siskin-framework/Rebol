@@ -265,6 +265,7 @@ static REBDEC Query_Vector_Median(REBSER *vect) {
 	// Make a vector copy, because sorting modifies
 	sorted = Copy_Series(vect);
 	sorted->size = vect->size; // attributes
+	ASSERT1(type < VT_MAX, RP_ASSERTS);
 	reb_qsort(SERIES_DATA(sorted), len, VECT_BYTE_SIZE(type), compares[type]);
 
 	median = get_vect_decimal(type, SERIES_DATA(sorted), len/2);
@@ -902,7 +903,7 @@ return_number:
 	REBCNT idx = VAL_INDEX(vect);
 	REBCNT skp = VECT_BYTE_SIZE(type);
 	REBYTE *data = VAL_SERIES(vect)->data + (idx * skp);
-
+	ASSERT1(type < VT_MAX, RP_ASSERTS);
 	reb_qsort(data, len, skp, reversed ? compares_rev[type] : compares[type]);
 }
 
@@ -1556,7 +1557,7 @@ bad_make:
 	if (IS_VECTOR(src_val)) {
 		REBLEN index = MIN(VAL_TAIL(src_val), VAL_INDEX(src_val));
 		REBLEN part = VAL_TAIL(src_val) - index;
-		if (action != A_CHANGE && GET_FLAG(flags, AN_PART) && dst_len < part)
+		if (action != A_CHANGE && GET_FLAG(flags, AN_PART) && dst_len < AS_INT(part))
 			part = dst_len;
 		if (type == VECT_TYPE(VAL_SERIES(src_val))) {
 			// same vector types...
@@ -1578,7 +1579,7 @@ bad_make:
 		src_ser = VAL_SERIES(src_val);
 		src_idx = VAL_INDEX(src_val);
 		src_len = (VAL_TAIL(src_val) - src_idx);
-		if (action != A_CHANGE && GET_FLAG(flags, AN_PART) && dst_len < src_len)
+		if (action != A_CHANGE && GET_FLAG(flags, AN_PART) && dst_len < AS_INT(src_len))
 			src_len = dst_len;
 		src_len /= bpv;
 		if (src_len == 0) Trap1(RE_INVALID_DATA, src_val);

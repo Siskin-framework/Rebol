@@ -45,7 +45,10 @@ make-banner: func [
 	str
 ]
 
-if #"/" <> first system/options/home [
+if all [
+    system/options/home
+    #"/" <> first system/options/home
+][
 	;make sure that home directory is absolute on all platforms
 	system/options/home: clean-path join what-dir system/options/home
 ]
@@ -67,7 +70,8 @@ sys/boot-banner: make-banner [
 	]
 	= Build:    system/build/date
 	-
-	= Home:     [to-local-file system/options/home]
+	= Home: [to-local-file any [system/options/home %"_"]]
+	= Data: [to-local-file any [system/options/data %"_"]]
 	-
 ]
 

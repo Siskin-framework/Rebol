@@ -409,8 +409,8 @@ debase: native [
 ]
 
 enbase: native [
-	{Encodes a string into a binary-coded string.}
-	value [binary! any-string!] {If string, will be UTF8 encoded}
+	{Encodes data into a textual representation using a specified binary base.}
+	value [binary! any-string! integer!] {Non-binary values are first converted to binary}
 	base  [integer!] {Binary base to use: 85, 64, 36, 16, or 2}
 	/url  {Base 64 Encoding with URL and Filename Safe Alphabet}
 	/part {Limit the length of the input}

@@ -558,15 +558,15 @@ Rebol [
 		obj:  object [a: 3 b: 4]
 		obj2: object [z: 0 a: none b: 7]
 		--assert obj2 = set obj obj2
-		--assert "make object! [a: #(none) b: 7]" = mold/flat obj
-		--assert "make object! [z: 0 a: #(none) b: 7]" = mold/flat obj2
+		--assert "make object! [a: _ b: 7]" = mold/flat obj
+		--assert "make object! [z: 0 a: _ b: 7]" = mold/flat obj2
 
 	--test-- "set-11"
 		obj:  object [a: 3 b: 4]
 		obj2: object [z: 0 a: none b: 7]
 		--assert obj2 = set/some obj obj2
 		--assert "make object! [a: 3 b: 7]" = mold/flat obj
-		--assert "make object! [z: 0 a: #(none) b: 7]" = mold/flat obj2
+		--assert "make object! [z: 0 a: _ b: 7]" = mold/flat obj2
 
 	--test-- "set-12"
 		o1: object [a: 1 b: 2 ]

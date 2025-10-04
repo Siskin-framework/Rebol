@@ -471,9 +471,9 @@
 
 	if (IS_UTF8_SERIES(ser1)) {
 		while (index >= head && index < tail) {
-			if (str1[index] == '<') {
-				index++;
-				str1 = BIN_SKIP(ser1, index);
+			str1 = BIN_SKIP(ser1, index);
+			if (str1[0] == '<') {
+				str1++;
 				str2 = BIN_SKIP(ser2, index2);
 				end = str1 + len;
 				while (str1 < end) {
@@ -491,8 +491,8 @@
 				if (str1 == end) {
 					c1 = UTF8_Get_Codepoint(str1);
 					if (c1 == '>') {
-						if (flags & AM_FIND_TAIL) return index + len + 1;
-						return index - 1;
+						if (flags & AM_FIND_TAIL) return index + len + 2;
+						return index;
 					}
 				}
 			}
@@ -502,28 +502,32 @@
 	}
 	else { // ASCII version
 		if (IS_UTF8_SERIES(ser2)) return NOT_FOUND;
-		for (; index >= head && index < tail; index += skip) {
-			if (str1[index] == '<') {
-				index++;
-				for (n = 0; n < len; n++) {
-					c1 = str1[index + n];
-					c2 = str2[index2 + n];
+		while (index >= head && index < tail) {
+			str1 = BIN_SKIP(ser1, index);
+			if (str1[0] == '<') {
+				str1++;
+				str2 = BIN_SKIP(ser2, index2);
+				end = str1 + len;
+				while (str1 < end) {
+					c1 = str1[0];
+					c2 = str2[0];
 					if (uncase && c1 < UNICODE_CASES && c2 < UNICODE_CASES) {
 						if (LO_CASE(c1) != LO_CASE(c2)) break;
 					}
 					else {
 						if (c1 != c2) break;
 					}
+					++str1; ++str2;
 				}
-				if (n == len) {
-					c1 = str1[index + n];
-					if (c1 == '>') {
-						if (flags & AM_FIND_TAIL) return index + len + 1;
-						return index - 1;
+				if (str1 == end) {
+					if (str1[0] == '>') {
+						if (flags & AM_FIND_TAIL) return index + len + 2;
+						return index;
 					}
 				}
 			}
 			if (flags & AM_FIND_MATCH) break;
+			index += skip;
 		}
 	}
 	return NOT_FOUND;

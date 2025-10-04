@@ -106,6 +106,7 @@ catalog: object [
 	]
 	bitsets: object [
 		crlf:          #(bitset! #{0024})                             ;charset "^/^M"
+		not-crlf:      complement crlf
 		space:         #(bitset! #{0040000080})                       ;charset " ^-"
 		whitespace:    #(bitset! #{0064000080})                       ;charset "^/^M^- "
 		numeric:       #(bitset! #{000000000000FFC0})                 ;0-9
