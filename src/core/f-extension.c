@@ -188,7 +188,7 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 		// RXIARG is too small to hold all neccessary values...
 		// so we must use central struct spec container when creating a struct value from external source
 		// Avoid returning structs from the extension unless they are newly created, to prevent this lookup.
-		REBSER *spec = RL_STRUCT_SPEC(arg.structure.id);
+		REBSER *spec = RL_Struct_Spec(arg.structure.id);
 		if (!spec) {
 			SET_NONE(val); // or error instead?!
 		}

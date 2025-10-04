@@ -1291,7 +1291,9 @@ RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
 	return To_REBOL_Path(src, len, uni, 0);
 }
 
-RL_API REBSER* RL_Struct_Spec(REBCNT id)
+/***********************************************************************
+**
+*/	RL_API REBSER* RL_Struct_Spec(REBCNT id)
 /*
 **	Get struct specification.
 **
@@ -1310,7 +1312,9 @@ RL_API REBSER* RL_Struct_Spec(REBCNT id)
 	return VAL_SERIES(VAL_BLK_SKIP(struct_specs, n));
 }
 
-RL_API REBCNT RL_Encode_UTF8_Char(REBYTE *dst, REBU32 chr)
+/***********************************************************************
+**
+*/	RL_API REBCNT RL_Encode_UTF8_Char(REBYTE *dst, REBU32 chr)
 /*
 **	Converts a single char to UTF8 code-point.
 **
