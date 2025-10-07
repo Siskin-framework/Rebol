@@ -190,3 +190,50 @@ request-dir: function/with [
     dir
 
 ] :applescript-ctx
+
+
+request-color: function/with [
+    "Prompt for a color using the macOS color picker dialog"
+    /default  "Default RGB color"
+     color    [tuple!]
+][
+	defaultColor: any [
+		all [default to-local-color color]
+		defaultColor
+	]
+
+    ;; Build the AppleScript command to prompt for a color
+    cmd: reword script-color self
+    ;; Initialize output and error buffers
+    clear out
+    clear err
+
+    ;; Execute the AppleScript via shell, capturing standard output and error
+    call/shell/output/error cmd :out :err
+
+    ;; Convert the comma-separated RGB list into a Rebol block of integers
+    transcode trim/with copy out ",^/"
+][
+    ;; Buffers for shell execution results
+    out: ""
+    err: ""
+
+    ;; Default RGB color as comma-separated string (red)
+    defaultColor: "65535, 0, 0"
+
+    ;; AppleScript to open the macOS color picker dialog
+    script-color: 
+    %%{osascript -e 'tell application "System Events" to activate' \
+      -e 'set chosenColor to choose color default color {$defaultColor}' \
+      -e 'return chosenColor'
+    }%%
+
+    to-local-color: func[c][
+    	rejoin [
+    		to-32bit c/1 ", "
+    		to-32bit c/2 ", "
+    		to-32bit c/3
+    	]
+    ]
+    to-32bit: func[v][to integer! round(v / 255 * 65535)]
+]
