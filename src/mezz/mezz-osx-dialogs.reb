@@ -13,7 +13,7 @@ REBOL [
 	Name:    osx-dialogs
 	Version: 1.0.0
 	type: module
-	Exports: [request-dir request-file]
+	Exports: [request-dir request-file request-color]
 ]
 
 ;; Remove the native (not implemented) placeholders
@@ -170,7 +170,7 @@ request-dir: function/with [
     self/title: any [text "Select a folder"]
 
     ;; Set default location for file dialog
-    self/defaultLoc: double-escape any [
+    defaultLoc: double-escape any [
         all [name to-real-file name]  ;; Use provided file/directory if given
         all [keep last-dir]
         what-dir                      ;; Otherwise use current directory
@@ -212,7 +212,8 @@ request-color: function/with [
     call/shell/output/error cmd :out :err
 
     ;; Convert the comma-separated RGB list into a Rebol block of integers
-    transcode trim/with copy out ",^/"
+    out: trim/with out ",^/"
+    either empty? out [none][transcode out]
 ][
     ;; Buffers for shell execution results
     out: ""
