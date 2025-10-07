@@ -196,6 +196,7 @@ request-color: function/with [
     "Prompt for a color using the macOS color picker dialog"
     /default  "Default RGB color"
      color    [tuple!]
+    /rgb16    "Return block with 16bit RGB values instead"
 ][
 	defaultColor: any [
 		all [default to-local-color color]
@@ -213,7 +214,9 @@ request-color: function/with [
 
     ;; Convert the comma-separated RGB list into a Rebol block of integers
     out: trim/with out ",^/"
-    either empty? out [none][transcode out]
+    if empty? out [return _]
+    clr: transcode out
+    either rgb16 [clr][to-rebol-color clr]
 ][
     ;; Buffers for shell execution results
     out: ""
@@ -229,12 +232,19 @@ request-color: function/with [
       -e 'return chosenColor'
     }%%
 
+    to-16bit: func[v][to integer! round(v / 255 * 65535)]
     to-local-color: func[c][
     	rejoin [
-    		to-32bit c/1 ", "
-    		to-32bit c/2 ", "
-    		to-32bit c/3
+    		to-16bit c/1 ", "
+    		to-16bit c/2 ", "
+    		to-16bit c/3
     	]
     ]
-    to-32bit: func[v][to integer! round(v / 255 * 65535)]
+    to-rebol-color: func[b][
+        to tuple! reduce [
+            to integer! round (b/1 / 65535 * 255)
+            to integer! round (b/2 / 65535 * 255)
+            to integer! round (b/3 / 65535 * 255)
+        ]
+    ]
 ]
