@@ -1,25 +1,25 @@
 REBOL [
-	System: "REBOL [R3] Language Interpreter and Run-time Environment"
-	Rights: {
-		Copyright 2012 REBOL Technologies
-		Copyright 2012-2025 Rebol Open Source Contributors
-		REBOL is a trademark of REBOL Technologies
-	}
-	License: {
-		Licensed under the Apache License, Version 2.0
-		See: http://www.apache.org/licenses/LICENSE-2.0
-	}
-	Title:  "macOS AppleScript dialogs"
-	Name:    osx-dialogs
-	Version: 1.0.0
-	type: module
-	Exports: [request-dir request-file request-color]
+    System: "REBOL [R3] Language Interpreter and Run-time Environment"
+    Rights: {
+        Copyright 2012 REBOL Technologies
+        Copyright 2012-2025 Rebol Open Source Contributors
+        REBOL is a trademark of REBOL Technologies
+    }
+    License: {
+        Licensed under the Apache License, Version 2.0
+        See: http://www.apache.org/licenses/LICENSE-2.0
+    }
+    Title:  "macOS AppleScript dialogs"
+    Name:    osx-dialogs
+    Version: 1.0.0
+    type: module
+    Exports: [request-dir request-file request-color]
 ]
 
 ;; Remove the native (not implemented) placeholders
 do in lib [
-	unset 'request-dir
-	unset 'request-file
+    unset 'request-dir
+    unset 'request-file
 ]
 
 applescript-ctx: make object! [
@@ -198,10 +198,10 @@ request-color: function/with [
      color    [tuple!]
     /rgb16    "Return block with 16bit RGB values instead"
 ][
-	defaultColor: any [
-		all [default to-local-color color]
-		defaultColor
-	]
+    defaultColor: any [
+        all [default to-local-color color]
+        defaultColor
+    ]
 
     ;; Build the AppleScript command to prompt for a color
     cmd: reword script-color self
@@ -232,19 +232,21 @@ request-color: function/with [
       -e 'return chosenColor'
     }%%
 
-    to-16bit: func[v][to integer! round(v / 255 * 65535)]
-    to-local-color: func[c][
-    	rejoin [
-    		to-16bit c/1 ", "
-    		to-16bit c/2 ", "
-    		to-16bit c/3
-    	]
+    ;; Convert a Rebol 8-bit color to macOS 16-bit AppleScript string
+    to-local-color: func[c [tuple!]][
+        ;; Scale channels from 0–255 to 0–65535
+        rejoin [
+            c/1 * 257 ", "
+            c/2 * 257 ", "
+            c/3 * 257
+        ]
     ]
-    to-rebol-color: func[b][
+    to-rebol-color: func[c [block!]][
+        ;; Scale down channels 0–65535 to 0–255
         to tuple! reduce [
-            to integer! round (b/1 / 65535 * 255)
-            to integer! round (b/2 / 65535 * 255)
-            to integer! round (b/3 / 65535 * 255)
+            c/1 / 257
+            c/2 / 257
+            c/3 / 257
         ]
     ]
 ]
