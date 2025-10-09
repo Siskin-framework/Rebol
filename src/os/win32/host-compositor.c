@@ -235,7 +235,8 @@ static REBXYF Zero_Pair = {0, 0};
 /*
 **	Recursively process and compose gob and its children.
 **
-**  NOTE: this function is used internally by OS_Compose_Gob() call only.
+**  NOTE:
+**  This function is used internally only by OS_Compose_Gob call (TO-IMAGE).
 **
 ***********************************************************************/
 {
