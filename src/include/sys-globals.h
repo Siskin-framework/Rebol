@@ -67,6 +67,10 @@ PVAR jmp_buf *Halt_State;	// Pointer to saved CPU state for HALT/QUIT handlers
 PVAR REBCNT	Eval_Signals;	// Signal flags
 
 
+//PVAR REBDEV *Devices[];
+PVAR REBREQ *Std_IO;
+PVAR REBARGS Main_Args;
+
 
 /***********************************************************************
 **

@@ -47,8 +47,6 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
-void Host_Crash(char *reason);
-
 // Temporary globals: (either move or remove?!)
 // O: where it should be moved?
 // O: as the Std_IO_Req is shared with lib (DLL), I'm now storing it also in Host_Lib struct
@@ -108,7 +106,7 @@ static int Fetch_Buf(void)
 
 /***********************************************************************
 **
-*/	REBREQ *Open_StdIO(REBOOL cgi)
+*/	OS_API REBREQ *OS_Open_StdIO(REBOOL cgi)
 /*
 **		Open REBOL's standard IO device. This same device is used
 **		by both the host code and the R3 DLL itself.
@@ -137,7 +135,7 @@ static int Fetch_Buf(void)
 
 /***********************************************************************
 **
-*/	void Close_StdIO(void)
+*/	OS_API void OS_Close_StdIO(void)
 /*
 **		Frees REBOL's standard IO device resources.
 **
@@ -146,10 +144,9 @@ static int Fetch_Buf(void)
 	OS_Free(inbuf);
 }
 
-
 /***********************************************************************
 **
-*/	REBYTE *Get_Str(void)
+*/	RL_API REBYTE *OS_Read_Line(void)
 /*
 **		Get input of a null terminated UTF-8 string.
 **		Divides the input into lines.
@@ -177,7 +174,7 @@ static int Fetch_Buf(void)
 
 /***********************************************************************
 **
-*/	void Put_Str(REBYTE *buf)
+*/	RL_API void OS_Put_Str(REBYTE *buf)
 /*
 **		Outputs a null terminated UTF-8 string.
 **		If buf is larger than StdIO Device allows, error out.

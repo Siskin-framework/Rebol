@@ -169,7 +169,7 @@ enum Transport_Types {
 	*sock = *nsock;
 	//sock->clen = sizeof(*sock);
 	sock->port = port;
-	OS_FREE(nsock); // allocated by dev_net.c (MT issues?)
+	OS_Free(nsock); // allocated by dev_net.c (MT issues?)
 }
 
 /***********************************************************************
@@ -215,14 +215,14 @@ enum Transport_Types {
 			arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
 			val = Obj_Value(spec, STD_PORT_SPEC_NET_PORT);
 
-			if (OS_DO_DEVICE(sock, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, -12);
+			if (OS_Do_Device(sock, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, -12);
 			SET_OPEN(sock);
 
 			// Lookup host name (an extra TCP device step):
 			if (IS_STRING(arg)) {
 				sock->data = VAL_BIN(arg);
 				sock->net.remote_port = IS_INTEGER(val) ? VAL_INT32(val) : 80;
-				result = OS_DO_DEVICE(sock, RDC_LOOKUP);  // sets remote_ip field
+				result = OS_Do_Device(sock, RDC_LOOKUP);  // sets remote_ip field
 				if (result < 0) Trap_Port(RE_NO_CONNECT, port, sock->error);
 				return R_RET;
 			}
@@ -294,7 +294,7 @@ enum Transport_Types {
 		sock->actual = 0;  // Actual for THIS read, not for total.
 
 		//Print("(max read length %d)", sock->length);
-		result = OS_DO_DEVICE(sock, RDC_READ); // recv can happen immediately
+		result = OS_Do_Device(sock, RDC_READ); // recv can happen immediately
 		if (GET_FLAG(sock->modes, RST_UDP && result == 0))
 			VAL_TAIL(arg) += sock->actual;
 		if (result < 0)
@@ -326,7 +326,7 @@ enum Transport_Types {
 		sock->actual = 0;
 
 		//Print("(write length %d)", len);
-		result = OS_DO_DEVICE(sock, RDC_WRITE); // send can happen immediately
+		result = OS_Do_Device(sock, RDC_WRITE); // send can happen immediately
 		if (result < 0) Trap_Port(RE_WRITE_ERROR, port, sock->error);
 		if (result == DR_DONE) SET_NONE(OFV(port, STD_PORT_DATA));
 		break;
@@ -357,7 +357,7 @@ enum Transport_Types {
 
 	case A_CLOSE:
 		if (IS_OPEN(sock)) {
-            if (OS_DO_DEVICE(sock, RDC_CLOSE) < 0) {
+            if (OS_Do_Device(sock, RDC_CLOSE) < 0) {
                 Trap_Port(RE_CANNOT_CLOSE, port, sock->error);
             }
 			SET_CLOSED(sock);
@@ -373,7 +373,7 @@ enum Transport_Types {
 		break;
 
 	case A_OPEN:
-		result = OS_DO_DEVICE(sock, RDC_CONNECT);
+		result = OS_Do_Device(sock, RDC_CONNECT);
 		if (result < 0) Trap_Port(RE_NO_CONNECT, port, sock->error);
 		break;
 		//Trap_Port(RE_ALREADY_OPEN, port);

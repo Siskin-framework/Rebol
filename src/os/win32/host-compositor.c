@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Additional code modifications and improvements:
@@ -65,7 +65,7 @@ static REBXYF Zero_Pair = {0, 0};
 
 /***********************************************************************
 **
-*/ void* OS_Create_Compositor(REBGOB* rootGob, REBGOB* gob)
+*/ OS_API void* OS_Create_Compositor(REBGOB* rootGob, REBGOB* gob)
 /*
 **	Create new Compositor instance.
 **
@@ -110,7 +110,7 @@ static REBXYF Zero_Pair = {0, 0};
 
 /***********************************************************************
 **
-*/ void OS_Destroy_Compositor(REBCMP* ctx)
+*/ OS_API void OS_Destroy_Compositor(REBCMP* ctx)
 /*
 **	Destroy existing Compositor instance.
 **
@@ -129,7 +129,7 @@ static REBXYF Zero_Pair = {0, 0};
 
 /***********************************************************************
 **
-*/ REBYTE* OS_Get_Window_Buffer(REBCMP* ctx)
+*/ OS_API REBYTE* OS_Get_Window_Buffer(REBCMP* ctx)
 /*
 **	Provide pointer to window compositing buffer.
 **  Return NULL if buffer not available of call failed.
@@ -144,7 +144,7 @@ static REBXYF Zero_Pair = {0, 0};
 
 /***********************************************************************
 **
-*/ void OS_Release_Window_Buffer(REBCMP* ctx)
+*/ OS_API void OS_Release_Window_Buffer(REBCMP* ctx)
 /*
 **	Release the window compositing buffer acquired by Os_Get_Window_Buffer().
 **
@@ -157,7 +157,7 @@ static REBXYF Zero_Pair = {0, 0};
 
 /***********************************************************************
 **
-*/ REBOOL OS_Resize_Window_Buffer(REBCMP* ctx, REBGOB* winGob)
+*/ OS_API REBOOL OS_Resize_Window_Buffer(REBCMP* ctx, REBGOB* winGob)
 /*
 **	Resize the window compositing buffer.
 **
@@ -350,7 +350,7 @@ static REBXYF Zero_Pair = {0, 0};
 
 /***********************************************************************
 **
-*/ void OS_Compose_Gob(REBCMP* ctx, REBGOB* winGob, REBGOB* gob, REBOOL only)
+*/ OS_API void OS_Compose_Gob(REBCMP* ctx, REBGOB* winGob, REBGOB* gob, REBOOL only)
 /*
 **	Compose content of the specified gob. Main compositing function.
 **
@@ -432,7 +432,7 @@ static REBXYF Zero_Pair = {0, 0};
 
 /***********************************************************************
 **
-*/  REBSER* OS_Gob_To_Image(REBGOB *gob)
+*/  OS_API REBSER* OS_Gob_To_Image(REBGOB *gob)
 /*
 **		Render gob into an image.
 **
@@ -461,7 +461,7 @@ static REBXYF Zero_Pair = {0, 0};
 
 /***********************************************************************
 **
-*/ void OS_Blit_Window(REBCMP* ctx)
+*/ OS_API void OS_Blit_Window(REBCMP* ctx)
 /*
 **	Blit window content on the screen.
 **
@@ -480,7 +480,7 @@ static REBXYF Zero_Pair = {0, 0};
 
 /***********************************************************************
 **
-*/	void OS_Blit_Gob_Color(REBGOB *gob, REBCMP* ctx, REBXYI abs_oft, REBXYI clip_oft, REBXYI clip_siz)
+*/	OS_API void OS_Blit_Gob_Color(REBGOB *gob, REBCMP* ctx, REBXYI abs_oft, REBXYI clip_oft, REBXYI clip_siz)
 /*
 **		Fill color rectangle, a pixel at a time.
 **
@@ -507,7 +507,7 @@ static REBXYF Zero_Pair = {0, 0};
 
 /***********************************************************************
 **
-*/	void OS_Blit_Gob_Image(REBGOB *gob, REBCMP* ctx, REBXYI abs_oft, REBINT top, REBINT left, REBINT bottom, REBINT right)
+*/	OS_API void OS_Blit_Gob_Image(REBGOB *gob, REBCMP* ctx, REBXYI abs_oft, REBINT top, REBINT left, REBINT bottom, REBINT right)
 /*
 **		This routine copies a rectangle from a PAN structure to the
 **		current output device.

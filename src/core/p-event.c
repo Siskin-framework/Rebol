@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Contributors
+**  Copyright 2012-2024 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -203,18 +203,18 @@ act_blk:
 
 	case A_OPEN:
 		if (!req) { //!!!
-			req = OS_MAKE_DEVREQ(RDI_EVENT);
+			req = OS_Make_Devreq(RDI_EVENT);
 			if (req) {
 				SET_OPEN(req);
-				OS_DO_DEVICE(req, RDC_CONNECT);		// stays queued
+				OS_Do_Device(req, RDC_CONNECT);		// stays queued
 			}
 		}
 		break;
 
 	case A_CLOSE:
-		OS_ABORT_DEVICE(req);
-		OS_DO_DEVICE(req, RDC_CLOSE);
-		OS_FREE(req);
+		OS_Abort_Device(req);
+		OS_Do_Device(req, RDC_CLOSE);
+		OS_Free(req);
 		req = 0;
 		break;
 

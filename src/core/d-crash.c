@@ -119,7 +119,7 @@ enum Crash_Msg_Nums {
 		OS_CRASH(s1, s2);
 	}
 #else
-	OS_CRASH(Crash_Msgs[CM_ERROR], buf);
+	OS_Crash(Crash_Msgs[CM_ERROR], buf);
 #endif
 	// will not reach here...
 	DEAD_END;

@@ -71,7 +71,7 @@
 	}
 #endif
 
-	while ((result = OS_DO_DEVICE(dir, RDC_READ)) == 0 && !GET_FLAG(dir->flags, RRF_DONE)) {
+	while ((result = OS_Do_Device(dir, RDC_READ)) == 0 && !GET_FLAG(dir->flags, RRF_DONE)) {
 		len = (REBCNT)LEN_STR(file.file.path);
 		if (GET_FLAG(file.modes, RFM_DIR)) len++;
 		name = Copy_OS_Str(file.file.path, len);
@@ -212,7 +212,7 @@ create:
 		if (IS_OPEN(dir)) Trap1(RE_ALREADY_OPEN, path); // already open
 		Init_Dir_Path(dir, path, 0, POL_WRITE | REMOVE_TAIL_SLASH); // Sets RFM_DIR too
 		SET_NONE(data);
-		result = OS_DO_DEVICE(dir, RDC_CREATE);
+		result = OS_Do_Device(dir, RDC_CREATE);
 		if (result < 0) Trap1(RE_NO_CREATE, path);
 		SET_OPEN(dir);
 		if (action == A_CREATE) return R_ARG2;
@@ -223,7 +223,7 @@ create:
 		// Convert file name to OS format:
 		if (!(target = Value_To_OS_Path(D_ARG(2), TRUE))) Trap1(RE_BAD_FILE_PATH, D_ARG(2));
 		dir->data = BIN_DATA(target);
-		OS_DO_DEVICE(dir, RDC_RENAME);
+		OS_Do_Device(dir, RDC_RENAME);
 		Free_Series(target);
 		if (dir->error) Trap1(RE_NO_RENAME, path);
 		break;
@@ -231,7 +231,7 @@ create:
 	case A_DELETE:
 		SET_NONE(data);
 		Init_Dir_Path(dir, path, 0, POL_WRITE);
-		result = OS_DO_DEVICE(dir, RDC_DELETE);
+		result = OS_Do_Device(dir, RDC_DELETE);
 		SET_CLOSED(dir);
 		if (result >=  0) return R_ARG2;
 		if (result == -2) return R_FALSE;
@@ -256,7 +256,7 @@ create:
 
 	case A_CLOSE:
 		if (IS_OPEN(dir)) {
-			if (dir->handle) OS_DO_DEVICE(dir, RDC_CLOSE);
+			if (dir->handle) OS_Do_Device(dir, RDC_CLOSE);
 			SET_NONE(data);
 			SET_CLOSED(dir);
 		}
@@ -269,7 +269,7 @@ create:
 		}
 		SET_NONE(data);
 		Init_Dir_Path(dir, path, -1, POL_READ);
-		if (OS_DO_DEVICE(dir, RDC_QUERY) < 0) return R_NONE;
+		if (OS_Do_Device(dir, RDC_QUERY) < 0) return R_NONE;
 		Ret_Query_File(port, dir, D_RET, D_ARG(ARG_QUERY_FIELD));
 		break;
 

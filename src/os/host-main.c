@@ -60,7 +60,7 @@
 #define OS_LIB_TABLE		// include the host-lib dispatch table
 
 #include "reb-host.h"		// standard host include files
-#include "host-lib.h"		// OS host library (dispatch table)
+//#include "host-lib.h"		// OS host library (dispatch table)
 
 #ifdef CUSTOM_STARTUP
 #include "host-init.h"
@@ -68,14 +68,12 @@
 
 /**********************************************************************/
 
-REBARGS Main_Args;
-
 #ifdef COLOR_CONSOLE
 #define PROMPT_STR (REBYTE*)"\x1B[1;31m>>\x1B[1;33m "
 #define RESULT_STR (REBYTE*)"\x1B[32m==\x1B[1;32m "
 #define CONTIN_STR "\x1B[1;31;49m  \x1B[1;33;49m "
 #define CONTIN_POS 11
-#define RESET_COLOR Put_Str(b_cast("\x1B[0m"))
+#define RESET_COLOR OS_Put_Str(b_cast("\x1B[0m"))
 #else
 #define PROMPT_STR (REBYTE*)">> "
 #define RESULT_STR (REBYTE*)"== "
@@ -86,36 +84,16 @@ REBARGS Main_Args;
 
 #ifdef TO_WINDOWS
 #define MAX_TITLE_LENGTH  1024
-HINSTANCE App_Instance = 0;
-HWND      Focused_Window = 0;
+#ifdef REB_VIEW
+extern HWND      Focused_Window;
+#endif
 WCHAR     App_Title[MAX_TITLE_LENGTH]; //will be filled later from the resources file
 #endif
 
-#ifdef REB_GTK
-
-extern void Init_Windows(void);
-
-#endif
 
 #ifdef REB_VIEW
-extern void Init_Windows(void);
 //extern void Init_Graphics(void);
 #endif
-
-//#define TEST_EXTENSIONS
-#ifdef TEST_EXTENSIONS
-extern void Init_Ext_Test(void);	// see: host-ext-test.c
-#endif
-
-// Host bare-bones stdio functs:
-extern REBREQ *Open_StdIO(REBOOL cgi);
-extern void Close_StdIO(void);
-extern void Put_Str(REBYTE *buf);
-extern REBYTE *Get_Str(void);
-
-void Host_Crash(char *reason) {
-	OS_Crash(cb_cast("REBOL Host Failure"), cb_cast(reason));
-}
 
 void Host_Repl(void) {
 //	REBOOL why_alert = TRUE;
@@ -147,12 +125,12 @@ void Host_Repl(void) {
 	while (TRUE) {
 		if (cont_level > 0) {
 			cont_str[CONTIN_POS] = cont_level <= MAX_CONT_LEVEL ? cont_stack[cont_level - 1] : '-';
-			Put_Str(cont_str);
+			OS_Put_Str(cont_str);
 		} else {
-			Put_Str(PROMPT_STR);
+			OS_Put_Str(PROMPT_STR);
 		}
 
-		line = Get_Str();
+		line = OS_Read_Line();
 
 		if (!line) {
 			// "end of stream" - for example on CTRL+C
@@ -319,21 +297,20 @@ cleanup_and_return:
 #ifdef TO_WINDOWS
 
 #ifdef _WINDOWS //use this define with Windows subsystem, by default use console subsystem
-int APIENTRY WinMain(HINSTANCE inst, HINSTANCE prior, LPSTR cmd, int show) {
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE prior, LPSTR cmd, int show) {
 	int argc;
-	REBCHR **argv;
-	App_Instance = inst;
+	char **argv;
 #else
 int main(int argc, char **argv) {
 	// Retrieves the window handle used by the console associated with the calling process
 	HWND hwndC = GetConsoleWindow();
 	// Then we could just get the HINSTANCE:
-	App_Instance = GetModuleHandle(0); // HMODULE=HINSTANCE
+	HINSTANCE hInstance = GetModuleHandle(0); // HMODULE=HINSTANCE
 #endif
 	// Fetch the win32 unicoded program arguments:
 	argv = (char**)CommandLineToArgvW(GetCommandLineW(), &argc);
 	// Use title string as defined in resources file (.rc) with hardcoded ID 101
-	LoadStringW(App_Instance, 101, App_Title, MAX_TITLE_LENGTH);
+	LoadStringW(hInstance, 101, App_Title, MAX_TITLE_LENGTH);
 #if defined(INCLUDE_IMAGE_OS_CODEC) || defined(INCLUDE_AUDIO_DEVICE) 
 	//CoInitialize(0);
 	HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -344,44 +321,29 @@ int main(int argc, char **argv) {
 #endif
 	REBYTE vers[8];
 	REBINT n;
-	REBREQ *std_io;
-	REBOOL cgi;
-
-	Parse_Args(argc, (REBCHR **)argv, &Main_Args);
-
-	cgi = RO_CGI == (Main_Args.options & RO_CGI);
-
-	// Must be done before an console I/O can occur. Does not use reb-lib,
-	// so this device should open even if there are other problems.
-	std_io = Open_StdIO(cgi);  // also sets up interrupt handler
-
-	Host_Lib = &Host_Lib_Init;
+	REBARGS *args;
 
 	vers[0] = 5; // len
 	RL_Version(&vers[0]);
+
+	// Initialize the REBOL library (reb-lib):
+	// !!! Second part will become vers[2] < RL_REV on release!!!
+	if (vers[1] != RL_VER || vers[2] != RL_REV) Host_Crash("Incompatible reb-lib DLL");
+	args = RL_Init(argc, argv);
+	if (!args) Host_Crash("Failed to initialize Rebol library");
 
 #ifdef TO_WINDOWS
 	// Setting title after Open_StdIO, because with Windows subsystem the console is not by default opened.
 	SetConsoleTitle((LPWSTR)App_Title);
 #endif
 
-	// Initialize the REBOL library (reb-lib):
-	if (!CHECK_STRUCT_ALIGN) Host_Crash("Incompatible struct alignment");
-	if (!Host_Lib) Host_Crash("Missing host lib");
-	// !!! Second part will become vers[2] < RL_REV on release!!!
-	if (vers[1] != RL_VER || vers[2] != RL_REV) Host_Crash("Incompatible reb-lib DLL");
-	Host_Lib->std_io = std_io;
-	n = RL_Init(&Main_Args, Host_Lib);
-	if (n == 1) Host_Crash("Host-lib wrong size");
-	if (n == 2) Host_Crash("Host-lib wrong version/checksum");
-
 #ifdef REB_VIEW
-	Init_Windows();
+	OS_Init_Windows(hInstance);
 	//Init_Graphics();
 #endif
 
 #ifdef TEST_EXTENSIONS
-	Init_Ext_Test();
+	OS_Init_Ext_Test();
 #endif
 
 // Call sys/start function. If a compressed script is provided, it will be 
@@ -395,14 +357,14 @@ int main(int argc, char **argv) {
 #endif
 
 	if (
-		!cgi
+		!(args->options & RO_CGI)
 		&& (
-			!Main_Args.script // no script was provided
+			!args->script // no script was provided
 			|| n  < 0         // script halted or had error
-			|| (Main_Args.options & RO_HALT)  // --halt option
+			|| (args->options & RO_HALT)  // --halt option
 		)
 	){
-		if (n < 0 && !(n == -ROF_HALT || Main_Args.options & RO_HALT)) {
+		if (n < 0 && !(args->options & RO_HALT)) {
 			RL_Do_String(b_cast("unless system/options/quiet [print {^[[mClosing in 3s!} wait 3]"), 0, 0);
 			OS_Exit(-n);
 		}

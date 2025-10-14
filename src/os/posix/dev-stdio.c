@@ -173,7 +173,7 @@ static void Close_StdIO_Local(void)
 	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy above
 
 	Close_StdIO_Local();
-	Close_StdIO(); // frees host's input buffer
+	OS_Close_StdIO(); // frees host's input buffer
 
 	CLR_FLAG(dev->flags, RDF_OPEN);
 	return DR_DONE;

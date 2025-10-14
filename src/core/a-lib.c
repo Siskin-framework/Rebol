@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,12 +36,6 @@
 #include "reb-dialect.h"
 #include "reb-ext.h"
 #include "reb-evtypes.h"
-
-// Linkage back to HOST functions. Needed when we compile as a DLL
-// in order to use the OS_* macro functions.
-#ifdef REB_API  // Included by C command line
-REBOL_HOST_LIB *Host_Lib;
-#endif
 
 #include "reb-lib.h"
 
@@ -88,7 +82,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
-*/	RL_API int RL_Init(REBARGS *rargs, void *lib)
+*/	RL_API REBARGS* RL_Init(int argc, char **argv)
 /*
 **	Initialize the REBOL interpreter.
 **
@@ -109,13 +103,13 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 {
 	int marker;
 	REBUPT bounds;
+	if (Std_IO) return &Main_Args;
 
-	Host_Lib = lib;
+	OS_Parse_Args(argc, (REBCHR **)argv, &Main_Args);
 
-	if (Host_Lib->size < HOST_LIB_SIZE) return 1;
-	if (((HOST_LIB_VER << 16) + HOST_LIB_SUM) != Host_Lib->ver_sum) return 2;
+	Std_IO = OS_Open_StdIO(Main_Args.options & RO_CGI);  // also sets up interrupt handler
 
-	bounds = (REBUPT)OS_CONFIG(1, 0);
+	bounds = (REBUPT)OS_Config(1, 0);
 	if (bounds == 0) bounds = (REBUPT)STACK_BOUNDS;
 
 #ifdef OS_STACK_GROWS_UP
@@ -125,14 +119,13 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	else Stack_Limit = (REBUPT)&marker - bounds;
 #endif
 
-	Init_Core(rargs);
+	Init_Core(&Main_Args);
 	GC_Active = TRUE; // Turn on GC
-	if (rargs->options & RO_TRACE) {
+	if (Main_Args.options & RO_TRACE) {
 		Trace_Level = 9999;
 		Trace_Flags = 1;
 	}
-
-	return 0;
+	return &Main_Args;
 }
 
 
@@ -784,7 +777,7 @@ RL_API u32 *RL_Map_Words(REBSER *series)
 	u32 *words;
 	REBVAL *val = BLK_HEAD(series);
 
-	words = OS_MAKE((series->tail+2) * sizeof(u32));
+	words = OS_Make((series->tail+2) * sizeof(u32));
 
 	for (; NOT_END(val); val++) {
 		if (ANY_WORD(val)) words[i++] = VAL_WORD_CANON(val);
@@ -814,7 +807,7 @@ RL_API REBYTE *RL_Word_String(u32 word)
 {
 	REBYTE *s1, *s2;
 	s1 = Get_Sym_Name(word);
-	s2 = OS_MAKE(strlen(cs_cast(s1)) + 1);
+	s2 = OS_Make(strlen(cs_cast(s1)) + 1);
 	strcpy(s_cast(s2), cs_cast(s1));
 	return s2;
 }
@@ -998,7 +991,7 @@ RL_API u32 *RL_Words_Of_Object(REBSER *obj)
 	REBVAL *syms;
 
 	syms = FRM_WORD(obj, 1);
-	words = OS_MAKE(obj->tail * sizeof(u32)); // One less, because SELF not included.
+	words = OS_Make(obj->tail * sizeof(u32)); // One less, because SELF not included.
 	for (index = 0; index < (obj->tail-1); syms++, index++) {
 		words[index] = VAL_BIND_CANON(syms);
 	}

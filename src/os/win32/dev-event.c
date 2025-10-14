@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,8 +48,9 @@ void Done_Device(REBUPT handle, int error);
 HWND Event_Handle = 0;			// Used for async DNS
 static int Timer_Id = 0;		// The timer we are using
 
-extern HINSTANCE App_Instance;	// From Main module.
+#ifdef REB_VIEW
 extern HWND      Focused_Window;
+#endif
 
 /***********************************************************************
 **
@@ -87,10 +89,12 @@ extern HWND      Focused_Window;
 	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy
 	WNDCLASSEX wc = {0};
 
+	HINSTANCE hInstance = GetModuleHandle(0);
+
 	// Register event object class:
 	wc.cbSize        = sizeof(wc);
 	wc.lpszClassName = TEXT("REBOL-Events");
-	wc.hInstance     = App_Instance;
+	wc.hInstance     = hInstance;
 	wc.lpfnWndProc   = REBOL_Event_Proc;
 	if (!RegisterClassEx(&wc)) return DR_ERROR;
 
@@ -100,7 +104,7 @@ extern HWND      Focused_Window;
 		wc.lpszClassName,
 		wc.lpszClassName,
 		0,0,0,0,0,0,
-		NULL, App_Instance, NULL
+		NULL, hInstance, NULL
 	);
 
 	if (!Event_Handle) return DR_ERROR;
@@ -168,10 +172,12 @@ extern HWND      Focused_Window;
 		if (msg.message == WM_DNS)
 			Done_Device(msg.wParam, msg.lParam>>16); // error code
 		else {
+			#ifdef REB_VIEW
 			if(Focused_Window && !IsDialogMessage(Focused_Window, &msg)) {
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
+			#endif
 		}
 	}
 

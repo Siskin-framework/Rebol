@@ -886,7 +886,7 @@ error:
 		}
 		Trap1(RE_SECURITY, value);
 	}
-	else if (flag == SEC_QUIT) OS_EXIT(101);
+	else if (flag == SEC_QUIT) OS_Exit(101);
 }
 
 
