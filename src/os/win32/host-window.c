@@ -3,12 +3,12 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Additional code modifications and improvements:
 **	Copyright 2012-2018 Saphirion AG & Atronix
-**	Copyright 2019-2023 Oldes
+**	Copyright 2019-2025 Oldes
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
@@ -106,8 +106,7 @@ typedef HRESULT(WINAPI * GETDPIFORMONITOR_T)(HMONITOR, MONITOR_DPI_TYPE, UINT*, 
 
 //***** Externs *****//
 
-extern HINSTANCE App_Instance;		// Set by winmain function
-extern void Host_Crash(char *reason);
+HINSTANCE App_Instance;		// Set by winmain function
 extern LRESULT CALLBACK REBOL_Window_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 extern LRESULT CALLBACK REBOL_OpenGL_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 extern LRESULT CALLBACK REBOL_Base_Proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -222,7 +221,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/	void* OS_Find_Window(REBGOB *gob)
+*/	OS_API void* OS_Find_Window(REBGOB *gob)
 /*
 **	Return window handle of given gob.
 **
@@ -237,7 +236,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/	void* OS_Find_Compositor(REBGOB *gob)
+*/	OS_API void* OS_Find_Compositor(REBGOB *gob)
 /*
 **	Return compositor handle of given gob.
 **
@@ -252,7 +251,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/	REBGOB* OS_Get_Gob_Root()
+*/	OS_API REBGOB* OS_Get_Gob_Root()
 /*
 **	Return gob root.
 **	Needed to map-event when event does not hold gob, but just data and 
@@ -265,7 +264,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/	void OS_Free_Window(REBGOB *gob)
+*/	OS_API void OS_Free_Window(REBGOB *gob)
 /*
 **	Release the Gob_Windows slot used by given gob.
 **
@@ -381,7 +380,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/  void* OS_Open_Window(REBGOB *gob)
+*/  OS_API void* OS_Open_Window(REBGOB *gob)
 /*
 **      Initialize the graphics window.
 **
@@ -550,7 +549,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/  void OS_Close_Window(REBGOB *gob)
+*/  OS_API void OS_Close_Window(REBGOB *gob)
 /*
 **		Close the window.
 **
@@ -575,7 +574,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/	REBOOL OS_Resize_Window(REBGOB *gob, REBOOL redraw)
+*/	OS_API REBOOL OS_Resize_Window(REBGOB *gob, REBOOL redraw)
 /*
 **		Update window parameters.
 **
@@ -598,7 +597,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/	void OS_Update_Window(REBGOB *gob)
+*/	OS_API void OS_Update_Window(REBGOB *gob)
 /*
 **		Update window parameters.
 **
@@ -660,7 +659,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/	void OS_Draw_Window(REBGOB *wingob, REBGOB *gob, REBOOL invalidate)
+*/	OS_API void OS_Draw_Window(REBGOB *wingob, REBGOB *gob, REBOOL invalidate)
 /*
 **		Refresh the GOB within the given window. If the wingob
 **		is zero, then find the correct window for it.
@@ -756,7 +755,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/  REBINT OS_Show_Gob(REBGOB *gob)
+*/  OS_API REBINT OS_Show_Gob(REBGOB *gob)
 /*
 **	Notes:
 **		1.	Can be called with NONE (0), Gob_Root (All), or a
@@ -825,7 +824,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/  void* OS_Init_Gob_Widget(REBCMP *ctx, REBGOB *gob)
+*/  OS_API void* OS_Init_Gob_Widget(REBCMP *ctx, REBGOB *gob)
 /*
 **      Creates native GUI widget
 **
@@ -968,7 +967,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/	REBOOL OS_Get_Widget_Data(REBGOB *gob, REBVAL *ret)
+*/	OS_API REBOOL OS_Get_Widget_Data(REBGOB *gob, REBVAL *ret)
 /*
 **	Returns data according the widget type
 **
@@ -1036,7 +1035,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/	REBOOL OS_Set_Widget_Data(REBGOB *gob, REBVAL *data)
+*/	OS_API REBOOL OS_Set_Widget_Data(REBGOB *gob, REBVAL *data)
 /*
 **	Returns data according the widget type
 **
@@ -1068,7 +1067,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/	REBD32 OS_Get_Metrics(METRIC_TYPE type, REBINT display)
+*/	OS_API REBD32 OS_Get_Metrics(METRIC_TYPE type, REBINT display)
 /*
 **	Provide OS specific UI related information.
 **
@@ -1163,7 +1162,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/	void OS_Set_Cursor(void *cursor)
+*/	OS_API void OS_Set_Cursor(void *cursor)
 /*
 **
 **
@@ -1174,7 +1173,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/	void* OS_Load_Cursor(void *cursor)
+*/	OS_API void* OS_Load_Cursor(void *cursor)
 /*
 **
 **
@@ -1185,7 +1184,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/	void OS_Destroy_Cursor(void *cursor)
+*/	OS_API void OS_Destroy_Cursor(void *cursor)
 /*
 **
 **
@@ -1197,7 +1196,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/	void* OS_Image_To_Cursor(REBYTE* image, REBINT width, REBINT height)
+*/	OS_API void* OS_Image_To_Cursor(REBYTE* image, REBINT width, REBINT height)
 /*
 **      Converts REBOL image! to Windows CURSOR
 **
@@ -1436,7 +1435,7 @@ void Paint_Window(HWND window);
 
 /***********************************************************************
 **
-*/	void Init_Windows(void)
+*/	RL_API void OS_Init_Windows(void* hInstance)
 /*
 **	Initialize special variables of the graphics subsystem.
 **
@@ -1444,6 +1443,7 @@ void Paint_Window(HWND window);
 {
 	RL = RL_Extend((REBYTE *)(&RX_window[0]), &RXD_Window);
 
+	App_Instance = (HINSTANCE)hInstance;
 	Gob_Windows = OS_Make(sizeof(struct gob_window) * (MAX_WINDOWS + 1));
 	CLEAR(Gob_Windows, sizeof(struct gob_window) * (MAX_WINDOWS + 1));
 	Cursor = LoadCursor(NULL, IDC_ARROW);

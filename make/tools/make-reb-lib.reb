@@ -3,7 +3,7 @@ REBOL [
 	Title: "Make Reb-Lib related files"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2021 Rebol Open Source Contributors
+		Copyright 2012-2025 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -220,15 +220,6 @@ form-header/gen "REBOL Host and Extension API" %reb-lib.reb %make-reb-lib.reb
 #define RL_VER } version/1 {
 #define RL_REV } version/2 {
 #define RL_UPD } version/3 {
-
-// Compatiblity with the lib requires that structs are aligned using the same
-// method. This is concrete, not abstract. The macro below uses struct
-// sizes to inform the developer that something is wrong.
-#if defined(__LP64__) || defined(__LLP64__)
-#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 116 && sizeof(REBEVT) == 16)
-#else
-#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 96 && sizeof(REBEVT) == 12)
-#endif
 
 // Function entry points for reb-lib (used for MACROS below):}
 rlib

@@ -2,7 +2,7 @@
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
-**	Copyright 2019-2023 Oldes
+**	Copyright 2019-2025 Oldes
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@
 
 /***********************************************************************
 **
-*/	void OS_Load_Image(REBUNI *uri, REBCNT frame, REBCDI *codi)
+*/	OS_API void OS_Load_Image(REBUNI *uri, REBCNT frame, REBCDI *codi)
 /*
 **		Decodes image from specified file. If its multi-image type, it's possible
 **		to specify which frame to load.
@@ -47,7 +47,7 @@
 
 /***********************************************************************
 **
-*/	void OS_Save_Image(REBUNI *uri, REBCDI *codi)
+*/	OS_API void OS_Save_Image(REBUNI *uri, REBCDI *codi)
 /*
 **		Encodes image to specified file.
 **
@@ -58,7 +58,7 @@
 
 /***********************************************************************
 **
-*/	void OS_Release_Codecs()
+*/	OS_API void OS_Release_Codecs()
 /*
 **		Release WIC resources.
 **

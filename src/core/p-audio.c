@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,7 +58,7 @@
 			Trap1(RE_INVALID_PORT_ARG, arg);
 
 		if (!IS_OPEN(req)) {
-			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
+			if (OS_Do_Device(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
 			//sync = TRUE;
 		}
 
@@ -67,7 +67,7 @@
 			if (VAL_LOGIC(arg) == FALSE) {
 				req->modify.mode = MODE_AUDIO_PLAY;
 				req->modify.value = FALSE;
-				result = OS_DO_DEVICE(req, RDC_MODIFY);
+				result = OS_Do_Device(req, RDC_MODIFY);
 				break;
 			}
 			if (IS_VECTOR(data) || IS_BINARY(data)) {
@@ -95,9 +95,9 @@
 			}
 		}
 
-		result = OS_DO_DEVICE(req, RDC_WRITE);
+		result = OS_Do_Device(req, RDC_WRITE);
 		if (result < 0) Trap_Port(RE_WRITE_ERROR, port, req->error);
-		//if (sync) OS_DO_DEVICE(req, RDC_CLOSE);
+		//if (sync) OS_Do_Device(req, RDC_CLOSE);
 		break;
 	case A_READ:
 		break;
@@ -129,11 +129,11 @@
 				req->audio.loop_count = MIN(MAX_U32, VAL_UNT64(arg));
 			}
 		}
-		if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
+		if (OS_Do_Device(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
 		break;
 
 	case A_CLOSE:
-		OS_DO_DEVICE(req, RDC_CLOSE);
+		OS_Do_Device(req, RDC_CLOSE);
 		Release_Port_State(port);
 		break;
 

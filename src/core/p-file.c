@@ -81,7 +81,7 @@
 	if (time.h == 0 && time.l == 0) {
 		SET_NONE(val);
 	} else {
-		OS_FILE_TIME(&time, &dat);
+		OS_File_Time(&time, &dat);
 		Set_Date(val, &dat);
 	}
 }
@@ -201,7 +201,7 @@
 {
 	if (IS_OPEN(file)) Trap1(RE_ALREADY_OPEN, path);
 
-	if (OS_DO_DEVICE(file, RDC_OPEN) < 0) Trap_Port(RE_CANNOT_OPEN, port, file->error);
+	if (OS_Do_Device(file, RDC_OPEN) < 0) Trap_Port(RE_CANNOT_OPEN, port, file->error);
 
 	SET_OPEN(file);
 }
@@ -266,7 +266,7 @@ resize:
 	// Do the read, check for errors:
 	file->data = BIN_HEAD(ser);
 	file->length = len;
-	res = OS_DO_DEVICE(file, RDC_READ);
+	res = OS_Do_Device(file, RDC_READ);
 	if (res == -RFE_RESIZE_SERIES) {
 		// We are reading virtual file where the size was initialy reported as 0,
 		// but now we have the real size calculated, so allocate the buffer again.
@@ -346,7 +346,7 @@ resize:
 		//Trap1(PE_BAD_ARGUMENT, data);
 	}
 	file->length = len;
-	OS_DO_DEVICE(file, RDC_WRITE); // don't report error here!
+	OS_Do_Device(file, RDC_WRITE); // don't report error here!
 	// We may want to close the port before error reporting.
 	// It is passed above in the file->error
 	
@@ -483,7 +483,7 @@ resize:
 
 		error = (REBINT)file->error; // store error value, before closing the file!
 		if (opened) {
-			OS_DO_DEVICE(file, RDC_CLOSE);
+			OS_Do_Device(file, RDC_CLOSE);
 			Release_Port_State(port);
 		}
 
@@ -541,7 +541,7 @@ resize:
 
 		error = (REBINT)file->error; // store error value, before closing the file!
 		if (opened) {
-			OS_DO_DEVICE(file, RDC_CLOSE);
+			OS_Do_Device(file, RDC_CLOSE);
 			Release_Port_State(port);
 		}
 
@@ -569,7 +569,7 @@ resize:
 
 	case A_CLOSE:
 		if (IS_OPEN(file)) {
-			OS_DO_DEVICE(file, RDC_CLOSE);
+			OS_Do_Device(file, RDC_CLOSE);
 			Release_Port_State(port);
 		}
 		break;
@@ -577,7 +577,7 @@ resize:
 	case A_DELETE:
 		if (IS_OPEN(file)) Trap1(RE_NO_DELETE, path); // it's not allowed to delete opened file port
 		Setup_File(file, 0, path);
-		result = OS_DO_DEVICE(file, RDC_DELETE);
+		result = OS_Do_Device(file, RDC_DELETE);
 		if (result >=  0) return R_RET;   // returns port so it can be used in chained evaluation 
 		if (result == -2) return R_FALSE;
 		// else...
@@ -595,7 +595,7 @@ resize:
 			if (!(target = Value_To_OS_Path(D_ARG(2), TRUE)))
 				Trap1(RE_BAD_FILE_PATH, D_ARG(2));
 			file->data = BIN_DATA(target);
-			OS_DO_DEVICE(file, RDC_RENAME);
+			OS_Do_Device(file, RDC_RENAME);
 			Free_Series(target);
 			if (file->error) Trap1(RE_NO_RENAME, path);
 		}
@@ -605,8 +605,8 @@ resize:
 		// !!! should it leave file open???
 		if (!IS_OPEN(file)) {
 			Setup_File(file, AM_OPEN_WRITE | AM_OPEN_NEW, path);
-			if (OS_DO_DEVICE(file, RDC_CREATE) < 0) Trap_Port(RE_CANNOT_OPEN, port, file->error);
-			OS_DO_DEVICE(file, RDC_CLOSE);
+			if (OS_Do_Device(file, RDC_CREATE) < 0) Trap_Port(RE_CANNOT_OPEN, port, file->error);
+			OS_Do_Device(file, RDC_CLOSE);
 		}
 		break;
 
@@ -618,7 +618,7 @@ resize:
 		if (!IS_OPEN(file)) {
 			if (VAL_LEN(path) == 0) return R_NONE;
 			Setup_File(file, 0, path);
-			if (OS_DO_DEVICE(file, RDC_QUERY) < 0) return R_NONE;
+			if (OS_Do_Device(file, RDC_QUERY) < 0) return R_NONE;
 			opened = TRUE;
 		}
 		Ret_Query_File(port, file, D_RET, D_ARG(ARG_QUERY_FIELD));
@@ -629,7 +629,7 @@ resize:
 		Set_Mode_Value(file, Get_Mode_Id(D_ARG(2)), D_ARG(3));
 		if (!IS_OPEN(file)) {
 			Setup_File(file, 0, path);
-			if (OS_DO_DEVICE(file, RDC_MODIFY) < 0) return R_NONE;
+			if (OS_Do_Device(file, RDC_MODIFY) < 0) return R_NONE;
 		}
 		return R_TRUE;
 
@@ -688,7 +688,7 @@ resize:
 		SET_FLAG(file->modes, RFM_RESEEK);
 		SET_FLAG(file->modes, RFM_TRUNCATE);
 		file->length = 0;
-		if (OS_DO_DEVICE(file, RDC_WRITE) < 0) Trap1(RE_WRITE_ERROR, path);
+		if (OS_Do_Device(file, RDC_WRITE) < 0) Trap1(RE_WRITE_ERROR, path);
 		break;
 
 	/* Not yet implemented:

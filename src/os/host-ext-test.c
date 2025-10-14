@@ -558,7 +558,13 @@ int XTestContext_mold(REBHOB *hob, REBSER *str) {
 
 
 
-void Init_Ext_Test(void)
+/***********************************************************************
+**
+*/	RL_API void OS_Init_Ext_Test(void)
+/*
+**	Initialize embedded extension test module
+**
+***********************************************************************/
 {
 	REBHSP spec;
 	RL = RL_Extend(b_cast(&RX_Spec[0]), (RXICAL)&RX_Call);

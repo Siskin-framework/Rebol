@@ -347,11 +347,11 @@ x*/	REBCNT Insert_Value(REBSER *series, REBCNT index, REBVAL *item, REBCNT type,
 		// On windows, we need to convert byte to wide:
 		if (IS_UTF8_STRING(val)) {
 			REBYTE *wide = NULL;
-			REBLEN len = OS_MULTIBYTE_TO_WIDE(VAL_BIN_DATA(val), &wide);
+			REBLEN len = OS_Multibyte_To_Wide(VAL_BIN_DATA(val), &wide);
 			if (!wide) return NULL;
 			up = Make_Unicode(len);  // will be GC'd ok
 			COPY_MEM(BIN_HEAD(up), wide, len * sizeof(REBUNI));
-			OS_FREE(wide);
+			OS_Free(wide);
 			SERIES_TAIL(up) = len;
 			UNI_TERM(up);
 		}

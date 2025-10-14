@@ -438,7 +438,7 @@ const REBCNT Gob_Flag_Words[] = {
 	case SYM_DATA:
 #ifdef HAS_WIDGET_GOB
 		if (GOB_TYPE(gob) == GOBT_WIDGET) {
-			OS_SET_WIDGET_DATA(gob, val);
+			OS_Set_Widget_Data(gob, val);
 		} else {
 #endif
 		SET_GOB_DTYPE(gob, GOBD_NONE);
@@ -583,7 +583,7 @@ is_none:
 	case SYM_DATA:
 #ifdef HAS_WIDGET_GOB
 		if (GOB_TYPE(gob) == GOBT_WIDGET) {
-			return OS_GET_WIDGET_DATA(gob, val);
+			return OS_Get_Widget_Data(gob, val);
 		}
 #endif
 		data = GOB_DATA(gob);

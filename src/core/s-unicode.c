@@ -1175,7 +1175,7 @@ X*/	REBSER *Encode_UTF8_Value(REBVAL *arg, REBCNT len, REBFLG opts)
 	if (uni) {
 		REBYTE *utf8 = NULL;
 		// Uasing OS conversion, because the old Rebol UTF-8 encoder does not support surrogates yet!
-		size = OS_WIDE_TO_MULTIBYTE((const REBUNI *)src, &utf8, len);
+		size = OS_Wide_To_Multibyte((const REBUNI *)src, &utf8, len);
 		if (no_copy) {
 			ser = BUF_SCAN;
 			cp = Reset_Buffer(ser, size); // +(GET_FLAG(opts, ENC_OPT_BOM) ? 3 : 0));
@@ -1186,7 +1186,7 @@ X*/	REBSER *Encode_UTF8_Value(REBVAL *arg, REBCNT len, REBFLG opts)
 		else {
 			ser = Copy_Bytes(utf8, size);
 		}
-		OS_FREE(utf8);
+		OS_Free(utf8);
 	}
 	else {
 		size = len;

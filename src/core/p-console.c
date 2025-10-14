@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,7 +63,7 @@
 	arg = D_ARG(2);
 
 	//O: known limitation: works only with default system's imput port (not for custom console ports) 
-	req = Host_Lib->std_io;
+	req = Std_IO;
 	req->port = port;
 
 	switch (action) {
@@ -71,7 +71,7 @@
 	case A_READ:
 		// If not open, open it:
 		if (!IS_OPEN(req)) {
-			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
+			if (OS_Do_Device(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
 		}
 
 		// If no buffer, create a buffer:
@@ -85,7 +85,7 @@
 		req->data = BIN_HEAD(ser);
 		req->length = SERIES_AVAIL(ser);
 
-		result = OS_DO_DEVICE(req, RDC_READ);
+		result = OS_Do_Device(req, RDC_READ);
 		if (result < 0) Trap_Port(RE_READ_ERROR, port, req->error);
 
 		if (req->actual == 1 && req->data[0] == '\x1B') return R_NONE; // CTRL-C
@@ -121,13 +121,13 @@
 
 	case A_OPEN:
 		// ?? why???
-		if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
+		if (OS_Do_Device(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
 		SET_OPEN(req);
 		break;
 
 	case A_CLOSE:
 		SET_CLOSED(req);
-		//OS_DO_DEVICE(req, RDC_CLOSE);
+		//OS_Do_Device(req, RDC_CLOSE);
 		break;
 
 	case A_OPENQ:
@@ -145,7 +145,7 @@
 			spec = D_ARG(3);
 			if (!IS_LOGIC(spec)) Trap2(RE_INVALID_VALUE_FOR, spec, arg);
 			req->modify.value = VAL_LOGIC(spec);
-			OS_DO_DEVICE(req, RDC_MODIFY);
+			OS_Do_Device(req, RDC_MODIFY);
 		} else Trap1(RE_BAD_FILE_MODE, arg);
 		return R_ARG3;
 
@@ -156,7 +156,7 @@
 			Set_Block(D_RET, Get_Object_Words(spec));
 			return R_RET;
 		}
-		if (OS_DO_DEVICE(req, RDC_QUERY) < 0) {
+		if (OS_Do_Device(req, RDC_QUERY) < 0) {
 			if(req->error == 25) return R_NONE; //Inappropriate ioctl for device (not running in terminal) 
 			SET_INTEGER(arg, req->error);
 			Trap1(RE_PROTOCOL, arg);
@@ -167,7 +167,7 @@
 		return R_RET;
 
 	case A_FLUSH:
-		OS_DO_DEVICE(req, RDC_FLUSH);
+		OS_Do_Device(req, RDC_FLUSH);
 		break;
 
 	default:

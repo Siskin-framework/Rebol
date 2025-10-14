@@ -50,7 +50,7 @@ static REBSER *Read_All_File(char *fname)
 
 	SET_FLAG(file.modes, RFM_READ);
 
-	OS_DO_DEVICE(&file, RDC_OPEN);
+	OS_Do_Device(&file, RDC_OPEN);
 
 	if (file.error) return 0;
 
@@ -59,7 +59,7 @@ static REBSER *Read_All_File(char *fname)
 	file.data = BIN_DATA(ser);
 	file.length = (REBCNT)(file.file.size);
 
-	OS_DO_DEVICE(&file, RDC_READ);
+	OS_Do_Device(&file, RDC_READ);
 
 	if (file.error) {
 		ser = 0;
@@ -69,7 +69,7 @@ static REBSER *Read_All_File(char *fname)
 		STR_TERM(ser);
 	}
 
-	OS_DO_DEVICE(&file, RDC_CLOSE);
+	OS_Do_Device(&file, RDC_CLOSE);
 	return ser;
 }
 #endif
@@ -260,7 +260,7 @@ static REBSER *Read_All_File(char *fname)
 
 	Assert_Max_Refines(ds, D_REF(9) ? 2 : 1); // prevent too many refines like: now/year/month
 
-	OS_GET_TIME(&dat);
+	OS_Get_Time(&dat);
 	if (!D_REF(9)) dat.nano = 0; // Not /precise
 	Set_Date(ret, &dat);
 	Current_Year = dat.year;
@@ -498,7 +498,7 @@ chk_neg:
 		return R_NONE;
 	}
 	// Try to call realpath on posix or _fullpath on Windows
-	tmp = OS_REAL_PATH((const REBCHR *)SERIES_DATA(ser)); // returns UTF-8 encoded data
+	tmp = OS_Real_Path((const REBCHR *)SERIES_DATA(ser)); // returns UTF-8 encoded data
 	Free_Series(ser);
 	if (!tmp) return R_NONE;
 
@@ -541,7 +541,7 @@ chk_neg:
 			ser = Value_To_OS_Path(path, TRUE);
 			file.file.path = (REBCHR*)(ser->data);
 			file.device = RDI_FILE;
-			len = OS_DO_DEVICE(&file, RDC_QUERY);
+			len = OS_Do_Device(&file, RDC_QUERY);
 			Free_Series(ser);
 			if (len == DR_DONE && GET_FLAG(file.modes, RFM_DIR)) return R_TRUE;
 			// can still report FALSE, if it does not ends with / or \ char...
@@ -579,11 +579,11 @@ chk_neg:
 	REBYTE *lpath;
 	REBINT len;
 
-	len = OS_GET_CURRENT_DIR(&lpath);
+	len = OS_Get_Current_Dir(&lpath);
 	ser = To_REBOL_Path(lpath, len, 0, TRUE); // allocates extra for end /
 
 	ASSERT1(ser, RP_MISC); // should never happen
-	OS_FREE(lpath);
+	OS_Free(lpath);
 	Set_Series(REB_FILE, D_RET, ser);
 
 	return R_RET;
@@ -608,7 +608,7 @@ chk_neg:
 	Set_String(&val, ser); // may be unicode or utf-8
 	Check_Security(SYM_FILE, POL_EXEC, &val);
 
-	n = OS_SET_CURRENT_DIR((void*)ser->data);  // use len for bool
+	n = OS_Set_Current_Dir((void*)ser->data);  // use len for bool
 
 	// convert the full OS path back to Rebol format
 	// used in error or as a result
@@ -647,7 +647,7 @@ chk_neg:
 		url = Val_Str_To_OS(arg);
 	}
 
-	r = OS_BROWSE(url, 0);
+	r = OS_Browse(url, 0);
 
 	if (r == 0) Trap1(RE_CALL_FAIL, Make_OS_Error(r));
 
@@ -838,7 +838,7 @@ chk_neg:
 		Trap_Arg(arg);
 	}
 
-	r = OS_CREATE_PROCESS(cmd, argc, argv, flags, &pid, &exit_code,
+	r = OS_Create_Process(cmd, argc, argv, flags, &pid, &exit_code,
 						  input_type, os_input, input_len,
 						  output_type, &os_output, &output_len,
 						  err_type, &os_err, &err_len);
@@ -848,7 +848,7 @@ chk_neg:
 			Append_Bytes_Len(VAL_SERIES(output), os_output, output_len);
 			if (output_type == STRING_TYPE && !IS_UTF8_STRING(output) && !Is_ASCII(os_output, output_len))
 				UTF8_SERIES(VAL_SERIES(output));
-			OS_FREE(os_output);
+			OS_Free(os_output);
 		}
 	}
 
@@ -857,7 +857,7 @@ chk_neg:
 			Append_Bytes_Len(VAL_SERIES(err), os_err, err_len);
 			if (err_type == STRING_TYPE && !IS_UTF8_STRING(err) && !Is_ASCII(os_err, err_len))
 				UTF8_SERIES(VAL_SERIES(err));
-			OS_FREE(os_err);
+			OS_Free(os_err);
 		}
 	}
 
@@ -874,7 +874,7 @@ chk_neg:
 		// based on f-stubs Make_OS_Error()
 		if (r != 0) {
 			REBCHR str[100];
-			OS_FORM_ERROR(r, str, 100);
+			OS_Form_Error(r, str, 100);
 
 			val = Append_Frame(obj, NULL, SYM_ERROR);
 			SET_STRING(val, Copy_OS_Str(str, (REBINT)LEN_STR(str)));
@@ -1029,10 +1029,10 @@ chk_neg:
 		len = dir->tail;
 		while ((n = (REBCNT)LEN_STR(str))) {
 			const REBYTE *utf8 = 0;
-			REBLEN sz = OS_WIDE_TO_MULTIBYTE((const REBUNI*)str, &utf8, n);
+			REBLEN sz = OS_Wide_To_Multibyte((const REBUNI*)str, &utf8, n);
 			dir->tail = len;
 			Append_Bytes_Len(dir, utf8, sz);
-			OS_FREE((void*)utf8);
+			OS_Free((void*)utf8);
 			Set_Series(REB_FILE, Append_Value(blk), Copy_String(dir, 0, -1));
 			str += n + 1; // next
 		}
@@ -1054,7 +1054,7 @@ chk_neg:
 	REBSER *ser;
 	REBINT n;
 
-	fr.files = OS_MAKE(MAX_FILE_REQ_BUF);
+	fr.files = OS_Make(MAX_FILE_REQ_BUF);
 	fr.len = MAX_FILE_REQ_BUF/sizeof(REBCHR) - 2;  
 	fr.files[0] = 0;
 
@@ -1083,7 +1083,7 @@ chk_neg:
 	if (D_REF(ARG_REQUEST_FILE_TITLE))
 		fr.title = Val_Str_To_OS(D_ARG(ARG_REQUEST_FILE_TEXT));
 
-	if (OS_REQUEST_FILE(&fr)) {
+	if (OS_Request_File(&fr)) {
 		if (GET_FLAG(fr.flags, FRF_MULTI)) {
 			ser = File_List_To_Block(fr.files);
 			Set_Block(D_RET, ser);
@@ -1096,7 +1096,7 @@ chk_neg:
 		ser = 0;
 
 	ENABLE_GC;
-	OS_FREE(fr.files);
+	OS_Free(fr.files);
 
 	return ser ? R_RET : R_NONE;
 #else
@@ -1117,7 +1117,7 @@ chk_neg:
 	REBSER *ser;
 	REBINT n;
 
-	fr.files = OS_MAKE(MAX_DIR_REQ_BUF);
+	fr.files = OS_Make(MAX_DIR_REQ_BUF);
 	fr.len = MAX_DIR_REQ_BUF/sizeof(REBCHR) - 4; // reserve for trailing slash and null 
 	fr.files[0] = 0;
 
@@ -1141,7 +1141,7 @@ chk_neg:
 
 	if (D_REF(ARG_REQUEST_DIR_KEEP)) SET_FLAG(fr.flags, FRF_KEEP);
 
-	if (OS_REQUEST_DIR(&fr)) {
+	if (OS_Request_Dir(&fr)) {
 		REBCNT len = (REBCNT)LEN_STR(fr.files);
 		// Windows may return path without trailing slash, so just add it if missing
 		if (fr.files[len-1] != '\\') {
@@ -1154,7 +1154,7 @@ chk_neg:
 		ser = 0;
 
 	ENABLE_GC;
-	OS_FREE(fr.files);
+	OS_Free(fr.files);
 
 	return ser ? R_RET : R_NONE;
 #else
@@ -1173,7 +1173,7 @@ chk_neg:
 	REBREQ  req = {0};
 	REBSER *str;
 
-	OS_REQUEST_PASSWORD(&req);
+	OS_Request_Password(&req);
 
 	if (req.data == NULL) return R_NONE;
 
@@ -1202,13 +1202,13 @@ chk_neg:
 	if (ANY_WORD(arg)) Set_String(arg, Form_Value(arg, 0, FALSE));
 	cmd = Val_Str_To_OS(arg);
 
-	lenplus = OS_GET_ENV(cmd, (REBCHR*)0, 0);
+	lenplus = OS_Get_Env(cmd, (REBCHR*)0, 0);
 	if (lenplus == 0) return R_NONE;
 	if (lenplus < 0) return R_UNSET;
 
 	// Two copies...is there a better way?
 	buf = MAKE_STR(lenplus);
-	OS_GET_ENV(cmd, buf, lenplus);
+	OS_Get_Env(cmd, buf, lenplus);
 	Set_String(D_RET, Copy_OS_Str(buf, lenplus - 1));
 	FREE_MEM(buf);
 
@@ -1234,7 +1234,7 @@ chk_neg:
 	
 	if (ANY_STR(arg2)) {
 		REBCHR *value = Val_Str_To_OS(arg2);
-		success = OS_SET_ENV(cmd, value);
+		success = OS_Set_Env(cmd, value);
 		if (success) {
 			// What function could reuse arg2 as-is?
 			Set_String(D_RET, Copy_OS_Str(value, (REBCNT)LEN_STR(value)));
@@ -1244,7 +1244,7 @@ chk_neg:
 	}
 
 	if (IS_NONE(arg2)) {
-		success = OS_SET_ENV(cmd, 0);
+		success = OS_Set_Env(cmd, 0);
 		if (success)
 			return R_NONE;
 		return R_UNSET;
@@ -1263,7 +1263,7 @@ chk_neg:
 /*
 ***********************************************************************/
 {
-	REBCHR *result = OS_LIST_ENV();
+	REBCHR *result = OS_List_Env();
 
 	if(result == NULL) Trap0(RE_NO_MEMORY);
 
@@ -1295,45 +1295,45 @@ chk_neg:
 		case SYM_UID:
 			if (set) {
 				if (IS_INTEGER(val)) {
-					ret = OS_SET_UID(VAL_INT32(val));
+					ret = OS_Set_UID(VAL_INT32(val));
 				} else {
 					Trap_Arg(val);
 				}
 			} else {
-				ret = OS_GET_UID();
+				ret = OS_Get_UID();
 			}
 			break;
 		case SYM_GID:
 			if (set) {
 				if (IS_INTEGER(val)) {
-					ret = OS_SET_GID(VAL_INT32(val));
+					ret = OS_Set_GID(VAL_INT32(val));
 				} else {
 					Trap_Arg(val);
 				}
 			} else {
-				ret = OS_GET_GID();
+				ret = OS_Get_GID();
 			}
 			break;
 		case SYM_EUID:
 			if (set) {
 				if (IS_INTEGER(val)) {
-					ret = OS_SET_EUID(VAL_INT32(val));
+					ret = OS_Set_EUID(VAL_INT32(val));
 				} else {
 					Trap_Arg(val);
 				}
 			} else {
-				ret = OS_GET_EUID();
+				ret = OS_Get_EUID();
 			}
 			break;
 		case SYM_EGID:
 			if (set) {
 				if (IS_INTEGER(val)) {
-					ret = OS_SET_EGID(VAL_INT32(val));
+					ret = OS_Set_EGID(VAL_INT32(val));
 				} else {
 					Trap_Arg(val);
 				}
 			} else {
-				ret = OS_GET_EGID();
+				ret = OS_Get_EGID();
 			}
 			break;
 		case SYM_PID:
@@ -1341,7 +1341,7 @@ chk_neg:
 				pid = val;
 				//REBVAL *arg = val;
 				if (IS_INTEGER(val)) {
-					ret = OS_KILL(VAL_INT32(pid));
+					ret = OS_Kill(VAL_INT32(pid));
 				} else if (IS_BLOCK(val)) {
 					REBVAL *sig = NULL;
 
@@ -1356,13 +1356,13 @@ chk_neg:
 					if (!IS_INTEGER(sig)) {
 						Trap_Arg(sig);
 					}
-					ret = OS_SEND_SIGNAL(VAL_INT32(pid), VAL_INT32(sig));
+					ret = OS_Send_Signal(VAL_INT32(pid), VAL_INT32(sig));
 					//arg = sig;
 				} else {
 					Trap_Arg(val);
 				}
 			} else {
-				ret = OS_GET_PID();
+				ret = OS_Get_PID();
 			}
 			break;
 		default:

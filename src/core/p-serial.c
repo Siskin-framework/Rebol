@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2013 REBOL Technologies
-**  Copyright 2013-2024 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -129,7 +129,7 @@
 				}
 			}
 
-			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, -12);
+			if (OS_Do_Device(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, -12);
 			SET_OPEN(req);
 			return R_RET;
 
@@ -165,7 +165,7 @@
 #ifdef DEBUG_SERIAL
 		printf("(max read length %d)", req->length);
 #endif
-		result = OS_DO_DEVICE(req, RDC_READ); // recv can happen immediately
+		result = OS_Do_Device(req, RDC_READ); // recv can happen immediately
 		if (result < 0) Trap_Port(RE_READ_ERROR, port, req->error);
 #ifdef DEBUG_SERIAL
 		for (len = 0; len < req->actual; len++) {
@@ -195,7 +195,7 @@
 		req->actual = 0;
 
 		//Print("(write length %d)", len);
-		result = OS_DO_DEVICE(req, RDC_WRITE); // send can happen immediately
+		result = OS_Do_Device(req, RDC_WRITE); // send can happen immediately
 		if (result < 0) Trap_Port(RE_WRITE_ERROR, port, req->error);
 		break;
 	case A_UPDATE:
@@ -214,7 +214,7 @@
 
 	case A_CLOSE:
 		if (IS_OPEN(req)) {
-			OS_DO_DEVICE(req, RDC_CLOSE);
+			OS_Do_Device(req, RDC_CLOSE);
 			Release_Port_State(port);
 		}
 		break;
@@ -230,7 +230,7 @@
 			spec = D_ARG(3);
 			if (!IS_LOGIC(spec)) Trap2(RE_INVALID_VALUE_FOR, spec, arg);
 			req->modify.value = VAL_LOGIC(spec);
-			OS_DO_DEVICE(req, RDC_MODIFY);
+			OS_Do_Device(req, RDC_MODIFY);
 		}
 		else Trap1(RE_BAD_FILE_MODE, arg);
 		return R_ARG3;

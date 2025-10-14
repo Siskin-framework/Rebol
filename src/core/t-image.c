@@ -1173,10 +1173,10 @@ find_none:
 			//originally it was returning image without content when conversion failed!
 			//value = Make_Image(ROUND_TO_INT(GOB_W(VAL_GOB(arg))), ROUND_TO_INT(GOB_H(VAL_GOB(arg))));
 #ifndef REB_VIEW
-			//TODO: remove this once OS_GOB_TO_IMAGE will be for all systems
+			//TODO: remove this once OS_Gob_To_Image will be for all systems
 			Trap0(RE_FEATURE_NA);
 #else
-			series = OS_GOB_TO_IMAGE(VAL_GOB(arg));
+			series = OS_Gob_To_Image(VAL_GOB(arg));
 #endif
 			if (!series) Trap_Make(REB_IMAGE, arg);
 			SET_IMAGE(value, series);

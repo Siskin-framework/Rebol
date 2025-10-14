@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -75,15 +75,21 @@ Special internal defines used by RT, not Host-Kit developers:
 
 #define THREADED				// enable threads
 
+#define OS_API
+
 #ifdef REB_EXE					// standalone exe from RT
 #define RL_API
+
 #else
-#ifdef REB_API					// r3lib dll from RT
+#if defined(REB_API) || defined(REB_LIB)	// r3lib dll from RT
 #define RL_API API_EXPORT
+//#define OS_API API_EXPORT
 #else
 #define RL_API API_IMPORT		// for host exe (not used for extension dlls)
 #endif
 #endif
+
+
 
 #define HAS_LL_CONSTS // compiler allows 1234LL constants;
                       // undef bellow for targets where not supported
