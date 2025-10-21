@@ -303,7 +303,7 @@ register-codec [
 							char: attempt [to char! to integer! char]
 						)
 						| #"x" copy char some hex-digits #";" (
-							char: attempt [to char! transcode/one join "0#" char]
+							char: attempt [to char! to integer! debase char 16]
 						)
 					]
 					| copy char 1 10 alphanum #";" (
