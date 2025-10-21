@@ -648,6 +648,10 @@ if find codecs 'XML [
 		--assert data/3/1/1 = "HTML"
 		--assert 5 = length? data/3/1/3
 
+	--test-- "XML decode test3"
+		--assert [document #[] [["a" ["name" "Émily"] ["Émily ♠"]]]]
+				== decode 'xml {<a name="&#x00C9;mily">&#xC9;mily &spades;</a>}
+
 
 	===end-group===
 ]
