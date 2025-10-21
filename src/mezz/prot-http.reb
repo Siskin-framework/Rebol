@@ -830,6 +830,7 @@ sys/make-scheme [
 				][
 					decode-result result
 					case/all [
+						string [ try [result/3: to string! result/3] ]
 						lines  [ try [result/3: split-lines to string! result/3] ]
 						index  [ result/3: skip result/3 index ]
 						length [ clear skip result/3 length]
