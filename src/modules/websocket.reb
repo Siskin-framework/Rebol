@@ -2,8 +2,8 @@ Rebol [
 	Title:  "WebSocket scheme and codec"
 	Type:    module
 	Name:    websocket
-	Date:    02-Jan-2024
-	Version: 0.2.1
+	Date:    24-Oct-2025
+	Version: 0.3.0
 	Author:  @Oldes
 	Home:    https://github.com/Oldes/Rebol-WebSocket
 	Rights:  http://opensource.org/licenses/Apache-2.0
@@ -60,46 +60,51 @@ register-codec [
 	]
 
 	decode: function [
-		"Decodes WebSocket messages from a given input."
+		"Decodes WebSocket frames from a given input."
 		data [binary!] "Consumed data are removed! (modified)"
 	][
 		out: copy []
+		bin: binary data
 		;; minimal WebSocket message has 2 bytes at least (when no masking involved)
-		while [2 < length? data][
-			final?: data/1 & 2#10000000 = 2#10000000
-			opcode: data/1 & 2#00001111
-			mask?:  data/2 & 2#10000000 = 2#10000000
-			len:    data/2 & 2#01111111
-			data: skip data 2
+		unless while [2 < length? bin/buffer][
+			msg-start: bin/buffer
+			;@@TODO: Rewrite when bincode supports reading bits.
+			binary/read bin [b1: UI8 b2: UI8]
+			final?: b1 & 2#10000000 == 2#10000000
+			opcode: b1 & 2#00001111
+			mask?:  b2 & 2#10000000 == 2#10000000
+			len:    b2 & 2#01111111
 
-			sys/log/debug 'WS ["Length:" len "opcode:" opcode "final?" final? "data-length?" length? data]
-
-			;@@ Not removing bytes until we make sure, that there is enough data!
 			case [
 				len = 126 [
 					;; there must be at least 2 bytes for the message length
-					if 2 >= length? data [break]
-					len: binary/read data 'UI16
-					sys/log/debug 'WS ["Real length:" len]
-					data: skip data 2
+					if 2 >= length? bin/buffer [break/return false]
+					len: binary/read bin 'UI16
 				]
 				len = 127 [
-					if 8 >= length? data [break]
-					len: binary/read data 'UI64
-					sys/log/debug 'WS ["Real length:" len]
-					data: skip data 8
+					if 8 >= length? bin/buffer [break/return false]
+					len: binary/read bin 'UI64
 				]
 			]
-			if (4 + length? data) < len [break]
-			data: truncate data ;; removes already processed bytes from the head
+
+			sys/log/debug 'WS ["opcode:" opcode "final?" final? "mask?" mask? "len:" pad len 6 "avail:" length? bin/buffer]
+
+			if ((pick [4 0] mask?) + length? bin/buffer) < len [break/return false]
+			
 			either mask? [
-				masks: take/part data 4
-				temp: masks xor take/part data len
-				if len < 4 [truncate/part temp len] ;; the mask was longer then the message
-			][	temp: take/part data len ]
+				masks: binary/read bin 4
+				temp: masks xor binary/read bin :len
+				if len < 4 [clear skip temp len] ;; the mask was longer then the message
+			][
+				temp: binary/read bin :len
+			]
 			if all [final? opcode = 1] [try [temp: to string! temp]]
 			append append append out :final? :opcode :temp
+		][
+			sys/log/debug 'WS ["Need data:" len "has:" length? bin/buffer]
+			bin/buffer: msg-start ;; reset position to the head of the message
 		]
+		data: truncate at data index? bin/buffer 
 		out
 	]
 ]
@@ -117,8 +122,8 @@ ws-conn-awake: func [event /local port extra parent spec temp] [
 	either extra/handshake [
 		switch event/type [
 			read [
-				append extra/buffer port/data
-				clear port/data
+				;print ";; TCP read" probe port/data 
+				append extra/buffer take/all port/data
 			]
 		]
 		insert system/ports/system make event! [ type: event/type port: parent ]
@@ -179,28 +184,55 @@ sys/make-scheme [
 	name: 'ws
 	title: "Websocket"
 	spec: make system/standard/port-spec-net []
-	awake: func [event /local port ctx raw temp] [
+	awake: func [event /local port ctx raw frames] [
 		;; This is just a default awake handler...
 		;; one may want to redefine it for a real life use!
 		port: event/port
 		ctx: port/extra
 		raw: ctx/buffer  ;; used to store unprocessed raw data
-		sys/log/more 'WS ["== WS-event:" as-red event/type port/spec/ref]
+		sys/log/more 'WS ["WS-event:" as-red event/type port/spec/ref]
 		switch event/type [
 			read  [
-				sys/log/debug 'WS ["== raw-data:" as-blue mold/flat/part raw 100]
-				if empty? temp: ws-decode raw [
+				;sys/log/debug 'WS ["== raw-data:" as-blue mold/flat/part raw 100]
+				;; Decode Websocket frames
+				if empty? frames: ws-decode raw [
 					sys/log/debug 'WS "data not complete..."
 					read port    ;; keep reading...
 					return false ;; don't wake up yet...
 				]
-				;; there may be more then one message in the decoded data
-				foreach [fin op data] temp [
-					;; store only decoded messages...
-					if fin [append port/data data] ;@@ what if the data are just partial (not final)?
+				;?? frames
+				
+				;; A WebSocket message can be split into multiple frames (fragments).
+				;; The first frame in the sequence has an opcode for the data type (text or binary),
+				;; and subsequent frames (except the last) are continuation frames with opcode 0.
+				;; The final frame in the fragmented sequence has the FIN bit set to 1,
+				;; signaling the end of the message.
+				foreach [fin op msg] frames [
+					if ctx/fragment-type [
+						;; Append fragment data to an existing fragment buffer
+						append ctx/fragment msg
+						either fin [
+							;; Final fragment, so prepare complete message
+							msg: copy ctx/fragment
+							op:  ctx/fragment-type
+							;; And clear the fragment buffer state
+							clear ctx/fragment
+							ctx/fragment-type: false
+						][  continue ]
+					]
+					either fin [
+						;; Complete message
+						if op == 1 [try/with [msg: to string! msg][ sys/log/error system/state/last-error] ]
+						;; Queue for the parent actor
+						append port/data msg
+					][
+						;; First frame
+						ctx/fragment-type: op
+						append ctx/fragment msg
+					]
 				]
-				sys/log/more 'WS ["Received messages:" as-yellow length? port/data]
-				;; notify the parent port
+				sys/log/more 'WS ["Queued messages:" as-yellow length? port/data]
+				; Notify the parent port
 				insert system/ports/system make event! [ type: 'read port: port/parent ]
 			]
 			wrote [
@@ -228,7 +260,9 @@ sys/make-scheme [
 				key:
 				handshake:
 				fields: none
-				buffer: make binary! 200 ;; used to hold undecoded raw websocket data
+				buffer:   make binary! 200 ;; used to hold undecoded raw websocket data
+				fragment: make binary! 100 ;; used to hold fragmented message
+				fragment-type: false ;; type of the fragmented message 
 			]
 			port/data: copy [] ;; used to hold decoeded packets
 
