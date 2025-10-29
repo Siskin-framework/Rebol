@@ -244,6 +244,12 @@ Rebol [
 	--assert %a1a2      = find/any/match %a1a2 %*a2
 	--assert %x         = find/any/tail %abx %*b
 	--assert %x         = find/any/tail %a1a2x %*a2
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2680
+	--assert none?        find/any %a.bc %*.c
+	--assert %a.bc      = find/any %a.bc %*.bc
+	--assert %a.bc      = find/any %a.bc %*.?c
+	--assert tail?        find/any/tail %a.bc %*.bc
+	--assert tail?        find/any/tail %a.bc %*.?c
 
 
 --test-- "FIND/ANY on string (unicode)"
