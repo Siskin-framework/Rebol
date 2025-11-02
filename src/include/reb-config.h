@@ -246,3 +246,9 @@ Special internal defines used by RT, not Host-Kit developers:
 #ifndef MAX_WBITS
 #  define MAX_WBITS   15 /* 32K LZ77 window */
 #endif
+
+//* Endianess **********************************************************
+
+#if !defined(ENDIAN_LITTLE) && !defined(ENDIAN_BIG)
+    #define ENDIAN_LITTLE  // it's usually what anyone wants these days
+#endif

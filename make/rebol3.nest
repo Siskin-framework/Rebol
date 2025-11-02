@@ -32,6 +32,11 @@ version: 3.20.3
 
 #if Posix? [ clfag: -Wno-pointer-sign ] ;@@ Review these warnings and fix them!
 
+;- Most operating systems are little-endian these days.
+#either (find [AmigaOS] system/platform) [
+	defines: ENDIAN_BIG
+][	defines: ENDIAN_LITTLE ]
+
 target-windows: [
 	os:       windows
 	sys:      win32
@@ -92,7 +97,7 @@ target-haiku: [
 	compiler: clang
 
 	library: [%network %iconv]
-	defines: [ENDIAN_LITTLE USE_OLD_PIPE]
+	defines: USE_OLD_PIPE
 ]
 target-turris: [
 	os:       turris
@@ -1034,12 +1039,10 @@ common: [
 			%Ole32
 			;%m
 		]
-		defines: ENDIAN_LITTLE
 		defines: _CRT_SECURE_NO_WARNINGS
 	]
 	#if macOS? [
 		library: %m
-		defines: ENDIAN_LITTLE
 		defines: USE_OLD_PIPE
 		cflags:  -Wno-pointer-sign
 		flag:    -mmacosx-version-min=10.9
@@ -1047,7 +1050,6 @@ common: [
 	]
 	#if (find [Linux OpenBSD FreeBSD NetBSD DragonFlyBSD Turris] system/platform) [
 		library: %m
-		defines: ENDIAN_LITTLE
 	]
 ]
 
