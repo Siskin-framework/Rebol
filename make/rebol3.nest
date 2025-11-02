@@ -23,7 +23,7 @@ version: 3.20.3
 #if Linux?   [ defines: TO_LINUX   ]
 #if macOS?   [ defines: TO_MACOS   ]
 #if (system/platform = 'haiku)   [ defines: TO_HAIKU   ]
-#if Windows? [ defines: TO_WINDOWS ]
+#if Windows? [ defines: [TO_WINDOWS _CRT_SECURE_NO_WARNINGS]]
 #if OpenBSD? [ defines: TO_OPENBSD ]
 #if FreeBSD? [ defines: TO_FREEBSD ]
 #if (system/platform = 'NetBSD)  [ defines: TO_NETBSD  ]
@@ -969,9 +969,9 @@ include-rebol-bulk: [
 	:include-rebol-core
 	:include-optional-checksums
 	:include-image-natives
-	:include-lzma-compression
-	:include-lzw-compression
-	:include-brotli-compression
+	:include-lzma-compression   ;= cca 17kB
+	:include-lzw-compression    ;= cca 2kB
+	:include-brotli-compression ;= cca 330kB
 	:include-crush-compression
 	:include-base36-encoding
 	:include-base85-encoding
@@ -1039,7 +1039,6 @@ common: [
 			%Ole32
 			;%m
 		]
-		defines: _CRT_SECURE_NO_WARNINGS
 	]
 	#if macOS? [
 		library: %m
@@ -1203,9 +1202,6 @@ make-ext-test: [
 	files: only %tests/extension/test.c
 	flags: [-O2 shared]
 	compiler: clang
-	#if Windows? [
-		defines: _CRT_SECURE_NO_WARNINGS
-	]
 	#if Linux? [
 		flag: -fPIC
 		compiler: gcc
@@ -1973,22 +1969,17 @@ eggs: [
 		:arch-x64
 		:make-ext-test
 	]
-
-	"Test app (using Rebol shared library)" [
-		name: %test-reb
-		:arch-x64
-		files: only [
-			%test-app.c
-		]
-		library:   %lib-rebol3-core-windows-x64
-		:target-windows
-		define: _CRT_SECURE_NO_WARNINGS
-		define: REB_EXE
-		library: [%User32 %Shell32 %Ws2_32 %Bcrypt %Comdlg32 %Advapi32 %Ole32]
-
-	]
-
 	"Amalgamate extension include file" [
 		do %make/tools/amalgamate-ext.r3
+	]
+	
+	#if Windows? [ ;@@ what about other systems?
+		"Test app (using Rebol shared library)" [
+			name: %test-reb
+			:arch-x64
+			files: only %test-app.c
+			library:  %lib-rebol3-bulk-windows-x64
+			:target-windows
+		]
 	]
 ]
