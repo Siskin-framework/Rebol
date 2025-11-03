@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.20.3
+version: 3.20.4
 
 #if Linux?   [ defines: TO_LINUX   ]
 #if macOS?   [ defines: TO_MACOS   ]
@@ -810,7 +810,7 @@ include-brotli-compression: [
 		%core/brotli/dec/decode.c
 		%core/brotli/dec/bit_reader.c
 		%core/brotli/dec/prefix.c
-		%core/brotli/dec/static_init.c
+		%core/brotli/dec/static_init_dec.c
 		%core/brotli/enc/backward_references.c
 		%core/brotli/enc/backward_references_hq.c
 		%core/brotli/enc/bit_cost.c
