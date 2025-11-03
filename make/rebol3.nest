@@ -809,6 +809,8 @@ include-brotli-compression: [
 		%core/brotli/dec/huffman.c
 		%core/brotli/dec/decode.c
 		%core/brotli/dec/bit_reader.c
+		%core/brotli/dec/prefix.c
+		%core/brotli/dec/static_init.c
 		%core/brotli/enc/backward_references.c
 		%core/brotli/enc/backward_references_hq.c
 		%core/brotli/enc/bit_cost.c
@@ -829,6 +831,8 @@ include-brotli-compression: [
 		%core/brotli/enc/memory.c
 		%core/brotli/enc/metablock.c
 		%core/brotli/enc/static_dict.c
+		%core/brotli/enc/static_init.c
+		%core/brotli/enc/static_dict_lut.c
 		%core/brotli/enc/utf8_util.c
 	]
 ]
