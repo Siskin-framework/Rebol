@@ -1,14 +1,15 @@
 REBOL [
-    version: 0.10.2
+    version: 0.11.0
     title: "TLS Protocol"
     name: tls
-    date: 16-Oct-2025
+    date: 13-Nov-2025
     file: %tls.reb
     author: "Oldes"
     Yype: module
     License: MIT
     Home: https://github.com/Oldes/Rebol-TLS
 ]
+try [do "_: #(none)"]
 comment "## Include: %tls-context.reb"
 comment {## Title:   "TLS Context Object Definition"}
 TLS-context: context [
@@ -1726,9 +1727,21 @@ decode-server-key-exchange: function [
         ctx/remote-random
         copy/part message message-len
     ]
-    hash-algorithm: *HashAlgorithm/name binary/read msg 'UI8
-    sign-algorithm: *ClientCertificateType/name binary/read msg 'UI8
-    signature: binary/read msg 'UI16BYTES
+    binary/read msg [
+        hash-algorithm: UI8
+        sign-algorithm: UI8
+        signature: UI16BYTES
+    ]
+    either hash-algorithm == 8 [
+        switch sign-algorithm [
+            4 [sign-algorithm: 'rsa_pss hash-algorithm: 'sha256]
+            5 [sign-algorithm: 'rsa_pss hash-algorithm: 'sha384]
+            6 [sign-algorithm: 'rsa_pss hash-algorithm: 'sha512]
+        ]
+    ] [
+        hash-algorithm: *HashAlgorithm/name :hash-algorithm
+        sign-algorithm: *ClientCertificateType/name :sign-algorithm
+    ]
     log-more ["R[" ctx/seq-read "] Using algorithm:" hash-algorithm "with" sign-algorithm]
     key: ctx/server-certs/1/public-key
     switch sign-algorithm [
@@ -1741,6 +1754,11 @@ decode-server-key-exchange: function [
             log-more "Checking signature using RSA"
             rsa-key: apply :rsa-init ctx/server-certs/1/public-key/rsaEncryption
             valid?: rsa/verify/hash rsa-key verify-data signature hash-algorithm
+        ]
+        rsa_pss [
+            log-more "Checking signature using RSA_PSS"
+            rsa-key: apply :rsa-init ctx/server-certs/1/public-key/rsaEncryption
+            valid?: rsa/verify/pss/hash rsa-key verify-data signature hash-algorithm
         ]
     ]
     unless valid? [
