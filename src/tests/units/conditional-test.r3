@@ -45,6 +45,15 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "DID"
+	--test-- "did native"
+	;; Can be used instead of deprecated `found?`
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2053
+		--assert did find [a] 'a 
+		--assert not find [a] 'b
+===end-group===
+
+
 ===start-group=== "SWITCH"
 	--test-- "switch ref!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2466

@@ -958,3 +958,17 @@ callback:	// ...and the last result.
 	}
 	return R_NONE;
 }
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(did)
+/*
+//  did: native [
+//		"Returns TRUE if the given value is truthy (not NONE or FALSE)."
+//		value [any-type!] "Value to test"
+//  ]
+***********************************************************************/
+{
+	return IS_FALSE(D_ARG(1)) ? R_FALSE : R_TRUE;
+}
