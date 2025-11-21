@@ -991,34 +991,6 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	Current_Year = dat.year;
 }
 
-/***********************************************************************
-**
-*/	void Init_Compression(void)
-/*
-**		Fill system/catalog/compressions with optional compressions
-**
-***********************************************************************/
-{
-	REBVAL *blk;
-	REBVAL  tmp;
-	(void)tmp; // to silence unreferenced local variable warning in case there is no compression included
-	#define add_compression(sym) Init_Word(&tmp, sym); VAL_SET_LINE(&tmp); Append_Val(VAL_SERIES(blk), &tmp);
-	blk = Get_System(SYS_CATALOG, CAT_COMPRESSIONS);
-	if (blk && IS_BLOCK(blk)) {
-		#ifdef INCLUDE_BROTLI
-		add_compression(SYM_BR);
-		#endif
-		#ifdef INCLUDE_CRUSH
-		add_compression(SYM_CRUSH);
-		#endif
-		#ifdef INCLUDE_LZMA
-		add_compression(SYM_LZMA);
-		#endif
-	}
-}
-	
-
-
 
 /***********************************************************************
 **

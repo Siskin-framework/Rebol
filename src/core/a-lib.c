@@ -1321,6 +1321,65 @@ RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
 	return  Encode_UTF8_Char(dst, chr);
 }
 
+/***********************************************************************
+**
+*/	RL_API void* RL_Mem_Alloc(void *opaque, size_t size)
+/*
+**	Allocates memory either using a memory pool or standard dynamic memory allocation.
+**	It keeps info about this memory and checks if memory use is not over policy.
+**	Such allocated memory must be freed using `RL_Mem_Free` function!
+**
+**	Returns:
+**		Pointer to the newly allocated memory
+**	Arguments:
+**		opaque  - unused
+**		size    - required memory size
+*/
+{
+	return Make_Managed_Mem(opaque, size);
+}
+
+/***********************************************************************
+**
+*/	RL_API void RL_Mem_Free(void* opaque, void* address)
+/*
+**	Frees memory allocated using the `RL_Mem_Alloc` function.
+**
+**	Returns:
+**		nothing
+**	Arguments:
+**		opaque  - unused
+**		address - memory address to be freed
+*/
+{
+	Free_Managed_Mem(opaque, address);
+}
+
+/***********************************************************************
+**
+*/	RL_API int RL_Register_Compress_Method(const REBYTE* name, COMPRESS_FUNC encoder, DECOMPRESS_FUNC decoder)
+/*
+**	Register external compression functions.
+**
+**	Returns:
+**		TRUE if succesfully registered.
+**	Arguments:
+**		name - null ternimanted name of the compression method
+**		encoder - external compress function
+*/
+{
+	REBCNT sym = Make_Word(cb_cast(name), 0);
+	int ret = Register_Compress_Method(sym, encoder, decoder);
+	if (ret) {
+		REBVAL val;
+		REBVAL *blk = Get_System(SYS_CATALOG, CAT_COMPRESSIONS);
+		Init_Word(&val, sym);
+		Append_Val(VAL_SERIES(blk), &val);
+	}
+	return ret;
+}
+
+
 
 #include "reb-lib-lib.h"
 
