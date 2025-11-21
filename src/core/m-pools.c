@@ -759,11 +759,12 @@ clear_header:
 			spec.free(hob->data);
 		}
 	}
-	
-	CLEAR(hob->data, spec.size);
-	// Free memory only if the requested size was greater than the pointer size.
-	if (spec.size > sizeof(void *)) {
-		Free_Managed_CMem(hob->data);
+	if (hob->data) {
+		CLEAR(hob->data, spec.size);
+		// Free memory only if the requested size was greater than the pointer size.
+		if (spec.size > sizeof(void*)) {
+			Free_Managed_CMem(hob->data);
+		}
 	}
 	UNUSE_HOB(hob);
 	Free_Node(HOB_POOL, (REBNOD *)hob);
