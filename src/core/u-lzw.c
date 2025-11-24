@@ -557,17 +557,23 @@ int lzw_decompress (void (*dst)(int,void*), void *dstctx, int (*src)(void*), voi
 }
 
 typedef struct {
-	REBSER *buffer;
+	const REBYTE *buffer;
 	REBCNT index;  // current buffer position
 	REBCNT end;    // for early exit
-} streamer;
+} lzw_reader;
+
+typedef struct {
+	REBSER* buffer;
+	REBCNT index;  // current buffer position
+	REBCNT end;    // for early exit
+} lzw_writer;
 
 static int read_buff(void *ctx) {
-	streamer *stream = ctx;
+	lzw_reader *stream = ctx;
 	REBINT value;
 
 	if (stream->index < stream->end) {
-		value = BIN_DATA(stream->buffer)[stream->index++];
+		value = stream->buffer[stream->index++];
 	}
 	else
 		value = NO_RESULT;
@@ -576,7 +582,7 @@ static int read_buff(void *ctx) {
 }
 
 static void write_buff(int value, void *ctx) {
-	streamer *stream = ctx;
+	lzw_writer *stream = ctx;
 
 	if (stream->index >= stream->end || value == NO_RESULT) {
 		return;
@@ -592,17 +598,15 @@ static void write_buff(int value, void *ctx) {
 
 /***********************************************************************
 **
-*/  REBSER *CompressLzw(REBSER *input, REBINT index, REBCNT in_len, REBINT level)
+*/  int CompressLzw(const REBYTE* input, REBLEN size, REBCNT level, REBSER** output, int* error)
 /*
-**      Compress a binary (only) using LZW compression.
-**      data
-**      /part
-**      length
+**      Compress a binary using LZW compression.
 **
 ***********************************************************************/
 {
-    REBINT  err, maxbits = 16;
-	streamer reader, writer;
+    REBINT     maxbits = 16;
+	lzw_reader reader;
+	lzw_writer writer;
 
 	if (level >= 1 && level <= 7) {
 		maxbits = 8 + level;
@@ -613,56 +617,49 @@ static void write_buff(int value, void *ctx) {
 	CLEARS(&reader);
 	CLEARS(&writer);
 	reader.buffer = input;
-	reader.index = index;
-	reader.end = index + in_len;
-	writer.buffer = Make_Binary(in_len >> 1);
+	reader.index = 0;
+	reader.end = size;
+	writer.buffer = *output = Make_Binary(size >> 1);
 	writer.end = NO_LIMIT;
 
-	err = lzw_compress(write_buff, &writer, read_buff, &reader, maxbits);
-    if (err) {
-		Free_Series(writer.buffer);
-        SET_INTEGER(DS_RETURN, err);
-        Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
-    }
-    SERIES_TAIL(writer.buffer) = writer.index;
-    return writer.buffer;
+	*error = lzw_compress(write_buff, &writer, read_buff, &reader, maxbits);
+	if (*error) return FALSE;
+    SERIES_TAIL(*output) = writer.index;
+    return TRUE;
 }
 
 /***********************************************************************
 **
-*/  REBSER *DecompressLzw(REBSER *input, REBCNT index, REBINT in_len, REBCNT limit)
+*/  int DecompressLzw(const REBYTE* input, REBLEN in_len, REBLEN limit, REBSER** output, int* error)
 /*
-**      Decompress a binary (only).
+**      Decompress a binary.
 **
 ***********************************************************************/
 {
 	REBU64 out_len;
 	REBINT err;
-	streamer reader, writer;
+	lzw_reader reader;
+	lzw_writer writer;
 
 	CLEARS(&reader);
 	CLEARS(&writer);
 	reader.buffer = input;
-	reader.index = index;
-	reader.end = in_len + index;
+	reader.index = 0;
+	reader.end = in_len;
 	
-	if (limit > 0) {
+	if (limit != NO_LIMIT) {
 		writer.end = out_len = limit;
 	}
 	else {
 		out_len = (REBU64)in_len << 1;
 		writer.end = NO_LIMIT;
 	}
-	writer.buffer = Make_Binary(out_len);
+	writer.buffer = *output = Make_Binary(out_len);
 
-	err = lzw_decompress(write_buff, &writer, read_buff, &reader);
-	if (err) {
-		SET_INTEGER(DS_RETURN, err);
-		Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
-	}
-	SET_STR_END(writer.buffer, writer.index);
-	SERIES_TAIL(writer.buffer) = writer.index;
-	return writer.buffer;
+	error = lzw_decompress(write_buff, &writer, read_buff, &reader);
+	if (error) return FALSE;
+	SERIES_TAIL(*output) = writer.index;
+	return TRUE;
 }
 
 #endif //INCLUDE_LZW

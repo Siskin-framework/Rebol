@@ -8,7 +8,11 @@ Rebol [
 	Note: {}
 ]
 
-bin: to binary! mold system
+;; Using molded system as a test input (large text data).
+;; When running this script from REPL console,
+;; make sure that we don't mold the system multiple times,
+;; else its size would be significantly bigger!
+unless binary? :bin [bin: to binary! mold system]
 sum: checksum bin 'sha256 ;; Used to validate decompressed result
 len: length? bin          ;; Used as a hint for the decompression
 

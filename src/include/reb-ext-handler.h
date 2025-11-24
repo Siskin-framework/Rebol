@@ -37,13 +37,15 @@ typedef int (*COMPRESS_FUNC)(
     const REBYTE *input,
     REBLEN        in_len,
 	REBCNT        level,
-    REBSER      **output
+    REBSER      **output,
+	REBINT       *error
 );
 
 typedef int (*DECOMPRESS_FUNC)(
     const REBYTE *input,
 	REBLEN        in_len,
 	REBLEN        out_len,
-    REBSER      **output
+    REBSER      **output,
+	REBINT       *error
 );
 

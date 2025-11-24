@@ -144,7 +144,7 @@ static inline int get_penalty(int a, int b) {
 
 /***********************************************************************
 **
-*/	int CompressCrush(const REBYTE* buf, REBLEN size, REBCNT level, REBSER** output)
+*/	int CompressCrush(const REBYTE* buf, REBLEN size, REBCNT level, REBSER** output, int* error)
 /*
 ***********************************************************************/
 {
@@ -333,19 +333,19 @@ static inline int get_penalty(int a, int b) {
 	//flush_bits...
 	put_bits(&ctx, 7, 0);
 	SERIES_TAIL(*output) = ctx.index;
-	return 1;
+	return TRUE;
 }
 
 /***********************************************************************
 **
-*/	int DecompressCrush(const REBYTE* input, REBLEN length, REBLEN limit, REBSER** output)
+*/	int DecompressCrush(const REBYTE* input, REBLEN length, REBLEN limit, REBSER** output, int* error)
 /*
 ***********************************************************************/
 {
 	REBYTE *buf;
 	REBCNT size, p;
 	REBINT len, s;
-	CRUSH  ctx;
+	CRUSH  ctx = { 0 };
 
 	if(length < 4) Trap1(RE_BAD_PRESS, DS_ARG(2));
 
@@ -400,6 +400,6 @@ static inline int get_penalty(int a, int b) {
 	}
 
 	SERIES_TAIL(*output) = size;
-	return 1;
+	return TRUE;
 }
 #endif //INCLUDE_CRUSH
