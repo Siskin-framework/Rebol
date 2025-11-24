@@ -656,8 +656,8 @@ static void write_buff(int value, void *ctx) {
 	}
 	writer.buffer = *output = Make_Binary(out_len);
 
-	error = lzw_decompress(write_buff, &writer, read_buff, &reader);
-	if (error) return FALSE;
+	*error = lzw_decompress(write_buff, &writer, read_buff, &reader);
+	if (*error) return FALSE;
 	SERIES_TAIL(*output) = writer.index;
 	return TRUE;
 }
