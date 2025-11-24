@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Additional code modifications and improvements Copyright 2012 Saphirion AG
@@ -64,8 +64,8 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
-extern HINSTANCE App_Instance;		// Set by winmain function
-extern HWND      Focused_Window;
+extern HINSTANCE App_Instance;	// Set by winmain function
+HWND      Focused_Window = 0;
 
 #define IS_LAYERED(hwnd) ((WS_EX_LAYERED & GetWindowLongPtr(hwnd, GWL_EXSTYLE)) > 0)
 #define GOB_FROM_HWND(hwnd) (REBGOB *)GetWindowLongPtr(hwnd, GWLP_USERDATA)

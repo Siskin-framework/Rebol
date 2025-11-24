@@ -61,7 +61,7 @@
 	REBYTE *src;
 
 	if (uni) {
-		len = OS_WIDE_TO_MULTIBYTE((const REBUNI*)bp, &src, len);
+		len = OS_Wide_To_Multibyte((const REBUNI*)bp, &src, len);
 	}
 	else {
 		src = bp;
@@ -190,7 +190,7 @@
 		out[n++] = OS_DIR_SEP;
 	}
 	else {
-		if (full) l = OS_GET_CURRENT_DIR(&lpath); // lpath is UTF-8 encoded!
+		if (full) l = OS_Get_Current_Dir(&lpath); // lpath is UTF-8 encoded!
 		dst = Make_Binary(l + len + FN_PAD); // may be longer (if lpath is encoded)
 		if (full) {
 			Append_Bytes_Len(dst, lpath, l);
@@ -199,7 +199,7 @@
 				*STR_LAST(dst) = OS_DIR_SEP;
 				*STR_TAIL(dst) = 0;
 			}
-			OS_FREE(lpath);
+			OS_Free(lpath);
 		}
 		out = STR_HEAD(dst);
 		n = SERIES_TAIL(dst);
@@ -251,13 +251,13 @@ term_out:
 
 	if (wide && n > 0) {
 		REBYTE *uni = NULL;
-		REBLEN len = OS_MULTIBYTE_TO_WIDE(STR_HEAD(dst), &uni);
+		REBLEN len = OS_Multibyte_To_Wide(STR_HEAD(dst), &uni);
 		if (uni == NULL) return NULL;
 		//wprintf(L"--wide: [ %s ]-- %u %u\n", (REBCHR*)uni, len, wcslen(uni));
 		Free_Series(dst);
 		dst = Make_Unicode(len + 1);
 		memcpy(BIN_HEAD(dst), (const void*)uni, len * sizeof(REBUNI));
-		OS_FREE((void*)uni);
+		OS_Free((void*)uni);
 
 		SERIES_TAIL(dst) = len;
 		UNI_TERM(dst);

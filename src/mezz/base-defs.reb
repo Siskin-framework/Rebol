@@ -147,10 +147,7 @@ scalar?: func [
 	value [any-type!]
 ][find scalar! type? :value]
 
-true?: func [
-	"Returns true if an expression can be used as true."
-	val [any-type!] ;- we want unset! not to fail.
-] [not not :val]
+true?: :did ;; `did` is defined in n-control.c
 
 quote: func [
 	"Returns the value passed to it without evaluation."

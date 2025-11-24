@@ -297,11 +297,17 @@ static REBFLG find_in_uni(REBU32 *up, REBINT len, REBU32 c)
 {
 	REBCNT tail = index + len;
 	REBCNT n;
-
-	// /all or /with
-	if (flags & (AM_TRIM_ALL | AM_TRIM_WITH)) {
-		if (IS_NONE(with)) SET_INTEGER(with, 0); // only NULL by default on binary
-		replace_with(ser, index, tail, with);
+	if (flags & AM_TRIM_WITH) Trap0(RE_BAD_REFINES);
+	if (flags & AM_TRIM_ALL) {
+		// Remove all nulls...
+		REBYTE* src = BIN_SKIP(ser, index);
+		REBYTE* dst = src;
+		for (n = 0; n < len; n++) {
+			if (src[n])	*dst++ = src[n];
+			else tail--;
+		}
+		SERIES_TAIL(ser) = tail;
+		BIN_HEAD(ser)[tail] = 0;
 		return;
 	}
 	// /head

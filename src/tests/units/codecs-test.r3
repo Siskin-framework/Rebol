@@ -648,6 +648,10 @@ if find codecs 'XML [
 		--assert data/3/1/1 = "HTML"
 		--assert 5 = length? data/3/1/3
 
+	--test-- "XML decode test3"
+		--assert [document #[] [["a" ["name" "Émily"] ["Émily ♠"]]]]
+				== decode 'xml {<a name="&#x00C9;mily">&#xC9;mily &spades;</a>}
+
 
 	===end-group===
 ]
@@ -659,6 +663,10 @@ if find codecs 'html-entities [
 		test: {Test: &spades; & &#162; &lt;a&gt;&#32;and &Delta;&delta; &frac34;}
 		--assert "Test: ♠ & ¢ <a> and Δδ ¾" = decode 'html-entities test
 		--assert "Test: ♠ & ¢ <a> and Δδ ¾" = decode 'html-entities to binary! test
+		--assert "Émily" == decode 'html-entities "&#x00C9;mily"
+		--assert "Émily" == decode 'html-entities "&#x0C9;mily"
+		--assert "Émily" == decode 'html-entities "&#xC9;mily"
+		--assert "&#xFFFFFF; & &#1114112;" == decode 'html-entities {&#xFFFFFF; & &#1114112;}
 
 	===end-group===
 ]

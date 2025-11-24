@@ -3,19 +3,55 @@
 This is just generated output from commits in [this repository](https://github.com/Oldes/Rebol3). For full log use [GitHub commits](https://github.com/Oldes/Rebol3/commits/master).
 
 
+
+## 2025 November
+
+### Features:
+
+* [`283062`](https://github.com/Oldes/Rebol3/commit/283062136f49cd52561e5fc9a47311be7aa0be9e) Add optional fast in-memory LZAV de/compression
+* [`e2a2d2`](https://github.com/Oldes/Rebol3/commit/e2a2d2b427de90b70e7644300b6358b7926e5549) Allow extensions to register new compression methods
+* [`e174bf`](https://github.com/Oldes/Rebol3/commit/e174bfad9b4de8072387bd38a910c1e491a0413e) New `did` native returning TRUE when given a truthy value
+
+### Changes:
+
+* [`e349a7`](https://github.com/Oldes/Rebol3/commit/e349a7e29136db1e1300944762e4b5b0b5a837ec) Initialize optional compression methods using Register_Compress_Method
+* [`57b590`](https://github.com/Oldes/Rebol3/commit/57b590799344f467abea5ca69491131ca7a70e29) Update Brotli source to version 1.2.0
+* [`76425d`](https://github.com/Oldes/Rebol3/commit/76425d1e31d776162741e8e81c39da584ad6e84c) Unify definitions of endianness-related macros
+
+### Fixes:
+
+* [`47fd36`](https://github.com/Oldes/Rebol3/commit/47fd3671a61a11c4975cbff6dabfdc79e1134eaa) Validate handle data is not NULL before releasing
+* [`c8397b`](https://github.com/Oldes/Rebol3/commit/c8397b8b8755e52281142c2daf0a3820c4416f5f) Missing argument for throw-http-error in the HTTP scheme
+* [`67f5da`](https://github.com/Oldes/Rebol3/commit/67f5da5d8d730b442a058daccdb6d242d55cc3aa) TLS protocol: handle site using TLS1.2 with rss_pss signature algorithm
+
+
 ## 2025 October
 
 ### Features:
 
+* [`645a24`](https://github.com/Oldes/Rebol3/commit/645a247a5d77bc27ed58fb053362e5b6996f5c17) Enhance HTML-entities codec with hexadecimal variant support
+* [`796816`](https://github.com/Oldes/Rebol3/commit/7968169e69de9fc66beaca22f555e72a2d658ba3) Allow `make tuple!` to accept decimal values
+* [`7562e9`](https://github.com/Oldes/Rebol3/commit/7562e9095a269caee7f9517204f58bceb0a922be) By default return Rebol tuple color from the `request-color` function
+* [`c7bedd`](https://github.com/Oldes/Rebol3/commit/c7bedd6439f100c12f1743098ffdb029cded64b9) Include `request-color` in macOS builds
+* [`3f484b`](https://github.com/Oldes/Rebol3/commit/3f484b8c775365a4219e30611df8f7e231afde62) Include `request-dir` and `request-file` in macOS builds
 * [`f190da`](https://github.com/Oldes/Rebol3/commit/f190dae17d08af2f47e593103e660ff4803e08ce) Add TLS v1.3 protocol support
 
 
 ### Changes:
 
+* [`ad0e33`](https://github.com/Oldes/Rebol3/commit/ad0e33aa188316702bf549ff2474ead9cbd03665) Disallow `trim/with` on binary input
+* [`298f05`](https://github.com/Oldes/Rebol3/commit/298f054359a1fe1eac4883e18358f3752f77f17f) Integrate host files into Rebol library
 * [`72af36`](https://github.com/Oldes/Rebol3/commit/72af3618de6c75e24324d7db1e7f19f5df90bda4) Allow 'number?' to accept 'unset!' value
 
 ### Fixes:
 
+* [`380b4d`](https://github.com/Oldes/Rebol3/commit/380b4dda207711c033427ae8e413f19efe3ae54f) Find/any returning incorrect result
+* [`2b412a`](https://github.com/Oldes/Rebol3/commit/2b412ad809e1a774b8e1193bd0f6f7705775fc60) WebSocket module - correctly handle fragmented messages
+* [`0dc36c`](https://github.com/Oldes/Rebol3/commit/0dc36c876b55c24f2263be10fa306f2cf4d91e4d) Properly handle escaped characters in XML attribute values
+* [`61a579`](https://github.com/Oldes/Rebol3/commit/61a579302f6f5f3e2d96213935227c4968a274b4) Force string conversion when reading URL with /string refinement
+* [`0a7323`](https://github.com/Oldes/Rebol3/commit/0a732326f0a423551d629a63f967a3a7d95c1f09) Force string conversion when reading URL with /lines refinement
+* [`25a3d1`](https://github.com/Oldes/Rebol3/commit/25a3d150510a44a94d3c85917d22a75bd4e9bfaa) Gracefully handle invalid TLS extension length and improve TLS 1.2 support
+* [`4dbe45`](https://github.com/Oldes/Rebol3/commit/4dbe4525fc9eeb544dc5566e351215624642c8d6) Throw error for unsupported `binary/read` spec values
 * [`969f3d`](https://github.com/Oldes/Rebol3/commit/969f3d2d93b2249f2b775cb9db8d2a913e4f64a0) Handle HTTP redirects to prevent bad requests in some cases
 * [`6ef022`](https://github.com/Oldes/Rebol3/commit/6ef022934a5ee91cb92cfbb6a00d7a0af33c8754) Correct 'find' behavior for tags in strings
 

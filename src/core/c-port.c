@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -172,7 +172,7 @@
 **
 ***********************************************************************/
 {
-	REBI64 base = OS_DELTA_TIME(0, 0);
+	REBI64 base = OS_Delta_Time(0, 0);
 	REBCNT time;
 	REBINT result;
 	REBCNT wt = 1;
@@ -198,7 +198,7 @@
 
 		if (timeout != ALL_BITS) {
 			// Figure out how long that (and OS_WAIT) took:
-			time = (REBCNT)(OS_DELTA_TIME(base, 0)/1000);
+			time = (REBCNT)(OS_Delta_Time(base, 0)/1000);
 			if (time >= timeout) break;	  // done (was dt = 0 before)
 			else if (wt > timeout - time) // use smaller residual time
 				wt = timeout - time;
@@ -220,7 +220,7 @@
 
 		// Wait for events or time to expire:
 		//Debug_Num("OSW", wt);
-		OS_WAIT(wt, res);
+		OS_Wait(wt, res);
 	}
 
 	//time = (REBCNT)OS_DELTA_TIME(base, 0);

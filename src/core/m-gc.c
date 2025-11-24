@@ -83,10 +83,6 @@
 #include "reb-evtypes.h"
 //#include "stdio.h"
 
-#ifdef REB_API
-extern REBOL_HOST_LIB *Host_Lib;
-#endif
-
 //-- For Serious Debugging:
 #ifdef WATCH_GC_VALUE
 REBSER *Watcher = 0;
@@ -110,6 +106,8 @@ REBVAL *N_watch(REBFRM *frame, REBVAL **inter_block)
 		// Mark_Count++;
 		// Print("Mark: %s %x", TYPE_NAME(val), val);
 #endif
+
+extern REBDEV *Devices[];
 
 static void Mark_Series(REBSER *series, REBCNT depth);
 static void Mark_Value(REBVAL *val, REBCNT depth);
@@ -272,7 +270,7 @@ static void Mark_Value(REBVAL *val, REBCNT depth);
 	int d;
 	REBDEV *dev;
 	REBREQ *req;
-	REBDEV **devices = Host_Lib->devices;
+	REBDEV **devices = Devices;// Host_Lib->devices;
 	
 	for (d = 0; d < RDI_MAX; d++) {
 		dev = devices[d];

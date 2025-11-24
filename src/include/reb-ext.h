@@ -30,6 +30,7 @@
 #include "reb-defs.h"
 #include "ext-types.h"
 #include "sys-value.h"
+#include "reb-ext-handler.h"
 
 #ifndef API_EXPORT
 # define RL_API API_EXPORT

@@ -146,19 +146,23 @@
 		}
 			break;
 
-#ifdef removed
-//		case REB_ISSUE:
-			// Scan 8 or 16 bit hex str, will throw on error...
-			arg = Scan_Hex_Value(VAL_DATA(val), VAL_LEN(val), (REBOOL)!VAL_BYTE_SIZE(val));
-			if (arg > MAX_UNI || arg < 0) goto bad_make;
-			chr = arg;
-			break;
-#endif
-
 		case REB_STRING:
 			if (VAL_INDEX(val) >= VAL_TAIL(val)) Trap_Make(REB_CHAR, val);
 			chr = GET_ANY_CHAR(VAL_SERIES(val), VAL_INDEX(val));
 			break;
+
+		case REB_ISSUE:
+		{
+			const REBYTE* bp = Get_Word_Name(val);
+			REBCNT len = LEN_BYTES(bp);
+			REBINT n = MIN(MAX_HEX_LEN, len);
+			REBI64 num;
+			// Scan 8 or 16 bit hex str, will throw on error...
+			if (Scan_Hex(bp, &num, n, n) == 0) goto bad_make;
+			if (num > MAX_UNI || num < 0) goto bad_make;
+			chr = (REBU32)num;
+			break;
+		}
 
 		default:
 bad_make:

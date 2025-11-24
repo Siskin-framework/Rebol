@@ -3,7 +3,7 @@ REBOL [
 	Title: "Make Reb-Lib related files"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2021 Rebol Open Source Contributors
+		Copyright 2012-2025 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {

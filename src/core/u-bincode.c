@@ -1680,6 +1680,10 @@ static REBCNT EncodedVINT_Size(REBU64 value) {
 						VAL_LOGIC(temp) = TRUE;
 					}
 					break;
+				default:
+					Trap1(RE_INVALID_SPEC, value);
+					//or...
+					//*temp = *value; // ...pass value as a result
 			}
 			// Set prior set-words:
 			while (DSP > ssp) {

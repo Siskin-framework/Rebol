@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -1833,7 +1833,7 @@ reapply:  // Go back here to start over with a new func
 		val = Get_System(SYS_STATE, STATE_LAST_ERROR); // Save it for EXPLAIN
 		*val = *DS_NEXT;
 		if (VAL_ERR_NUM(val) == RE_QUIT) {
-			OS_EXIT(VAL_INT32(VAL_ERR_VALUE(DS_NEXT))); // console quit
+			OS_Exit(VAL_INT32(VAL_ERR_VALUE(DS_NEXT))); // console quit
 		}
 		return val;
 	}
@@ -2352,7 +2352,7 @@ xx*/	REBVAL *Do_Path(REBVAL **path_val, REBVAL *val)
 				*val = *DS_NEXT;
 				if (VAL_ERR_NUM(val) == RE_QUIT) {
 					//Debug_Fmt("Quit(init)");
-					OS_EXIT(VAL_INT32(VAL_ERR_VALUE(val))); // console quit
+					OS_Exit(VAL_INT32(VAL_ERR_VALUE(val))); // console quit
 				}
 				if (VAL_ERR_NUM(val) == RE_HALT) return -ROF_HALT;
 				if (VAL_ERR_NUM(val) >= RE_THROW_MAX)

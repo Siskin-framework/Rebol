@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -96,4 +97,3 @@ enum arg_opts {
 
 #define RO_IGNORE      (1<<ROF_IGNORE)
 
-void Parse_Args(int argc, REBCHR **argv, REBARGS *rargs);

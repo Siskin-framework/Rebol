@@ -1,14 +1,15 @@
 REBOL [
-    version: 0.10.2
+    version: 0.11.0
     title: "TLS Protocol"
     name: tls
-    date: 2-Oct-2025
+    date: 13-Nov-2025
     file: %tls.reb
     author: "Oldes"
     Yype: module
     License: MIT
     Home: https://github.com/Oldes/Rebol-TLS
 ]
+try [do "_: #(none)"]
 comment "## Include: %tls-context.reb"
 comment {## Title:   "TLS Context Object Definition"}
 TLS-context: context [
@@ -262,24 +263,24 @@ comment {## Title:   "TLS Protocol Constants and Enumerations"}
     sha512: 6
     md5_sha1: 255
 ] 'TLSHashAlgorithm
-*SignatureAlgorithm: enum [
-    rsa_pkcs1_sha1: 1025
-    rsa_pkcs1_sha224: 1281
-    rsa_pkcs1_sha256: 1537
-    rsa_pkcs1_sha384: 1793
-    rsa_pkcs1_sha512: 2049
-    rsa_pss_rsae_sha256: 2052
-    rsa_pss_rsae_sha384: 2053
-    rsa_pss_rsae_sha512: 2054
-    rsa_pss_pss_sha256: 2055
-    rsa_pss_pss_sha384: 2056
-    rsa_pss_pss_sha512: 2057
+*SignatureScheme: enum [
+    rsa_pkcs1_sha256: 1025
+    rsa_pkcs1_sha384: 1281
+    rsa_pkcs1_sha512: 1537
     ecdsa_secp256r1_sha256: 1027
     ecdsa_secp384r1_sha384: 1283
     ecdsa_secp521r1_sha512: 1539
-    ed25519: 2058
-    ed448: 2059
-] 'TLSSignatureAlgorithm
+    rsa_pss_rsae_sha256: 2052
+    rsa_pss_rsae_sha384: 2053
+    rsa_pss_rsae_sha512: 2054
+    ed25519: 2055
+    ed448: 2056
+    rsa_pss_pss_sha256: 2057
+    rsa_pss_pss_sha384: 2058
+    rsa_pss_pss_sha512: 2059
+    rsa_pkcs1_sha1: 513
+    ecdsa_sha1: 515
+] 'TLSSignatureScheme
 *ClientCertificateType: enum [
     rsa_sign: 1
     dss_sign: 2
@@ -906,7 +907,7 @@ decode-certificate-verify: function [
         signature-type: UI16
         signature: UI16BYTES
     ]
-    log-debug ["Verify certificate using type:^[[1m" *SignatureAlgorithm/name signature-type]
+    log-debug ["Verify certificate using type:^[[1m" *SignatureScheme/name signature-type]
     if signature-type == 2052 [
         either system/version < 3.19.7 [
             log-error {Current Rebol version is not able to validate this certificate!}
@@ -1125,62 +1126,64 @@ decode-extensions: function [
         ]
         decoded: ext-data
         ext-type: any [*TLS-Extension/name ext-type ext-type]
-        ext-data: binary ext-data
-        switch ext-type [
-            supported_groups [
-                decoded: decode-list *EllipticCurves ext-data 'UI16
-            ]
-            supported_versions [
-                either ctx/server? [
-                    num: (binary/read ext-data 'UI8) >> 1
-                    decoded: make block! num
-                    loop num [
-                        append decoded binary/read ext-data 'UI16
-                    ]
-                ] [
-                    either 2 != length? ext-data/buffer [
-                        log-error {Invalid length of the supported_versions extension!}
-                    ] [decoded: binary/read ext-data 'UI16]
+        unless empty? ext-data [
+            ext-data: binary ext-data
+            switch ext-type [
+                supported_groups [
+                    decoded: decode-list *EllipticCurves ext-data 'UI16
                 ]
-            ]
-            key_share [
-                bytes: either ctx/server? [
-                    binary/read ext-data 'UI16
-                ] [length? ext-data/buffer]
-                decoded: copy []
-                either bytes == 2 [
-                    decoded: binary/read ext-data 'UI16
-                ] [
-                    while [bytes >= 8] [
-                        binary/read ext-data [curve: UI16 len: UI16]
-                        bytes: bytes - len - 4
-                        tmp: binary/read ext-data :len
-                        if curve: *EllipticCurves/name curve [
-                            repend decoded [curve tmp]
+                supported_versions [
+                    either ctx/server? [
+                        num: (binary/read ext-data 'UI8) >> 1
+                        decoded: make block! num
+                        loop num [
+                            append decoded binary/read ext-data 'UI16
+                        ]
+                    ] [
+                        either 2 != length? ext-data/buffer [
+                            log-error {Invalid length of the supported_versions extension!}
+                        ] [decoded: binary/read ext-data 'UI16]
+                    ]
+                ]
+                key_share [
+                    bytes: either ctx/server? [
+                        binary/read ext-data 'UI16
+                    ] [length? ext-data/buffer]
+                    decoded: copy []
+                    either bytes == 2 [
+                        decoded: binary/read ext-data 'UI16
+                    ] [
+                        while [bytes >= 8] [
+                            binary/read ext-data [curve: UI16 len: UI16]
+                            bytes: bytes - len - 4
+                            tmp: binary/read ext-data :len
+                            if curve: *EllipticCurves/name curve [
+                                repend decoded [curve tmp]
+                            ]
                         ]
                     ]
                 ]
-            ]
-            server_name [
-                bytes: binary/read ext-data 'UI16
-                case [
-                    bytes != length? ext-data/buffer [
-                        log-error "Invalid length of the server_name extension!"
-                    ]
-                    0 != binary/read ext-data 'UI8 [
-                        log-error "Unknown server_name type!"
-                    ]
-                    'else [
-                        decoded: to string! binary/read ext-data 'UI16BYTES
-                        log-info ["Requested server name:^[[1m" decoded]
+                server_name [
+                    bytes: binary/read ext-data 'UI16
+                    case [
+                        bytes != length? ext-data/buffer [
+                            log-error "Invalid length of the server_name extension!"
+                        ]
+                        0 != binary/read ext-data 'UI8 [
+                            log-error "Unknown server_name type!"
+                        ]
+                        'else [
+                            decoded: to string! binary/read ext-data 'UI16BYTES
+                            log-info ["Requested server name:^[[1m" decoded]
+                        ]
                     ]
                 ]
-            ]
-            signature_algorithms [
-                decoded: decode-list *SignatureAlgorithm ext-data 'UI16
-            ]
-            compress_certificate [
-                decoded: decode-list *TLS-CertCompression ext-data 'UI8
+                signature_algorithms [
+                    decoded: decode-list *SignatureScheme ext-data 'UI16
+                ]
+                compress_certificate [
+                    decoded: decode-list *TLS-CertCompression ext-data 'UI8
+                ]
             ]
         ]
         out/:ext-type: decoded
@@ -1308,9 +1311,15 @@ TLS-client-awake: function [
                                     handshake-finished ctx
                                     return true
                                 ] [
-                                    prepare-finished-message ctx
-                                    do-TCP-write ctx
-                                    return false
+                                    either ctx/TLS13? [
+                                        prepare-finished-message ctx
+                                        do-TCP-write ctx
+                                        return false
+                                    ] [
+                                        change-state ctx ctx/protocol: 'APPLICATION
+                                        dispatch-event 'connect ctx/TLS-port
+                                        return true
+                                    ]
                                 ]
                             ]
                         ]
@@ -1719,37 +1728,37 @@ decode-server-key-exchange: function [
         copy/part message message-len
     ]
     binary/read msg [
-        algorithm: UI16
+        hash-algorithm: UI8
+        sign-algorithm: UI8
         signature: UI16BYTES
     ]
-    unless algorithm: *SignatureAlgorithm/name algorithm [
-        log-error "Unknown signature algorithm!"
-        cause-TLS-error 'Decode_error
+    either hash-algorithm == 8 [
+        switch sign-algorithm [
+            4 [sign-algorithm: 'rsa_pss hash-algorithm: 'sha256]
+            5 [sign-algorithm: 'rsa_pss hash-algorithm: 'sha384]
+            6 [sign-algorithm: 'rsa_pss hash-algorithm: 'sha512]
+        ]
+    ] [
+        hash-algorithm: *HashAlgorithm/name :hash-algorithm
+        sign-algorithm: *ClientCertificateType/name :sign-algorithm
     ]
-    hash-algorithm: signature-hash-methods/:algorithm
-    log-more ["R[" ctx/seq-read "] Signature Algorithm:" algorithm "=" enbase *SignatureAlgorithm/:algorithm 16]
+    log-more ["R[" ctx/seq-read "] Using algorithm:" hash-algorithm "with" sign-algorithm]
     key: ctx/server-certs/1/public-key
-    switch key/1 [
-        ecPublicKey [
-            log-more "Checking signature using RSA_fixed_DH"
+    switch sign-algorithm [
+        ecdsa_sign [
+            log-more "Checking signature using ECDSA"
             message-hash: checksum verify-data hash-algorithm
             ecdsa/verify/curve ctx/pub-key message-hash signature ctx/pub-exp
         ]
-        rsaEncryption [
+        rsa_sign [
             log-more "Checking signature using RSA"
             rsa-key: apply :rsa-init ctx/server-certs/1/public-key/rsaEncryption
-            switch algorithm [
-                rsa_pss_rsae_sha256
-                rsa_pss_rsae_sha384
-                rsa_pss_rsae_sha512 [
-                    either system/version < 3.19.7 [
-                        log-error {Current Rebol version is not able to validate this certificate!}
-                        valid?: true
-                    ] [
-                        valid?: rsa/verify/pss/hash rsa-key verify-data signature hash-algorithm
-                    ]
-                ]
-            ]
+            valid?: rsa/verify/hash rsa-key verify-data signature hash-algorithm
+        ]
+        rsa_pss [
+            log-more "Checking signature using RSA_PSS"
+            rsa-key: apply :rsa-init ctx/server-certs/1/public-key/rsaEncryption
+            valid?: rsa/verify/pss/hash rsa-key verify-data signature hash-algorithm
         ]
     ]
     unless valid? [

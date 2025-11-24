@@ -244,6 +244,12 @@ Rebol [
 	--assert %a1a2      = find/any/match %a1a2 %*a2
 	--assert %x         = find/any/tail %abx %*b
 	--assert %x         = find/any/tail %a1a2x %*a2
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2680
+	--assert none?        find/any %a.bc %*.c
+	--assert %a.bc      = find/any %a.bc %*.bc
+	--assert %a.bc      = find/any %a.bc %*.?c
+	--assert tail?        find/any/tail %a.bc %*.bc
+	--assert tail?        find/any/tail %a.bc %*.?c
 
 
 --test-- "FIND/ANY on string (unicode)"
@@ -607,12 +613,13 @@ Rebol [
 		--assert #{11001100} = trim/head      copy bin
 		--assert #{00110011} = trim/tail      copy bin
 		--assert #{1111}     = trim/all       copy bin
-		--assert #{000000}   = trim/all/with  copy bin #{11}
 		--assert #{} = trim      #{0000}
 		--assert #{} = trim/tail #{0000}
 		--assert #{} = trim/head #{0000}
 		--assert #{2061626320} = trim/head/tail to-binary " abc "
 	--test-- "trim binary! incompatible"
+		--assert all [error? e: try [trim/with      #{0011} #{11}] e/id = 'bad-refines]
+		--assert all [error? e: try [trim/all/with  #{0011} #{11}] e/id = 'bad-refines]
 		--assert all [error? e: try [trim/auto  #{00}] e/id = 'bad-refines]
 		--assert all [error? e: try [trim/lines #{00}] e/id = 'bad-refines]
 		--assert all [error? e: try [trim/head/all #{00}] e/id = 'bad-refines]

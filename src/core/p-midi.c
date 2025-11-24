@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -75,7 +75,7 @@
 		// This device is opened on the READ:
 		if (!IS_OPEN(req)) Trap_Port(RE_NOT_OPEN, port, -12);
 
-		result = OS_DO_DEVICE(req, RDC_READ);
+		result = OS_Do_Device(req, RDC_READ);
 		if (result < 0) Trap_Port(RE_READ_ERROR, port, req->error);
 
 		// Copy and set the string result:
@@ -93,7 +93,7 @@
 			req->data = VAL_BIN(arg);
 			req->length = VAL_LEN(arg);
 
-			result = OS_DO_DEVICE(req, RDC_WRITE);
+			result = OS_Do_Device(req, RDC_WRITE);
 			if (result < 0) Trap_Port(RE_WRITE_ERROR, port, req->error);
 		}
 		break;
@@ -120,13 +120,13 @@
 				SET_INTEGER(val2, req->midi.device_out);
 			}
 		}
-		if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
+		if (OS_Do_Device(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
 
 		break;
 
 	case A_CLOSE:
 		if (!IS_OPEN(req)) Trap_Port(RE_NOT_OPEN, port, -12);
-		OS_DO_DEVICE(req, RDC_CLOSE);
+		OS_Do_Device(req, RDC_CLOSE);
 		Release_Port_State(port);
 		break;
 
@@ -143,7 +143,7 @@
 		Set_Block(Get_Field(obj, STD_MIDI_INFO_DEVICES_IN), Make_Block(7));
 		Set_Block(Get_Field(obj, STD_MIDI_INFO_DEVICES_OUT), Make_Block(7));
 		req->data = (REBYTE*)obj;
-		OS_DO_DEVICE(req, RDC_QUERY);
+		OS_Do_Device(req, RDC_QUERY);
 
 		REBVAL *field = D_ARG(ARG_QUERY_FIELD);
 		if (IS_WORD(field)) {

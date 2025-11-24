@@ -20,6 +20,10 @@ Credits for Non-REBOL orginated C files and modules
   Version 1.3.1.1, 1-Apr-2025
   Copyright 1995-2024 Jean-loup Gailly and Mark Adler
 
+* LZAV (optional):
+  Copyright (C) 2023-2025, Aleksey Vaneev
+  MIT - https://github.com/avaneev/lzav
+
 * LZMA (optional):
   Copyright (C) 2018, Igor Pavlov
   Public domain - https://www.7-zip.org/sdk.html

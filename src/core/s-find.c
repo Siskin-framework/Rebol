@@ -584,6 +584,7 @@
 			while (n < len && pos < tail) {
 				c1 = GET_UTF8_CHAR(ser1, pos);
 				c3 = GET_UTF8_CHAR(ser2, index2 + n);
+				// printf("  %c == %c\n", c1, c3);
 				if (c3 == c_some) {
 				some_loop:
 					while (n < len) {
@@ -598,11 +599,12 @@
 						goto found;
 					}
 					sn = n; // store a new needle's start (thru the last found *)
+				some_next:
 					// skip in 'hay' all chars until found next needle's char
 					while (1) {
 						if (pos < head || pos >= tail) return NOT_FOUND;
 						c1 = GET_UTF8_CHAR(ser1, pos);
-						// printf("? %c == %c\n", c1, c3);
+						// printf("* %c == %c\n", c1, c3);
 						if (c1 == c3) goto next_char;
 						if (uncase && c1 < UNICODE_CASES && c3 < UNICODE_CASES) {
 							if (LO_CASE(c1) == LO_CASE(c3)) goto next_char;
@@ -617,7 +619,8 @@
 					if (LO_CASE(c1) != LO_CASE(c3)) {
 						if (sn) {
 							n = sn; // reset needles position to the last know * char
-							goto next_char;
+							c3 = GET_UTF8_CHAR(ser2, index2 + n);
+							goto some_next;
 						}
 						else break;
 					}

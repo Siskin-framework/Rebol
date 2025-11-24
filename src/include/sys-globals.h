@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,6 +66,10 @@ PVAR jmp_buf *Halt_State;	// Pointer to saved CPU state for HALT/QUIT handlers
 // when implemented that way. Needs research!!!!
 PVAR REBCNT	Eval_Signals;	// Signal flags
 
+
+//PVAR REBDEV *Devices[];
+PVAR REBREQ *Std_IO;
+PVAR REBARGS Main_Args;
 
 
 /***********************************************************************

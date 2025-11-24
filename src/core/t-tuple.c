@@ -63,6 +63,9 @@
 		else if (IS_CHAR(data)) {
 			n = VAL_CHAR(data);
 		}
+		else if (IS_DECIMAL(data)) {
+			n = AS_INT(round(VAL_DECIMAL(data)));
+		}
 		else return FALSE;
 		if (n > 255 || n < 0) return FALSE;
 		*vp = n;

@@ -28,10 +28,27 @@
 ***********************************************************************/
 
 #include "sys-core.h"
+#include "reb-ext-handler.h"
 #include "sys-zlib.h"
 #ifdef INCLUDE_LZMA
 #include "sys-lzma.h"
 #endif // INCLUDE_LZMA
+
+
+// Registry entry structure
+typedef struct {
+	REBINT          sym;    // Symbol ID for the method
+	COMPRESS_FUNC   encode; // Compress function pointer
+	DECOMPRESS_FUNC decode; // Decompress function pointer
+} COMPRESS_METHOD;
+
+// Dynamic registry (used to register compression methods on runtime)
+#define MAX_COMPRESS_METHODS 8
+COMPRESS_METHOD compress_registry[MAX_COMPRESS_METHODS];
+static REBCNT compress_method_count = 0;
+
+
+
 
 static void *zalloc(void *opaque, unsigned nr, unsigned size) {
 	return Make_Managed_Mem(opaque, nr*size);
@@ -167,7 +184,7 @@ void Trap_ZStream_Error(z_stream *stream, int err, REBOOL while_compression)
 	REBINT err;
 
 	if (len < 0 || (index + len > BIN_LEN(input))) len = BIN_LEN(input) - index;
-	size = (limit > 0) ? limit : (uLongf)len * 3;
+	size = (limit != NO_LIMIT) ? limit : (uLongf)len * 3;
 
 	output = Make_Binary(size);
 
@@ -223,30 +240,22 @@ static const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 
 /***********************************************************************
 **
-*/  REBSER *CompressLzma(REBSER *input, REBINT index, REBCNT in_len, REBINT level)
+*/  int CompressLzma(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output, int* error)
 /*
-**      Compress a binary (only) using LZMA compression.
-**		data
-**		/part
-**		length
+**      Compress a binary using LZMA compression.
 **
 ***********************************************************************/
 {
 	REBU64  size;
-	REBU64  size_in = in_len;
-	REBSER *output;
 	REBINT  err;
 	REBYTE *dest;
 	REBYTE  out_size[sizeof(REBCNT)];
 
-	if (level < 0)
-		level = 5;
-	else if (level > 9)
-		level = 9;
+	level = (level == UNKNOWN) ? 5 : MIN(9, level);
 
 	//@@ are these Sterling's magic numbers correct for LZMA too?
-	size = LZMA_PROPS_SIZE + size_in + (size_in > STERLINGS_MAGIC_NUMBER ? size_in / 10 + 12 : STERLINGS_MAGIC_FIX);
-	output = Make_Binary(size);
+	size = LZMA_PROPS_SIZE + len + (len > STERLINGS_MAGIC_NUMBER ? len / 10 + 12 : STERLINGS_MAGIC_FIX);
+	*output = Make_Binary(size);
 
 	// so far hardcoded LZMA encoder properties... it would be nice to be able specify these by user if needed.
 	CLzmaEncProps props;
@@ -267,72 +276,60 @@ static const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 	//	int fb,  /* 5 <= fb <= 273, default = 32 */
 	//	int numThreads /* 1 or 2, default = 2 */
 
-	dest = BIN_HEAD(output);
+	dest = BIN_HEAD(*output);
 
 	/* header: 5 bytes of LZMA properties */
 	REBU64 headerSize = LZMA_PROPS_SIZE;
 	size -= headerSize;
 
-	err = LzmaEncode(dest + headerSize, (SizeT*)&size, BIN_HEAD(input) + index, (SizeT)in_len, &props, dest, (SizeT*)&headerSize, 0,
+	*error = LzmaEncode(dest + headerSize, (SizeT*)&size, input, (SizeT)len, &props, dest, (SizeT*)&headerSize, 0,
 		((ICompressProgress *)0), &g_Alloc, &g_Alloc);
 	//printf("lzmaencode res: %i size: %u headerSize: %u\n", err, size, headerSize);
-	if (err) {
-		if (err == SZ_ERROR_MEM) Trap0(RE_NO_MEMORY);
-		SET_INTEGER(DS_RETURN, err);
-		Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
-	}
+	if (*error) return FALSE;
 	size += headerSize;
-	//SET_STR_END(output, size);
-	SERIES_TAIL(output) = size;
-	REBCNT_To_Bytes(out_size, (REBCNT)in_len); // Tag the size to the end.
-	Append_Series(output, (REBYTE*)out_size, sizeof(REBCNT));
-	if (SERIES_AVAIL(output) > 1024) // Is there wasted space?
-		output = Copy_Series(output); // Trim it down if too big. !!! Revisit this based on mem alloc alg.
-	return output;
+
+	SERIES_TAIL(*output) = size;
+	REBCNT_To_Bytes(out_size, (REBCNT)len); // Tag the size to the end.
+	Append_Series(*output, (REBYTE*)out_size, sizeof(REBCNT));
+	if (SERIES_AVAIL(*output) > 16384)  // Is there wasted space?
+		*output = Copy_Series(*output); // Trim it down if too big. !!! Revisit this based on mem alloc alg.
+	return TRUE;
 }
 
 /***********************************************************************
 **
-*/  REBSER *DecompressLzma(REBSER *input, REBCNT index, REBINT in_len, REBCNT limit)
+*/  int DecompressLzma(const REBYTE* input, REBLEN len, REBLEN limit, REBSER** output, int* error)
 /*
-**      Decompress a binary (only).
+**      Decompress a binary using LZMA.
 **
 ***********************************************************************/
 {
 	REBU64 size;
 	REBU64 destLen;
-	REBSER *output;
 	REBINT err;
 	REBYTE *dest;
-	REBYTE *src = BIN_HEAD(input) + index;
 	REBU64 headerSize = LZMA_PROPS_SIZE;
 	ELzmaStatus status = 0;
 
-	if (in_len < 0 || (index + in_len > BIN_LEN(input))) in_len = BIN_LEN(input) - index;
-	if (in_len < 9) Trap0(RE_PAST_END); // !!! better msg needed
-	size = cast(REBU64, in_len - LZMA_PROPS_SIZE); // don't include size of properties
+	if (len < 9) Trap0(RE_PAST_END); // !!! better msg needed
+	size = cast(REBU64, len - LZMA_PROPS_SIZE); // don't include size of properties
 
-	if(limit > 0) {
+	if(limit != NO_LIMIT) {
 		destLen = limit;
 	} else {
 		// Get the uncompressed size from last 4 source data bytes.
-		destLen = cast(REBU64, Bytes_To_REBCNT(BIN_SKIP(input, index + in_len) - sizeof(REBCNT)));
+		destLen = cast(REBU64, Bytes_To_REBCNT(input + len - sizeof(REBCNT)));
 	}
 
-	output = Make_Binary(destLen);
-	dest = BIN_HEAD(output);
+	*output = Make_Binary(destLen);
+	dest = BIN_HEAD(*output);
 
-	err = LzmaDecode(dest, (SizeT*)&destLen, src + LZMA_PROPS_SIZE, (SizeT*)&size, src, headerSize, LZMA_FINISH_ANY, &status, &g_Alloc);
+	*error = LzmaDecode(dest, (SizeT*)&destLen, input + LZMA_PROPS_SIZE, (SizeT*)&size, input, headerSize, LZMA_FINISH_ANY, &status, &g_Alloc);
 	//printf("lzmadecode res: %i status: %i size: %u\n", err, status, size);
 
-	if (err) {
-		if (err == SZ_ERROR_MEM) Trap0(RE_NO_MEMORY);
-		SET_INTEGER(DS_RETURN, err);
-		Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
-	}
-	SET_STR_END(output, destLen);
-	SERIES_TAIL(output) = destLen;
-	return output;
+	if (*error) return FALSE;
+	SERIES_TAIL(*output) = destLen;
+	return TRUE;
 }
 
 #endif //INCLUDE_LZMA
@@ -353,127 +350,375 @@ void BrotliDefaultFreeFunc(void* opaque, void* address) {
 	Free_Managed_Mem(opaque, address);
 }
 
+// Using global de/encoder state, because Rebol may throw an error
+// and so left the state unreleased...
+static BrotliEncoderState* BrotliEncoder = NULL;
+static BrotliDecoderState* BrotliDecoder = NULL;
+
 /***********************************************************************
 **
-*/  REBSER *CompressBrotli(REBSER *input, REBINT index, REBLEN in_len, REBINT level)
+*/  int CompressBrotli(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output, int* error)
 /*
-**      Compress a binary (only) using Brotli compression.
-**		data
-**		/part
-**		length
+**      Compress a binary using Brotli.
 **
 ***********************************************************************/
 {
-	size_t  availableIn = (size_t)in_len;
-	size_t  availableOut = 0;
-	size_t  totalOut = 0;
-	REBSER *output;
-	REBYTE *out;
-	const uint8_t *inp;
+	size_t available_out = 0;
+	size_t available_in = len;
+	size_t total_out = 0;
+	size_t max_size;
+	BROTLI_BOOL res;
+	REBYTE* bin;
+	
+	error = 0;
 
-	if (level < 0)
-		level = 6;
-	else if (level > 11)
-		level = 11;
-
-	BrotliEncoderState *BrotliEncoder = BrotliEncoderCreateInstance(Make_Managed_Mem, Free_Managed_Mem, NULL);
-	if (!BrotliEncoder) {
-		Trap0(RE_NO_MEMORY);
-		return 0;  // Failed to create the Brotli encoder
-	}
-
-	availableOut = BrotliEncoderMaxCompressedSize(availableIn);
-	output = Make_Binary((REBLEN)availableOut);
-
-	inp = (const uint8_t*)(BIN_HEAD(input) + index);
-	out = BIN_HEAD(output);
-
-	BrotliEncoderSetParameter(BrotliEncoder, BROTLI_PARAM_QUALITY, level); // Set compression quality (0-11)
-
-	if (!BrotliEncoderCompressStream(BrotliEncoder, BROTLI_OPERATION_FINISH, &availableIn, &inp, &availableOut, &out, &totalOut)) {
+	if (BrotliDecoder) {
 		BrotliEncoderDestroyInstance(BrotliEncoder);
-		SET_INTEGER(DS_RETURN, 0);
-		Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
+		BrotliEncoder = NULL;
 	}
-
+	BrotliEncoder = BrotliEncoderCreateInstance(BrotliDefaultAllocFunc, BrotliDefaultFreeFunc, NULL);
+	if (!BrotliEncoder) return 0;
+	
+	// Set compression quality (0-11)
+	if (level == NO_LIMIT) level = 6;
+	BrotliEncoderSetParameter(BrotliEncoder, BROTLI_PARAM_QUALITY, MAX(0, MIN(11, level)));
+	max_size = BrotliEncoderMaxCompressedSize(len);
+	*output = Make_Binary((REBLEN)max_size);
+	
+	bin = BIN_TAIL(*output);
+	available_out = SERIES_REST(*output);
+	// compress..
+	res = BrotliEncoderCompressStream(
+		BrotliEncoder, BROTLI_OPERATION_FINISH,
+		&available_in, &input,
+		&available_out, &bin, &total_out);
+	// cleanup..
 	BrotliEncoderDestroyInstance(BrotliEncoder);
-
-	SERIES_TAIL(output) = (REBLEN)totalOut;
-	if (SERIES_AVAIL(output) > (1<<14)) // Is there wasted space?
-		output = Copy_Series(output); // Trim it down if too big. !!! Revisit this based on mem alloc alg.
-	return output;
+	BrotliEncoder = NULL;
+	SERIES_TAIL(*output) = (REBLEN)total_out;
+	return res;
 }
 
-// Using global decoder state, because Rebol may throw an error from Expand_Series
-// and so left the state unreleased...
-static BrotliDecoderState *BrotliDecoder = NULL;
 /***********************************************************************
 **
-*/  REBSER *DecompressBrotli(REBSER *input, REBCNT index, REBINT in_len, REBCNT limit)
+*/  int DecompressBrotli(const REBYTE* input, REBLEN len, REBLEN limit, REBSER** output, int* error)
 /*
-**      Decompress a binary (only). Not thread safe!
+**      Decompress a binary using Brotli.
 **
 ***********************************************************************/
 {
-	REBU64 out_len;
-	REBSER *output;
-	REBYTE *src = BIN_HEAD(input) + index;
-	BrotliDecoderResult res;
+	BROTLI_BOOL res;
 
 	if (BrotliDecoder)
 		BrotliDecoderDestroyInstance(BrotliDecoder); // in case that there was a Rebol error in previous call
 
-	BrotliDecoder = BrotliDecoderCreateInstance(Make_Managed_Mem, Free_Managed_Mem, NULL);
-    if (!BrotliDecoder) {
-		// Failed to create the Brotli decoder
-		Trap0(RE_NO_MEMORY);
-    }
+	BrotliDecoder = BrotliDecoderCreateInstance(BrotliDefaultAllocFunc, BrotliDefaultFreeFunc, NULL);
+	if (!BrotliDecoder) {
+		//trace("Failed to create the Brotli decoder!");
+		return FALSE;
+	}
 
-	if (in_len < 0 || (index + in_len > BIN_LEN(input))) in_len = BIN_LEN(input) - index;
+	REBU64 out_len = (limit != NO_LIMIT) ? limit : len * 2;
+	*output = Make_Binary(out_len);
 
-	out_len = (limit > 0) ? limit : in_len * 2;
+	size_t availableIn = len;
+	size_t availableOut = SERIES_AVAIL(*output);
+	size_t totalOut = 0;
+	uint8_t* nextOut = BIN_HEAD(*output);
 
-	output = Make_Binary(out_len);
-
-
-	size_t availableIn = in_len;
-    size_t availableOut = SERIES_AVAIL(output);
-    size_t totalOut = 0;
-    uint8_t* nextIn  = BIN_HEAD(input) + index;
-    uint8_t* nextOut = BIN_HEAD(output);
-
-    while (1) {
-		res = BrotliDecoderDecompressStream(BrotliDecoder, &availableIn, (const uint8_t **)&nextIn, &availableOut, &nextOut, &totalOut);
+	while (1) {
+		res = BrotliDecoderDecompressStream(BrotliDecoder, &availableIn, (const uint8_t**)&input, &availableOut, &nextOut, &totalOut);
 		if (res == BROTLI_DECODER_RESULT_ERROR || res == BROTLI_DECODER_RESULT_NEEDS_MORE_INPUT) goto error;
 
-        if (BrotliDecoderIsFinished(BrotliDecoder) || (limit > 0 && totalOut > limit)) {
-            break;  // Decompression finished
-        }
+		if (BrotliDecoderIsFinished(BrotliDecoder) || (limit != NO_LIMIT && totalOut > limit)) {
+			break;  // Decompression finished
+		}
 
-        // If the output buffer is full, resize it
-        if (availableOut == 0 && (limit == 0 || limit < totalOut)) {
-			SERIES_TAIL(output) = (REBLEN)totalOut;
-			Expand_Series(output, AT_TAIL, out_len); //@@ May throw an error and so the decoder would not be released!
-			SERIES_TAIL(output) = (REBLEN)totalOut;
-            nextOut = BIN_HEAD(output) + totalOut;  // Move the output pointer to the correct position
-            availableOut = SERIES_AVAIL(output);
-        }
-    }
+		// If the output buffer is full, resize it
+		if (availableOut == 0 && (limit == NO_LIMIT || limit < totalOut)) {
+			SERIES_TAIL(*output) = (REBLEN)totalOut;
+			Expand_Series(*output, AT_TAIL, out_len); //@@ May throw an error and so the decoder would not be released!
+			SERIES_TAIL(*output) = (REBLEN)totalOut;
+			nextOut = BIN_HEAD(*output) + totalOut;  // Move the output pointer to the correct position
+			availableOut = SERIES_AVAIL(*output);
+		}
+	}
 
-    BrotliDecoderDestroyInstance(BrotliDecoder);
-	BrotliDecoder = NULL;
-
-	if (limit > 0 && totalOut > limit) totalOut = limit;
-
-	SET_STR_END(output, totalOut);
-	SERIES_TAIL(output) = (REBLEN)totalOut;
-	return output;
-
-error:
-	SET_INTEGER(DS_RETURN, BrotliDecoderGetErrorCode(BrotliDecoder));
 	BrotliDecoderDestroyInstance(BrotliDecoder);
 	BrotliDecoder = NULL;
-	Trap1(RE_BAD_PRESS, DS_RETURN);
+
+	if (limit != NO_LIMIT && totalOut > limit) totalOut = limit;
+
+	SET_STR_END(*output, totalOut);
+	SERIES_TAIL(*output) = (REBLEN)totalOut;
+	return TRUE;
+
+error:
+	*error = BrotliDecoderGetErrorCode(BrotliDecoder);
+	BrotliDecoderDestroyInstance(BrotliDecoder);
+	BrotliDecoder = NULL;
+	return FALSE;
 }
 
 #endif //INCLUDE_BROTLI
+
+
+#ifdef INCLUDE_LZAV
+#include "sys-lzav.h" // https://github.com/avaneev/lzav/blob/main/lzav.h
+/***********************************************************************
+**
+*/  int CompressLzav(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output, int* error)
+/*
+**      Compress a binary using LZAV.
+**
+***********************************************************************/
+{
+	error = 0;
+	int out_bytes = lzav_compress_bound(len);
+	if (out_bytes <= 0) return 0;
+	*output = Make_Binary(out_bytes);
+	out_bytes = lzav_compress_default(input, BIN_HEAD(*output), (const int)len, SERIES_REST(*output));
+	if (out_bytes == 0) return FALSE;
+	SERIES_TAIL(*output) = out_bytes;
+	return TRUE;
+}
+
+/***********************************************************************
+**
+*/  int DecompressLzav(const REBYTE* input, REBLEN len, REBLEN limit, REBSER** output, int* error)
+/*
+**      Decompress a binary using LZAV.
+**
+***********************************************************************/
+{
+	if (limit == NO_LIMIT) return 0; // LZMA requires exact destination size!
+	*output = Make_Binary(limit);
+	*error = lzav_decompress(input, BIN_HEAD(*output), (const int)len, (const int)limit);
+	if (*error < 0) return FALSE;
+	SERIES_TAIL(*output) = limit;
+	return TRUE;
+
+}
+#endif //INCLUDE_LZAV
+
+
+/***********************************************************************
+**
+*/	REBOOL Register_Compress_Method(REBINT sym, void* encode, void* decode)
+/*
+**		Register a new compression method
+**
+***********************************************************************/
+{
+    if (compress_method_count >= MAX_COMPRESS_METHODS) {
+        return FALSE; // Registry full
+    }
+    
+    // Check if already registered
+    for (REBCNT i = 0; i < compress_method_count; i++) {
+        if (compress_registry[i].sym == sym) {
+            // Update existing handlers
+            compress_registry[i].encode = (COMPRESS_FUNC)encode;
+			compress_registry[i].decode = (DECOMPRESS_FUNC)decode;
+            return TRUE;
+        }
+    }
+    
+    // Add new entry
+    compress_registry[compress_method_count].sym = sym;
+    compress_registry[compress_method_count].encode = (COMPRESS_FUNC)encode;
+	compress_registry[compress_method_count].decode = (DECOMPRESS_FUNC)decode;
+    compress_method_count++;
+    return TRUE;
+}
+
+// Find compression handler
+static COMPRESS_FUNC Find_Compress_Handler(REBINT sym) {
+	for (REBCNT i = 0; i < compress_method_count; i++) {
+		if (compress_registry[i].sym == sym) {
+			return compress_registry[i].encode;
+		}
+	}
+	return NULL;
+}
+// Find decompression handler
+static DECOMPRESS_FUNC Find_Decompress_Handler(REBINT sym) {
+	for (REBCNT i = 0; i < compress_method_count; i++) {
+		if (compress_registry[i].sym == sym) {
+			return compress_registry[i].decode;
+		}
+	}
+	return NULL;
+}
+
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(compress)
+/*
+//	compress: native [
+//		{Compresses data.}
+//		data [binary! string!] {If string, it will be UTF8 encoded}
+//		method [word!] {One of `system/catalog/compressions`}
+//		/part length {Length of source data}
+//		/level lvl [integer!] {Compression level 0-9}
+//	]
+***********************************************************************/
+{
+	REBVAL* data = D_ARG(1);
+	REBINT  method = VAL_WORD_CANON(D_ARG(2));
+	//	REBOOL ref_part  = D_REF(3);
+	REBVAL* length = D_ARG(4);
+	REBOOL ref_level = D_REF(5);
+
+	REBSER* ser = VAL_SERIES(data);
+	REBCNT len = Partial1(data, length); // May modify the index!
+	REBCNT index = VAL_INDEX(data);
+	REBINT windowBits = MAX_WBITS;
+	REBCNT level = ref_level ? VAL_UNT32(D_ARG(6)) : UNKNOWN;
+	
+	// Try to find registered handler
+	COMPRESS_FUNC encoder = Find_Compress_Handler(method);
+	if (encoder) {
+		REBSER* out = NULL;
+		REBINT  err = 0;
+		int res = encoder(BIN_SKIP(ser, index), len, level, &out, &err);
+		if ( res && out) {
+			Set_Binary(D_RET, out);
+			return R_RET;
+		}
+		else {
+			if (out) Free_Series(out);
+			SET_INTEGER(DS_RETURN, err);
+			Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
+		}
+	}
+
+	switch (method) {
+	case SYM_ZLIB:
+	zlib_compress:
+		Set_Binary(D_RET, CompressZlib(ser, index, (REBINT)len, level, windowBits));
+		break;
+
+	case SYM_DEFLATE:
+		windowBits = -windowBits;
+		goto zlib_compress;
+
+	case SYM_GZIP:
+		windowBits |= 16;
+		goto zlib_compress;
+
+	default:
+		Trap1(RE_INVALID_ARG, D_ARG(2));
+	}
+
+	return R_RET;
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(decompress)
+/*
+//	decompress: native [
+//		{Decompresses data.}
+//		data [binary!] {Source data to decompress}
+//		method [word!] {One of `system/catalog/compressions`}
+//		/part "Limits source data to a given length or position"
+//			length [number! series!] {Length of compressed data (must match end marker)}
+//		/size
+//			bytes [integer!] {Number of uncompressed bytes.}
+]
+***********************************************************************/
+{
+	REBVAL* data = D_ARG(1);
+	REBINT  method = VAL_WORD_CANON(D_ARG(2));
+	//	REBOOL ref_part = D_REF(3);
+	REBVAL* length = D_ARG(4);
+	REBOOL ref_size = D_REF(5);
+	REBVAL* size = D_ARG(6);
+
+	REBCNT limit = NO_LIMIT;
+	REBCNT len;
+	REBINT windowBits = MAX_WBITS;
+
+	len = Partial1(data, length);
+
+	if (ref_size) limit = (REBCNT)Int32s(size, 1); // /limit size
+
+	// Try to find registered handler
+	DECOMPRESS_FUNC decode = Find_Decompress_Handler(method);
+	if (decode) {
+		REBSER* out = NULL;
+		REBINT  err = 0;
+		REBYTE* inp = BIN_SKIP(VAL_SERIES(data), VAL_INDEX(data));
+		if (decode(inp, len, limit, &out, &err) && out) {
+			Set_Binary(D_RET, out);
+			return R_RET;
+		}
+		else {
+			if (out) Free_Series(out);
+			SET_INTEGER(DS_RETURN, err);
+			Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
+		}
+	}
+
+	switch (method) {
+	case SYM_ZLIB:
+	zlib_decompress:
+		Set_Binary(D_RET, DecompressZlib(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit, windowBits));
+		break;
+
+	case SYM_DEFLATE:
+		windowBits = -windowBits;
+		goto zlib_decompress;
+
+	case SYM_GZIP:
+		windowBits |= 16;
+		goto zlib_decompress;
+
+	default:
+		Trap1(RE_INVALID_ARG, D_ARG(2));
+	}
+
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	void Init_Compression(void)
+/*
+**		Fill system/catalog/compressions with optional compressions
+**
+***********************************************************************/
+{
+	REBVAL* blk;
+	REBVAL  tmp;
+	(void)tmp; // to silence unreferenced local variable warning in case there is no compression included
+#define add_compression(sym) Init_Word(&tmp, sym); Append_Val(VAL_SERIES(blk), &tmp);
+	blk = Get_System(SYS_CATALOG, CAT_COMPRESSIONS);
+	if (blk && IS_BLOCK(blk)) {
+#ifdef INCLUDE_BROTLI
+		Register_Compress_Method(SYM_BR, CompressBrotli, DecompressBrotli);
+		add_compression(SYM_BR);
+#endif
+#ifdef INCLUDE_CRUSH
+		Register_Compress_Method(SYM_CRUSH, CompressCrush, DecompressCrush);
+		add_compression(SYM_CRUSH);
+#endif
+#ifdef INCLUDE_LZAV
+		Register_Compress_Method(SYM_LZAV, CompressLzav, DecompressLzav);
+		add_compression(SYM_LZAV);
+#endif
+#ifdef INCLUDE_LZMA
+		Register_Compress_Method(SYM_LZMA, CompressLzma, DecompressLzma);
+		add_compression(SYM_LZMA);
+#endif
+#ifdef INCLUDE_LZW
+		Register_Compress_Method(SYM_LZW, CompressLzw, DecompressLzw);
+		add_compression(SYM_LZW);
+#endif
+	}
+
+}

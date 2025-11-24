@@ -12,9 +12,9 @@ REBOL [
 		Licensed under the Apache License, Version 2.0
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-	Version: 0.7.4
+	Version: 0.7.5
 	Needs: 3.18.5 ;; because using the new log-* functions
-	Date: 14-Oct-2025
+	Date: 21-Oct-2025
 	File: %prot-http.r3
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -815,7 +815,7 @@ sys/make-scheme [
 			]
 			either any-function? :port/awake [
 				unless open? port [cause-error 'Access 'not-open port/spec/ref]
-				if port/state/state <> 'ready [throw-http-error "Port not ready"]
+				if port/state/state <> 'ready [throw-http-error port "Port not ready"]
 				port/state/awake: :port/awake
 				do-request port
 			][
@@ -830,7 +830,8 @@ sys/make-scheme [
 				][
 					decode-result result
 					case/all [
-						lines  [ result/3: split-lines result/3 ]
+						string [ try [result/3: to string! result/3] ]
+						lines  [ try [result/3: split-lines to string! result/3] ]
 						index  [ result/3: skip result/3 index ]
 						length [ clear skip result/3 length]
 					]
@@ -869,7 +870,7 @@ sys/make-scheme [
 
 			either any-function? :port/awake [
 				unless open? port [cause-error 'Access 'not-open port/spec/ref]
-				if port/state/state <> 'ready [throw-http-error "Port not ready"]
+				if port/state/state <> 'ready [throw-http-error port "Port not ready"]
 				port/state/awake: :port/awake
 				parse-write-dialect port value
 				do-request port

@@ -580,6 +580,11 @@ is-protected-error?: func[code][
 	bin: #{010203} binary/write tail bin [ui8 255 ui8 255]
 	--assert bin == #{010203FFFF}
 
+	--test-- "Invalid read spec"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2671
+	--assert all [error? e: try [binary/read #{01} ["foo"]]  e/id = 'invalid-spec]
+	--assert all [error? e: try [binary/read #{01} [ui8 42]]  e/id = 'invalid-spec]
+
 ===end-group===
 
 ~~~end-file~~~

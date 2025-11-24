@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -574,7 +574,7 @@ double weighted_rgb_color_distance(long r1, long g1, long b1, long r2, long g2, 
 			codi.len  = VAL_LEN(val_src_file);
 		}
 		
-		OS_LOAD_IMAGE(ser ? (REBCHR*)SERIES_DATA(ser) : NULL, frm, &codi);
+		OS_Load_Image(ser ? (REBCHR*)SERIES_DATA(ser) : NULL, frm, &codi);
 
 		if(codi.error) {
 			switch (codi.error) {
@@ -640,7 +640,7 @@ double weighted_rgb_color_distance(long r1, long g1, long b1, long r2, long g2, 
 		//	}
 		//}
 		
-		OS_SAVE_IMAGE(IS_FILE(val_dest) ? (REBCHR *)SERIES_DATA(ser) : NULL, &codi);
+		OS_Save_Image(IS_FILE(val_dest) ? (REBCHR *)SERIES_DATA(ser) : NULL, &codi);
 
 		if(codi.error) {
 			switch (codi.error) {

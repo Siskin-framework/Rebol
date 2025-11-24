@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,7 +74,7 @@
 
 	Init_Task();
 	body = Clone_Block(VAL_MOD_BODY(task));
-	OS_TASK_READY(0);
+	OS_Task_Ready(0);
 	
 	PUSH_STATE(state, Saved_State);
 	if (SET_JUMP(state)) {
@@ -97,7 +98,7 @@
 ***********************************************************************/
 {
 #ifdef INCLUDE_TASK
-	OS_CREATE_THREAD((void*)Launch_Task, task, 50000);
+	OS_Create_Thread((void*)Launch_Task, task, 50000);
 #endif
 }
 

@@ -123,7 +123,7 @@ extern const REBYTE Str_Banner[];
 	if (rargs->options & RO_VERS) {
 		Out_Str(cb_cast(REBOL_VERSION), 0, FALSE);
 		Out_Str(cb_cast("\n"), 0, FALSE);
-		OS_EXIT(0);
+		OS_Exit(0);
 	}
 }
 
@@ -919,30 +919,30 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	// Print("home: %s", rargs->current_dir);
 	if (rargs->current_dir) {
 		Set_Option_File(OPTIONS_PATH, (REBYTE*)rargs->current_dir, TRUE);
-		OS_FREE(rargs->current_dir);
+		OS_Free(rargs->current_dir);
 	}
-	if (NZ(data = OS_GET_LOCALE(0))) {
+	if (NZ(data = OS_Get_Locale(0))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE);
 		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
-		OS_FREE(data);
+		OS_Free(data);
 	}
 
-	if (NZ(data = OS_GET_LOCALE(1))) {
+	if (NZ(data = OS_Get_Locale(1))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE_P);
 		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
-		OS_FREE(data);
+		OS_Free(data);
 	}
 
-	if (NZ(data = OS_GET_LOCALE(2))) {
+	if (NZ(data = OS_Get_Locale(2))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE);
 		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
-		OS_FREE(data);
+		OS_Free(data);
 	}
 
-	if (NZ(data = OS_GET_LOCALE(3))) {
+	if (NZ(data = OS_Get_Locale(3))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE_P);
 		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
-		OS_FREE(data);
+		OS_Free(data);
 	}
 }
 
@@ -987,37 +987,9 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 {
 	REBOL_DAT dat;
 
-	OS_GET_TIME(&dat);
+	OS_Get_Time(&dat);
 	Current_Year = dat.year;
 }
-
-/***********************************************************************
-**
-*/	void Init_Compression(void)
-/*
-**		Fill system/catalog/compressions with optional compressions
-**
-***********************************************************************/
-{
-	REBVAL *blk;
-	REBVAL  tmp;
-	(void)tmp; // to silence unreferenced local variable warning in case there is no compression included
-	#define add_compression(sym) Init_Word(&tmp, sym); VAL_SET_LINE(&tmp); Append_Val(VAL_SERIES(blk), &tmp);
-	blk = Get_System(SYS_CATALOG, CAT_COMPRESSIONS);
-	if (blk && IS_BLOCK(blk)) {
-		#ifdef INCLUDE_BROTLI
-		add_compression(SYM_BR);
-		#endif
-		#ifdef INCLUDE_CRUSH
-		add_compression(SYM_CRUSH);
-		#endif
-		#ifdef INCLUDE_LZMA
-		add_compression(SYM_LZMA);
-		#endif
-	}
-}
-	
-
 
 
 /***********************************************************************
@@ -1052,7 +1024,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	Init_StdIO();
 
 	Assert_Basics();
-	PG_Boot_Time = OS_DELTA_TIME(0, 0);
+	PG_Boot_Time = OS_Delta_Time(0, 0);
 
 	DOUT("Level 0");
 	Init_Memory(0);			// Memory allocator

@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -173,7 +173,7 @@ static void Close_StdIO_Local(void)
 	REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy above
 
 	Close_StdIO_Local();
-	Close_StdIO(); // frees host's input buffer
+	OS_Close_StdIO(); // frees host's input buffer
 
 	CLR_FLAG(dev->flags, RDF_OPEN);
 	return DR_DONE;

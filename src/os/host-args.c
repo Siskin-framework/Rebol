@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -203,7 +204,7 @@ const struct arg_chr arg_chars2[] = {
 
 /***********************************************************************
 **
-*/	void Parse_Args(int argc, REBCHR **argv, REBARGS *rargs)
+*/	OS_API void OS_Parse_Args(int argc, REBCHR **argv, REBARGS *rargs)
 /*
 **		Parse REBOL's command line arguments, setting options
 **		and values in the provided args structure.

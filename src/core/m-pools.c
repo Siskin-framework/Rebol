@@ -95,7 +95,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	MOD_POOL(12,  32),
 	MOD_POOL(13,  32),
 	MOD_POOL(14,  32),
-	MOD_POOL(15,  32),
+	MOD_POOL(15,  64),
 	MOD_POOL(16,  64),	// 257
 	MOD_POOL(20,  32),	// 321 - Mid-size series (x 64)
 	MOD_POOL(24,  32),	// 385 / 768
@@ -103,7 +103,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	MOD_POOL(LAST_SMALL_SIZE,  16),	// 513
 
 	DEF_POOL(MEM_BIG_SIZE,   16),	// 1K - Large series (x 1024)
-	DEF_POOL(MEM_BIG_SIZE*2, 32),	// 2K
+	DEF_POOL(MEM_BIG_SIZE*2, 64),	// 2K
 	DEF_POOL(MEM_BIG_SIZE*3,  4),	// 3K
 	DEF_POOL(MEM_BIG_SIZE*4,  8),	// 4K
 
@@ -759,11 +759,12 @@ clear_header:
 			spec.free(hob->data);
 		}
 	}
-	
-	CLEAR(hob->data, spec.size);
-	// Free memory only if the requested size was greater than the pointer size.
-	if (spec.size > sizeof(void *)) {
-		Free_Managed_CMem(hob->data);
+	if (hob->data) {
+		CLEAR(hob->data, spec.size);
+		// Free memory only if the requested size was greater than the pointer size.
+		if (spec.size > sizeof(void*)) {
+			Free_Managed_CMem(hob->data);
+		}
 	}
 	UNUSE_HOB(hob);
 	Free_Node(HOB_POOL, (REBNOD *)hob);

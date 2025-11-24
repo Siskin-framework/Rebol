@@ -56,12 +56,12 @@ static REBREQ *Req_SIO;
 ***********************************************************************/
 {
 	//OS_CALL_DEVICE(RDI_STDIO, RDC_INIT);
-	Req_SIO = OS_MAKE_DEVREQ(RDI_STDIO);
+	Req_SIO = OS_Make_Devreq(RDI_STDIO);
 	if (!Req_SIO) Crash(RP_IO_ERROR);
 
 	// The device is already open, so this call will just setup
 	// the request fields properly.
-	OS_DO_DEVICE(Req_SIO, RDC_OPEN);
+	OS_Do_Device(Req_SIO, RDC_OPEN);
 }
 
 /***********************************************************************
@@ -70,7 +70,7 @@ static REBREQ *Req_SIO;
 /*
 ***********************************************************************/
 {
-	OS_FREE(Req_SIO);
+	OS_Free(Req_SIO);
 	Req_SIO = NULL;
 }
 
@@ -93,7 +93,7 @@ static REBREQ *Req_SIO;
 	if (err)
 		SET_FLAG(Req_SIO->flags, RRF_ERROR);
 
-	OS_DO_DEVICE(Req_SIO, RDC_WRITE);
+	OS_Do_Device(Req_SIO, RDC_WRITE);
 
 	if (Req_SIO->error) Crash(RP_IO_ERROR);
 }
@@ -114,7 +114,7 @@ static REBREQ *Req_SIO;
 	Req_SIO->length = (len == UNKNOWN) ? LEN_BYTES(bp) : len; // byte size of buffer
 	if (err)
 		SET_FLAG(Req_SIO->flags, RRF_ERROR);
-	OS_DO_DEVICE(Req_SIO, RDC_WRITE);
+	OS_Do_Device(Req_SIO, RDC_WRITE);
 	if (Req_SIO->error) Crash(RP_IO_ERROR);
 }
 
@@ -507,7 +507,7 @@ static REBREQ *Req_SIO;
 ***********************************************************************/
 {
 	Req_SIO->file.path = file;
-	return OS_DO_DEVICE(Req_SIO, RDC_CREATE);
+	return OS_Do_Device(Req_SIO, RDC_CREATE);
 }
 
 
