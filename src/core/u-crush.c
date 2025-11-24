@@ -349,7 +349,7 @@ static inline int get_penalty(int a, int b) {
 
 	if(length < 4) Trap1(RE_BAD_PRESS, DS_ARG(2));
 
-	ctx.data = input;
+	ctx.data = (REBYTE*)input;
 	size = ((REBCNT *)ctx.data)[0]; // reads expected decompressed length
 	ctx.index = sizeof(REBCNT);
 	ctx.bit_count = 0;
@@ -385,8 +385,7 @@ static inline int get_penalty(int a, int b) {
 				: get_bits(&ctx, CRUSH_W_BITS - (CRUSH_NUM_SLOTS - 1))) + p;
 			if (s < 0)
 			{
-				Trap1(RE_BAD_PRESS, DS_ARG(2));
-				return NULL;
+				return FALSE;
 			}
 
 			buf[p++] = buf[s++];
