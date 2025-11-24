@@ -550,6 +550,9 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 				VAL_TAIL(val) = len;
 				COPY_MEM(VAL_BIN_HEAD(val), errmsg, len);
 			}
+			else {
+				SET_NONE(val);
+			}
 			Trap1(RE_COMMAND_FAIL, val);
 		}
 		break;
