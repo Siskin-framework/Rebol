@@ -144,7 +144,7 @@ static inline int get_penalty(int a, int b) {
 
 /***********************************************************************
 **
-*/	REBSER *CompressCrush(const REBYTE* buf, REBLEN size, REBCNT level, REBSER** output)
+*/	int CompressCrush(const REBYTE* buf, REBLEN size, REBCNT level, REBSER** output)
 /*
 ***********************************************************************/
 {
@@ -338,7 +338,7 @@ static inline int get_penalty(int a, int b) {
 
 /***********************************************************************
 **
-*/	REBSER *DecompressCrush(const REBYTE* input, REBLEN length, REBLEN limit, REBSER** output)
+*/	int DecompressCrush(const REBYTE* input, REBLEN length, REBLEN limit, REBSER** output)
 /*
 ***********************************************************************/
 {

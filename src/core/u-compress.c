@@ -240,7 +240,7 @@ static const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 
 /***********************************************************************
 **
-*/  REBSER *CompressLzma(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output)
+*/  int CompressLzma(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output)
 /*
 **      Compress a binary using LZMA compression.
 **
@@ -302,7 +302,7 @@ static const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 
 /***********************************************************************
 **
-*/  REBSER *DecompressLzma(const REBYTE* input, REBLEN len, REBLEN limit, REBSER** output)
+*/  int DecompressLzma(const REBYTE* input, REBLEN len, REBLEN limit, REBSER** output)
 /*
 **      Decompress a binary using LZMA.
 **
