@@ -786,6 +786,10 @@ include-lzma-compression: [
 	core-files: %core/u-lzma.c
 ]
 
+include-lzav-compression: [
+	config: INCLUDE_LZAV
+]
+
 include-lzw-compression: [
 	config: INCLUDE_LZW
 	core-files: %core/u-lzw.c
@@ -973,6 +977,7 @@ include-rebol-bulk: [
 	:include-rebol-core
 	:include-optional-checksums
 	:include-image-natives
+	:include-lzav-compression
 	:include-lzma-compression   ;= cca 17kB
 	:include-lzw-compression    ;= cca 2kB
 	:include-brotli-compression ;= cca 330kB

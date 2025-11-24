@@ -471,6 +471,42 @@ error:
 #endif //INCLUDE_BROTLI
 
 
+#ifdef INCLUDE_LZAV
+#include "sys-lzav.h" // https://github.com/avaneev/lzav/blob/main/lzav.h
+/***********************************************************************
+**
+*/  int CompressLzav(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output)
+/*
+**      Compress a binary using LZAV.
+**
+***********************************************************************/
+{
+	int out_bytes = lzav_compress_bound(len);
+	if (out_bytes <= 0) return 0;
+	*output = Make_Binary(out_bytes);
+	out_bytes = lzav_compress_default(input, BIN_HEAD(*output), (const int)len, SERIES_REST(*output));
+	if (out_bytes == 0) return 0;
+	SERIES_TAIL(*output) = out_bytes;
+	return 1;
+}
+
+/***********************************************************************
+**
+*/  int DecompressLzav(const REBYTE* input, REBLEN len, REBLEN limit, REBSER** output)
+/*
+**      Decompress a binary using LZAV.
+**
+***********************************************************************/
+{
+	if (limit == NO_LIMIT) return 0; // LZMA requires exact destination size!
+	*output = Make_Binary(limit);
+	int res = lzav_decompress(input, BIN_HEAD(*output), (const int)len, (const int)limit);
+	if (res < 0) return res;
+	SERIES_TAIL(*output) = limit;
+	return 1;
+
+}
+#endif //INCLUDE_LZAV
 
 
 /***********************************************************************
@@ -723,6 +759,10 @@ static DECOMPRESS_FUNC Find_Decompress_Handler(REBINT sym) {
 #ifdef INCLUDE_CRUSH
 		Register_Compress_Method(SYM_CRUSH, CompressCrush, DecompressCrush);
 		add_compression(SYM_CRUSH);
+#endif
+#ifdef INCLUDE_LZAV
+		Register_Compress_Method(SYM_LZAV, CompressLzav, DecompressLzav);
+		add_compression(SYM_LZAV);
 #endif
 #ifdef INCLUDE_LZMA
 		Register_Compress_Method(SYM_LZMA, CompressLzma, DecompressLzma);
