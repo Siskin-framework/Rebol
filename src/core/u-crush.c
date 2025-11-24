@@ -144,13 +144,11 @@ static inline int get_penalty(int a, int b) {
 
 /***********************************************************************
 **
-*/	REBSER *CompressCrush(REBSER *input, REBINT index, REBCNT size, int level)
+*/	REBSER *CompressCrush(const REBYTE* buf, REBLEN size, REBCNT level, REBSER** output)
 /*
 ***********************************************************************/
 {
 	CRUSH  ctx;
-	REBSER *ser;
-	REBYTE *buf = BIN_SKIP(input, index);
 	REBCNT p;
 	REBINT len, offset, chain_len, s, i;
 	REBINT h1 = 0, h2 = 0;
@@ -161,8 +159,8 @@ static inline int get_penalty(int a, int b) {
 
 	level = MAX(0, MIN(2, level));
 
-	ser = Make_Series(MAX(16, size+4), sizeof(REBYTE), FALSE);
-	ctx.data = BIN_HEAD(ser);
+	*output = Make_Series(MAX(16, size+4), sizeof(REBYTE), FALSE);
+	ctx.data = BIN_HEAD(*output);
 
 	((REBCNT *)ctx.data)[0] = size;
 	ctx.index = sizeof(REBCNT);
@@ -262,10 +260,10 @@ static inline int get_penalty(int a, int b) {
 
 		// If input is already well compressed, output from the Crush may be larger!
 		// Instead of adding this check to each `put_bits` call, count with some hopefuly safe range (16bytes)
-		if (ctx.index+16 >= SERIES_REST(ser)) {
-			SERIES_TAIL(ser) = ctx.index;
-			Expand_Series(ser, ctx.index, MAX(16, SERIES_REST(ser) >> 3)); // using 1/4 of the current size for the delta
-			ctx.data = BIN_DATA(ser);
+		if (ctx.index+16 >= SERIES_REST(*output)) {
+			SERIES_TAIL(*output) = ctx.index;
+			Expand_Series(*output, ctx.index, MAX(16, SERIES_REST(*output) >> 3)); // using 1/4 of the current size for the delta
+			ctx.data = BIN_DATA(*output);
 		}
 
 		if (len >= CRUSH_MIN_MATCH) // Match
@@ -334,25 +332,24 @@ static inline int get_penalty(int a, int b) {
 	}
 	//flush_bits...
 	put_bits(&ctx, 7, 0);
-	SERIES_TAIL(ser) = ctx.index;
-	return ser;
+	SERIES_TAIL(*output) = ctx.index;
+	return 1;
 }
 
 /***********************************************************************
 **
-*/	REBSER *DecompressCrush(REBSER *data, REBINT index, REBCNT length, REBCNT limit)
+*/	REBSER *DecompressCrush(const REBYTE* input, REBLEN length, REBLEN limit, REBSER** output)
 /*
 ***********************************************************************/
 {
 	REBYTE *buf;
-	REBSER *ser;
 	REBCNT size, p;
 	REBINT len, s;
 	CRUSH  ctx;
 
 	if(length < 4) Trap1(RE_BAD_PRESS, DS_ARG(2));
 
-	ctx.data = BIN_SKIP(data, index);
+	ctx.data = input;
 	size = ((REBCNT *)ctx.data)[0]; // reads expected decompressed length
 	ctx.index = sizeof(REBCNT);
 	ctx.bit_count = 0;
@@ -361,8 +358,8 @@ static inline int get_penalty(int a, int b) {
 	// allow partial output if specified...
 	if (limit && size > limit) size = limit;
 	
-	ser = Make_Binary(size); // output series
-	buf = BIN_HEAD(ser);     // output binary
+	*output = Make_Binary(size); // output series
+	buf = BIN_HEAD(*output);     // output binary
 	
 	p = 0;
 	while (p < size)
@@ -402,7 +399,7 @@ static inline int get_penalty(int a, int b) {
 			buf[p++] = get_bits(&ctx, 8);
 	}
 
-	SERIES_TAIL(ser) = size;
-	return ser;
+	SERIES_TAIL(*output) = size;
+	return 1;
 }
 #endif //INCLUDE_CRUSH

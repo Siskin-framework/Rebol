@@ -184,7 +184,7 @@ void Trap_ZStream_Error(z_stream *stream, int err, REBOOL while_compression)
 	REBINT err;
 
 	if (len < 0 || (index + len > BIN_LEN(input))) len = BIN_LEN(input) - index;
-	size = (limit > 0) ? limit : (uLongf)len * 3;
+	size = (limit != NO_LIMIT) ? limit : (uLongf)len * 3;
 
 	output = Make_Binary(size);
 
@@ -240,30 +240,22 @@ static const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 
 /***********************************************************************
 **
-*/  REBSER *CompressLzma(REBSER *input, REBINT index, REBCNT in_len, REBINT level)
+*/  REBSER *CompressLzma(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output)
 /*
-**      Compress a binary (only) using LZMA compression.
-**		data
-**		/part
-**		length
+**      Compress a binary using LZMA compression.
 **
 ***********************************************************************/
 {
 	REBU64  size;
-	REBU64  size_in = in_len;
-	REBSER *output;
 	REBINT  err;
 	REBYTE *dest;
 	REBYTE  out_size[sizeof(REBCNT)];
 
-	if (level < 0)
-		level = 5;
-	else if (level > 9)
-		level = 9;
+	level = (level == UNKNOWN) ? 5 : MIN(9, level);
 
 	//@@ are these Sterling's magic numbers correct for LZMA too?
-	size = LZMA_PROPS_SIZE + size_in + (size_in > STERLINGS_MAGIC_NUMBER ? size_in / 10 + 12 : STERLINGS_MAGIC_FIX);
-	output = Make_Binary(size);
+	size = LZMA_PROPS_SIZE + len + (len > STERLINGS_MAGIC_NUMBER ? len / 10 + 12 : STERLINGS_MAGIC_FIX);
+	*output = Make_Binary(size);
 
 	// so far hardcoded LZMA encoder properties... it would be nice to be able specify these by user if needed.
 	CLzmaEncProps props;
@@ -284,13 +276,13 @@ static const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 	//	int fb,  /* 5 <= fb <= 273, default = 32 */
 	//	int numThreads /* 1 or 2, default = 2 */
 
-	dest = BIN_HEAD(output);
+	dest = BIN_HEAD(*output);
 
 	/* header: 5 bytes of LZMA properties */
 	REBU64 headerSize = LZMA_PROPS_SIZE;
 	size -= headerSize;
 
-	err = LzmaEncode(dest + headerSize, (SizeT*)&size, BIN_HEAD(input) + index, (SizeT)in_len, &props, dest, (SizeT*)&headerSize, 0,
+	err = LzmaEncode(dest + headerSize, (SizeT*)&size, input, (SizeT)len, &props, dest, (SizeT*)&headerSize, 0,
 		((ICompressProgress *)0), &g_Alloc, &g_Alloc);
 	//printf("lzmaencode res: %i size: %u headerSize: %u\n", err, size, headerSize);
 	if (err) {
@@ -299,47 +291,44 @@ static const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 		Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
 	}
 	size += headerSize;
-	//SET_STR_END(output, size);
-	SERIES_TAIL(output) = size;
-	REBCNT_To_Bytes(out_size, (REBCNT)in_len); // Tag the size to the end.
-	Append_Series(output, (REBYTE*)out_size, sizeof(REBCNT));
-	if (SERIES_AVAIL(output) > 1024) // Is there wasted space?
-		output = Copy_Series(output); // Trim it down if too big. !!! Revisit this based on mem alloc alg.
-	return output;
+
+	SERIES_TAIL(*output) = size;
+	REBCNT_To_Bytes(out_size, (REBCNT)len); // Tag the size to the end.
+	Append_Series(*output, (REBYTE*)out_size, sizeof(REBCNT));
+	if (SERIES_AVAIL(*output) > 1024) // Is there wasted space?
+		*output = Copy_Series(*output); // Trim it down if too big. !!! Revisit this based on mem alloc alg.
+	return 1;
 }
 
 /***********************************************************************
 **
-*/  REBSER *DecompressLzma(REBSER *input, REBCNT index, REBINT in_len, REBCNT limit)
+*/  REBSER *DecompressLzma(const REBYTE* input, REBLEN len, REBLEN limit, REBSER** output)
 /*
-**      Decompress a binary (only).
+**      Decompress a binary using LZMA.
 **
 ***********************************************************************/
 {
 	REBU64 size;
 	REBU64 destLen;
-	REBSER *output;
 	REBINT err;
 	REBYTE *dest;
-	REBYTE *src = BIN_HEAD(input) + index;
 	REBU64 headerSize = LZMA_PROPS_SIZE;
 	ELzmaStatus status = 0;
 
-	if (in_len < 0 || (index + in_len > BIN_LEN(input))) in_len = BIN_LEN(input) - index;
-	if (in_len < 9) Trap0(RE_PAST_END); // !!! better msg needed
-	size = cast(REBU64, in_len - LZMA_PROPS_SIZE); // don't include size of properties
+	if (len < 9) Trap0(RE_PAST_END); // !!! better msg needed
+	size = cast(REBU64, len - LZMA_PROPS_SIZE); // don't include size of properties
 
-	if(limit > 0) {
+	if(limit != NO_LIMIT) {
 		destLen = limit;
 	} else {
 		// Get the uncompressed size from last 4 source data bytes.
-		destLen = cast(REBU64, Bytes_To_REBCNT(BIN_SKIP(input, index + in_len) - sizeof(REBCNT)));
+		destLen = cast(REBU64, Bytes_To_REBCNT(input - sizeof(REBCNT)));
 	}
 
-	output = Make_Binary(destLen);
-	dest = BIN_HEAD(output);
+	*output = Make_Binary(destLen);
+	dest = BIN_HEAD(*output);
 
-	err = LzmaDecode(dest, (SizeT*)&destLen, src + LZMA_PROPS_SIZE, (SizeT*)&size, src, headerSize, LZMA_FINISH_ANY, &status, &g_Alloc);
+	err = LzmaDecode(dest, (SizeT*)&destLen, input + LZMA_PROPS_SIZE, (SizeT*)&size, input, headerSize, LZMA_FINISH_ANY, &status, &g_Alloc);
 	//printf("lzmadecode res: %i status: %i size: %u\n", err, status, size);
 
 	if (err) {
@@ -347,9 +336,8 @@ static const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 		SET_INTEGER(DS_RETURN, err);
 		Trap1(RE_BAD_PRESS, DS_RETURN); //!!!provide error string descriptions
 	}
-	SET_STR_END(output, destLen);
-	SERIES_TAIL(output) = destLen;
-	return output;
+	SERIES_TAIL(*output) = destLen;
+	return 1;
 }
 
 #endif //INCLUDE_LZMA
@@ -725,21 +713,20 @@ static DECOMPRESS_FUNC Find_Decompress_Handler(REBINT sym) {
 	REBVAL* blk;
 	REBVAL  tmp;
 	(void)tmp; // to silence unreferenced local variable warning in case there is no compression included
-#define add_compression(sym) Init_Word(&tmp, sym); VAL_SET_LINE(&tmp); Append_Val(VAL_SERIES(blk), &tmp);
+#define add_compression(sym) Init_Word(&tmp, sym); Append_Val(VAL_SERIES(blk), &tmp);
 	blk = Get_System(SYS_CATALOG, CAT_COMPRESSIONS);
 	if (blk && IS_BLOCK(blk)) {
-		//		#ifdef INCLUDE_BROTLI
-		//		add_compression(SYM_BR);
-		//		#endif
-#ifdef INCLUDE_CRUSH
-		add_compression(SYM_CRUSH);
-#endif
-#ifdef INCLUDE_LZMA
-		add_compression(SYM_LZMA);
-#endif
 #ifdef INCLUDE_BROTLI
 		Register_Compress_Method(SYM_BR, CompressBrotli, DecompressBrotli);
 		add_compression(SYM_BR);
+#endif
+#ifdef INCLUDE_CRUSH
+		Register_Compress_Method(SYM_CRUSH, CompressCrush, DecompressCrush);
+		add_compression(SYM_CRUSH);
+#endif
+#ifdef INCLUDE_LZMA
+		Register_Compress_Method(SYM_LZMA, CompressLzma, DecompressLzma);
+		add_compression(SYM_LZMA);
 #endif
 	}
 
