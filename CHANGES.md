@@ -8,11 +8,13 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Features:
 
+* [`283062`](https://github.com/Oldes/Rebol3/commit/283062136f49cd52561e5fc9a47311be7aa0be9e) Add optional fast in-memory LZAV de/compression
 * [`e2a2d2`](https://github.com/Oldes/Rebol3/commit/e2a2d2b427de90b70e7644300b6358b7926e5549) Allow extensions to register new compression methods
 * [`e174bf`](https://github.com/Oldes/Rebol3/commit/e174bfad9b4de8072387bd38a910c1e491a0413e) New `did` native returning TRUE when given a truthy value
 
 ### Changes:
 
+* [`e349a7`](https://github.com/Oldes/Rebol3/commit/e349a7e29136db1e1300944762e4b5b0b5a837ec) Initialize optional compression methods using Register_Compress_Method
 * [`57b590`](https://github.com/Oldes/Rebol3/commit/57b590799344f467abea5ca69491131ca7a70e29) Update Brotli source to version 1.2.0
 * [`76425d`](https://github.com/Oldes/Rebol3/commit/76425d1e31d776162741e8e81c39da584ad6e84c) Unify definitions of endianness-related macros
 
