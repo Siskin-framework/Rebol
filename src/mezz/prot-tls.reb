@@ -1,11 +1,11 @@
 REBOL [
-    version: 0.11.0
+    version: 0.12.0
     title: "TLS Protocol"
-    name: tls
-    date: 13-Nov-2025
+    name: 'tls
+    date: 30-Nov-2025
     file: %tls.reb
     author: "Oldes"
-    Yype: module
+    Yype: 'module
     License: MIT
     Home: https://github.com/Oldes/Rebol-TLS
 ]
@@ -968,12 +968,16 @@ get-transcript-hash: function [
 ]
 TLS-parse-handshake-records: function [
     ctx [object!]
-    data [binary!]
 ] [
-    bin: binary data
+    bin: binary ctx/port-data
     while [4 <= length? bin/buffer] [
         start: bin/buffer
-        binary/read bin [type: UI8 message: UI24BYTES]
+        binary/read bin [type: UI8 len: UI24]
+        if len > length? bin/buffer [
+            bin/buffer: start
+            break
+        ]
+        message: binary/read bin len
         log-debug ["R[" ctx/seq-read "] length:" length? message "type:" type]
         change-state ctx *Handshake/name type
         TLS-update-messages-hash/part ctx start 4 + length? message
@@ -1033,6 +1037,7 @@ TLS-parse-handshake-records: function [
         ]
     ]
     log-more ["DONE: handshake^[[1m" ctx/state] log-----
+    ctx/port-data: truncate bin/buffer
     false
 ]
 prepare-change-cipher-spec: function [
@@ -1410,6 +1415,7 @@ TLS-read-data: function [
                     log-debug ["Inner type:^[[1m" type]
                 ]
             ]
+            append ctx/port-data data
         ]
         *protocol-type/assert type
         *protocol-version/assert server-version
@@ -1421,12 +1427,9 @@ TLS-read-data: function [
         switch protocol [
             APPLICATION [
                 assert-prev-state ctx [APPLICATION ALERT FINISHED NEW_SESSION_TICKET]
-                append ctx/port-data data
             ]
             HANDSHAKE [
-                unless empty? data [
-                    ctx/critical-error: TLS-parse-handshake-records ctx data
-                ]
+                ctx/critical-error: TLS-parse-handshake-records ctx
                 ctx/reading?: any [ctx/server? not empty? inp/buffer]
             ]
             CHANGE_CIPHER_SPEC [
