@@ -462,6 +462,45 @@ error:
 
 #endif //INCLUDE_BROTLI
 
+#ifdef INCLUDE_LZ4 // https://github.com/lz4/lz4
+#include "lz4/lz4hc.h"
+/***********************************************************************
+**
+*/  int CompressLz4(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output, int* error)
+/*
+**      Compress a binary using LZ4.
+**
+***********************************************************************/
+{
+	int result = LZ4_compressBound(len);
+	if (result <= 0) return FALSE;
+	*output = Make_Binary(result);
+	result = LZ4_compress_HC(
+		input, BIN_HEAD(*output),
+		len, SERIES_REST(*output),
+		MAX(1, MIN(LZ4HC_CLEVEL_MAX, (int)level)));
+	if (result <= 0) return FALSE;
+	SERIES_TAIL(*output) = result;
+	return TRUE;
+}
+
+/***********************************************************************
+**
+*/  int DecompressLz4(const REBYTE* input, REBLEN len, REBLEN limit, REBSER** output, int* error)
+/*
+**      Decompress a binary using LZ4.
+**
+***********************************************************************/
+{
+	*output = Make_Binary((limit != NO_LIMIT) ? limit : len * 3);
+	int result = LZ4_decompress_safe(input, BIN_HEAD(*output), len, SERIES_REST(*output));
+	if (result <= 0) return FALSE;
+	SERIES_TAIL(*output) = result;
+	return TRUE;
+}
+
+#endif //INCLUDE_LZ4
+
 
 #ifdef INCLUDE_LZAV
 #include "sys-lzav.h" // https://github.com/avaneev/lzav/blob/main/lzav.h
@@ -706,6 +745,10 @@ static DECOMPRESS_FUNC Find_Decompress_Handler(REBINT sym) {
 #ifdef INCLUDE_CRUSH
 		Register_Compress_Method(SYM_CRUSH, CompressCrush, DecompressCrush);
 		add_compression(SYM_CRUSH);
+#endif
+#ifdef INCLUDE_LZ4
+		Register_Compress_Method(SYM_LZ4, CompressLz4, DecompressLz4);
+		add_compression(SYM_LZ4);
 #endif
 #ifdef INCLUDE_LZAV
 		Register_Compress_Method(SYM_LZAV, CompressLzav, DecompressLzav);

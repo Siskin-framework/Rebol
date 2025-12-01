@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.20.5
+version: 3.20.6
 
 #if Linux?   [ defines: TO_LINUX   ]
 #if macOS?   [ defines: TO_MACOS   ]
@@ -786,6 +786,15 @@ include-lzma-compression: [
 	core-files: %core/u-lzma.c
 ]
 
+include-lz4-compression: [
+	config: INCLUDE_LZ4
+	include: %src/core/lz4/
+	files: [
+		%core/lz4/lz4.c
+		%core/lz4/lz4hc.c
+	]
+]
+
 include-lzav-compression: [
 	config: INCLUDE_LZAV
 ]
@@ -977,6 +986,7 @@ include-rebol-bulk: [
 	:include-rebol-core
 	:include-optional-checksums
 	:include-image-natives
+	:include-lz4-compression
 	:include-lzav-compression
 	:include-lzma-compression   ;= cca 17kB
 	:include-lzw-compression    ;= cca 2kB
