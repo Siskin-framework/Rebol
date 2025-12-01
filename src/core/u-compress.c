@@ -247,7 +247,6 @@ static const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 ***********************************************************************/
 {
 	REBU64  size;
-	REBINT  err;
 	REBYTE *dest;
 	REBYTE  out_size[sizeof(REBCNT)];
 
@@ -306,7 +305,6 @@ static const ISzAlloc g_Alloc = { SzAlloc, SzFree };
 {
 	REBU64 size;
 	REBU64 destLen;
-	REBINT err;
 	REBYTE *dest;
 	REBU64 headerSize = LZMA_PROPS_SIZE;
 	ELzmaStatus status = 0;
