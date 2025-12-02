@@ -105,6 +105,12 @@
 
 	count = Recycle(TRUE);
 
+	// Check memory pool segments.
+	// If used with /pool refinement, check all segments where usage is less than 90%.
+	// Otherwise, check only pools where usage is less than 20%.
+	count += Free_Empty_Pool_Segments( D_REF(6) ? 90 : 20);
+
+
 	// Disable auto-recycling if it was disabled.
 	if (D_REF(1))
 		GC_Active = FALSE;

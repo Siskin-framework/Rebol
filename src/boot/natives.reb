@@ -250,6 +250,7 @@ recycle: native [
 	/ballast {Trigger for auto-recycle (memory used)}
 	size [integer!]
 	/torture {Constant recycle (for internal debugging)}
+	/pools {Release empty memory pool segments}
 ]
 
 release: native [

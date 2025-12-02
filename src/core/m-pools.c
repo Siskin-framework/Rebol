@@ -1033,6 +1033,97 @@ crash:
 }
 
 
+// Check if a segment is completely empty (all nodes free)
+static REBFLG Is_Segment_Empty(REBPOL* pool, REBSEG* seg)
+{
+	// Quick reject: not enough free nodes in the pool overall
+	if (pool->free < pool->units)
+		return FALSE;
+
+	REBNOD* node;
+	REBCNT count = 0;
+
+	for (node = pool->first; node; node = *node) {
+		if ((REBUPT)node > (REBUPT)seg
+			&& (REBUPT)node < (REBUPT)seg + (REBUPT)seg->size) {
+			if (++count == pool->units)
+				return TRUE;   // all nodes from this segment are free
+		}
+	}
+
+	return FALSE;
+}
+
+// Free a single empty segment from a pool's segment list
+static void Free_Empty_Segment(REBPOL* pool, REBSEG* seg)
+{
+	// 1. Remove ALL nodes from free list FIRST
+	REBNOD* prevNode = &pool->first;
+	REBNOD  node = pool->first;
+	REBCNT n = 0;
+	while (node) {
+		REBNOD nextNode = *(REBNOD*)node;
+		if ((REBUPT)node > (REBUPT)seg && (REBUPT)node < (REBUPT)seg + (REBUPT)seg->size) {
+			// Unlink this node (belongs to segment)
+			*prevNode = nextNode;
+			n++;
+		}
+		else {
+			prevNode = (REBNOD*)node;
+		}
+		node = nextNode;
+	}
+	//printf("unlinked %u nodes\n", n);
+	ASSERT1(n == pool->units, RP_CORRUPT_MEMORY);
+
+	// 2. Update accounting
+	pool->has -= pool->units;
+	pool->free -= pool->units;
+
+	// 3. Free memory
+	Free_Mem(seg, seg->size);
+}
+
+/***********************************************************************
+**
+*/ REBLEN Free_Empty_Pool_Segments(REBCNT usage_threshold)
+/*
+***********************************************************************/
+{
+	REBCNT  pool_id;
+	REBLEN freed = 0;
+	FOREACH(pool_id, SYSTEM_POOL) {
+		REBPOL* pool = &Mem_Pools[pool_id];
+		REBSEG* prev = pool->segs;
+		REBSEG* seg = prev->next;
+		REBSEG* next = NULL;
+
+		REBLEN used = pool->has - pool->free;
+		
+		if (pool->has == 0 || ((100 * used) / pool->has) > usage_threshold) {
+			//printf("Pool %u is not empty enough.\n");
+			continue;
+		}
+		//printf("Pool %u has: %u units:%u used: %u (%u%%)\n", pool_id, pool->has, pool->units, used, (used * 100) / pool->has);
+		while (seg) {
+			if (Is_Segment_Empty(pool, seg)) {
+				//printf("EMPTY(pool=%u, seg=%p,size=%u)\n", pool_id, (void*)seg, seg->size);
+				next = seg->next;
+				Free_Empty_Segment(pool, seg);
+				freed += prev->size;
+				prev->next = next;
+				seg = next;
+			}
+			else {
+				prev = seg;
+				seg = seg->next;
+			}
+		}
+	}
+	return freed;
+}
+
+
 /***********************************************************************
 **
 */	REBU64 Inspect_Series(REBCNT flags)
