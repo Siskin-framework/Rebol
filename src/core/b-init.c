@@ -1159,7 +1159,9 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 		Dispose_Ports();
 		Dispose_Mold();
 		Dispose_CRC();
+#ifdef INCLUDE_CRYPTOGRAPHY
 		Dispose_Crypt();
+#endif
 		Dispose_Handles();
 		Free_Mem(PG_Boot_Strs, RS_MAX * sizeof(REBYTE*));
 	}
