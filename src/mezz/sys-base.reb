@@ -1,4 +1,4 @@
-REBOL [
+Rebol [
 	System: "REBOL [R3] Language Interpreter and Run-time Environment"
 	Title: "REBOL 3 Boot Sys: Top Context Functions"
 
@@ -28,10 +28,10 @@ REBOL [
 ;-- SYS context definition begins here --
 ;	WARNING: ORDER DEPENDENT part of context (accessed from C code)
 
-native: none
+native: _
 ; for boot only
 
-action: none
+action: _
 ; for boot only
 
 do*: func [
@@ -48,10 +48,10 @@ do*: func [
 	/next
 	"Do next expression only, return it, update block variable"
 
-	var [word!]
+	mark [word!]
 	"Variable updated with new block position"
 
-	/local data file spec dir hdr scr mod?
+	/local body file spec current-path header saved-script is-module
 ][
 	; This code is only called for urls, files, and strings.
 	; DO of functions, blocks, paths, and other do-able types is done in the
@@ -67,58 +67,58 @@ do*: func [
 	; Load the data, first so it will error before change-dir
 
 	either string? value [
-		data: load/all/as value 'unbound
+		body: load/all/as value 'unbound
 		; does not evaluate Rebol header
 	][
-		data: load/header/as value 'unbound
+		body: load/header/as value 'unbound
 		; unbound so DO-NEEDS runs before INTERN
 
-		hdr: first+ data
+		header: first+ body
 		; Get the header and advance 'data to the code position
 		; object or none
 
-		mod?: 'module = select hdr 'type
+		is-module: 'module = select header 'type
 		; data is a block! here, with the header object in the first position back
 	]
 
 	either all [
 		string? value
-		not mod?
+		not is-module
 	][
 		; Return result without script overhead
 
-		do-needs hdr
+		do-needs header
 		; Load the script requirements
 
-		if empty? data [
-			if var [
-				set var data
+		if empty? body [
+			if mark [
+				set mark body
 			]
 
 			exit
 			; Shortcut return empty
 		]
 
-		intern data
+		intern body
 		; Bind the user script
 
-		catch/quit either var [
-			[do/next data var]
+		catch/quit either mark [
+			[do/next body mark]
 		][
-			data
+			body
 		]
 	][
 		; Otherwise we are in script mode
 		; Do file in directory if necessary
 
-		dir: none
+		current-path: _
 		; in case of /local hack
 
 		if all [
 			file? value
 			file: find/last/tail value slash
 		][
-			dir: what-dir
+			current-path: what-dir
 			; save the current directory for later restoration
 
 			change-dir copy/part value file
@@ -127,62 +127,66 @@ do*: func [
 		; Make the new script object
 		; and save old one
 
-		scr: system/script
+		saved-script: system/script
 
-		system/script: make system/standard/script [
-			title: select hdr 'title
-			header: hdr
-			parent: :scr
-			path: what-dir
+		system/script: make system/standard/script compose [
+			title: (select header 'title)
+			header: (header)
+			parent: (saved-script)
+			path: (what-dir)
 			args: :arg
 		]
 
 		; Print out the script info
 		;
 		log/info 'REBOL [
-			pick ["Module:" "Script:"] mod?
-			mold select hdr 'title
-			"Version:" select hdr 'version
-			"Date:"	   select hdr 'date
+			pick ["Module:" "Script:"] is-module
+			mold select header 'title
+			"Version:" select header 'version
+			"Date:"	   select header 'date
 		]
 
 		set/any 'value try [
 			; Eval the block or make the module, returned
 
-			either mod? [
+			either is-module [
 				; Import the module and set the var
 
 				spec: reduce [
-					hdr
-					data
-					do-needs/no-user hdr
+					header
+					body
+					do-needs/no-user header
 				]
 
 				also
-				import (catch/quit [make module! spec])
-				if var [
-					set var tail data
+				import (
+					catch/quit [
+						make module! spec
+					]
+				)
+				if mark [
+					set mark tail body
 				]
 			][
-				do-needs hdr
+				do-needs header
 				; Load the script requirements
 
-				intern data
+				intern body
 				; Bind the user script
 
-				catch/quit either var [
-					[do/next data var]
+				catch/quit either mark [
+					[do/next body mark]
 				][
-					data
+					body
 				]
 			]
 		]
 
 		all [
 			; Restore system/script and the dir
-			system/script: :scr
-			dir
-			change-dir dir
+			system/script: :saved-script
+			current-path
+			change-dir current-path
 		]
 
 		if error? :value [
@@ -199,7 +203,7 @@ make-module*: func [
 	spec [block!]
 	"As [spec-block body-block opt-mixins-object]"
 
-	/local body obj mixins hidden w
+	/local body context mixins hidden words
 ][
 	set [spec body mixins] spec
 
@@ -225,7 +229,7 @@ make-module*: func [
 
 	; Module is an object during its initialization:
 	;
-	obj: make object! 7
+	context: make object! 7
 	; arbitrary starting size
 
 	either find spec/options 'extension [
@@ -236,9 +240,9 @@ make-module*: func [
 			lib-file
 			lib-local
 			words
-		] obj
+		] context
 	][
-		append obj 'lib-local
+		append context 'lib-local
 		; local import library for the module
 	]
 
@@ -268,29 +272,30 @@ make-module*: func [
 				remove skip
 				opt remove 'hidden
 				opt [
-					set w any-word!
+					set words any-word!
 					(
-						unless find spec/exports w: to word! w [
-							append spec/exports w
+						unless find spec/exports words: to word! words [
+							append spec/exports words
 						]
 					)
 					|
-					set w block!
-					(append spec/exports collect-words/ignore w spec/exports)
+					set words block!
+					(append spec/exports collect-words/ignore words spec/exports)
 				]
 			]
+
 			to end
 		]
 	]
 
 	if block? select spec 'exports [
-		bind/new spec/exports obj
+		bind/new spec/exports context
 		; Add exported words at top of context (performance)
 	]
 
 	; Collect 'hidden keyword words, removing the keywords. Ignore exports.
 	;
-	hidden: none
+	hidden: _
 
 	if find body 'hidden [
 		hidden: make block! 10
@@ -302,50 +307,55 @@ make-module*: func [
 				to 'hidden
 				remove skip
 				opt [
-					set w any-word!
+					set words any-word!
 					(
-						unless find select spec 'exports w: to word! w [
-							append hidden w
+						unless find select spec 'exports words: to word! words [
+							append hidden words
 						]
 					)
 					|
-					set w block!
-					(append hidden collect-words/ignore w select spec 'exports)
+					set words block!
+					(append hidden collect-words/ignore words select spec 'exports)
 				]
 			]
+
 			to end
 		]
 	]
 
 	; Add hidden words next to the context (performance)
 	;
-	if block? hidden [bind/new hidden obj]
+	if block? hidden [
+		bind/new hidden context
+	]
 
 	either find spec/options 'isolate [
-		bind/new body obj
+		bind/new body context
 		; All words of the module body are module variables
 
 		if object? mixins [
-			resolve obj mixins
+			resolve context mixins
 			; The module keeps its own variables (not shared with system)
 		]
 
-		;resolve obj sys -- no longer done -Carl
-		resolve obj lib
+		; resolve context sys -- no longer done -Carl
+		resolve context lib
 	][
-		bind/only/set body obj
+		bind/only/set body context
 		; Only top level defined words are module variables.
 
 		bind body lib
 		; The module shares system exported variables:
 
-		;bind body sys -- no longer done -Carl
-		if object? mixins [bind body mixins]
+		; bind body sys -- no longer done -Carl
+		if object? mixins [
+			bind body mixins
+		]
 	]
 
-	bind body obj
+	bind body context
 
-	obj/lib-local: any [
+	context/lib-local: any [
 		; always set, always overrides
 		mixins
 		make object! 0
@@ -355,33 +365,33 @@ make-module*: func [
 		protect/hide/words hidden
 	]
 
-	obj: to module! reduce [
-		spec obj
+	context: to module! reduce [
+		spec context
 	]
 
 	do body
 
 	;print ["Module created" spec/name spec/version]
 
-	obj
+	context
 ]
 
 ; MOVE some of these to SYSTEM?
 ;
-boot-banner: none
+boot-banner: _
 
 boot-help: "Boot-sys level - no extra features."
 
-boot-host: none
+boot-host: _
 ; any host add-ons to the lib (binary)
 
-boot-mezz: none
+boot-mezz: _
 ; built-in mezz code (put here on boot)
 
-boot-prot: none
+boot-prot: _
 ; built-in boot protocols
 
-boot-exts: none
+boot-exts: _
 ; boot extension list
 
 export: func [
@@ -400,17 +410,23 @@ export: func [
 assert-utf8: function [
 	"If binary data is UTF-8, returns it, else throws an error."
 
-	data [binary!]
+	source [binary!]
 ][
-	unless find [0 8] tmp: utf? data [
+	unless find [0 8] encoding: utf? source [
 		; Not UTF-8
 		cause-error 'script 'no-decode ajoin [
-			"UTF-" abs tmp
+			"UTF-" abs encoding
 		]
 	]
 
-	data
+	source
 ]
+
+system/options/ansi/bold: "^[[1m"
+system/options/ansi/regular-yellow: "^[[33m"
+system/options/ansi/regular-cyan: "^[[36m"
+system/options/ansi/reset-green: "^[[0;32m"
+system/options/ansi/reset-cyan: "^[[0;36m"
 
 log: func [
 	"Prints out debug message"
@@ -418,7 +434,7 @@ log: func [
 	'id [any-word!]
 	"Source of the log message"
 
-	msg
+	message
 	"Output message"
 
 	/info
@@ -426,18 +442,21 @@ log: func [
 	/debug
 	/error
 
-	/local level
+	/local level options ansi
 ][
+	options: system/options
+	ansi: options/ansi
+
 	if error [
-		msg: trim/head/tail form either block? msg [
-			reduce msg
+		message: trim/head/tail form either block? message [
+			reduce message
 		][
-			msg
+			message
 		]
 
-		foreach line split-lines msg [
+		foreach line split-lines message [
 			print ajoin [
-				" ^[[35m[" id "] ^[[1m"
+				" " ansi/purple "[" id "] " ansi/bold
 
 				either line/1 = #"*" [] [
 					"** Error: "
@@ -445,19 +464,19 @@ log: func [
 
 				copy/part line 200 ;@@ I am not sure with this line length limit
 
-				"^[[0m"
+				ansi/reset
 			]
 		]
 
 		exit
 	]
 
-	if system/options/quiet [
+	if options/quiet [
 		exit
 	]
 
 	level: any [
-		select system/options/log id
+		select options/log id
 		3
 	]
 
@@ -465,15 +484,15 @@ log: func [
 		exit
 	]
 
-	if block? msg [
-		msg: form reduce :msg
+	if block? message [
+		message: form reduce :message
 	]
 
 	case [
 		info  [
 			if level > 0 [
 				print ajoin [
-					" ^[[1;33m[" id "] ^[[36m" msg "^[[0m"
+					#" " ansi/yellow "[" id "] " ansi/regular-cyan message ansi/reset
 				]
 			]
 		]
@@ -481,7 +500,7 @@ log: func [
 		more  [
 			if level > 1 [
 				print ajoin [
-					" ^[[33m[" id "] ^[[0;36m" msg "^[[0m"
+					#" " ansi/regular-yellow "[" id "] " ansi/reset-cyan message ansi/reset
 				]
 			]
 		]
@@ -489,15 +508,15 @@ log: func [
 		debug [
 			if level > 2 [
 				print ajoin [
-					" ^[[33m[" id "] ^[[0;32m" msg "^[[0m"
+					#" " ansi/regular-yellow "[" id "] " ansi/reset-green message ansi/reset
 				]
 			]
 		]
 
-		true  [
+		#(true)  [
 			if level > 0 [
 				print ajoin [
-					" ^[[33m[" id "] " msg "^[[0m"
+					#" " ansi/regular-yellow "[" id "] " message ansi/reset
 				]
 			]
 		]
