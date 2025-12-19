@@ -1257,7 +1257,6 @@ load-module: function [
 			not word? :name
 			; requires name for full import
 		][
-
 			no-lib: yes
 			; Unnamed module can't be imported to lib, so /no-lib here
 			; Still not /no-lib in IMPORT
@@ -1692,7 +1691,7 @@ import: function [
 				no-lib
 				/import
 				/as
-				module
+				source
 			]
 
 			unless name [
