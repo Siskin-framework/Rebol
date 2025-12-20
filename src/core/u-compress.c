@@ -42,9 +42,10 @@ typedef struct {
 } COMPRESS_METHOD;
 
 // Dynamic registry (used to register compression methods on runtime)
-#define MAX_COMPRESS_METHODS 16
-COMPRESS_METHOD compress_registry[MAX_COMPRESS_METHODS];
+#define COMPRESS_METHOD_SIZE 16
+static COMPRESS_METHOD *compress_registry; // allocated in Init_Compression
 static REBCNT compress_method_count = 0;
+static REBCNT compress_method_size = COMPRESS_METHOD_SIZE;
 
 
 //#ifdef old_Sterlings_code // used also in LZMA code at this moment
@@ -775,8 +776,13 @@ void LZ4_free(void* address) {
 **
 ***********************************************************************/
 {
-    if (compress_method_count >= MAX_COMPRESS_METHODS) {
-        return FALSE; // Registry full
+    if (compress_method_count >= compress_method_size) {
+		compress_method_size += 8;
+		void* new_registry = Make_Clear_Mem(compress_method_size, sizeof(COMPRESS_METHOD));
+		if (new_registry == NULL) return FALSE;
+		COPY_MEM(new_registry, compress_registry, compress_method_count * sizeof(COMPRESS_METHOD));
+		Free_Mem(compress_registry, compress_method_count * sizeof(COMPRESS_METHOD));
+		compress_registry = (COMPRESS_METHOD*)new_registry;
     }
     
     // Check if already registered
@@ -963,6 +969,9 @@ static DECOMPRESS_FUNC Find_Decompress_Handler(REBINT sym) {
 {
 	REBVAL* blk;
 	REBVAL  tmp;
+
+	compress_registry = Make_Clear_Mem(COMPRESS_METHOD_SIZE, sizeof(COMPRESS_METHOD));
+
 	(void)tmp; // to silence unreferenced local variable warning in case there is no compression included
 #define add_compression(sym) Init_Word(&tmp, sym); Append_Val(VAL_SERIES(blk), &tmp);
 	blk = Get_System(SYS_CATALOG, CAT_COMPRESSIONS);
@@ -1001,4 +1010,17 @@ static DECOMPRESS_FUNC Find_Decompress_Handler(REBINT sym) {
 #endif
 	}
 
+}
+
+/***********************************************************************
+**
+*/	void Dispose_Compression(void)
+/*
+**		Release allocated compression memory.
+**
+***********************************************************************/
+{
+	if (compress_registry) {
+		Free_Mem(compress_registry, compress_method_size * sizeof(COMPRESS_METHOD));
+	}
 }

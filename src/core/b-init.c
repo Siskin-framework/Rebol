@@ -1162,6 +1162,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 #ifdef INCLUDE_CRYPTOGRAPHY
 		Dispose_Crypt();
 #endif
+		Dispose_Compression();
 		Dispose_Handles();
 		Free_Mem(PG_Boot_Strs, RS_MAX * sizeof(REBYTE*));
 	}
