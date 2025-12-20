@@ -1380,7 +1380,7 @@ load-module: function [
 
 		all [
 			check
-			sum !== module-hash
+			hash !== module-hash
 		][
 			cause-error 'access 'invalid-check module
 		]
