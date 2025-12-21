@@ -120,10 +120,12 @@ catalog: object [
 		quoted-printable: #(bitset! #{FFFFFFFFFFFFFFFBFFFFFFFFFFFFFFFF})
 	]
 	structs: make map! [] ;; filled using `register` native function
+	compressions: [
+		; will be filled on boot from `Init_Compression` in `u-compress.c`
+	]
 	checksums: [
 		; will be filled on boot from `Init_Crypt` in `n-crypt.c
 	]
-	compressions: [deflate zlib gzip] ;; these are always available
 	elliptic-curves: [
 		; will be filled on boot from `Init_Crypt` in `n-crypt.c`
 	]
@@ -266,7 +268,7 @@ modules: object [
 	blurhash:      https://github.com/Siskin-framework/Rebol-BlurHash/releases/download/1.0.0/
 	easing:        https://github.com/Siskin-framework/Rebol-Easing/releases/download/1.0.0/
 	mathpresso:    https://github.com/Siskin-framework/Rebol-MathPresso/releases/download/0.1.0/
-	miniaudio:     https://github.com/Oldes/Rebol-MiniAudio/releases/download/0.11.18.0/
+	miniaudio:     https://github.com/Oldes/Rebol-MiniAudio/releases/download/0.11.23.0/
 	speak:         https://github.com/Oldes/Rebol-Speak/releases/download/0.0.1/
 	sqlite:        https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.46.0.0/
 	triangulate:   https://github.com/Siskin-framework/Rebol-Triangulate/releases/download/1.6.0.0/

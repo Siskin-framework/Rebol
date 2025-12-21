@@ -637,7 +637,6 @@ static void write_buff(int value, void *ctx) {
 ***********************************************************************/
 {
 	REBU64 out_len;
-	REBINT err;
 	lzw_reader reader;
 	lzw_writer writer;
 

@@ -123,7 +123,7 @@ extern const REBYTE Str_Banner[];
 	if (rargs->options & RO_VERS) {
 		Out_Str(cb_cast(REBOL_VERSION), 0, FALSE);
 		Out_Str(cb_cast("\n"), 0, FALSE);
-		OS_Exit(0);
+		OS_Exit(0, 0);
 	}
 }
 
@@ -169,18 +169,21 @@ extern const REBYTE Str_Banner[];
 	// first four bytes of Native_Specs is a little-endian 32-bit
 	// length of the uncompressed spec data.
 	{
-		REBSER spec;
-		REBSER *text;
-		REBCNT textlen;
+		REBSER* text;
+		REBCNT textlen = Bytes_To_REBCNT(Native_Specs);
 
+#ifdef INCLUDE_DEPRECATED_ZLIB
+		REBSER spec;
 		// REVIEW: This is a nasty casting away of a const.  But there's
 		// nothing that can be done about it as long as Decompress takes
 		// a REBSER, as the data field is not const
 		spec.data = ((REBYTE*)Native_Specs) + 4;
 		spec.tail = NAT_SPEC_SIZE;
-
-		textlen = Bytes_To_REBCNT(Native_Specs);
-		text = DecompressZlib(&spec, 0, -1, textlen, 0);
+		text = DecompressZlibDeprecated(&spec, 0, -1, textlen, 0);
+#else
+		REBINT err = 0;
+		DecompressZlib(((REBYTE*)Native_Specs) + 4, NAT_SPEC_SIZE, textlen, &text, &err);
+#endif
 		if (!text || (STR_LEN(text) != textlen)) Crash(RP_BOOT_DATA);
 		boot = Scan_Source(STR_HEAD(text), textlen);
 		//Dump_Block_Raw(boot, 0, 2);
@@ -1009,6 +1012,10 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	PG_Boot_Level = BOOT_LEVEL_FULL;
 	PG_Mem_Usage = 0;
 	PG_Mem_Limit = 0;
+#ifdef DEBUG
+	PG_Mem_Make = 0;
+	PG_Mem_Free = 0;
+#endif
 	PG_Reb_Stats = Make_CMem(sizeof(*PG_Reb_Stats));
 	Halt_State = 0;
 	Reb_Opts = Make_CMem(sizeof(*Reb_Opts));
@@ -1115,6 +1122,11 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	if(!Task_Series)
 		return; // can happen when close button, shutdown, etc.
 
+#ifdef DEBUG
+	// Turn off watching memory (not possible after releasing output buffers)
+	Reb_Opts->watch_alloc = 0;
+#endif
+
 	Free_Series(Task_Series);
 	if (PG_Boot_Phase > BOOT_START) {
 		Free_Series(Bind_Table);
@@ -1147,9 +1159,20 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 		Dispose_Ports();
 		Dispose_Mold();
 		Dispose_CRC();
-		Free_Mem(PG_Boot_Strs, 0);
+#ifdef INCLUDE_CRYPTOGRAPHY
+		Dispose_Crypt();
+#endif
+		Dispose_Compression();
+		Dispose_Handles();
+		Free_Mem(PG_Boot_Strs, RS_MAX * sizeof(REBYTE*));
 	}
 	Dispose_StdIO();
-	Free_Mem(PG_Reb_Stats, 0);
-	Free_Mem(Reb_Opts, 0);
+	Dispose_Pools();
+	Free_Mem(PG_Reb_Stats, sizeof(*PG_Reb_Stats));
+	Free_Mem(Reb_Opts, sizeof(*Reb_Opts));
+#ifdef DEBUG
+	if (PG_Mem_Make != PG_Mem_Free || PG_Mem_Usage > 0)
+		printf("PG_Mem_Make: %llu free: %llu used: %llu\n", PG_Mem_Make, PG_Mem_Free, PG_Mem_Usage);
+#endif
+	ASSERT1(PG_Mem_Free == PG_Mem_Make, RP_MISC);
 }
