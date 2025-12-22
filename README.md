@@ -40,6 +40,7 @@ It is possible to extend Rebol functionality using external modules (native or w
 * [Rebol/CSS](https://github.com/Oldes/Rebol-CSS)  - Cascading Style Sheets (CSS) utilities
 * [Rebol/Easing](https://github.com/Oldes/Rebol-Easing) - Collection of easing functions
 * [Rebol/EBML](https://github.com/Oldes/Rebol-EBML) - Extensible Binary Meta Language codec
+* [Rebol/Deflate](https://github.com/Oldes/Rebol-Deflate) - Deflate, Zlib and Gzip compression (based on `libdeflate`)
 * [Rebol/GitHub](https://github.com/Oldes/Rebol-GitHub) - GitHub GraphQL and REST API
 * [Rebol/Godot](https://github.com/Oldes/Rebol-Godot) - Extractor of Godot's `.pck` files
 * [Rebol/Google](https://github.com/Oldes/Rebol-Google) - Google Web API
