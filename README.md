@@ -61,6 +61,7 @@ It is possible to extend Rebol functionality using external modules (native or w
 * [Rebol/WebDriver](https://github.com/Oldes/Rebol-WebDriver) - WebDriver scheme for automating Chromium based browser sessions
 * [Rebol/WebP](https://github.com/Oldes/Rebol-WebP) - WebP codec for lossless and lossy image compression
 * [Rebol/WebSocket](https://github.com/Oldes/Rebol-WebSocket) - WebSocket scheme and codec
+* [Rebol/Zstd](https://github.com/Oldes/Rebol-Zstd) - Zstd compression
 
 It should be noted that on macOS it may be required to resign _downloaded native extensions_ using command like:
 ```
