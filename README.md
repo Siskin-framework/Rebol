@@ -37,6 +37,7 @@ It is possible to extend Rebol functionality using external modules (native or w
 * [Rebol/BCM2835](https://github.com/Oldes/Rebol-BCM2835) - Broadcom BCM 2835 chip extension (for GPIO on RaspberryPI)
 * [Rebol/Blend2D](https://github.com/Siskin-framework/Rebol-Blend2D) - Drawing dialect using [Blend2D](https://blend2d.com) as a high performance 2D vector graphics engine
 * [Rebol/BlurHash](https://github.com/Siskin-framework/Rebol-BlurHash) - Compact representation of a placeholder for an image
+* [Rebol/Brotli](https://github.com/Oldes/Rebol-Brotli) - Brotli compression
 * [Rebol/CSS](https://github.com/Oldes/Rebol-CSS)  - Cascading Style Sheets (CSS) utilities
 * [Rebol/Easing](https://github.com/Oldes/Rebol-Easing) - Collection of easing functions
 * [Rebol/EBML](https://github.com/Oldes/Rebol-EBML) - Extensible Binary Meta Language codec
