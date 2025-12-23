@@ -1329,27 +1329,27 @@ eggs: [
 		]
 
 		"Rebol/Core windows-x86 shared library" [
-			name:    %rebol3-core-windows-x86.dll
+			name:    %lib-rebol3-core-windows-x86
 			:target-windows
 			:include-rebol-core
 			:make-x86-dll
 		]
 		"Rebol/Bulk windows-x86 shared library" [
-			name:    %rebol3-bulk-windows-x86.dll
+			name:    %lib-rebol3-bulk-windows-x86
 			:target-windows
 			:include-rebol-bulk
 			:make-x86-dll
 		]
 		"Rebol/Core windows-x86 host application" [
 			name:    %host-core-windows-x86
-			library: %rebol3-core-windows-x86
+			library: %lib-rebol3-core-windows-x86
 			:target-windows
 			:include-rebol-core
 			:make-x86-host
 		]
 		"Rebol/Bulk windows-x86 host application" [
 			name:    %host-bulk-windows-x86
-			library: %rebol3-bulk-windows-x86
+			library: %lib-rebol3-bulk-windows-x86
 			:target-windows
 			:make-x86-host
 			define: REB_VIEW
