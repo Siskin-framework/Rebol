@@ -37,9 +37,11 @@ It is possible to extend Rebol functionality using external modules (native or w
 * [Rebol/BCM2835](https://github.com/Oldes/Rebol-BCM2835) - Broadcom BCM 2835 chip extension (for GPIO on RaspberryPI)
 * [Rebol/Blend2D](https://github.com/Siskin-framework/Rebol-Blend2D) - Drawing dialect using [Blend2D](https://blend2d.com) as a high performance 2D vector graphics engine
 * [Rebol/BlurHash](https://github.com/Siskin-framework/Rebol-BlurHash) - Compact representation of a placeholder for an image
+* [Rebol/Brotli](https://github.com/Oldes/Rebol-Brotli) - Brotli compression
 * [Rebol/CSS](https://github.com/Oldes/Rebol-CSS)  - Cascading Style Sheets (CSS) utilities
 * [Rebol/Easing](https://github.com/Oldes/Rebol-Easing) - Collection of easing functions
 * [Rebol/EBML](https://github.com/Oldes/Rebol-EBML) - Extensible Binary Meta Language codec
+* [Rebol/Deflate](https://github.com/Oldes/Rebol-Deflate) - Deflate, Zlib and Gzip compression (based on `libdeflate`)
 * [Rebol/GitHub](https://github.com/Oldes/Rebol-GitHub) - GitHub GraphQL and REST API
 * [Rebol/Godot](https://github.com/Oldes/Rebol-Godot) - Extractor of Godot's `.pck` files
 * [Rebol/Google](https://github.com/Oldes/Rebol-Google) - Google Web API
@@ -60,6 +62,8 @@ It is possible to extend Rebol functionality using external modules (native or w
 * [Rebol/WebDriver](https://github.com/Oldes/Rebol-WebDriver) - WebDriver scheme for automating Chromium based browser sessions
 * [Rebol/WebP](https://github.com/Oldes/Rebol-WebP) - WebP codec for lossless and lossy image compression
 * [Rebol/WebSocket](https://github.com/Oldes/Rebol-WebSocket) - WebSocket scheme and codec
+* [Rebol/Zlib-ng](https://github.com/Oldes/Rebol-Zlib-ng) - Deflate, Zlib and Gzip compression (based on `zlib-ng`)
+* [Rebol/Zstd](https://github.com/Oldes/Rebol-Zstd) - Zstd compression
 
 It should be noted that on macOS it may be required to resign _downloaded native extensions_ using command like:
 ```
