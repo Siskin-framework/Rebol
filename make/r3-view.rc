@@ -1,20 +1,20 @@
 101 ICON "icon/r3.ico"
 
 1 VERSIONINFO
-FILEVERSION     3,20,5,0
-PRODUCTVERSION  3,20,5,0
+FILEVERSION     3,21,0,0
+PRODUCTVERSION  3,21,0,0
 BEGIN
   BLOCK "StringFileInfo"
   BEGIN
     BLOCK "040904E4"
     BEGIN
       VALUE "FileDescription", "Rebol Console"
-      VALUE "FileVersion", "3.20"
+      VALUE "FileVersion", "3.21"
       VALUE "InternalName", "Rebol 3 (Oldes branch)"
       VALUE "LegalCopyright", "2012 REBOL Technologies"
       VALUE "OriginalFilename", "Rebol.exe"
       VALUE "ProductName", "Rebol/View"
-      VALUE "ProductVersion", "3.20"
+      VALUE "ProductVersion", "3.21"
     END
   END
   BLOCK "VarFileInfo"

@@ -7,11 +7,16 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Features:
 
+* [`6492ec`](https://github.com/Oldes/Rebol3/commit/6492ec92649dc9e42afaaa5230c53a2b46f1c679) Add link to latest Rebol/Zlib-ng extension
+* [`aa784b`](https://github.com/Oldes/Rebol3/commit/aa784ba59280d6e2e79b4f81bd8f1e3515ea32bf) Add link to latest Rebol/Brotli extension
+* [`8d8987`](https://github.com/Oldes/Rebol3/commit/8d89872f68bf1bf02d3b999ae904cd017f45284c) Add link to latest Rebol/Zstd extension
+* [`a1db7a`](https://github.com/Oldes/Rebol3/commit/a1db7a5d824f2316e7438a705f343127cfa788fa) Add link to latest Rebol/Deflate extension
 * [`7df1d4`](https://github.com/Oldes/Rebol3/commit/7df1d445e4e73591f16b4f1720d6a38649f97c24) Add `recycle/pool` to free empty memory pool segments
 * [`80a468`](https://github.com/Oldes/Rebol3/commit/80a4683c10306245314d1c0cf961ea5b8d95d508) Add optional LZ4 de/compression
 
 ### Changes:
 
+* [`dc0422`](https://github.com/Oldes/Rebol3/commit/dc0422273db6808d843ab24f7bfe3be2fb4879a6) Extend compression method registry when needed
 * [`bc42bf`](https://github.com/Oldes/Rebol3/commit/bc42bfc0f35f56209ade1a77d8b4fb10eb1132ad) Refactoring of SYS-LOAD and SYS-BASE (#153)
 
   No substantive changes—intent is to better elucidate the LOAD and DO processes with an eye to review and modification. Where possible, word names are expanded and reflect what each value represents, not what they are.
@@ -50,6 +55,7 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`2c484f`](https://github.com/Oldes/Rebol3/commit/2c484f67e78d48482aaa902a51f4fee8afc3ea0a) Regression related to #153 and #155
 * [`07bfe8`](https://github.com/Oldes/Rebol3/commit/07bfe85740b43f44e55fc2715a7d73f2e43bd79b) Properly parse double quotes in Unicode escape sequences (#154)
 * [`25ba57`](https://github.com/Oldes/Rebol3/commit/25ba5731cef1bb8b96c8f073f8e13563f7de7e6d) Do not dispose cryptography when it is not included
 
