@@ -1,15 +1,15 @@
 Rebol [
 	Title:    "Test compression"
-	Date:     28-Jun-2023
+	Date:     24-Dec-2025
 	Author:   "Oldes"
 	File:     %test-compression.r3
-	Version:  0.0.1
+	Version:  0.0.2
 ;;	Requires: 3.11.0
 	Note: {}
 ]
 
-foreach m [br zstd][
-	attempt [unless find system/catalog/compressions m [import (m)]]
+foreach m [brotli zstd zlib-ng deflate][
+	attempt [import (m)]
 ]
 
 ;; Using molded system as a test input (large text data).

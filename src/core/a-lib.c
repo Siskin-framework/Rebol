@@ -1381,14 +1381,7 @@ RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
 */
 {
 	REBCNT sym = Make_Word(cb_cast(name), 0);
-	int ret = Register_Compress_Method(sym, encoder, decoder);
-	if (ret) {
-		REBVAL val;
-		REBVAL *blk = Get_System(SYS_CATALOG, CAT_COMPRESSIONS);
-		Init_Word(&val, sym);
-		Append_Val(VAL_SERIES(blk), &val);
-	}
-	return ret;
+	return Register_Compress_Method(sym, encoder, decoder);
 }
 
 
