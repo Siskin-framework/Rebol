@@ -800,6 +800,13 @@ void LZ4_free(void* address) {
     compress_registry[compress_method_count].encode = (COMPRESS_FUNC)encode;
 	compress_registry[compress_method_count].decode = (DECOMPRESS_FUNC)decode;
     compress_method_count++;
+
+	// Append new name to system/catalog/compressions
+	REBVAL val;
+	REBVAL* blk = Get_System(SYS_CATALOG, CAT_COMPRESSIONS);
+	Init_Word(&val, sym);
+	Append_Val(VAL_SERIES(blk), &val);
+
     return TRUE;
 }
 
@@ -967,48 +974,31 @@ static DECOMPRESS_FUNC Find_Decompress_Handler(REBINT sym) {
 **
 ***********************************************************************/
 {
-	REBVAL* blk;
-	REBVAL  tmp;
-
 	compress_registry = Make_Clear_Mem(COMPRESS_METHOD_SIZE, sizeof(COMPRESS_METHOD));
 
-	(void)tmp; // to silence unreferenced local variable warning in case there is no compression included
-#define add_compression(sym) Init_Word(&tmp, sym); Append_Val(VAL_SERIES(blk), &tmp);
-	blk = Get_System(SYS_CATALOG, CAT_COMPRESSIONS);
-	if (blk && IS_BLOCK(blk)) {
 #ifdef INCLUDE_DEFLATE
-		Register_Compress_Method(SYM_DEFLATE, CompressDeflate, DecompressDeflate);
-		Register_Compress_Method(SYM_ZLIB, CompressZlib, DecompressZlib);
-		Register_Compress_Method(SYM_GZIP, CompressGzip, DecompressGzip);
-		add_compression(SYM_DEFLATE);
-		add_compression(SYM_ZLIB);
-		add_compression(SYM_GZIP);
+	Register_Compress_Method(SYM_DEFLATE, CompressDeflate, DecompressDeflate);
+	Register_Compress_Method(SYM_ZLIB, CompressZlib, DecompressZlib);
+	Register_Compress_Method(SYM_GZIP, CompressGzip, DecompressGzip);
 #endif
 #ifdef INCLUDE_BROTLI
-		Register_Compress_Method(SYM_BR, CompressBrotli, DecompressBrotli);
-		add_compression(SYM_BR);
+	Register_Compress_Method(SYM_BR, CompressBrotli, DecompressBrotli);
 #endif
 #ifdef INCLUDE_CRUSH
-		Register_Compress_Method(SYM_CRUSH, CompressCrush, DecompressCrush);
-		add_compression(SYM_CRUSH);
+	Register_Compress_Method(SYM_CRUSH, CompressCrush, DecompressCrush);
 #endif
 #ifdef INCLUDE_LZ4
-		Register_Compress_Method(SYM_LZ4, CompressLz4, DecompressLz4);
-		add_compression(SYM_LZ4);
+	Register_Compress_Method(SYM_LZ4, CompressLz4, DecompressLz4);
 #endif
 #ifdef INCLUDE_LZAV
-		Register_Compress_Method(SYM_LZAV, CompressLzav, DecompressLzav);
-		add_compression(SYM_LZAV);
+	Register_Compress_Method(SYM_LZAV, CompressLzav, DecompressLzav);
 #endif
 #ifdef INCLUDE_LZMA
-		Register_Compress_Method(SYM_LZMA, CompressLzma, DecompressLzma);
-		add_compression(SYM_LZMA);
+	Register_Compress_Method(SYM_LZMA, CompressLzma, DecompressLzma);
 #endif
 #ifdef INCLUDE_LZW
-		Register_Compress_Method(SYM_LZW, CompressLzw, DecompressLzw);
-		add_compression(SYM_LZW);
+	Register_Compress_Method(SYM_LZW, CompressLzw, DecompressLzw);
 #endif
-	}
 
 }
 
