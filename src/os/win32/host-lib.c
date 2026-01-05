@@ -1463,6 +1463,31 @@ static INT CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 
 /***********************************************************************
 **
+*/	OS_API REBOOL OS_Request_Color(REBCNT* color)
+/*
+***********************************************************************/
+{
+	// Static so custom colors persist across calls
+	static COLORREF customColors[16] = { 0 };
+
+	CHOOSECOLOR cc;
+	ZeroMemory(&cc, sizeof(cc));
+	cc.lStructSize = sizeof(cc);
+	//cc.hwndOwner = owner;
+	cc.rgbResult = (COLORREF)*color;
+	cc.lpCustColors = customColors;
+	cc.Flags = CC_FULLOPEN | CC_RGBINIT;  // start expanded, use rgbResult as initial
+
+	if (ChooseColor(&cc)) {
+		*color = cc.rgbResult; // in format: 00bbggrr
+		return TRUE;          
+	}
+	return FALSE;
+}
+
+
+/***********************************************************************
+**
 */	OS_API void OS_Request_Password(REBREQ *req)
 /*
 ***********************************************************************/
