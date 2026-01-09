@@ -63,6 +63,9 @@ Credits for Non-REBOL orginated C files and modules
 * qsort:
   Copyright (c) 1992, 1993 The Regents of the University of California.
 
+* Adaptive Symmetry Partition Sort:
+  Copyright (C) 2012, Jingchao Chen 
+
 * UTF-8 decoder:
   Copyright (c) 2008-2010 Bjoern Hoehrmann <bjoern@hoehrmann.de>
 
