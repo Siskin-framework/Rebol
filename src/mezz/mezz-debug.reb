@@ -3,7 +3,7 @@ REBOL [
 	Title: "REBOL 3 Mezzanine: Debug"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2022 Rebol Open Source Contributors
+		Copyright 2012-2026 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -17,7 +17,7 @@ dt: delta-time: function [
 	block [block!]
 ][
 	; force GC, so there is less chance that it is fired in `do block`
-	recycle
+	recycle/pools
 	start: stats/timer
 	do block
 	stats/timer - start
@@ -30,7 +30,7 @@ dp: delta-profile: func [
 	/local start end adjust
 ][
 	; first force GC
-	unless only [recycle]
+	unless only [recycle/pools]
 	; than count adjustments for empty code
 	adjust: copy end: stats/profile 
 	do [] 
@@ -93,7 +93,7 @@ speed?: function [
 			]
 		]
 	][
-		recycle
+		recycle/pools
 		secs: now/precise
 		calc: 0
 		do block
