@@ -396,7 +396,7 @@ void Paint_Window(HWND window);
 	REBINT ws_flags;
 	REBINT windex;
 	HWND window;
-	REBCHR *title;
+	REBCHR *title = NULL;
 	int x, y, w, h;
 	HWND parent = NULL;
 	REBYTE osString = FALSE;
@@ -432,11 +432,6 @@ void Paint_Window(HWND window);
 	else if (!GET_GOB_FLAG(gob, GOBF_NO_BORDER)) {
 		options |= WS_BORDER;
 	}
-
-	if (IS_GOB_STRING(gob))
-		RL_Get_String(GOB_CONTENT(gob), 0, (void**)&title, TRUE);
-    else
-        title = TXT("REBOL Window");
 
 	if (GET_GOB_FLAG(gob, GOBF_POPUP)) {
 		ws_flags |= WS_EX_TOOLWINDOW;
@@ -476,16 +471,23 @@ void Paint_Window(HWND window);
 	h = rect.bottom - rect.top;
 	//----------------------------------------------------
 
+	if (IS_GOB_STRING(gob)) {
+		OS_Multibyte_To_Wide(BIN_DATA(GOB_CONTENT(gob)), &title);
+	}
+
 	// Create the window:
 	window = CreateWindowEx(
 		ws_flags, 
 		Class_Name_Window,
-		title,
+		title ? title : TXT("REBOL Window"),
 		options,
 		x, y, w, h,
 		parent,
 		NULL, App_Instance, NULL
 	);
+
+	if (title) free(title);
+
 	if (!window) {
 		Host_Crash("CreateWindow failed");
 		return NULL; // silent compiler's warnings
