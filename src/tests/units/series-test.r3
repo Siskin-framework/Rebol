@@ -1875,6 +1875,11 @@ try/with [
 	--assert [1.#NaN 1.#NaN 1.#INF 1.0 0 -1.0 -1.#INF] = sort/reverse [1.#inf 1.#NAN -1.0 1.#nan 1.0 -1.#inf 0]
 	--assert [1.#NaN 1.#NaN 1.#INF 1.0 0 -1.0 -1.#INF] = sort/reverse [1.#NAN 1.#inf -1.0 1.#nan 1.0 -1.#inf 0]
 
+--test-- "SORT inifinite loop case"
+	;@@ https://github.com/jingchaochen/Symmetry-Partition-Sort/issues/1
+	words: ["type" "offset" "size" "text" "image" "color" "menu" "data" "enabled?" "visible?" "selected" "flags" "options" "parent" "pane" "state" "rate" "edge" "para" "font" "actors" "extra" "draw" "on-change*" "on-deep-change*"]
+	--assert ["type" "menu" "size" "text" "draw" "pane" "edge" "data" "rate" "font" "para" "flags" "color" "image" "state" "extra" "offset" "actors" "parent" "options" "selected" "visible?" "enabled?" "on-change*" "on-deep-change*"] == sort/compare words func [a b][(length? a) < (length? b)]
+
 ===end-group===
 
 

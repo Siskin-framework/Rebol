@@ -108,14 +108,14 @@ void SymPartitionSort(char *a, int s, int n, int es, int (*cmp)(const void *,con
 //Fat partition begins
         pb=pi=pm+es;  
         do {
-            while ( (rc=cmp(pb,pm)) < 0 ) pb+=es;
+            while ( (rc=cmp(pb,pm)) < 0 && pb <= pc) pb+=es;
             if(pb >= pc) break;
             if(rc==0){
 				if(pi!=pb) {swap(pb,pi);}
                  pi+=es; pb+=es;
                  continue;
             }
-            while ((rc=cmp(pc,pm)) > 0 ) pc-=es;
+            while ((rc=cmp(pc,pm)) > 0 && pb <= pc) pc-=es;
             if(pb >= pc) break;
             swap(pb,pc);
             if(rc==0){

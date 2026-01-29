@@ -396,7 +396,7 @@ void Paint_Window(HWND window);
 	REBINT ws_flags;
 	REBINT windex;
 	HWND window;
-	REBCHR *title;
+	REBCHR *title = NULL;
 	int x, y, w, h;
 	HWND parent = NULL;
 	REBYTE osString = FALSE;
@@ -432,11 +432,6 @@ void Paint_Window(HWND window);
 	else if (!GET_GOB_FLAG(gob, GOBF_NO_BORDER)) {
 		options |= WS_BORDER;
 	}
-
-	if (IS_GOB_STRING(gob))
-		RL_Get_String(GOB_CONTENT(gob), 0, (void**)&title, TRUE);
-    else
-        title = TXT("REBOL Window");
 
 	if (GET_GOB_FLAG(gob, GOBF_POPUP)) {
 		ws_flags |= WS_EX_TOOLWINDOW;
@@ -476,16 +471,23 @@ void Paint_Window(HWND window);
 	h = rect.bottom - rect.top;
 	//----------------------------------------------------
 
+	if (IS_GOB_STRING(gob)) {
+		OS_Multibyte_To_Wide(BIN_DATA(GOB_CONTENT(gob)), &title);
+	}
+
 	// Create the window:
 	window = CreateWindowEx(
 		ws_flags, 
 		Class_Name_Window,
-		title,
+		title ? title : TXT("REBOL Window"),
 		options,
 		x, y, w, h,
 		parent,
 		NULL, App_Instance, NULL
 	);
+
+	if (title) free(title);
+
 	if (!window) {
 		Host_Crash("CreateWindow failed");
 		return NULL; // silent compiler's warnings
@@ -716,29 +718,10 @@ void Paint_Window(HWND window);
 
 	if (wingob) {
 		BeginPaint(window, (LPPAINTSTRUCT) &ps);
-
 		cmp = GOB_COMPOSITOR(wingob);
-
 		//printf("PS: %f %f %f %f - %x %x\n", ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom, ps.hdc, cmp->wind_DC);
-
-		
-
-		//printf("erase %i %i %i %i\n", cmp->win_rect.left, cmp->win_rect.top, cmp->win_rect.right, cmp->win_rect.bottom);
-		//HBRUSH TransperrantBrush = CreateSolidBrush(GetSysColor(COLOR_ACTIVECAPTION)); //(HBRUSH)GetStockObject(NULL_BRUSH); //
-		//SetBkMode(cmp->back_DC, OPAQUE);
-		//FillRect(cmp->back_DC, &cmp->win_rect, TransperrantBrush);
-		//FillRect(cmp->wind_DC, &cmp->win_rect, TransperrantBrush);
-		//DeleteObject(TransperrantBrush);
-
-		BitBlt( cmp->wind_DC, 0, 0, GOB_LOG_W_INT(cmp->wind_gob), GOB_LOG_H_INT(cmp->wind_gob), cmp->wind_DC, 0, 0, SRCERASE); 
-//		BitBlt( cmp->back_DC, 0, 0, GOB_LOG_W_INT(cmp->wind_gob), GOB_LOG_H_INT(cmp->wind_gob), cmp->back_DC, 0, 0, SRCERASE); 
-
 		FillRect(cmp->back_DC, &cmp->win_rect, cmp->brush_DC);
-		
 		OS_Compose_Gob(cmp, wingob, wingob, FALSE);
-
-		//OS_Blit_Window(compositor);
-		
 		BitBlt(
 			cmp->wind_DC,
 			0, 0,
@@ -747,7 +730,6 @@ void Paint_Window(HWND window);
 			0, 0,
 			SRCCOPY
 		);
-		
 		EndPaint(window, (LPPAINTSTRUCT) &ps);
 	}
 }
