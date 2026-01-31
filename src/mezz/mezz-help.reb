@@ -177,14 +177,12 @@ import (module [
 		/match "Include only those that match a string or datatype"
 			pattern
 		/not-none "Ignore NONE values"
-		/count 'w
-		/local start wild type str result user? num
+		/local start wild type str result user?
 	][
 		result: clear ""
 		user?: same? obj system/contexts/user
 		; Search for matching strings:
 		wild: all [string? pattern  find pattern "*"]
-		num: 0
 		foreach [word val] obj [
 			type: type?/word :val
 			if any [
@@ -226,10 +224,8 @@ import (module [
 						ajoin ["^[[32m" form-val :val "^[[m^/"]
 					]
 				]
-				++ num
 			]
 		]
-		if count [set w num]
 		if system/options/no-color [sys/remove-ansi result]
 		copy result
 	]
@@ -248,7 +244,7 @@ import (module [
 		/doc "Open web browser to related documentation"
 		/into "Help text will be inserted into provided string instead of printed"
 			string [string!] "Returned series will be past the insertion"
-		/local value spec args refs rets type ret desc arg def des ref str cols tmp ret-desc num
+		/local value spec args refs rets type ret desc arg def des ref str cols tmp ret-desc
 	][
 		if all [
 			doc
@@ -312,8 +308,8 @@ import (module [
 						 "It is defined as" either find "aeiou" first spec/title [" an "] [" a "] spec/title ".^/"
 						 "It is of the general type ^[[1;32m" spec/type "^[[m.^/^/"
 						]
-						unless empty? value: dump-obj/match/count system/contexts/lib :word num [
-							output ajoin ["Found these " num " related words:^/" value]
+						unless empty? value: dump-obj/match system/contexts/lib :word [
+							output ajoin ["Found these related words:^/" value]
 						]
 						unless empty? value: dump-obj/match system/contexts/user :word [
 							output ajoin ["Found these related words in the user context:^/" value]
