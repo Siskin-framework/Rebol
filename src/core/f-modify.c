@@ -123,6 +123,8 @@
 	REBCNT tail  = SERIES_TAIL(dst_ser);
 	REBINT size;		// total to insert
 
+	RESET_TAIL(BUF_SCAN);
+
 	if (dups < 0) return (action == A_APPEND) ? 0 : dst_idx;
 	if (action == A_APPEND || dst_idx > tail) dst_idx = tail;
 

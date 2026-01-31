@@ -1634,7 +1634,6 @@ append:
 
 	BLK_RESET(MOLD_LOOP);
 	RESET_SERIES(buf);
-	SERIES_CLR_FLAG(buf, SER_UTF8);
 	mold->series = buf;
 
 	// This is not needed every time, but w/o a functional way to set the option,
