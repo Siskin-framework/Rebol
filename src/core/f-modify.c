@@ -165,6 +165,7 @@
 		SERIES_TAIL(src_ser) = Encode_UTF8_Char(STR_HEAD(src_ser), VAL_CHAR(src_val));
 		TERM_SERIES(src_ser);
 		if (SERIES_TAIL(src_ser) > 1) UTF8_SERIES(src_ser);
+		dst_len = SERIES_TAIL(src_ser);
 	}
 	else if (IS_BLOCK(src_val)) {
 		src_ser = Form_Tight_Block(src_val);

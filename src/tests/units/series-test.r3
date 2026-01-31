@@ -751,6 +751,9 @@ Rebol [
 	--test-- "APPEND string! char!"
 		--assert "a" = append "" #"a"
 		--assert "←" = append "" #"^(2190)" ; wide char
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2683
+		--assert "a" = append/part "" #"a" 10
+		--assert "←" = append/part "" #"^(2190)" 10
 ===end-group===
 
 ===start-group=== "APPEND ref!"
