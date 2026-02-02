@@ -751,6 +751,9 @@ Rebol [
 	--test-- "APPEND string! char!"
 		--assert "a" = append "" #"a"
 		--assert "←" = append "" #"^(2190)" ; wide char
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2683
+		--assert "a" = append/part "" #"a" 10
+		--assert "←" = append/part "" #"^(2190)" 10
 ===end-group===
 
 ===start-group=== "APPEND ref!"
@@ -787,6 +790,9 @@ Rebol [
 	--test-- "APPEND binary! char!"
 		--assert #{0001}     = append #{00} #"^(01)"
 		--assert #{00E28690} = append #{00} #"^(2190)"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2683
+		--assert #{0001}     = append/part #{00} #"^(01)" 10
+		--assert #{00E28690} = append/part #{00} #"^(2190)" 10
 	--test-- "APPEND/part binary!"
 		--assert #{01} = append/part #{} #{0102} 1
 		--assert #{01} = append/part #{} "^(01)^(02)" 1
