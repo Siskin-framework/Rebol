@@ -1742,6 +1742,21 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/721
 	--assert [4 3 2 1] = sort/compare [1 2 3 4] :greater?
 
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2684
+	--assert (sort/skip ["A2" "B3" "C1" "A1" "B2" "C3" "A3" "B1" "C2"] 3)
+			== ["A1" "B2" "C3" "A2" "B3" "C1" "A3" "B1" "C2"]
+	--assert (sort/skip/compare ["A2" "B3" "C1" "A1" "B2" "C3" "A3" "B1" "C2" ] 3 [ 3 2 1 ])
+			== ["A2" "B3" "C1" "A3" "B1" "C2" "A1" "B2" "C3"]
+	--assert (sort/skip/compare [ "A2" "B3" "C1" "A1" "B2" "C3" "A3" "B1" "C2" ] 3 [ 2 3 1 ])
+			== ["A3" "B1" "C2" "A1" "B2" "C3" "A2" "B3" "C1"]
+	--assert (sort/skip/compare [ "A2" "B3" "C1" "A1" "B2" "C3" "A3" "B1" "C2" ] 3 [ 2 1 3 ])
+			== ["A3" "B1" "C2" "A1" "B2" "C3" "A2" "B3" "C1"]
+	--assert (sort/skip/compare [ "A2" "B3" "C1" "A1" "B2" "C3" "A3" "B1" "C2" ] 3 [ 1 2 3 ])
+			== ["A1" "B2" "C3" "A2" "B3" "C1" "A3" "B1" "C2"]
+	--assert all [error? e: try [sort/skip/compare [3 B 1 B] 2 [2 -1]] e/id = 'invalid-arg]
+	--assert all [error? e: try [sort/skip/compare [3 B 1 B] 2 [2 0]] e/id = 'invalid-arg]
+	--assert all [error? e: try [sort/skip/compare [3 B 1 B] 2 [2 x]] e/id = 'invalid-arg]
+
 --test-- "SORT/compare string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1100
 	comp: func [a b] [a > b]
