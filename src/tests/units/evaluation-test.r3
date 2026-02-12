@@ -486,6 +486,15 @@ Rebol [
 		date? m2/c
 		m2/d/k == white
 	]
+	remove/key m1 'c
+	--assert all [
+		map? m2: compose/deep m1
+		paren? m1/a
+		m2/a == 0
+		m2/b/1 == red
+		none? m2/c
+		m2/d/k == white
+	]
 	
 ===end-group===
 
