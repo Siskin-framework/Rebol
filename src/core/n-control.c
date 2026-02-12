@@ -564,7 +564,7 @@ callback:	// ...and the last result.
 	REBVAL *value = D_ARG(1);
 	REBVAL *into = D_REF(4) ? D_ARG(5) : 0;
 
-	if (IS_BLOCK(value)) {
+	if (IS_BLOCK(value) || IS_MAP(value)) {
 		Compose_Block(value, D_REF(2), D_REF(3), into);
 		return R_TOS;
 	}

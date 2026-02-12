@@ -466,6 +466,26 @@ Rebol [
 	--assert x = [a b "a"]
 	--assert tail? compose/into [a (b)] tail x
 	--assert x = [a b "a" a 2]
+
+	--test-- "compose map"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2685
+	m1: #[a: (zero) b: [(red)] c: (now) d: #[k: (white)]] 
+	--assert all [
+		map? m2: compose m1
+		paren? m1/a
+		m2/a == 0
+		paren? m2/b/1
+		date? m2/c
+		paren? m2/d/k
+	]
+	--assert all [
+		map? m2: compose/deep m1
+		paren? m1/a
+		m2/a == 0
+		m2/b/1 == red
+		date? m2/c
+		m2/d/k == white
+	]
 	
 ===end-group===
 
