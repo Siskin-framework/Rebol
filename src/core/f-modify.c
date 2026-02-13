@@ -143,7 +143,7 @@
 		}
 		else if (IS_CHAR(src_val)) {
 			src_ser = BUF_SCAN;
-			src_ser->tail = dst_len = Encode_UTF8_Char(BIN_HEAD(src_ser), VAL_CHAR(src_val));
+			src_ser->tail = Encode_UTF8_Char(BIN_HEAD(src_ser), VAL_CHAR(src_val));
 		}
 		else if (ANY_STR(src_val)) {
 			if (action != A_CHANGE && GET_FLAG(flags, AN_PART)) {
@@ -167,7 +167,6 @@
 		SERIES_TAIL(src_ser) = Encode_UTF8_Char(STR_HEAD(src_ser), VAL_CHAR(src_val));
 		TERM_SERIES(src_ser);
 		if (SERIES_TAIL(src_ser) > 1) UTF8_SERIES(src_ser);
-		dst_len = SERIES_TAIL(src_ser);
 	}
 	else if (IS_BLOCK(src_val)) {
 		src_ser = Form_Tight_Block(src_val);
