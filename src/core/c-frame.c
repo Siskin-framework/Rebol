@@ -1048,7 +1048,7 @@
 	REBINT *binds = WORDS_HEAD(Bind_Table);
 
 	for (; NOT_END(data); data++) {
-		if (ANY_BLOCK(data))
+		if (ANY_BLOCK_OR_MAP(data))
 			Rebind_Block(src_frame, dst_frame, VAL_BLK_DATA(data), modes);
 		else if (ANY_WORD(data) && VAL_WORD_FRAME(data) == src_frame) {
 			VAL_WORD_FRAME(data) = dst_frame;

@@ -501,6 +501,9 @@ Rebol [
 	
 	f2: closure/with [b][compose #[num: (a + b)]][a: 1]
 	--assert #[num: 3] = try [f2 2]
+
+	--assert #[num: 4] = use[v][v: 4 compose #[num: (v)]]
+	--assert #[num: 5] = apply func [val] [compose/deep #[num: (val)]] [5]
 	
 ===end-group===
 
