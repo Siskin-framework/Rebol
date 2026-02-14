@@ -495,6 +495,12 @@ Rebol [
 		none? m2/c
 		m2/d/k == white
 	]
+
+	a: 1 f1: func[b][compose #[num: (a + b)]]
+	--assert #[num: 3] = try [f1 2]
+	
+	f2: closure/with [b][compose #[num: (a + b)]][a: 1]
+	--assert #[num: 3] = try [f2 2]
 	
 ===end-group===
 
