@@ -678,6 +678,10 @@ Rebol [
 	--test-- "unicode string"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2665
 		--assert (replace/all "<á]] <é]]" "]]" #">") == "<á> <é>"
+
+	--test-- "issue-2683"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2683
+		--assert "YaYb" = replace/all "XXXaXXXb" "XXX" #"Y"
 		
 ===end-group===
 
@@ -754,6 +758,8 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2683
 		--assert "a" = append/part "" #"a" 10
 		--assert "←" = append/part "" #"^(2190)" 10
+		--assert "1" = append/part "" 1 10
+		--assert "1.1.1" = append/part "" 1.1.1 10
 ===end-group===
 
 ===start-group=== "APPEND ref!"

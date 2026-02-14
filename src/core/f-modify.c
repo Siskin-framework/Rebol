@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -186,7 +186,8 @@
 	}
 
 	// For INSERT or APPEND with /PART use the dst_len not src_len:
-	if (action != A_CHANGE && GET_FLAG(flags, AN_PART)) src_len = dst_len;
+	if (action != A_CHANGE && GET_FLAG(flags, AN_PART) && src_len > dst_len)
+		src_len = dst_len;
 
 	// If Source == Destination we need to prevent possible conflicts.
 	// Clone the argument just to be safe.
