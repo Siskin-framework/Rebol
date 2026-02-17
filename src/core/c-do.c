@@ -1366,14 +1366,14 @@ eval_func2:
 **
 */	void Compose_Block(REBVAL *block, REBFLG deep, REBFLG only, REBVAL *into)
 /*
-**		Compose a block from a block of un-evaluated values and
+**		Compose a block or map from a block of un-evaluated values and
 **		paren blocks that are evaluated. Stack holds temp values,
 **		which also protects them from GC along the way.
 **
 **			deep - recurse into sub-blocks
 **			only - parens that return blocks are kept as blocks
 **
-**		Returns result as a block on top of stack.
+**		Returns result as a block or map on top of stack.
 **
 ***********************************************************************/
 {
@@ -1385,14 +1385,22 @@ eval_func2:
 	}
 
 	for (; NOT_END(value); value++) {
+		if (IS_MAP(block)) {
+			if (VAL_MAP_REMOVED(value)) {
+				// ignore removed keys
+				value++;
+				continue;
+			}
+			DS_PUSH(value++);
+		}
 		if (IS_PAREN(value)) {
 			// Eval the paren, and leave result on the stack:
 			DO_BLK(value);
 			DSP++; // !!!DSP temp
 			if (THROWN(DS_TOP)) return;
 
-			// If result is a block, and not /only, insert its contents:
-			if (IS_BLOCK(DS_TOP) && !only) {
+			// If result is a block, and not /only or a map value, insert its contents:
+			if (IS_BLOCK(DS_TOP) && !only && !IS_MAP(block)) {
 				// Append series to the stack:
 				SERIES_TAIL(DS_Series) = DSP; // overwrites TOP value
 				Append_Series(DS_Series, (REBYTE *)VAL_BLK_DATA(DS_TOP), VAL_BLK_LEN(DS_TOP));
@@ -1402,7 +1410,7 @@ eval_func2:
 			else if (IS_UNSET(DS_TOP)) DS_DROP; // remove unset values
 		}
 		else if (deep) {
-			if (IS_BLOCK(value)) Compose_Block(value, TRUE, only, 0);
+			if (IS_BLOCK(value) || IS_MAP(value)) Compose_Block(value, TRUE, only, 0);
 			else {
 				DS_PUSH(value);
 				if (ANY_BLOCK(value)) // Include PATHS
@@ -1413,7 +1421,11 @@ eval_func2:
 	}
 
 	Copy_Stack_Values(start, into);
+	if (IS_MAP(block)) {
+		VAL_SET(DS_TOP, REB_MAP);
+	}
 }
+
 
 
 /***********************************************************************

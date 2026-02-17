@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Developers
+**  Copyright 2012-2026 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -843,7 +843,7 @@
 				}
 			}
 		}
-		else if ((ANY_BLOCK(value) || IS_MAP(value)) && (mode & BIND_DEEP)) {
+		else if ((ANY_BLOCK_OR_MAP(value)) && (mode & BIND_DEEP)) {
 			// Recursion check: (variation of: Find_Same_Block(MOLD_LOOP, value))
 			for (val = BLK_HEAD(MOLD_LOOP); NOT_END(val); val++) {
 				if (VAL_SERIES(val) == VAL_SERIES(value)) return;
@@ -963,7 +963,7 @@
 				VAL_WORD_FRAME(value) = frame; // func body
 			}
 		}
-		else if (ANY_BLOCK(value))
+		else if (ANY_BLOCK_OR_MAP(value))
 			Bind_Relative_Words(frame, VAL_SERIES(value));
 	}
 }
@@ -1048,7 +1048,7 @@
 	REBINT *binds = WORDS_HEAD(Bind_Table);
 
 	for (; NOT_END(data); data++) {
-		if (ANY_BLOCK(data))
+		if (ANY_BLOCK_OR_MAP(data))
 			Rebind_Block(src_frame, dst_frame, VAL_BLK_DATA(data), modes);
 		else if (ANY_WORD(data) && VAL_WORD_FRAME(data) == src_frame) {
 			VAL_WORD_FRAME(data) = dst_frame;

@@ -638,6 +638,10 @@ static const cmp_func sfunc_table[2][2][2][2] = {
 		DS_PUSH_INTEGER(flags);
 		sfunc = Compare_Comp;
 	}
+	else if (IS_BLOCK(compv)) {
+		// Not implemented for string series.
+		Trap0(RE_FEATURE_NA);
+	}
 	else {
 		// Store the skip (used to implement /all)
 		DS_PUSH_INTEGER(all ? skip : 1);

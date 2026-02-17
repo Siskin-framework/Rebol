@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -137,7 +137,7 @@
 /*
 **		Makes a MAP block (that holds both keys and values).
 **		Size is the number of key-value pairs.
-**		Hash series is also created.
+**		Hash series is not created yet.
 **
 ***********************************************************************/
 {
@@ -147,7 +147,7 @@
 	CLEAR_SERIES(blk);
 
 	// Use hashing only when there is more then MIN_DICT keys.
-	if (size > MIN_DICT) ser = Make_Hash_Array(size);
+	//if (size > MIN_DICT) ser = Make_Hash_Array(size);
 
 	blk->series = ser;
 
@@ -450,16 +450,26 @@ new_entry:
 **
 */	REBSER *Copy_Map(REBVAL *val, REBU64 types)
 /*
-**		Copy given map.
+**		Copy the given map's key/value pairs. Don't hash until necessary.
 **
 ***********************************************************************/
 {
 	REBSER *series;
+	ASSERT1(IS_MAP(val) || IS_BLOCK(val) || IS_PAREN(val), RP_INTERNAL);
 	series = Make_Map(VAL_BLK_LEN(val) / 2);
-	//COPY_BLK_PART(series, VAL_BLK_DATA(data), n);
-	Append_Map(series, val, UNKNOWN);
+	if (IS_MAP(val)) {
+		// There should be valid key/value pairs, so just copying is sufficient.
+		COPY_BLK_PART(series, VAL_BLK(val), VAL_TAIL(val));
+		// If existing series has a hashtable, reuse it.
+		if (VAL_SERIES(val)->series)
+			series->series = Copy_Series(VAL_SERIES(val)->series);
+	}
+	else {
+		// There may be duplicates, so we must append each key/value pair.
+		Append_Map(series, val, UNKNOWN);
+	}
 	if (types != 0) Copy_Deep_Values(series, 0, SERIES_TAIL(series), types);
-	Rehash_Hash(series);
+	//Rehash_Hash(series); // It will be rehashed only when needed.
 	return series;
 }
 
@@ -471,8 +481,8 @@ new_entry:
 {
 	REBCNT n;
 //	REBSER *series;
-
-	if (!IS_BLOCK(data) && !IS_MAP(data)) return FALSE;
+	if (!(IS_BLOCK(data) || IS_MAP(data) || IS_PAREN(data)))
+		return FALSE;
 
 	n = VAL_BLK_LEN(data);
 	if (n & 1) return FALSE;

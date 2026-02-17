@@ -466,7 +466,59 @@ Rebol [
 	--assert x = [a b "a"]
 	--assert tail? compose/into [a (b)] tail x
 	--assert x = [a b "a" a 2]
+
+	--test-- "compose map"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2685
+	m1: #[a: (zero) b: [(red)] c: (now) d: #[k: (white)]] 
+	--assert all [
+		map? m2: compose m1
+		paren? m1/a
+		m2/a == 0
+		paren? m2/b/1
+		date? m2/c
+		paren? m2/d/k
+	]
+	--assert all [
+		map? m2: compose/deep m1
+		paren? m1/a
+		m2/a == 0
+		m2/b/1 == red
+		date? m2/c
+		m2/d/k == white
+	]
+	remove/key m1 'c
+	--assert all [
+		map? m2: compose/deep m1
+		paren? m1/a
+		m2/a == 0
+		m2/b/1 == red
+		none? m2/c
+		m2/d/k == white
+	]
+
+	a: 1 f1: func[b][compose #[num: (a + b)]]
+	--assert #[num: 3] = try [f1 2]
 	
+	f2: closure/with [b][compose #[num: (a + b)]][a: 1]
+	--assert #[num: 3] = try [f2 2]
+
+	--assert #[num: 4] = use[v][v: 4 compose #[num: (v)]]
+	--assert #[num: 5] = apply func [val] [compose/deep #[num: (val)]] [5]
+	
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2686
+	--assert #[num: [one two three]] = compose #[num: ([one two three])]
+
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2687
+	*obp: make object! [one: 1 two: 2 tmp: #[three: (one + two)]]
+	*ob1: make *obp [one: 11]
+	*ob2: make *obp [two: 22]
+	*ob3: make *ob1 [two: 22]
+
+	--assert [3 13 23 33] = map-each obj reduce [*obp *ob1 *ob2 *ob3] [
+		select compose/deep obj/tmp 'three
+	]
+	
+
 ===end-group===
 
 ===start-group=== "unset value passing"

@@ -18,12 +18,16 @@ Rebol [
 		--assert 1 = m/a
 		--assert empty? make map! []
 
+	--test-- "make map! paren!"
+		--assert map? try [m: make map! to paren! [a: 1 b: 2]]
+		--assert 1 = m/a
+
 	--test-- "#[map! []]"
 		m: #(map! [a: 1 b: 2])
 		--assert 2 = m/b
 		--assert empty? #(map! [])
 
-	--test-- "#()"
+	--test-- "#[]"
 		m: #[a: 1 b: 2]
 		--assert 2 = m/b
 		--assert empty? #[]

@@ -461,6 +461,28 @@ done:
 
 /***********************************************************************
 **
+*/	static int Compare_Val_Multi(const void* v1, const void* v2)
+/*
+**	Used to compare multiple values in the record (sort/compare with block).
+**
+***********************************************************************/
+{
+	REBVAL* val = DS_GET(DSP - 1);
+	REBU64 flags = VAL_UNT64(DS_TOP);
+	REBLEN offset = 0;
+	REBINT result = 0;
+	ASSERT1(IS_BLOCK(val), RP_BAD_EVALTYPE);
+	REBVAL* ofs = VAL_BLK_DATA(val);
+	while (result == 0 && IS_INTEGER(ofs)) {
+		offset = AS_REBLEN(VAL_INT64(ofs++) - 1);
+		result = Cmp_Value((REBVAL*)v1 + offset, (REBVAL*)v2 + offset, GET_FLAG(flags, SORT_FLAG_CASE));
+	}
+	if (GET_FLAG(flags, SORT_FLAG_REVERSE)) result = -result;
+	return result;
+}
+
+/***********************************************************************
+**
 */	static int Compare_All_Val(const void *v1, const void *v2)
 /*
 ***********************************************************************/
@@ -579,10 +601,28 @@ done:
 	// Use fast quicksort library function:
 	if (skip > 1) len /= skip, size *= skip;
 
-	if (ANY_FUNC(compv))
-		reb_qsort((void *)VAL_BLK_DATA(block), len, size, Compare_Call);
-	else
-		reb_qsort((void *)VAL_BLK_DATA(block), len, size, (all && skip > 1) ? Compare_All_Val : Compare_Val);
+	int (*cmp)(const void*, const void*);
+
+	if (ANY_FUNC(compv)) {
+		cmp = Compare_Call;
+	}
+	else if (all && skip > 1) {
+		cmp = Compare_All_Val;
+	}
+	else if (IS_BLOCK(compv)) {
+		// Validate first...
+		REBVAL* tmp = VAL_BLK_DATA(compv);
+		while (!IS_END(tmp)) {
+			if (!IS_INTEGER(tmp) || VAL_INT64(tmp) < 1)
+				Trap1(RE_INVALID_ARG, tmp);
+			tmp++;
+		}
+		cmp = Compare_Val_Multi;
+	}
+	else {
+		cmp = Compare_Val;
+	}
+	reb_qsort((void*)VAL_BLK_DATA(block), len, size, cmp);
 
 	// Stored comparator and flags are not needed anymore
 	DS_DROP;

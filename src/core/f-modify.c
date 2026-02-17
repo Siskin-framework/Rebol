@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -143,7 +143,7 @@
 		}
 		else if (IS_CHAR(src_val)) {
 			src_ser = BUF_SCAN;
-			src_ser->tail = dst_len = Encode_UTF8_Char(BIN_HEAD(src_ser), VAL_CHAR(src_val));
+			src_ser->tail = Encode_UTF8_Char(BIN_HEAD(src_ser), VAL_CHAR(src_val));
 		}
 		else if (ANY_STR(src_val)) {
 			if (action != A_CHANGE && GET_FLAG(flags, AN_PART)) {
@@ -167,7 +167,6 @@
 		SERIES_TAIL(src_ser) = Encode_UTF8_Char(STR_HEAD(src_ser), VAL_CHAR(src_val));
 		TERM_SERIES(src_ser);
 		if (SERIES_TAIL(src_ser) > 1) UTF8_SERIES(src_ser);
-		dst_len = SERIES_TAIL(src_ser);
 	}
 	else if (IS_BLOCK(src_val)) {
 		src_ser = Form_Tight_Block(src_val);
@@ -187,7 +186,8 @@
 	}
 
 	// For INSERT or APPEND with /PART use the dst_len not src_len:
-	if (action != A_CHANGE && GET_FLAG(flags, AN_PART)) src_len = dst_len;
+	if (action != A_CHANGE && GET_FLAG(flags, AN_PART) && src_len > dst_len)
+		src_len = dst_len;
 
 	// If Source == Destination we need to prevent possible conflicts.
 	// Clone the argument just to be safe.
