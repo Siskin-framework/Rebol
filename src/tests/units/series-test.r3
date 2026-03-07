@@ -610,6 +610,8 @@ Rebol [
 		--assert "a1ab2ac3" = trim/all { a ^-1^/ ab2^- ^/ ac3 ^/ ^/^/}
 		--assert "    ^-1^/    b2^-  ^/  c3  ^/  ^/^/" = trim/with copy mstr #"a"
 		--assert "    ^-1^/    b2^-  ^/  c3  ^/  ^/^/" = trim/with copy mstr 97
+		--assert "one^/^-two" == trim/tail trim/auto {^/^-one^/^-^-two  ^/}
+		--assert "one^/^-two" == trim/auto/tail {^/^-one^/^-^-two  ^/}
 	--test-- "trim binary!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1482
 		bin: #{0011001100}
