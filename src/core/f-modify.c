@@ -102,7 +102,7 @@
 
 /***********************************************************************
 **
-*/	REBCNT Modify_String(REBCNT action, REBSER *dst_ser, REBCNT dst_idx, REBVAL *src_val, REBCNT flags, REBINT dst_len, REBINT dups)
+*/	REBCNT Modify_String(REBCNT action, REBSER *dst_ser, REBCNT dst_idx, REBVAL *src_val, REBCNT flags, REBCNT dst_len, REBINT dups)
 /*
 **		action: INSERT, APPEND, CHANGE
 **
@@ -121,7 +121,7 @@
 	REBCNT src_idx = 0;
 	REBCNT src_len;
 	REBCNT tail  = SERIES_TAIL(dst_ser);
-	REBINT size;		// total to insert
+	REBCNT size;		// total to insert
 
 	RESET_TAIL(BUF_SCAN);
 
