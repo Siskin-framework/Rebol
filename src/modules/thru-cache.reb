@@ -67,7 +67,7 @@ read-thru: func [
 				sys/log/more 'THRU-CACHE ["Stored:" mold url]
 			]
 		][
-			sys/log/debug 'THRU-CACHE ["Response" code " Not stored:" mold url]
+			sys/log/error 'THRU-CACHE ["Response" code " Not stored:" mold url]
 		]
 	]
 	if string [try [data: to string! data]]
