@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -76,7 +77,8 @@ typedef struct rebol_dat {
 } REBOL_DAT;  // not same as REBDAT
 
 typedef int	cmp_t(const void *, const void *);
-void reb_qsort(void *a, size_t n, size_t es, cmp_t *cmp);
+void unstable_sort(void* a, size_t n, size_t es, cmp_t* cmp);
+void   stable_sort(void* a, size_t n, size_t es, cmp_t* cmp);
 #define SORT_FLAG_REVERSE 1
 #define SORT_FLAG_WIDE    2
 #define SORT_FLAG_CASE    3

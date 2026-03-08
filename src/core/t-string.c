@@ -563,7 +563,7 @@ static const cmp_func sfunc_table[2][2][2][2] = {
 
 /***********************************************************************
 **
-*/	static void Sort_String(REBVAL *string, REBFLG ccase, REBVAL *skipv, REBVAL *compv, REBVAL *part, REBFLG all, REBFLG rev)
+*/	static void Sort_String(REBVAL *string, REBFLG ccase, REBVAL *skipv, REBVAL *compv, REBVAL *part, REBFLG all, REBFLG rev, REBFLG uns)
 /*
 ***********************************************************************/
 {
@@ -649,8 +649,12 @@ static const cmp_func sfunc_table[2][2][2][2] = {
 		if (all && !IS_NONE(compv)) Trap0(RE_BAD_REFINES);
 		sfunc = sfunc_table[all][ccase][wide != 1][rev];
 	}
-
-	reb_qsort((void *)str_bin, len, size * wide, sfunc);
+	if (uns) {
+		unstable_sort((void*)str_bin, len, size * wide, sfunc);
+	}
+	else {
+		stable_sort((void*)str_bin, len, size * wide, sfunc);
+	}
 	if (wide == 4) {
 		UTF32_To_UTF8(VAL_SERIES(string), str_bin, len*4*skip, OS_LITTLE_ENDIAN);
 	}
@@ -1109,7 +1113,8 @@ zero_str:
 			D_ARG(6),	// comparator
 			D_ARG(8),	// part-length
 			D_REF(9),	// all fields
-			D_REF(10)	// reverse
+			D_REF(10),	// reverse
+			(D_REF(11) || IS_BINARY(value)) // unstable
 		);
 		break;
 

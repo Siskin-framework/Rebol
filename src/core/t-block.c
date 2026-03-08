@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,6 @@
 ***********************************************************************/
 
 #include "sys-core.h"
-
 
 /***********************************************************************
 **
@@ -554,7 +553,7 @@ done:
 
 /***********************************************************************
 **
-*/	static void Sort_Block(REBVAL *block, REBFLG ccase, REBVAL *skipv, REBVAL *compv, REBVAL *part, REBFLG all, REBFLG rev)
+*/	static void Sort_Block(REBVAL *block, REBFLG ccase, REBVAL *skipv, REBVAL *compv, REBVAL *part, REBFLG all, REBFLG rev, REBFLG unst)
 /*
 **		series [series!]
 **		/case {Case sensitive sort}
@@ -566,6 +565,7 @@ done:
 **		length [number! series!] {Length of series to sort}
 **		/all {Compare all fields}
 **		/reverse {Reverse sort order}
+**		/unstable {Unstable Adaptive Symmetry Partition sort}
 **
 ***********************************************************************/
 {
@@ -622,7 +622,12 @@ done:
 	else {
 		cmp = Compare_Val;
 	}
-	reb_qsort((void*)VAL_BLK_DATA(block), len, size, cmp);
+	if (unst) {
+		unstable_sort((void*)VAL_BLK_DATA(block), len, size, cmp);
+	}
+	else {
+		stable_sort((void*)VAL_BLK_DATA(block), len, size, cmp);
+	}
 
 	// Stored comparator and flags are not needed anymore
 	DS_DROP;
@@ -995,7 +1000,8 @@ zero_blk:
 			D_ARG(6),	// comparator
 			D_ARG(8),	// part-length
 			D_REF(9),	// all fields
-			D_REF(10)	// reverse
+			D_REF(10),	// reverse
+			D_REF(11)	// unstable
 		);
 		break;
 

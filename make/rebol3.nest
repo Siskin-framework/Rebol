@@ -18,7 +18,7 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.21.6
+version: 3.21.7
 
 ;flags: "-ggdb3"
 ;define: DEBUG
@@ -183,6 +183,7 @@ core-files: [
 	%core/f-math.c
 	%core/f-modify.c
 ;	%core/f-qsort.c         ;pathologically slow for large partially sorted inputs
+	%core/f-stablemerge-sort.c
 	%core/f-adp-symmetry-psort.c
 	%core/f-random.c
 	%core/f-round.c

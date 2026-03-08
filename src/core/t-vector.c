@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -266,7 +266,7 @@ static REBDEC Query_Vector_Median(REBSER *vect) {
 	sorted = Copy_Series(vect);
 	sorted->size = vect->size; // attributes
 	ASSERT1(type < VT_MAX, RP_ASSERTS);
-	reb_qsort(SERIES_DATA(sorted), len, VECT_BYTE_SIZE(type), compares[type]);
+	unstable_sort(SERIES_DATA(sorted), len, VECT_BYTE_SIZE(type), compares[type]);
 
 	median = get_vect_decimal(type, SERIES_DATA(sorted), len/2);
 	if (len%2 == 0) {
@@ -904,7 +904,7 @@ return_number:
 	REBCNT skp = VECT_BYTE_SIZE(type);
 	REBYTE *data = VAL_SERIES(vect)->data + (idx * skp);
 	ASSERT1(type < VT_MAX, RP_ASSERTS);
-	reb_qsort(data, len, skp, reversed ? compares_rev[type] : compares[type]);
+	unstable_sort(data, len, skp, reversed ? compares_rev[type] : compares[type]);
 }
 
 /***********************************************************************

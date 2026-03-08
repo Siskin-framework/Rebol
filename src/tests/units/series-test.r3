@@ -1742,8 +1742,8 @@ Rebol [
 --test-- "sort string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2170
 	s: "ABCabcdefDEF"
-	--assert "AaBbCcdDEefF" == sort s
-	--assert "AaBbCcdDEefF" == sort s ; just to test if it stays same
+	--assert "AaBbCcdDeEfF" == sort s
+	--assert "AaBbCcdDeEfF" == sort s ; just to test if it stays same
 	--assert "ABCDEFabcdef" == sort/case s
 	--assert "AaBbCcDdEeFf" == sort s
 
@@ -1911,8 +1911,30 @@ try/with [
 
 --test-- "SORT inifinite loop case"
 	;@@ https://github.com/jingchaochen/Symmetry-Partition-Sort/issues/1
-	words: ["type" "offset" "size" "text" "image" "color" "menu" "data" "enabled?" "visible?" "selected" "flags" "options" "parent" "pane" "state" "rate" "edge" "para" "font" "actors" "extra" "draw" "on-change*" "on-deep-change*"]
-	--assert ["type" "menu" "size" "text" "draw" "pane" "edge" "data" "rate" "font" "para" "flags" "color" "image" "state" "extra" "offset" "actors" "parent" "options" "selected" "visible?" "enabled?" "on-change*" "on-deep-change*"] == sort/compare words func [a b][(length? a) < (length? b)]
+	words:   ["type" "offset" "size" "text" "image" "color" "menu" "data" "enabled?" "visible?" "selected" "flags" "options" "parent" "pane" "state" "rate" "edge" "para" "font" "actors" "extra" "draw" "on-change*" "on-deep-change*"]
+	--assert ["type" "size" "text" "menu" "data" "pane" "rate" "edge" "para" "font" "draw" "image" "color" "flags" "state" "extra" "offset" "parent" "actors" "options" "enabled?" "visible?" "selected" "on-change*" "on-deep-change*"] == sort/compare copy words func [a b][(length? a) < (length? b)]
+	--assert ["type" "menu" "size" "text" "draw" "pane" "edge" "data" "rate" "font" "para" "flags" "color" "image" "state" "extra" "offset" "actors" "parent" "options" "selected" "visible?" "enabled?" "on-change*" "on-deep-change*"] == sort/unstable/compare copy words func [a b][(length? a) < (length? b)]
+
+--test-- "Stable SORT"
+	--assert all [
+		[Bob 25 Alice 30 Carol 30] == sort/skip/compare [Alice 30 Bob 25 Carol 30] 2 2
+		[Bob 25 Alice 30 Carol 30] == sort/skip/compare [Alice 30 Carol 30 Bob 25] 2 2
+		[Bob 25 Carol 30 Alice 30] == sort/skip/compare [Carol 30 Alice 30 Bob 25] 2 2
+		[Bob 25 Carol 30 Alice 30] == sort/skip/compare [Carol 30 Bob 25 Alice 30] 2 2
+	]
+	--assert all [
+		[Bob 25 Alice 30 Carol 30] == sort/unstable/skip/compare [Alice 30 Bob 25 Carol 30] 2 2
+		[Bob 25 Carol 30 Alice 30] == sort/unstable/skip/compare [Alice 30 Carol 30 Bob 25] 2 2 ;= not stable
+		[Bob 25 Alice 30 Carol 30] == sort/unstable/skip/compare [Carol 30 Alice 30 Bob 25] 2 2 ;= not stable
+		[Bob 25 Carol 30 Alice 30] == sort/unstable/skip/compare [Carol 30 Bob 25 Alice 30] 2 2
+	]
+
+
+--test-- "SORT vectors"
+	--assert #(uint8! [1 2 3 3 3 4 4 5 7]) == sort #(uint8! [1 4 3 2 3 5 7 4 3])
+	--assert #(uint8! [7 5 4 4 3 3 3 2 1]) == sort/reverse #(uint8! [1 4 3 2 3 5 7 4 3])
+	--assert #(int8! [-5 -4 -2 1 3 3 3 4 7]) == sort #(int8! [1 4 3 -2 3 -5 7 -4 3])
+	--assert #(int8! [7 4 3 3 3 1 -2 -4 -5]) == sort/reverse #(int8! [1 4 3 -2 3 -5 7 -4 3])
 
 ===end-group===
 

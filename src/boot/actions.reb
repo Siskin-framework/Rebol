@@ -383,6 +383,7 @@ sort: action [
 	range [number! series!]
 	/all {Compare all fields}
 	/reverse {Reverse sort order}
+	/unstable {Unstable Adaptive Symmetry Partition sort}
 ]
 
 ;-- Port actions:
