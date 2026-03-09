@@ -304,7 +304,7 @@ X*/	REBSER *Prep_Bin_Str(REBVAL *val, REBCNT *index, REBCNT *length)
 */	void Shuffle_String(REBVAL *value, REBFLG secure)
 /*
 **		Randomize a string. Return a new string series.
-**		Doesn't handles UNICODE strings!
+**		Handles both BYTE and UNICODE strings.
 **
 ***********************************************************************/
 {
@@ -315,16 +315,17 @@ X*/	REBSER *Prep_Bin_Str(REBVAL *val, REBCNT *index, REBCNT *length)
 	REBUNI swap;
 
 	if (IS_UTF8_STRING(value)) {
-		Trap0(RE_FEATURE_NA);
-		// Following code does not work with internal UTF8 encoding!
-		// https://github.com/Oldes/Rebol-issues/issues/2691
-		//for (n = VAL_LEN(value); n > 1;) {
-		//	k = idx + (REBCNT)Random_Int(secure) % n;
-		//	n--;
-		//	swap = GET_ANY_CHAR(series, k);
-		//	SET_ANY_CHAR(series, k, GET_ANY_CHAR(series, n + idx));
-		//	SET_ANY_CHAR(series, n + idx, swap);
-		//}
+		UTF8_To_UTF32(BUF_SCAN, VAL_DATA(value), VAL_LEN(value), OS_LITTLE_ENDIAN);
+		REBCNT* buf = (REBCNT*)BIN_HEAD(BUF_SCAN);
+		n = SERIES_TAIL(BUF_SCAN) / 4;
+		for (; n > 1;) {
+			k = idx + (REBCNT)Random_Int(secure) % n;
+			n--;
+			swap = buf[k];
+			buf[k] = buf[n + idx];
+			buf[n + idx] = swap;
+		}
+		UTF32_To_UTF8(VAL_SERIES(value), BIN_HEAD(BUF_SCAN), SERIES_TAIL(BUF_SCAN), OS_LITTLE_ENDIAN);
 	}
 	else {
 		for (n = VAL_LEN(value); n > 1;) {

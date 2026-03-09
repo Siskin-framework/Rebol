@@ -1972,9 +1972,10 @@ try/with [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2691
 		random/seed 1
 		--assert "sistte" == random "stesti"
-		--assert all [error? e: try [random "štěstí"]  e/id = 'feature-na] ;= not implemented!
 		random/seed 1
-		--assert #{DDBBAACC} = random #{aabbccdd}
+		--assert "síšttě" == random "štěstí"
+		random/seed 1
+		--assert #{DDBBAACC} == random #{aabbccdd}
 
 ===end-group===
 
