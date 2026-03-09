@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -304,7 +304,7 @@ X*/	REBSER *Prep_Bin_Str(REBVAL *val, REBCNT *index, REBCNT *length)
 */	void Shuffle_String(REBVAL *value, REBFLG secure)
 /*
 **		Randomize a string. Return a new string series.
-**		Handles both BYTE and UNICODE strings.
+**		Doesn't handles UNICODE strings!
 **
 ***********************************************************************/
 {
@@ -314,12 +314,26 @@ X*/	REBSER *Prep_Bin_Str(REBVAL *val, REBCNT *index, REBCNT *length)
 	REBCNT idx     = VAL_INDEX(value);
 	REBUNI swap;
 
-	for (n = VAL_LEN(value); n > 1;) {
-		k = idx + (REBCNT)Random_Int(secure) % n;
-		n--;
-		swap = GET_ANY_CHAR(series, k);
-		SET_ANY_CHAR(series, k, GET_ANY_CHAR(series, n + idx));
-		SET_ANY_CHAR(series, n + idx, swap);
+	if (IS_UTF8_STRING(value)) {
+		Trap0(RE_FEATURE_NA);
+		// Following code does not work with internal UTF8 encoding!
+		// https://github.com/Oldes/Rebol-issues/issues/2691
+		//for (n = VAL_LEN(value); n > 1;) {
+		//	k = idx + (REBCNT)Random_Int(secure) % n;
+		//	n--;
+		//	swap = GET_ANY_CHAR(series, k);
+		//	SET_ANY_CHAR(series, k, GET_ANY_CHAR(series, n + idx));
+		//	SET_ANY_CHAR(series, n + idx, swap);
+		//}
+	}
+	else {
+		for (n = VAL_LEN(value); n > 1;) {
+			k = idx + (REBCNT)Random_Int(secure) % n;
+			n--;
+			swap = BIN_HEAD(series)[k];
+			BIN_HEAD(series)[k] = BIN_HEAD(series)[n + idx];
+			BIN_HEAD(series)[n + idx] = swap;
+		}
 	}
 }
 

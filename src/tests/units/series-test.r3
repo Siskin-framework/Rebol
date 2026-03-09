@@ -1916,6 +1916,7 @@ try/with [
 	--assert ["type" "menu" "size" "text" "draw" "pane" "edge" "data" "rate" "font" "para" "flags" "color" "image" "state" "extra" "offset" "actors" "parent" "options" "selected" "visible?" "enabled?" "on-change*" "on-deep-change*"] == sort/unstable/compare copy words func [a b][(length? a) < (length? b)]
 
 --test-- "Stable SORT"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2690
 	--assert all [
 		[Bob 25 Alice 30 Carol 30] == sort/skip/compare [Alice 30 Bob 25 Carol 30] 2 2
 		[Bob 25 Alice 30 Carol 30] == sort/skip/compare [Alice 30 Carol 30 Bob 25] 2 2
@@ -1966,6 +1967,14 @@ try/with [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/912
 		; not supported..
 		--assert all [error? e: try [random 'a/b/c] e/id = 'cannot-use]
+
+	--test-- "random unicode"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2691
+		random/seed 1
+		--assert "sistte" == random "stesti"
+		--assert all [error? e: try [random "štěstí"]  e/id = 'feature-na] ;= not implemented!
+		random/seed 1
+		--assert #{DDBBAACC} = random #{aabbccdd}
 
 ===end-group===
 
