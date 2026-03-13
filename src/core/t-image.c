@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@
 **  Module:  t-image.c
 **  Summary: image datatype
 **  Section: datatypes
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Oldes
 **  Notes:
 **
 ***********************************************************************/
@@ -188,6 +188,25 @@
 	return 0;
 }
 
+FORCE_INLINE
+/***********************************************************************
+**
+*/	REBYTE Luminosity(REBYTE r, REBYTE g, REBYTE b)
+/*
+***********************************************************************/
+{
+	return (REBYTE)((0.299 * r) + (0.587 * g) + (0.114 * b));
+}
+
+FORCE_INLINE
+/***********************************************************************
+**
+*/	REBCNT Grayscale(REBCNT r, REBCNT g, REBCNT b)
+/*
+***********************************************************************/
+{
+	return (r + g + b) / 3;
+}
 
 /***********************************************************************
 **
@@ -212,6 +231,19 @@
 	case SYM_ABGR: c0 = C_A; c1 = C_B; c2 = C_G; c3 = C_R; alpha =  1; break;
 	case SYM_OBGR: c0 = C_A; c1 = C_B; c2 = C_G; c3 = C_R; alpha = -1; break;
 	case SYM_BGR:  c0 = C_B; c1 = C_G; c2 = C_R; c3 = C_A; break;
+	
+	case SYM_LUMINOSITY: {
+		for (; len > 0; len--, rgba += 4, ++bin) {
+			bin[0] = Luminosity(rgba[C_R], rgba[C_G], rgba[C_B]);
+		}
+		break;
+	}
+	case SYM_GRAY: {
+		for (; len > 0; len--, rgba += 4, ++ bin) {
+			bin[0] = Grayscale(rgba[C_R], rgba[C_G], rgba[C_B]);
+		}
+		break;
+	}
 	default: return;
 	}
 
@@ -270,6 +302,15 @@
 	case SYM_BGRO: b = 0; g = 1; r = 2; a = 3; alpha = -1; break;
 	case SYM_ABGR: a = 0; b = 1; g = 2; r = 3; alpha =  1; break;
 	case SYM_OBGR: a = 0; b = 1; g = 2; r = 3; alpha = -1; break;
+
+	case SYM_GRAY:
+	case SYM_LUMINOSITY: {
+		REBYTE* bin = (REBYTE*)trg;
+		for (; len > 0; len--, src++, bin+=4) {
+			bin[C_R] = bin[C_G] = bin[C_B] = *src;
+		}
+		break;
+	}
 	default: return;
 	}
 
@@ -1366,9 +1407,16 @@ is_true:
 
 			case SYM_ALPHA:
 			case SYM_OPACITY:
+			case SYM_LUMINOSITY:
+			case SYM_GRAY:
 				nser = Make_Binary(len);
 				SERIES_TAIL(nser) = len;
-				Alpha_To_Bin(QUAD_HEAD(nser), src, len, sym);
+				if (sym == SYM_GRAY || sym == SYM_LUMINOSITY) {
+					Color_To_Bin(QUAD_HEAD(nser), src, len, sym);
+				}
+				else {
+					Alpha_To_Bin(QUAD_HEAD(nser), src, len, sym);
+				}
 				Set_Binary(val, nser);
 				break;
 
@@ -1437,6 +1485,19 @@ is_true:
 				} else if (IS_BINARY(val)) {
 					Bin_To_Alpha(src, len, VAL_BIN_DATA(val), VAL_LEN(val), sym);
 				} else return PE_BAD_SET;
+				break;
+
+			case SYM_LUMINOSITY:
+			case SYM_GRAY:
+				if (IS_INTEGER(val)) {
+					n = VAL_INT32(val);
+					if (n < 0 || n > 255) return PE_BAD_RANGE;
+					Fill_Line((REBCNT*)src, TO_PIXEL_COLOR(n, n, n, n), len, FALSE);
+				}
+				else if (IS_BINARY(val)) {
+					Bin_To_Color(src, VAL_BIN_DATA(val), VAL_LEN(val), sym);
+				}
+				else return PE_BAD_SET;
 				break;
 
 			default:

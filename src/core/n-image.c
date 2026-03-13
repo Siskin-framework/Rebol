@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -379,6 +379,72 @@ double weighted_rgb_color_distance(long r1, long g1, long b1, long r2, long g2, 
 		}
 	}
 	return R_ARG1;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(luminosity)
+/*
+//	luminosity: native [
+//		"Convert a color or an image to grayscale using Luminosity formula"
+//		target [tuple! image!] "Target RGB color or image (modifed)"
+//		return: [
+//			integer!  "When input is a tuple"
+//			image!    "When input is an image"
+//		]
+//	]
+***********************************************************************/
+{
+	REBVAL* value = D_ARG(1);
+	REBYTE r, g, b, gray;
+
+	if (IS_TUPLE(value)) {
+		REBCLR* clr = (REBCLR*)VAL_TUPLE(value);
+		SET_INTEGER(D_RET, Luminosity(clr->r, clr->g, clr->b));
+		return R_RET;
+	}
+	else {
+		REBINT   len = VAL_IMAGE_LEN(value);
+		REBYTE* rgba = VAL_IMAGE_DATA(value);
+		for (; len > 0; len--, rgba += 4) {
+			gray = Luminosity(rgba[C_R], rgba[C_G], rgba[C_B]);
+			rgba[C_R] = rgba[C_G] = rgba[C_B] = gray;
+		}
+		return R_ARG1;
+	}
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(grayscale)
+/*
+//	grayscale: native [
+//		"Convert a color or an image to grayscale using Average method"
+//		target [tuple! image!] "Target RGB color or image (modifed)"
+//		return: [
+//			integer!  "When input is a tuple"
+//			image!    "When input is an image"
+//		]
+//	]
+***********************************************************************/
+{
+	REBVAL* value = D_ARG(1);
+	REBYTE r, g, b, gray;
+
+	if (IS_TUPLE(value)) {
+		REBCLR* clr = (REBCLR*)VAL_TUPLE(value);
+		SET_INTEGER(D_RET, Grayscale(clr->r, clr->g, clr->b));
+		return R_RET;
+	}
+	else {
+		REBINT   len = VAL_IMAGE_LEN(value);
+		REBYTE* rgba = VAL_IMAGE_DATA(value);
+		for (; len > 0; len--, rgba += 4) {
+			gray = (REBYTE)Grayscale(rgba[C_R], rgba[C_G], rgba[C_B]);
+			rgba[C_R] = rgba[C_G] = rgba[C_B] = gray;
+		}
+		return R_ARG1;
+	}
 }
 
 /***********************************************************************

@@ -403,7 +403,6 @@ FFFFFFDC1616212121212121
 ===end-group===
 
 ===start-group=== "Tint color"
-
 --test-- "Tint tuple"
 	c: 100.200.255
 	--assert 100.200.255 = tint c 128.128.128 0
@@ -418,6 +417,49 @@ FFFFFFDC1616212121212121
 	--assert 114.164.192.255 = first  tint i 128.128.128 50% ;@@ image is being modified!
 	--assert 121.146.160.255 = second tint i 128.128.128 50%
 
+===end-group===
+
+===start-group=== "Luminosity / Grayscale"
+;; Use to convert images (or single colors) to grayscale
+--test-- "Luminosity tuple"
+	--assert  76 == luminosity 255.0.0
+	--assert 149 == luminosity 0.255.0
+	--assert  29 == luminosity 0.0.255
+	--assert 158 == luminosity 255.128.64
+--test-- "Luminosity image"
+	--assert all [
+		img: make image! [2x1]
+		img/1: 255.128.64.255 
+		img/2: 64.128.255.128
+		#{FF8040FF4080FF80} == to binary! img
+		#{9E9E9EFF7B7B7B80} == to binary! luminosity img ;@@ image is modified!
+		#{9E9E9EFF7B7B7B80} == to binary! img
+		#{9E7B} == gray-bin: img/luminosity
+		255.0.0 == img/color: red     ;; fills image with red color, alpha is not modified
+		#{FF0000FFFF000080} == to binary! img
+		#{9E7B} == img/gray: gray-bin ;; fills image with gray data, returns input binary
+		#{9E9E9EFF7B7B7B80} == to binary! img
+	]
+
+--test-- "Grayscale tuple"
+	--assert  85 == grayscale 255.0.0
+	--assert  85 == grayscale 0.255.0
+	--assert  85 == grayscale 0.0.255
+	--assert 149 == grayscale 255.128.64
+--test-- "Grayscale image"
+	--assert all [
+		img: make image! [2x1]
+		img/1: 255.128.64.255 
+		img/2: 64.128.255.128
+		#{FF8040FF4080FF80} == to binary! img
+		#{959595FF95959580} == to binary! grayscale img ;@@ image is modified!
+		#{959595FF95959580} == to binary! img
+		#{9595} == gray-bin: img/gray
+		255.0.0 == img/color: red     ;; fills image with red color, alpha is not modified
+		#{FF0000FFFF000080} == to binary! img
+		#{9595} == img/gray: gray-bin ;; fills image with gray data, returns input binary
+		#{959595FF95959580} == to binary! img
+	]
 ===end-group===
 
 
