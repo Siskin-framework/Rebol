@@ -1747,6 +1747,13 @@ Rebol [
 	--assert "ABCDEFabcdef" == sort/case s
 	--assert "AaBbCcDdEeFf" == sort s
 
+--test-- "SORT/compare integer!"
+	--assert [1 2 3 4] == sort/skip/compare [3 4 1 2] 2 2
+	--assert all [error? e: try [sort/compare [3 4 1 2] 0 e/id = 'invalid-arg]]
+	--assert all [error? e: try [sort/compare [3 4 1 2] 2 e/id = 'invalid-arg]]
+	--assert all [error? e: try [sort/skip/compare [3 4 1 2] 2 0 e/id = 'invalid-arg]]
+	--assert all [error? e: try [sort/skip/compare [3 4 1 2] 2 3 e/id = 'invalid-arg]]
+
 --test-- "SORT/compare block!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/720
 	--assert [3 2 1] = sort/compare [1 2 3] func [a b] [a > b]
@@ -1769,6 +1776,7 @@ Rebol [
 	--assert all [error? e: try [sort/skip/compare [3 B 1 B] 2 [2 -1]] e/id = 'invalid-arg]
 	--assert all [error? e: try [sort/skip/compare [3 B 1 B] 2 [2 0]] e/id = 'invalid-arg]
 	--assert all [error? e: try [sort/skip/compare [3 B 1 B] 2 [2 x]] e/id = 'invalid-arg]
+	--assert all [error? e: try [sort/skip/compare [3 B 1 B] 2 [2 3]] e/id = 'invalid-arg]
 
 --test-- "SORT/compare string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1100
@@ -1789,6 +1797,8 @@ Rebol [
 	--assert error? try [sort/compare/skip "ba ab aa " 4 3] ;; invalid offset
 	--assert error? try [sort/compare/skip "ba ab aa " 0 3] ;; invalid offset
 	--assert error? try [sort/compare/skip/all "ba ab aa " 1 3] ;; all is not compatible
+	--assert all [error? e: try [sort/compare "abcd" 0 e/id = 'invalid-arg]]
+	--assert all [error? e: try [sort/compare "abcd" 3 e/id = 'invalid-arg]]
 
 --test-- "SORT/compare string! (nested)"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2621

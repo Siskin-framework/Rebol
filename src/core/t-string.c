@@ -632,7 +632,7 @@ static const cmp_func sfunc_table[2][2][2][2] = {
 		// Using the offset comparator
 		if (all) Trap0(RE_BAD_REFINES); // not compatible
 		REBI64 ofs = VAL_INT64(compv);
-		if (ofs < 1 || ofs > skip) Trap_Arg(compv);
+		if (ofs < 1 || ofs > skip || IS_NONE(skipv)) Trap_Arg(compv);
 		if (ccase) SET_FLAG(flags, SORT_FLAG_CASE);
 		DS_PUSH_INTEGER(ofs-1);
 		DS_PUSH_INTEGER(flags);

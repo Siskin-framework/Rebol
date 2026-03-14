@@ -584,6 +584,10 @@ done:
 		if (skip <= 0 || len % skip != 0 || skip > len)
 			Trap_Range(skipv);
 	}
+	if (IS_INTEGER(compv)) {
+		if (IS_NONE(skipv) || VAL_INT64(compv)<1 || VAL_INT64(compv)>VAL_INT64(skipv))
+			Trap1(RE_INVALID_ARG, compv);
+	}
 
 	REBU64 flags = 0;
 	if (ccase) SET_FLAG(flags, SORT_FLAG_CASE);
@@ -613,7 +617,7 @@ done:
 		// Validate first...
 		REBVAL* tmp = VAL_BLK_DATA(compv);
 		while (!IS_END(tmp)) {
-			if (!IS_INTEGER(tmp) || VAL_INT64(tmp) < 1)
+			if (!IS_INTEGER(tmp) || VAL_INT64(tmp) < 1 || VAL_INT64(tmp) > skip)
 				Trap1(RE_INVALID_ARG, tmp);
 			tmp++;
 		}

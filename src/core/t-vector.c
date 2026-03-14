@@ -1403,13 +1403,13 @@ static void reverse_vector(REBVAL *value, REBCNT len)
 
 	case A_SORT:
 		len = Partial(value, 0, D_ARG(8), 0);
-		Sort_Vector(value, len, D_REF(10));
 		if (
 		//	D_REF(2) ||	// case sensitive
 			D_REF(3) ||	// skip
 			D_REF(5) 	// comparator
 		//	D_REF(9) 	// all fields
 			) Trap0(RE_FEATURE_NA);
+		Sort_Vector(value, len, D_REF(10));
 		break;
 			
 	case A_RANDOM:
