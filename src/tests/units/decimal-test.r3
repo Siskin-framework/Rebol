@@ -154,6 +154,24 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "lerp number"
+	--test-- "lerp number with decimal"
+		--assert   10.0 == lerp 10 200  0.0
+		--assert   67.0 == lerp 10 200  0.3
+		--assert  200.0 == lerp 10 200  1.0
+		--assert  200.0 == lerp 10 200  2.0
+		--assert   10.0 == lerp 10 200 -2.0
+	--test-- "lerp number with percents"
+		--assert   10.0 == lerp 10 200  0%
+		--assert   67.0 == lerp 10 200  30%
+		--assert  200.0 == lerp 10 200  100%
+		--assert  200.0 == lerp 10 200  200%
+		--assert   10.0 == lerp 10 200 -200%
+	--test-- "lerp number with not compatible types"
+		--assert all [error? e: try [lerp 0 10x10 0] e/id = 'type-mismatch]
+===end-group===
+
+
 ===start-group=== "log"
 	--test-- "log-* -1"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2431

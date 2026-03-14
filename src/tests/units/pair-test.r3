@@ -315,4 +315,21 @@ Rebol [
 		p: 1.5x-3  --assert   4.5 = try [p/area]
 ===end-group===
 
+===start-group=== "lerp pair"
+	--test-- "lerp pair with decimal"
+		--assert   10x100 == lerp 10x100 200x0  0.0
+		--assert   67x70  == lerp 10x100 200x0  0.3
+		--assert  200x0   == lerp 10x100 200x0  1.0
+		--assert  200x0   == lerp 10x100 200x0  2.0
+		--assert   10x100 == lerp 10x100 200x0 -2.0
+	--test-- "lerp pair with percents"
+		--assert   10x100 == lerp 10x100 200x0  0%
+		--assert   67x70  == lerp 10x100 200x0  30%
+		--assert  200x0   == lerp 10x100 200x0  100%
+		--assert  200x0   == lerp 10x100 200x0  200%
+		--assert   10x100 == lerp 10x100 200x0 -200%
+	--test-- "lerp pair with not compatible types"
+		--assert all [error? e: try [lerp 10x10 0 0] e/id = 'type-mismatch]
+===end-group===
+
 ~~~end-file~~~

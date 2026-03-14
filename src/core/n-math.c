@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Developers
+**  Copyright 2012-2026 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@
 **  Module:  n-math.c
 **  Summary: native functions for math
 **  Section: natives
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Oldes
 **  Notes:   See also: the numeric datatypes
 **
 ***********************************************************************/
@@ -1005,4 +1005,50 @@ int is_prime(REBI64 n) {
 ***********************************************************************/
 {
 	return (is_prime(VAL_INT64(D_ARG(1)))) ? R_TRUE : R_FALSE;
+}
+
+FORCE_INLINE
+static REBDEC lerp_decimal(REBDEC s, REBDEC e, REBDEC t) {
+	return s + (e - s) * t;
+}
+#define lerp_byte(s, e, t) (REBYTE)lerp_decimal((REBDEC)s, (REBDEC)e, t)
+
+/***********************************************************************
+**
+*/	REBNATIVE(lerp)
+/*
+//	lerp: native [
+//		{Linearly interpolates between start and end by factor}
+//		start  [number! tuple! pair!]
+//		end    [number! tuple! pair!]
+//		factor [number!] "Interpolation factor, clamped to 0.0-1.0"
+//	]
+***********************************************************************/
+{
+	REBVAL* v1 = D_ARG(1);
+	REBVAL* v2 = D_ARG(2);
+	REBDEC   t = Clip_Dec(Dec64(D_ARG(3)), 0, 1);
+	if (ANY_NUMBER(v1)) {
+		if (!ANY_NUMBER(v2)) Trap2(RE_TYPE_MISMATCH, v1, v2);
+		SET_DECIMAL(D_RET, lerp_decimal(Dec64(v1), Dec64(v2),t));
+	}
+	else if (IS_TUPLE(v1)) {
+		if (!IS_TUPLE(v2)) Trap2(RE_TYPE_MISMATCH, v1, v2);
+		REBLEN len = MAX(VAL_TUPLE_LEN(v1), VAL_TUPLE_LEN(v2));
+		REBYTE *b1 = VAL_TUPLE(v1);
+		REBYTE *b2 = VAL_TUPLE(v2);
+		VAL_SET(D_RET, REB_TUPLE);
+		VAL_TUPLE_LEN(D_RET) = len;
+		REBYTE *b3 = VAL_TUPLE(D_RET);
+		for (int i=0; i < len; i++) {
+			b3[i] = lerp_byte(b1[i], b2[i], t);
+		}
+	}
+	else if (IS_PAIR(v1)) {
+		if (!IS_PAIR(v2)) Trap2(RE_TYPE_MISMATCH, v1, v2);
+		VAL_SET(D_RET, REB_PAIR);
+		VAL_PAIR_X(D_RET) = lerp_decimal(VAL_PAIR_X(v1), VAL_PAIR_X(v2), t);
+		VAL_PAIR_Y(D_RET) = lerp_decimal(VAL_PAIR_Y(v1), VAL_PAIR_Y(v2), t);
+	}
+	return R_RET;
 }
