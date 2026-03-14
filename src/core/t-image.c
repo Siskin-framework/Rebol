@@ -1382,6 +1382,12 @@ is_true:
 				VAL_PAIR_X(val) = (REBD32)VAL_IMAGE_WIDE(data);
 				VAL_PAIR_Y(val) = (REBD32)VAL_IMAGE_HIGH(data);
 				break;
+			case SYM_WIDTH:
+				SET_INTEGER(val, VAL_IMAGE_WIDE(data));
+				break;
+			case SYM_HEIGHT:
+				SET_INTEGER(val, VAL_IMAGE_HIGH(data));
+				break;
 
 			case SYM_RGB:
 			case SYM_BGR:

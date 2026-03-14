@@ -39,6 +39,9 @@ Rebol [
 		--assert all [image? img: to image! #{0000000011}        img/size = 1x1]
 		--assert all [image? img: to image! #{000000001111}      img/size = 1x1]
 		--assert all [image? img: to image! #{0000000011111111}  img/size = 2x1]
+	--test-- "image /width /height"
+		img: make image! 2x3
+		--assert all [img/width == 2 img/height == 3]
 
 ===end-group===
 
