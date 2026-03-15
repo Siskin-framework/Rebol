@@ -1383,6 +1383,16 @@ static void reverse_vector(REBVAL *value, REBCNT len)
 		// fall thru
 
 	case A_TO:
+		// CASE: make vector! #{01FF} ;== #(uint8! [1 255]) 
+		if (IS_BINARY(arg)) {
+			len = VAL_LEN(arg);
+			ser = Make_Vector(0, 1, 1, 8, len); //== uint8!
+			if (len > 0) {
+				COPY_MEM(SERIES_DATA(ser), VAL_BIN_DATA(arg), len);
+			}
+			SET_VECTOR(value, ser);
+			break;
+		}
 		// CASE: make vector! [...]
 		if (IS_BLOCK(arg) && Make_Vector_Spec(arg, value)) break;
 		goto bad_make;

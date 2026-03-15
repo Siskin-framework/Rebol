@@ -52,6 +52,10 @@ Rebol [
 	--assert #(uint32! []) == transcode/one "#(uint32!)"
 	--assert #(float32! []) == transcode/one "#(float32!)"
 
+--test-- "Make vector from binary"
+	--assert #(uint8! []) == attempt [to vector! #{}]
+	--assert #(uint8! [1 255]) == attempt [to vector! #{01FF}]
+
 --test-- "Random shuffle of vector vs. block"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/910
 	;@@ https://github.com/Oldes/Rebol-issues/issues/947
