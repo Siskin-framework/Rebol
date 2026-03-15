@@ -1,8 +1,7 @@
 Rebol [
-	title: "Rosetta code: Bitmap/Flood fill"
-	file:  %Bitmap-Flood_fill.r3
-	url:   https://rosettacode.org/wiki/Bitmap/Bitmap-Flood_fill
-    needs: 3.21.9
+    title: "Rosetta code: Bitmap/Flood fill"
+    file:  %Bitmap-Flood_fill.r3
+    url:   https://rosettacode.org/wiki/Bitmap/Bitmap-Flood_fill
 ]
 
 flood-fill: function [
