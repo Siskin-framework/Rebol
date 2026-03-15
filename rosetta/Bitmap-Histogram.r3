@@ -2,6 +2,7 @@ Rebol [
 	title: "Rosetta code: Bitmap/Histogram"
 	file:  %Bitmap-Histogram.r3
 	url:   https://rosettacode.org/wiki/Bitmap/Bitmap-Histogram
+    needs: 3.21.9
 ]
 
 ;; Load source image from file
