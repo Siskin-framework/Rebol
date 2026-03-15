@@ -245,7 +245,7 @@ Rebol [
 		--assert error? try [img/1/10:  10]
 ===end-group===
 
-===start-group=== "raw image data getters"
+===start-group=== "raw image data getters/setters"
 	img: make image! 2x1 img/1: 1.2.3.100 img/2: 4.5.6.200
 	tests: [
 		rgba    #{01020364040506C8}
@@ -260,8 +260,17 @@ Rebol [
 		alpha   #{64C8}
 	]
 	foreach [format bin] tests [
+		--test-- reform ["set raw image" format "data as binary"]
+			--assert binary? img/:format: bin
 		--test-- reform ["get raw image" format "data"]
 			--assert img/:format = bin
+		--test-- reform ["set raw image" format "data as vector"]
+			--assert all [
+				vector? img/:format: make vector! compose [uint8! (bin)]
+				img/:format = bin
+			]
+
+
 	]
 ===end-group===
 
