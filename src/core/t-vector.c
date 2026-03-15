@@ -75,7 +75,7 @@ static const REBCNT normalized_vect_sym[29] = {
 	return normalized_vect_sym[sym - SYM_INT8X];
 }
 
-REBU64 f_to_u64(float n) {
+static REBU64 f_to_u64(float n) {
 	union {
 		REBU64 u;
 		REBDEC d;
@@ -1023,6 +1023,9 @@ REBOOL Get_Vector_Spec_From_Symbol(REBCNT sym, REBINT *type, REBINT *sign, REBIN
 		if (len > size && size == 0) size = len;
 		iblk = bp;
 		bp++;
+	}
+	else if (IS_END(bp)) {
+		size = 0;
 	}
 	else return 0;
 	// Index offset:

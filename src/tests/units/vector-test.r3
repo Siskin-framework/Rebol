@@ -47,6 +47,11 @@ Rebol [
 	--assert (make vector! [1 2 3 4]) == #(int64! [1 2 3 4])
 	--assert (make vector! [1.0 2]) == #(float64! [1.0 2.0])
 
+--test-- "Make empty vector"
+	--assert #(uint8! []) == transcode/one "#(uint8!)"
+	--assert #(uint32! []) == transcode/one "#(uint32!)"
+	--assert #(float32! []) == transcode/one "#(float32!)"
+
 --test-- "Random shuffle of vector vs. block"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/910
 	;@@ https://github.com/Oldes/Rebol-issues/issues/947
