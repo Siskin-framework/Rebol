@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -1170,9 +1170,9 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	Dispose_Pools();
 	Free_Mem(PG_Reb_Stats, sizeof(*PG_Reb_Stats));
 	Free_Mem(Reb_Opts, sizeof(*Reb_Opts));
-#ifdef DEBUG
-	if (PG_Mem_Make != PG_Mem_Free || PG_Mem_Usage > 0)
-		printf("PG_Mem_Make: %llu free: %llu used: %llu\n", PG_Mem_Make, PG_Mem_Free, PG_Mem_Usage);
+#if defined(DEBUG) || defined(_DEBUG)
+//	if (PG_Mem_Make != PG_Mem_Free || PG_Mem_Usage > 0)
+//		printf("PG_Mem_Make: %llu free: %llu used: %llu\n", PG_Mem_Make, PG_Mem_Free, PG_Mem_Usage);
 #endif
 	ASSERT1(PG_Mem_Free == PG_Mem_Make, RP_MISC);
 }
