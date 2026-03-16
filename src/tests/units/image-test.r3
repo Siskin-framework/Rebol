@@ -258,6 +258,9 @@ Rebol [
 		obgr    #{9B03020137060504}
 		opacity #{9B37}
 		alpha   #{64C8}
+		red     #{0104}
+		green   #{0205}
+		blue    #{0306}
 	]
 	foreach [format bin] tests [
 		--test-- reform ["set raw image" format "data as binary"]
@@ -271,15 +274,6 @@ Rebol [
 			]
 
 
-	]
-===end-group===
-
-===start-group=== "raw image data setters"
-	foreach [format bin] tests [
-		--test-- reform ["set raw image" format "data"]
-			img/1: 1.2.3
-			img/:format: bin
-			--assert img/1 = 1.2.3.100
 	]
 ===end-group===
 

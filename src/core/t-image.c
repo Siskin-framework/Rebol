@@ -138,12 +138,20 @@
 
 /***********************************************************************
 **
-*/	void Fill_Alpha_Line(REBYTE *rgba, REBYTE alpha, REBINT len)
+*/	void Fill_Channel_Line(REBYTE *rgba, REBYTE value, REBINT len, REBCNT sym)
 /*
 ***********************************************************************/
 {
+	REBCNT idx=0;
+	switch (sym) {
+	case SYM_ALPHA: idx = C_A; break;
+	case SYM_RED:   idx = C_R; break;
+	case SYM_GREEN: idx = C_G; break;
+	case SYM_BLUE:  idx = C_B; break;
+	case SYM_OPACITY: idx = C_A; value = 255 - value; break;
+	}
 	for (; len > 0; len--, rgba += 4)
-		rgba[C_A] = alpha;
+		rgba[idx] = value;
 }
 
 
@@ -154,7 +162,7 @@
 ***********************************************************************/
 {
 	for (; dupy > 0; dupy--, ip += w)
-		Fill_Alpha_Line((REBYTE *)ip, alpha, dupx);
+		Fill_Channel_Line((REBYTE *)ip, alpha, dupx, SYM_ALPHA);
 }
 
 
@@ -362,34 +370,47 @@ FORCE_INLINE
 
 /***********************************************************************
 **
-*/	void Alpha_To_Bin(REBYTE *bin, REBYTE *rgba, REBINT len, REBCNT type)
+*/	void Channel_To_Bin(REBYTE* bin, REBYTE* rgba, REBINT len, REBCNT type)
 /*
 ***********************************************************************/
 {
-	if (type == SYM_ALPHA) {
-		for (; len > 0; len--, rgba += 4)
-			*bin++ = rgba[C_A];
-	} else { // SYM_OPACITY
+	REBCNT idx = 0;
+	switch (type) {
+	case SYM_ALPHA: idx = C_A; break;
+	case SYM_RED:   idx = C_R; break;
+	case SYM_GREEN: idx = C_G; break;
+	case SYM_BLUE:  idx = C_B; break;
+	case SYM_OPACITY:
 		for (; len > 0; len--, rgba += 4)
 			*bin++ = 255 - rgba[C_A];
+		return;
 	}
+	for (; len > 0; len--, rgba += 4)
+		*bin++ = rgba[idx];
 }
+
+
 
 /***********************************************************************
 **
-*/	void Bin_To_Alpha(REBYTE *rgba, REBCNT size, REBYTE *bin, REBINT len, REBCNT type)
+*/	void Bin_To_Channel(REBYTE *rgba, REBCNT size, REBYTE *bin, REBINT len, REBCNT sym)
 /*
 ***********************************************************************/
 {
+	REBCNT idx = 0;
 	if (len > (REBINT)size) len = size; // avoid over-run
-
-	if (type == SYM_ALPHA) {
-		for (; len > 0; len--, rgba += 4)
-			rgba[C_A] = *bin++;
-	} else { // SYM_OPACITY
+	switch (sym) {
+	case SYM_ALPHA: idx = C_A; break;
+	case SYM_RED:   idx = C_R; break;
+	case SYM_GREEN: idx = C_G; break;
+	case SYM_BLUE:  idx = C_B; break;
+	case SYM_OPACITY:
 		for (; len > 0; len--, rgba += 4)
 			rgba[C_A] = 255 - *bin++;
+		return;
 	}
+	for (; len > 0; len--, rgba += 4)
+		rgba[idx] = *bin++;
 }
 
 
@@ -656,7 +677,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 
 		// Load alpha channel data:
 		if (IS_BINARY(block)) {
-			Bin_To_Alpha(ip, size, VAL_BIN_DATA(block), VAL_LEN(block), SYM_ALPHA);
+			Bin_To_Channel(ip, size, VAL_BIN_DATA(block), VAL_LEN(block), SYM_ALPHA);
 //			VAL_IMAGE_TRANSP(value)=VITT_ALPHA;
 			block++;
 		}
@@ -828,7 +849,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 			if (IS_PAIR(count)) // rectangular fill
 				Fill_Alpha_Rect((REBCNT *)ip, (REBYTE)n, w, dupx, dupy);
 			else
-				Fill_Alpha_Line(ip, (REBYTE)n, dup);
+				Fill_Channel_Line(ip, (REBYTE)n, dup, SYM_ALPHA);
 		} else if (IS_TUPLE(arg)) { // RGB
 			if (IS_PAIR(count)) // rectangular fill
 				Fill_Rect((REBCNT *)ip, TO_PIXEL_TUPLE(arg), w, dupx, dupy, only);
@@ -1411,19 +1432,24 @@ is_true:
 				Set_Binary(val, nser);
 				break;
 
-			case SYM_ALPHA:
-			case SYM_OPACITY:
 			case SYM_LUMINOSITY:
 			case SYM_GRAY:
 				nser = Make_Binary(len);
 				SERIES_TAIL(nser) = len;
-				if (sym == SYM_GRAY || sym == SYM_LUMINOSITY) {
-					Color_To_Bin(QUAD_HEAD(nser), src, len, sym);
-				}
-				else {
-					Alpha_To_Bin(QUAD_HEAD(nser), src, len, sym);
-				}
+				Color_To_Bin(QUAD_HEAD(nser), src, len, sym);
 				Set_Binary(val, nser);
+				break;
+
+			case SYM_ALPHA:
+			case SYM_RED:
+			case SYM_GREEN:
+			case SYM_BLUE:
+			case SYM_OPACITY:
+				nser = Make_Binary(len);
+				SERIES_TAIL(nser) = len;
+				Channel_To_Bin(QUAD_HEAD(nser), src, len, sym);
+				Set_Binary(val, nser);
+				break;
 				break;
 
 			case SYM_COLOR:
@@ -1484,13 +1510,16 @@ is_true:
 				break;
 
 			case SYM_ALPHA:
+			case SYM_RED:
+			case SYM_GREEN:
+			case SYM_BLUE:
 			case SYM_OPACITY:
 				if (IS_INTEGER(val)) {
 					n = VAL_INT32(val);
 					if (n < 0 || n > 255) return PE_BAD_RANGE;
-					Fill_Alpha_Line(src, (REBYTE)n, len);
+					Fill_Channel_Line(src, (REBYTE)n, len, sym);
 				} else if ((IS_VECTOR(val) && VAL_VEC_WIDTH(val) == 1) || IS_BINARY(val)) {
-					Bin_To_Alpha(src, len, VAL_BIN_DATA(val), VAL_LEN(val), sym);
+					Bin_To_Channel(src, len, VAL_BIN_DATA(val), VAL_LEN(val), sym);
 				} else return PE_BAD_SET;
 				break;
 
