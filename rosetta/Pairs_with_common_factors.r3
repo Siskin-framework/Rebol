@@ -45,8 +45,8 @@ repeat number limit [
 
 print "The first one hundred terms of the number of pairs with common factors:"
 repeat number 100 [
-    prin rejoin [
-        pad form pairs-count/(number + 1) -5
+    prin ajoin [
+        pad pairs-count/(number + 1) -5
         either zero? number % 10 [LF][SP]
     ]
 ]
@@ -54,7 +54,7 @@ print ""
 
 ;; Print at powers of 10
 term: 1 while [term <= limit] [
-    label: rejoin ["Term " term ":"]
+    label: ajoin ["Term " term ":"]
     print [pad label 13 pairs-count/(term + 1)]
     term: term * 10
 ]
