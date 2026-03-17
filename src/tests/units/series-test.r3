@@ -1793,8 +1793,6 @@ Rebol [
 		error? e: try [sort/skip/compare/all db 2 func [a b] [reverse b   a/2 < b/2]]
 		e/id = 'protected
 	]
-	db: [ "A3" 41 "B2" 8 "C1" 6 ]
-	--assert sort/skip/compare/all db 2 func [a b] [reverse a  a/1 < b/1]
 
 --test-- "SORT/compare string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1100

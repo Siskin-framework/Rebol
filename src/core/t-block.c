@@ -619,6 +619,8 @@ done:
 			BLK_TERM(VAL_SERIES(&v1));
 			BLK_TERM(VAL_SERIES(&v2));
 			// Lock them to prevent modification during sorting
+			PROTECT_SERIES(VAL_SERIES(&v1));
+			PROTECT_SERIES(VAL_SERIES(&v2));
 			LOCK_SERIES(VAL_SERIES(&v1));
 			LOCK_SERIES(VAL_SERIES(&v2));
 			// Push argument blocks and comparator onto the stack
