@@ -32,7 +32,7 @@ big-add: function [
 lychrel: function/with [
     "Determine whether an integer is a Lychrel number candidate"
     ;; Returns the Lychrel seed: the lowest related number in the chain,
-    ;; or 0 if num resolves to a palindrome within 1000 steps (i.e. not Lychrel).
+    ;; or none if num resolves to a palindrome within 1000 steps (i.e. not Lychrel).
     ;; Results are memoised in the `cache` map shared across all calls.
     num [integer!]
 ][
@@ -49,7 +49,7 @@ lychrel: function/with [
         rv: reverse copy ns  ;; reverse of the new value
 
         ;; Palindrome found -> num is NOT a Lychrel number
-        if ns == rv [ res: 0 break ]
+        if ns == rv [ res: none break ]
 
         ;; Hit a number whose Lychrel status is already known -> inherit its result
         if val: cache/:ns [ res: val break ]
@@ -69,20 +69,16 @@ lychrel: function/with [
 seeds:   copy []  ;; Lychrel seeds:   numbers that are their own chain origin
 related: copy []  ;; Lychrel related: numbers that lead to a known Lychrel seed
 palin:   copy []  ;; Lychrel palindromes: Lychrel numbers that are also palindromes
-
-; Run the search over the first 10 000 positive integers and time it
-print delta-time [
-    repeat num 10000 [
-        s: lychrel num  ;; 0 = not Lychrel, otherwise the seed of num's chain
-        if s != 0 [
-            ;; Seeds are numbers equal to their own chain origin; others are related
-            append either num == s [seeds][related] num
-            ;; Check whether num is also a palindrome in its own right
-            if (to string! num) == reverse to string! num [append palin num]
-        ]
+;; Run the search over the first 10 000 positive integers and time it
+repeat num 10000 [
+    s: lychrel num  ;; none = not Lychrel, otherwise the seed of num's chain
+    if s [
+        ;; Seeds are numbers equal to their own chain origin; others are related
+        append either num == s [seeds][related] num
+        ;; Check whether num is also a palindrome in its own right
+        if (to string! num) == reverse to string! num [append palin num]
     ]
 ]
-
 print [as-green pad length? seeds   -6 "Lychrel seeds:" as-yellow seeds]
 print [as-green pad length? related -6 "Lychrel related"]
 print [as-green pad length? palin   -6 "Lychrel palindromes:" as-yellow palin]
