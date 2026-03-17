@@ -11,7 +11,7 @@ padovan-sequences: function [
 ][
     ;; 2D array stored as flat block, indexed as arr[s][e]
     ;; s ranges 2..max-s, e ranges 1..max-e
-    arr: array/initial (max-s - 1) * max-e 0
+    arr: make vector! compose [uint16! ((max-s - 1) * max-e)]
 
     ;; Index helper: maps (s, e) to a 1-based position in the flat block
     idx: func [s e] [(s - 2) * max-e + e]
