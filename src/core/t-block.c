@@ -23,7 +23,7 @@
 **  Module:  t-block.c
 **  Summary: block related datatypes
 **  Section: datatypes
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Oldes
 **  Notes:
 **
 ***********************************************************************/
@@ -506,22 +506,32 @@ done:
 /*
 ***********************************************************************/
 {
-	REBVAL *v1 = (REBVAL*)p2;
-	REBVAL *v2 = (REBVAL*)p1;
+	REBVAL *v1;
+	REBVAL *v2;
 	REBVAL *val;
-	REBVAL *tmp;
 	REBSER *args;
 	REBVAL *func;
 	REBU64 flags;
+	int result = -1;
 
 	func = DS_GET(DSP - 1);
-	if (!ANY_FUNC(func)) abort();
+	ASSERT1(ANY_FUNC(func), RP_MISC);
 	flags = VAL_UNT64(DS_TOP);
 
-	if (GET_FLAG(flags, SORT_FLAG_REVERSE)) {
-		tmp = v1;
-		v1 = v2;
-		v2 = tmp;
+	if (GET_FLAG(flags, SORT_FLAG_ALL)) {
+		// Retrieve the pre-allocated argument blocks from the stack
+		v1 = DS_GET(DSP - 3);
+		v2 = DS_GET(DSP - 2);
+		ASSERT1(IS_BLOCK(v1) && IS_BLOCK(v2), RP_MISC);
+		// Calculate the byte size of one block's worth of values
+		REBCNT len = sizeof(REBVAL) * SERIES_TAIL(VAL_SERIES(v1));
+		// Copy data into the argument blocks
+		COPY_MEM((REBYTE*)VAL_BLK(v1), p2, len);
+		COPY_MEM((REBYTE*)VAL_BLK(v2), p1, len);
+	}
+	else {
+		v1 = (REBVAL*)p2;
+		v2 = (REBVAL*)p1;
 	}
 
 	// Check argument types of comparator function.
@@ -537,17 +547,18 @@ done:
 	val = Apply_Func(0, func, v1, v2, 0);
 
 	if (IS_LOGIC(val)) {
-		if (IS_TRUE(val)) return 1;
+		if (IS_TRUE(val))
+			result = 1;
 	}
 	else if (IS_INTEGER(val)) {
-		if (VAL_INT64(val) < 0) return 1;
-		if (VAL_INT64(val) == 0) return 0;
+		if (VAL_INT64(val) >= 0)
+			result = (VAL_INT64(val) > 0) ? 1 : 0;
 	}
 	else if (IS_DECIMAL(val)) {
-		if (VAL_DECIMAL(val) < 0) return 1;
-		if (VAL_DECIMAL(val) == 0) return 0;
+		if (VAL_DECIMAL(val) >= 0)
+			result = (VAL_DECIMAL(val) > 0) ? 1 : 0;
 	}
-	return -1;
+	return GET_FLAG(flags, SORT_FLAG_REVERSE) ? -result : result;
 }
 
 
@@ -572,6 +583,8 @@ done:
 	REBCNT len;
 	REBCNT skip = 1;
 	REBCNT size = sizeof(REBVAL);
+	REBVAL v1, v2;
+	REBINT stack = DSP; // current stack pointer
 //	int (*sfunc)(const void *v1, const void *v2);
 
 	// Determine length of sort:
@@ -594,8 +607,26 @@ done:
 	if (rev)   SET_FLAG(flags, SORT_FLAG_REVERSE);
 	
 	if (all) {
-		if (!IS_NONE(compv)) Trap0(RE_BAD_REFINES);
+		if (IS_INTEGER(compv))
+			Trap0(RE_BAD_REFINES);
 		DS_PUSH_INTEGER(skip);
+		if (IS_FUNCTION(compv)) {
+			// Create temporary blocks to hold comparator function arguments
+			Set_Block(&v1, Make_Block(skip));
+			Set_Block(&v2, Make_Block(skip));
+			SERIES_TAIL(VAL_SERIES(&v1)) = skip;
+			SERIES_TAIL(VAL_SERIES(&v2)) = skip;
+			BLK_TERM(VAL_SERIES(&v1));
+			BLK_TERM(VAL_SERIES(&v2));
+			// Lock them to prevent modification during sorting
+			LOCK_SERIES(VAL_SERIES(&v1));
+			LOCK_SERIES(VAL_SERIES(&v2));
+			// Push argument blocks and comparator onto the stack
+			DS_PUSH(&v1);
+			DS_PUSH(&v2);
+			DS_PUSH(compv);
+			SET_FLAG(flags, SORT_FLAG_ALL);
+		}
 	}
 	else {
 		DS_PUSH(compv);
@@ -633,9 +664,14 @@ done:
 		stable_sort((void*)VAL_BLK_DATA(block), len, size, cmp);
 	}
 
+	if (all && IS_FUNCTION(compv)) {
+		// Release temporary blocks
+		ASSERT1(IS_BLOCK(&v1) && IS_BLOCK(&v2), RP_MISC);
+		Free_Series(VAL_SERIES(&v1));
+		Free_Series(VAL_SERIES(&v2));
+	}
 	// Stored comparator and flags are not needed anymore
-	DS_DROP;
-	DS_DROP;
+	DSP = stack;
 }
 
 

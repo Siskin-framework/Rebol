@@ -1778,6 +1778,24 @@ Rebol [
 	--assert all [error? e: try [sort/skip/compare [3 B 1 B] 2 [2 x]] e/id = 'invalid-arg]
 	--assert all [error? e: try [sort/skip/compare [3 B 1 B] 2 [2 3]] e/id = 'invalid-arg]
 
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2695
+	db: ["A3" 41 "B2" 8 "C4" 6]
+	cmp1: func [a b] [a/2 < b/2]
+	--assert ["C4" 6 "B2" 8 "A3" 41] == sort/skip/compare/all db 2 :cmp1
+	--assert ["A3" 41 "B2" 8 "C4" 6] == sort/reverse/skip/compare/all db 2 :cmp1
+	cmp2: func [a b] [a/1/2 < b/1/2]
+	--assert ["B2" 8 "A3" 41 "C4" 6] = sort/skip/compare/all db 2 :cmp2
+	--assert all [
+		error? e: try [sort/skip/compare/all db 2 func [a b] [append a 'x a/2 < b/2]]
+		e/id = 'protected
+	]
+	--assert all [
+		error? e: try [sort/skip/compare/all db 2 func [a b] [reverse b   a/2 < b/2]]
+		e/id = 'protected
+	]
+	db: [ "A3" 41 "B2" 8 "C1" 6 ]
+	--assert sort/skip/compare/all db 2 func [a b] [reverse a  a/1 < b/1]
+
 --test-- "SORT/compare string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1100
 	comp: func [a b] [a > b]
@@ -1821,7 +1839,7 @@ try/with [
 	--assert s1 == ["a" "b" "c" "d"]
 	--assert s2 == [4 3 2 1]
 	s1: sort/compare/reverse ["a" "A" "B" "b"] func[a b][s2: sort/compare [1 2 3 4] :greater? a < b]
-	--assert s1 == ["B" "b" "a" "A"]
+	--assert s1 =  ["B" "b" "a" "A"] ;; using = because a < b is not case sensitive with strings!
 	--assert s2 == [4 3 2 1]
 	s1: sort/compare [1 4 2 3] func[a b][s2: sort/case ["a" "B" "b" "a"] a < b]
 	--assert s1 == [1 2 3 4]
