@@ -153,13 +153,13 @@ Rebol [
 		--assert (lerp 10.100.255 255.128.64  0.3) == 83.108.197
 		--assert (lerp 10.100.255 255.128.64  1.0) == 255.128.64
 		--assert (lerp 10.100.255 255.128.64  2.0) == 255.128.64
-		--assert (lerp 10.100.255 255.128.64 -2.0) == 255.128.64
+		--assert (lerp 10.100.255 255.128.64 -2.0) == 10.100.255
 	--test-- "lerp tuple with percents"
 		--assert (lerp 10.100.255 255.128.64  0%)   == 10.100.255
 		--assert (lerp 10.100.255 255.128.64  30%)  == 83.108.197
 		--assert (lerp 10.100.255 255.128.64  100%) == 255.128.64
 		--assert (lerp 10.100.255 255.128.64  200%) == 255.128.64
-		--assert (lerp 10.100.255 255.128.64 -200%) == 255.128.64
+		--assert (lerp 10.100.255 255.128.64 -200%) == 10.100.255
 	--test-- "lerp tuple with not compatible types"
 		--assert all [error? e: try [lerp 0.0.0 10x10 0] e/id = 'type-mismatch]
 ===end-group===
