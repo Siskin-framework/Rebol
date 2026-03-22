@@ -46,68 +46,52 @@ my-console: context [
 					]
 					#"^-" [ ; Tab Completion
 						;all-words: union words-of system/contexts/lib words-of system/contexts/user
-						parts: split event/port/data " "
-						if not empty? parts [
-							last-part: last parts
-							either (first last-part) = #"%" [
-								path-parts: split-path last-part
-								files: sort either 1 = length? path-parts [ read %. ] [ read to-file first path-parts ]
-
-								perfect-match: find files to-file skip last-part 1
-								
-								either perfect-match = none [
-									last-part-as-string: to-string skip last-part 1
-									best-matches: copy []
-									
-									foreach file files [
-										file-as-string: to-string file
-
-										if all [
-											((length? file-as-string) >= (length? last-part-as-string))
-											((copy/part file-as-string (length? last-part-as-string)) = last-part-as-string)
-										] [
-											;append best-matches replace file-as-string last-part-as-string ""
-											append best-matches join "%" file-as-string
-										]
+						last-part: any [
+							find/last/tail event/port/data SP
+							event/port/data
+						]
+						if last-part/1 == #"%" [
+							last-part: as file! next last-part
+							path-parts: split-path last-part
+							files: sort read path-parts/1
+							matching-part: none
+							either perfect-match: find files last-part [
+								matching-part: skip best-matches/1 length? last-part
+								append matching-part SP
+							][
+								best-matches: clear []
+								foreach file files [
+									if parse file [last-part to end][
+										append best-matches file
 									]
-
-									either (length? best-matches) <> 1 [
-										print rejoin [ "^/" mold best-matches ]
-
-										min-length: length? first best-matches
-										foreach match best-matches [
-											min-length: min min-length (length? match)
-										]
-
-										match: true
-										match-count: 0
-
-										repeat char-count min-length [
-											repeat word-count length? best-matches [
-												if (pick (pick best-matches word-count) char-count) <> (pick (pick best-matches 1) char-count) [
-													match: false
-													break
-												]
-											]
-											if (not match) [ break ]
-											match-count: char-count
-										]
-
-										matching-part: skip copy/part first best-matches match-count length? last-part
-
-										append event/port/data matching-part
-									] [
-										matching-part: skip first best-matches length? last-part
-
-										append event/port/data matching-part
-									]
-								] [
-									append event/port/data " "
 								]
-							] [
-								print "^/Char"
+								either single? best-matches [
+									matching-part: skip best-matches/1 length? last-part
+									append matching-part SP
+								][
+									min-length: length? best-matches/1
+									foreach match next best-matches [
+										min-length: min min-length length? match
+									]
+									if match-count: catch [
+										repeat char-count min-length [
+										    char: pick pick best-matches 1 :char-count
+										    foreach word best-matches [
+										        if char != pick word char-count [
+										        	throw char-count - 1
+										        ]
+										    ]
+										]
+									][
+										matching-part: skip copy/part best-matches/1 match-count length? last-part
+									]
+								]
+							]
+							if matching-part [
+								append event/port/data matching-part
 							]
 						]
+						;@@TODO... words?
 					]
 				][
 					append event/port/data event/key
@@ -134,8 +118,7 @@ my-console: context [
 			;	prin event/port/data
 			;]
 			resize    [
-				print ["^[[G^[[Ksize:" event/offset]
-
+				;print ["^[[G^[[Ksize:" event/offset]
 				emit as-red prompt
 				emit event/port/data
 			]
