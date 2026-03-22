@@ -62,25 +62,26 @@ my-console: context [
 								best-matches: clear []
 								foreach file files [
 									if parse file [last-part to end][
-										append best-matches file
+										append best-matches as string! file
 									]
 								]
 								either single? best-matches [
 									matching-part: skip best-matches/1 length? last-part
 									append matching-part SP
 								][
+									print ["^[[G^[[K" mold best-matches]
 									min-length: length? best-matches/1
 									foreach match next best-matches [
 										min-length: min min-length length? match
 									]
 									if match-count: catch [
 										repeat char-count min-length [
-										    char: pick pick best-matches 1 :char-count
-										    foreach word best-matches [
-										        if char != pick word char-count [
-										        	throw char-count - 1
-										        ]
-										    ]
+											char: best-matches/1/:char-count
+											foreach word best-matches [
+												if char != word/:char-count [
+													throw char-count - 1
+												]
+											]
 										]
 									][
 										matching-part: skip copy/part best-matches/1 match-count length? last-part
