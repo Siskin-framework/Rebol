@@ -6,6 +6,7 @@ on:
     paths:
       - make/**
       - src/**
+      - '!src/tests/**'
       - .github/workflows/main.yml
 
   pull_request:

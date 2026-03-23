@@ -334,6 +334,65 @@ if system/version >= 3.19.1 [
 		e/id = 'protected
 	]
 
+--test-- "Nested structs with arrays"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2692
+	--assert attempt [all [
+		s: make struct! [a [struct! [n [int8!]][2]]]
+		1 == s/a/1/n: 1
+		2 == s/a/2/n: 2
+		#{0102} == to binary! s
+		struct? a1: s/a/1
+		#{01}   == to binary! a1
+		struct? s/a/1: s/a/2
+		#{0202} == to binary! s
+		#{02}   == to binary! a1
+		3 == s/a/1/n: 3
+		#{03}   == to binary! a1
+		#{0302} == to binary! s
+	]]
+	--assert attempt [all [
+		s: make struct! [n [int8!] val [rebval!]]
+		[1 2] == s/val: [1 2]
+		1 == s/val/1
+		2 == s/val/2
+		s/val/1: 10
+		s/val/(1 + 1): 20
+		[10 20] == s/val
+		append s/val "abc"
+		[10 20 "abc"] == s/val
+		#"a" == s/val/3/1
+		#"X" == s/val/3/1: #"X"
+		;s/val/3 = "Xbc"
+	]]
+	--assert attempt [all [
+		s1: make struct! [n [uint8!] s [struct! [a1 [struct! [x [int8!]]]]]]
+		s2: make struct! [n [ int8!] s [struct! [a2 [struct! [x [int8!]]]]]]
+		s1/s/a1/x: 1
+		s2/s/a2/x: 2
+		#{0001} == to binary! s1
+		#{0002} == to binary! s2
+		s1/s/a1: s2/s/a2
+		#{0002} == to binary! s1
+	]]
+	--assert attempt [all [
+		s: make struct! [n [int8!] val [rebval!]]
+		block? s/val: [1 "abc"]
+		char?  s/val/2/1: #"X"
+		s/val == [1 "Xbc"]
+	]]
+	--assert attempt [all [
+		s: make struct! [n [int8!] val [rebval!]]
+		block? s/val: [1 "abc"]
+		char?  s/val/2/(1): #"X"
+		s/val == [1 "Xbc"]
+	]]
+	--assert attempt [all [
+		s: make struct! [n [int8!] val [rebval!]]
+		object? s/val: object [a: "123"]
+		char? s/val/a/1: #"X"
+		s/val/a == "X23"
+	]]
+
 --test-- "Setting inner struct"
 	s: make struct! [
 		id  [uint16!]

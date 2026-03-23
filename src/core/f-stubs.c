@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -864,6 +864,7 @@
 
 #endif
 
+FORCE_INLINE
 /***********************************************************************
 **
 */	int Clip_Int(int val, int mini, int maxi)
@@ -874,7 +875,7 @@
 	else if (val > maxi) val = maxi;
 	return val;
 }
-
+FORCE_INLINE
 /***********************************************************************
 **
 */	REBDEC Clip_Dec(REBDEC val, REBDEC mind, REBDEC maxd)

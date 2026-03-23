@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2014 Atronix Engineering, Inc.
-**  Copyright 2021-2025 Rebol Open Source Contributors
+**  Copyright 2021-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -129,48 +129,89 @@ static REBFLG get_scalar(REBSTU *stu,
 	return TRUE;
 }
 
-/***********************************************************************
-**
-*/	static REBFLG Get_Struct_Var(REBSTU *stu, REBVAL *word, REBVAL *val)
-/*
-***********************************************************************/
+// Retrieves the value of a struct field and stores it in `val`.
+// Handles both array fields (returning a block or vector) and scalar fields.
+static
+void Get_Struct_Field_Value(REBSTU* stu, REBSTF* field, REBVAL* val)
+{
+	if (field->array) {
+		REBSER* ser;
+		REBINT type = field->type;
+
+		// Look up the vector-compatible symbol for this field type
+		REBCNT sym = (REBCNT)type_to_sym[type];
+
+		if (type > STRUCT_TYPE_DOUBLE || sym == NOT_FOUND) {
+			// Type has no vector equivalent — fall back to a block of scalars
+			ser = Make_Block(field->dimension);
+			REBCNT n = 0;
+			SET_TYPE(val, REB_BLOCK);
+
+			// Iterate over each element, extract it as a scalar, and append to the block
+			for (n = 0; n < field->dimension; n++) {
+				REBVAL elem;
+				get_scalar(stu, field, n, &elem);
+				Append_Val(ser, &elem);
+			}
+		}
+		else {
+			// Type maps to a known vector word — use a vector for efficiency
+			ser = Make_Vector_From_Word(sym, field->dimension);
+
+			// Bulk-copy the raw field bytes directly into the vector's data buffer
+			COPY_MEM(
+				SERIES_DATA(ser),
+				STRUCT_DATA_BIN(stu) + field->offset,
+				field->dimension * field->size
+			);
+			SET_TYPE(val, REB_VECTOR);
+		}
+
+		// Point val at the newly created series, starting at index 0
+		VAL_SERIES(val) = ser;
+		VAL_INDEX(val) = 0;
+	}
+	else {
+		// Non-array field - retrieve a single scalar value directly
+		get_scalar(stu, field, 0, val);
+	}
+}
+
+// Searches a struct's field list for a field whose symbol matches `word`.
+// Returns a pointer to the matching REBSTF, or NULL if not found.
+static
+REBSTF* Get_Struct_Field(REBSTU* stu, REBVAL* word)
+{
+	REBSTF* field = STRUCT_FIELDS(stu);
+
+	for (REBCNT i = 0; i < STRUCT_FIELDS_NUM(stu); i++, field++) {
+		// Compare canonical (case-insensitive) symbol of word against field's symbol
+		if (VAL_WORD_CANON(word) == VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, field->sym))) {
+			return field;
+		}
+	}
+
+	return NULL; // No matching field found
+}
+
+// Looks up a field by word in a struct and writes its value into `val`.
+// Returns TRUE if the field was found and val was populated, FALSE otherwise.
+static
+REBFLG Get_Struct_Var(REBSTU *stu, REBVAL *word, REBVAL *val)
 {
 	REBSTF *field = NULL;
 	REBCNT i = 0;
-	field = STRUCT_FIELDS(stu);
-	for (i = 0; i < STRUCT_FIELDS_NUM(stu); i ++, field ++) {
-		if (VAL_WORD_CANON(word) == VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, field->sym))) {
-			if (field->array) {
-				REBSER *ser;
-				REBINT type = field->type;
-				REBCNT sym = (REBCNT)type_to_sym[type];
 
-				if (type > STRUCT_TYPE_DOUBLE || sym == NOT_FOUND) {
-					// Using block as a result...
-					ser = Make_Block(field->dimension);
-					REBCNT n = 0;
-					SET_TYPE(val, REB_BLOCK);
-					for (n = 0; n < field->dimension; n++) {
-						REBVAL elem;
-						get_scalar(stu, field, n, &elem);
-						Append_Val(ser, &elem);
-					}
-				}
-				else {
-					// Using vector as a result...
-					ser = Make_Vector_From_Word(sym, field->dimension);
-					COPY_MEM(SERIES_DATA(ser), STRUCT_DATA_BIN(stu) + field->offset, field->dimension * field->size);
-					SET_TYPE(val, REB_VECTOR);
-				}
-				VAL_SERIES(val) = ser;
-				VAL_INDEX(val) = 0;
-			} else {
-				get_scalar(stu, field, 0, val);
-			}
+	field = STRUCT_FIELDS(stu);
+
+	for (i = 0; i < STRUCT_FIELDS_NUM(stu); i++, field++) {
+		// Match the word against each field's canonical symbol
+		if (VAL_WORD_CANON(word) == VAL_SYM_CANON(BLK_SKIP(PG_Word_Table.series, field->sym))) {
+			Get_Struct_Field_Value(stu, field, val);
 			return TRUE;
 		}
 	}
-	return FALSE;
+	return FALSE; // Word did not match any field in this struct
 }
 
 /***********************************************************************
@@ -852,37 +893,69 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 /*
 ***********************************************************************/
 {
-	REBSTU *stu = &VAL_STRUCT(pvs->value);
-	if (!IS_WORD(pvs->select)) {
-		return PE_BAD_SELECT;
-	}
-	if (! pvs->setval || NOT_END(pvs->path + 1)) {
-		if (!Get_Struct_Var(stu, pvs->select, pvs->store)) {
-			return PE_BAD_SELECT;
-		}
+	REBSTU* stu = &VAL_STRUCT(pvs->value);
+	REBSTF* field = NULL;
+	REBFLG res = 1;
 
-		/* Setting element to an array in the struct:
-		 * struct/field/1: 0
-		 * */
-		if (pvs->setval
-			&& IS_BLOCK(pvs->store)
-			&& IS_END(pvs->path + 2)) {
-			REBVAL *sel = pvs->select;
-			pvs->value = pvs->store;
-			Next_Path(pvs); // sets value in pvs->value
-			if (!Set_Struct_Var(stu, sel, pvs->select, pvs->value)) {
-				return PE_BAD_SET;
+	// Struct allows only named field access (so far).
+	if (!IS_WORD(pvs->select))
+		return PE_BAD_SELECT;
+
+	//Debug_Fmt("?? setval: %r pvs->path+1: %r", pvs->setval, pvs->path+1);
+	if (!pvs->setval || NOT_END(pvs->path + 1)) {
+		// Get-path or deep set-path (e.g. struct/field/1: 0)
+
+		// Find the requested field by name; bail if not found.
+		if (!(field = Get_Struct_Field(stu, pvs->select)))
+			return PE_BAD_SELECT;
+
+		// Retrieve the field's current value into pvs->store.
+		Get_Struct_Field_Value(stu, field, pvs->store);
+
+		//Debug_Fmt("?? store: %r value: %r", pvs->store, pvs->value);
+
+		// Simple get-path — just return the stored value.
+		if (!pvs->setval) return PE_USE;
+
+		// Deep set-path: save the field selector, then advance pvs->value
+		// to pvs->store so Next_Path operates on the field's current value.
+		REBVAL* sel = pvs->select;
+		pvs->value = pvs->store;
+
+		// Walk the remainder of the path, resolving the final value to set.
+		Next_Path(pvs);
+
+		//Debug_Fmt("<- value: %r select: %r prev: %r", pvs->value, pvs->select, sel);
+		//Debug_Fmt("== store: %r value : %r", pvs->store, pvs->value);
+
+		switch (field->type) {
+		case STRUCT_TYPE_STRUCT:
+			if (IS_INTEGER(pvs->select) && IS_BLOCK(pvs->store) && IS_STRUCT(pvs->value)) {
+				// Setting one struct element inside an array of structs by index,
+				// e.g.: st/arr/2: st/arr/1
+				// Copy the source struct's raw bytes into the correct slot.
+				REBCNT idx = VAL_INT64(pvs->select);
+				if (idx > field->dimension) return PE_BAD_SET; // index out of range
+				void* data = STRUCT_DATA_BIN(stu) + field->offset + (idx - 1) * field->size;
+				COPY_MEM(data, VAL_STRUCT_DATA_BIN(pvs->value), field->size);
 			}
-			return PE_OK;
+			break;
+		case STRUCT_TYPE_REBVAL:
+			// For REBVAL fields, a numeric sub-select means Next_Path already
+			// resolved the target; otherwise set via the original field name.
+			if (!IS_INTEGER(pvs->select))
+				res = Set_Struct_Var(stu, sel, NULL, pvs->store);
+			break;
+		default:
+			// For all other types, set the field to the path-resolved value.
+			res = Set_Struct_Var(stu, sel, NULL, pvs->value);
 		}
-		return PE_USE;
-	} else {// setval && END
-		if (!Set_Struct_Var(stu, pvs->select, NULL, pvs->setval)) {
-			return PE_BAD_SET;
-		}
-		return PE_OK;
 	}
-	return PE_BAD_SELECT;
+	else {
+		// Simple set-path (e.g. struct/field: 123) — set the field directly.
+		res = Set_Struct_Var(stu, pvs->select, NULL, pvs->setval);
+	}
+	return res ? PE_OK : PE_BAD_SET;
 }
 
 /***********************************************************************

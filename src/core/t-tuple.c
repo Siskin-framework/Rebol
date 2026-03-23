@@ -270,24 +270,6 @@
 		goto ret_value;
 	}
 
-	// !!!! merge with SWITCH below !!!
-	if (action == A_COMPLEMENT) {
-		for (;len > 0; len--, vp++)
-			*vp = (REBYTE)~*vp;
-		goto ret_value;
-	}
-	if (action == A_RANDOM) {
-		if (D_REF(2)) { // seed
-			Set_Random(Compute_CRC24(vp, len));
-			return R_UNSET;
-		}
-		for (;len > 0; len--, vp++) {
-			if (*vp)
-				*vp = (REBYTE)(Random_Int(D_REF(3)) % (1+*vp));
-		}
-		goto ret_value;
-	}
-
 	//a = 1; //???
 	switch (action) {
 	case A_LENGTHQ:
@@ -381,6 +363,22 @@
 		else goto bad_arg;
 
 		for (; alen < MAX_TUPLE; alen++) *vp++ = 0;
+		goto ret_value;
+
+	case A_COMPLEMENT:
+		for (; len > 0; len--, vp++)
+			*vp = (REBYTE)~*vp;
+		goto ret_value;
+
+	case A_RANDOM:
+		if (D_REF(2)) { // seed
+			Set_Random(Compute_CRC24(vp, len));
+			return R_UNSET;
+		}
+		for (; len > 0; len--, vp++) {
+			if (*vp)
+				*vp = (REBYTE)(Random_Int(D_REF(3)) % (1 + *vp));
+		}
 		goto ret_value;
 
 bad_arg:

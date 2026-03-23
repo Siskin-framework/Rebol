@@ -185,6 +185,11 @@ Rebol [
 	--assert "<A>"  = find/case "<a><A>" "<A>"
 	--assert "<a href=''>" = find "foo<a href=''>" "<a href=''>"
 	--assert "<a>x" = find/skip "x<a><b>x<a>x" "<a>" 4
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2689
+	--assert "č" == find "č" "č"
+	--assert "č" == find "č" #"č"
+	--assert "č" == find "č" form #"č"
+
 
 --test-- "FIND %file %file"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/624
@@ -605,6 +610,8 @@ Rebol [
 		--assert "a1ab2ac3" = trim/all { a ^-1^/ ab2^- ^/ ac3 ^/ ^/^/}
 		--assert "    ^-1^/    b2^-  ^/  c3  ^/  ^/^/" = trim/with copy mstr #"a"
 		--assert "    ^-1^/    b2^-  ^/  c3  ^/  ^/^/" = trim/with copy mstr 97
+		--assert "one^/^-two" == trim/tail trim/auto {^/^-one^/^-^-two  ^/}
+		--assert "one^/^-two" == trim/auto/tail {^/^-one^/^-^-two  ^/}
 	--test-- "trim binary!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1482
 		bin: #{0011001100}
@@ -1735,16 +1742,23 @@ Rebol [
 --test-- "sort string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2170
 	s: "ABCabcdefDEF"
-	--assert "AaBbCcdDEefF" == sort s
-	--assert "AaBbCcdDEefF" == sort s ; just to test if it stays same
+	--assert "AaBbCcdDeEfF" == sort s
+	--assert "AaBbCcdDeEfF" == sort s ; just to test if it stays same
 	--assert "ABCDEFabcdef" == sort/case s
 	--assert "AaBbCcDdEeFf" == sort s
+
+--test-- "SORT/compare integer!"
+	--assert [1 2 3 4] == sort/skip/compare [3 4 1 2] 2 2
+	--assert all [error? e: try [sort/compare [3 4 1 2] 0 e/id = 'invalid-arg]]
+	--assert all [error? e: try [sort/compare [3 4 1 2] 2 e/id = 'invalid-arg]]
+	--assert all [error? e: try [sort/skip/compare [3 4 1 2] 2 0 e/id = 'invalid-arg]]
+	--assert all [error? e: try [sort/skip/compare [3 4 1 2] 2 3 e/id = 'invalid-arg]]
 
 --test-- "SORT/compare block!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/720
 	--assert [3 2 1] = sort/compare [1 2 3] func [a b] [a > b]
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2376
-	--assert [1 3 10] = sort/compare [1 10 3] func[x y][case [x > y [1] x < y [-1] true [0]]]
+	--assert [10 3 1] = sort/compare [1 10 3] func[x y][case [x > y [1] x < y [-1] true [0]]]
 	;@@ https://github.com/Oldes/Rebol-issues/issues/721
 	--assert [4 3 2 1] = sort/compare [1 2 3 4] :greater?
 
@@ -1762,6 +1776,23 @@ Rebol [
 	--assert all [error? e: try [sort/skip/compare [3 B 1 B] 2 [2 -1]] e/id = 'invalid-arg]
 	--assert all [error? e: try [sort/skip/compare [3 B 1 B] 2 [2 0]] e/id = 'invalid-arg]
 	--assert all [error? e: try [sort/skip/compare [3 B 1 B] 2 [2 x]] e/id = 'invalid-arg]
+	--assert all [error? e: try [sort/skip/compare [3 B 1 B] 2 [2 3]] e/id = 'invalid-arg]
+
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2695
+	db: ["A3" 41 "B2" 8 "C4" 6]
+	cmp1: func [a b] [a/2 < b/2]
+	--assert ["C4" 6 "B2" 8 "A3" 41] == sort/skip/compare/all db 2 :cmp1
+	--assert ["A3" 41 "B2" 8 "C4" 6] == sort/reverse/skip/compare/all db 2 :cmp1
+	cmp2: func [a b] [a/1/2 < b/1/2]
+	--assert ["B2" 8 "A3" 41 "C4" 6] = sort/skip/compare/all db 2 :cmp2
+	--assert all [
+		error? e: try [sort/skip/compare/all db 2 func [a b] [append a 'x a/2 < b/2]]
+		e/id = 'protected
+	]
+	--assert all [
+		error? e: try [sort/skip/compare/all db 2 func [a b] [reverse b   a/2 < b/2]]
+		e/id = 'protected
+	]
 
 --test-- "SORT/compare string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1100
@@ -1782,6 +1813,8 @@ Rebol [
 	--assert error? try [sort/compare/skip "ba ab aa " 4 3] ;; invalid offset
 	--assert error? try [sort/compare/skip "ba ab aa " 0 3] ;; invalid offset
 	--assert error? try [sort/compare/skip/all "ba ab aa " 1 3] ;; all is not compatible
+	--assert all [error? e: try [sort/compare "abcd" 0 e/id = 'invalid-arg]]
+	--assert all [error? e: try [sort/compare "abcd" 3 e/id = 'invalid-arg]]
 
 --test-- "SORT/compare string! (nested)"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2621
@@ -1804,7 +1837,7 @@ try/with [
 	--assert s1 == ["a" "b" "c" "d"]
 	--assert s2 == [4 3 2 1]
 	s1: sort/compare/reverse ["a" "A" "B" "b"] func[a b][s2: sort/compare [1 2 3 4] :greater? a < b]
-	--assert s1 == ["B" "b" "a" "A"]
+	--assert s1 =  ["B" "b" "a" "A"] ;; using = because a < b is not case sensitive with strings!
 	--assert s2 == [4 3 2 1]
 	s1: sort/compare [1 4 2 3] func[a b][s2: sort/case ["a" "B" "b" "a"] a < b]
 	--assert s1 == [1 2 3 4]
@@ -1904,8 +1937,31 @@ try/with [
 
 --test-- "SORT inifinite loop case"
 	;@@ https://github.com/jingchaochen/Symmetry-Partition-Sort/issues/1
-	words: ["type" "offset" "size" "text" "image" "color" "menu" "data" "enabled?" "visible?" "selected" "flags" "options" "parent" "pane" "state" "rate" "edge" "para" "font" "actors" "extra" "draw" "on-change*" "on-deep-change*"]
-	--assert ["type" "menu" "size" "text" "draw" "pane" "edge" "data" "rate" "font" "para" "flags" "color" "image" "state" "extra" "offset" "actors" "parent" "options" "selected" "visible?" "enabled?" "on-change*" "on-deep-change*"] == sort/compare words func [a b][(length? a) < (length? b)]
+	words:   ["type" "offset" "size" "text" "image" "color" "menu" "data" "enabled?" "visible?" "selected" "flags" "options" "parent" "pane" "state" "rate" "edge" "para" "font" "actors" "extra" "draw" "on-change*" "on-deep-change*"]
+	--assert ["type" "size" "text" "menu" "data" "pane" "rate" "edge" "para" "font" "draw" "image" "color" "flags" "state" "extra" "offset" "parent" "actors" "options" "enabled?" "visible?" "selected" "on-change*" "on-deep-change*"] == sort/compare copy words func [a b][(length? a) < (length? b)]
+	--assert ["type" "menu" "size" "text" "draw" "pane" "edge" "data" "rate" "font" "para" "flags" "color" "image" "state" "extra" "offset" "actors" "parent" "options" "selected" "visible?" "enabled?" "on-change*" "on-deep-change*"] == sort/unstable/compare copy words func [a b][(length? a) < (length? b)]
+
+--test-- "Stable SORT"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2690
+	--assert all [
+		[Bob 25 Alice 30 Carol 30] == sort/skip/compare [Alice 30 Bob 25 Carol 30] 2 2
+		[Bob 25 Alice 30 Carol 30] == sort/skip/compare [Alice 30 Carol 30 Bob 25] 2 2
+		[Bob 25 Carol 30 Alice 30] == sort/skip/compare [Carol 30 Alice 30 Bob 25] 2 2
+		[Bob 25 Carol 30 Alice 30] == sort/skip/compare [Carol 30 Bob 25 Alice 30] 2 2
+	]
+	--assert all [
+		[Bob 25 Alice 30 Carol 30] == sort/unstable/skip/compare [Alice 30 Bob 25 Carol 30] 2 2
+		[Bob 25 Carol 30 Alice 30] == sort/unstable/skip/compare [Alice 30 Carol 30 Bob 25] 2 2 ;= not stable
+		[Bob 25 Alice 30 Carol 30] == sort/unstable/skip/compare [Carol 30 Alice 30 Bob 25] 2 2 ;= not stable
+		[Bob 25 Carol 30 Alice 30] == sort/unstable/skip/compare [Carol 30 Bob 25 Alice 30] 2 2
+	]
+
+
+--test-- "SORT vectors"
+	--assert #(uint8! [1 2 3 3 3 4 4 5 7]) == sort #(uint8! [1 4 3 2 3 5 7 4 3])
+	--assert #(uint8! [7 5 4 4 3 3 3 2 1]) == sort/reverse #(uint8! [1 4 3 2 3 5 7 4 3])
+	--assert #(int8! [-5 -4 -2 1 3 3 3 4 7]) == sort #(int8! [1 4 3 -2 3 -5 7 -4 3])
+	--assert #(int8! [7 4 3 3 3 1 -2 -4 -5]) == sort/reverse #(int8! [1 4 3 -2 3 -5 7 -4 3])
 
 ===end-group===
 
@@ -1926,6 +1982,81 @@ try/with [
 ===end-group===
 
 
+===start-group=== "SWAP"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2696
+	--test-- "swap string (different series)"
+		--assert all [
+			s1: "ab" s2: "AB"
+			"Ab" == swap s1 s2
+			"Ab" == s1
+			"aB" == s2
+		]
+		--assert all [
+			s1: "ab" s2: "🙂č"
+			"🙂b" == swap s1 s2
+			"🙂b" == s1
+			"ač" == s2 
+		]
+		--assert all [
+			"🙂b" == swap s: "ab" "🙂"
+			2 == length? s
+		]
+	--test-- "swap string (same series)"
+		--assert all [
+			s1: "ab" s2: next s1
+			"ba" == swap s1 s2
+			"ba" == s1
+			 "a" == s2
+		]
+		--assert all [
+			s1: "ab🙂" s2: next s1
+			"ba🙂" == swap s1 s2
+			"ba🙂" == s1
+			 "a🙂" == s2
+		]
+		--assert all [
+			s1: "ab🙂" s2: next s1
+			"a🙂" == swap s2 s1
+			"ba🙂" == s1
+			"a🙂" == s2
+		]
+		--assert all [
+			"b🙂" == swap s1: "🙂b" next s1
+		]
+	--test-- "swap invalidating index (known issue)"
+		--assert all [
+			"b🙂" == swap s1: "🙂b" s2: next s1
+			"🙂" == length? s2 ;@@ Known issue!!! The index is not valid anymore.
+		]
+	--test-- "swap binary"
+		--assert all [
+			s1: #{0102} s2: #{AABB}
+			#{AA02} == swap s1 s2
+			#{AA02} == s1
+			#{01BB} == s2
+		]
+		--assert all [
+			s1: #{01FF} s2: next s1
+			#{FF01} == swap s1 s2
+			#{FF01} == s1
+			  #{01} == s2
+		]
+	--test-- "swap block"
+		--assert all [
+			s1: [1 2] s2: [3 4]
+			[3 2] == swap s1 s2
+			[3 2] == s1
+			[1 4] == s2
+		]
+		--assert all [
+			s1: [1 2] s2: next s1
+			[2 1] == swap s1 s2
+			[2 1] == s1
+			[  1] == s2
+		]
+
+===end-group===
+
 
 ===start-group=== "RANDOM"
 	--test-- "random/only string!"
@@ -1937,6 +2068,15 @@ try/with [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/912
 		; not supported..
 		--assert all [error? e: try [random 'a/b/c] e/id = 'cannot-use]
+
+	--test-- "random unicode"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2691
+		random/seed 1
+		--assert "sistte" == random "stesti"
+		random/seed 1
+		--assert "síšttě" == random "štěstí"
+		random/seed 1
+		--assert #{DDBBAACC} == random #{aabbccdd}
 
 ===end-group===
 

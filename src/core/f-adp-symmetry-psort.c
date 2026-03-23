@@ -25,7 +25,7 @@
 
 #include <stdlib.h>
 
-#define Adp_SymPSort reb_qsort
+#define Adp_SymPSort unstable_sort
 
 // the code for the sorting algorithm begins 
 #define swapvector(TYPE,pi,pj,n)            \

@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -314,12 +314,27 @@ X*/	REBSER *Prep_Bin_Str(REBVAL *val, REBCNT *index, REBCNT *length)
 	REBCNT idx     = VAL_INDEX(value);
 	REBUNI swap;
 
-	for (n = VAL_LEN(value); n > 1;) {
-		k = idx + (REBCNT)Random_Int(secure) % n;
-		n--;
-		swap = GET_ANY_CHAR(series, k);
-		SET_ANY_CHAR(series, k, GET_ANY_CHAR(series, n + idx));
-		SET_ANY_CHAR(series, n + idx, swap);
+	if (IS_UTF8_STRING(value)) {
+		UTF8_To_UTF32(BUF_SCAN, VAL_DATA(value), VAL_LEN(value), OS_LITTLE_ENDIAN);
+		REBCNT* buf = (REBCNT*)BIN_HEAD(BUF_SCAN);
+		n = SERIES_TAIL(BUF_SCAN) / 4;
+		for (; n > 1;) {
+			k = idx + (REBCNT)Random_Int(secure) % n;
+			n--;
+			swap = buf[k];
+			buf[k] = buf[n + idx];
+			buf[n + idx] = swap;
+		}
+		UTF32_To_UTF8(VAL_SERIES(value), BIN_HEAD(BUF_SCAN), SERIES_TAIL(BUF_SCAN), OS_LITTLE_ENDIAN);
+	}
+	else {
+		for (n = VAL_LEN(value); n > 1;) {
+			k = idx + (REBCNT)Random_Int(secure) % n;
+			n--;
+			swap = BIN_HEAD(series)[k];
+			BIN_HEAD(series)[k] = BIN_HEAD(series)[n + idx];
+			BIN_HEAD(series)[n + idx] = swap;
+		}
 	}
 }
 

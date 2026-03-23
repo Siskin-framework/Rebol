@@ -298,7 +298,7 @@ enum {
 #define ALIGN(s, a) (((s) + (a)-1) & ~((a)-1))
 
 #ifndef ALEVEL
-# ifdef DEBUG
+# if defined(DEBUG) || defined(_DEBUG)
 #  define ALEVEL 1
 # else
 #  define ALEVEL 0

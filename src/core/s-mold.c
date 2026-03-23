@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -385,6 +385,7 @@ STOID Mold_Char(REBSER *dst, REBU32 chr, REBOOL molded)
 		REBCNT len = UTF8_Codepoint_Size(chr);
 		EXPAND_SERIES_TAIL(dst, len);
 		Encode_UTF8_Char(BIN_TAIL(dst) - len, chr);
+		if (len > 1) UTF8_SERIES(dst);
 	}
 	else {
 		EXPAND_SERIES_TAIL(dst, 10); // worst case: #"^(1234)"
@@ -1296,7 +1297,8 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		if ((GET_MOPT(mold, MOPT_MOLD_ALL) && VAL_INDEX(value) != 0)
 			|| VAL_TAIL(value) == 0
 			|| NOT_FOUND == Find_Str_Char(VAL_SERIES(value), 0, 0,
-				VAL_TAIL(value), 1, VAL_TYPE(value) == REB_EMAIL ? '@' : ':', 0))
+				VAL_TAIL(value), 1, VAL_TYPE(value) == REB_EMAIL ? '@' : ':', 0)
+			|| VAL_DATA(value)[0] == '%')
 		{
 			Mold_All_Constr_String(value, mold);
 			return;
@@ -1711,7 +1713,7 @@ append:
 	URL_Escapes['\x7C'] |= ESC_URL;
 	// required file escaping... https://github.com/Oldes/Rebol-issues/issues/2491
 	URL_Escapes['\x3A'] |= ESC_FILE;
-	URL_Escapes['\x40'] |= ESC_FILE;
+	//URL_Escapes['\x40'] |= ESC_FILE;
 	
 }
 

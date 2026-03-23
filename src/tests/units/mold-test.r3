@@ -248,6 +248,7 @@ Rebol [
 		--assert "a:a"  == mold as url! next "aa:a"
 		--assert {#(url! "aa:a" 2)} == mold/all as url! next "aa:a"
 		--assert {#(url! "a:a" 2)} == mold as url! next "a:a"
+		--assert {#(url! "%aa")} == mold as url! "%aa"
 
 ===end-group=== 
 
@@ -265,6 +266,8 @@ Rebol [
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1442
 		--assert "%a%02c" == mold to-file "a^Bc"
 		--assert "%a%20b" == mold to-file "a^ b"
+
+		--assert "%a@b" == mold to-file "a@b"
 
 ===end-group=== 
 
@@ -538,6 +541,7 @@ Rebol [
 		--assert {#(email! "a@/")} == mold as email! "a@/"
 		--assert {#(email! "a@@")} == mold as email! "a@@"
 		--assert {#(email! "a@b@")} == mold as email! "a@b@"
+		--assert {#(email! "%@b")} == mold as email! "%@b"
 ===end-group===
 
 ===start-group=== "mold ref!"

@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -75,7 +75,7 @@ static const REBCNT normalized_vect_sym[29] = {
 	return normalized_vect_sym[sym - SYM_INT8X];
 }
 
-REBU64 f_to_u64(float n) {
+static REBU64 f_to_u64(float n) {
 	union {
 		REBU64 u;
 		REBDEC d;
@@ -266,7 +266,7 @@ static REBDEC Query_Vector_Median(REBSER *vect) {
 	sorted = Copy_Series(vect);
 	sorted->size = vect->size; // attributes
 	ASSERT1(type < VT_MAX, RP_ASSERTS);
-	reb_qsort(SERIES_DATA(sorted), len, VECT_BYTE_SIZE(type), compares[type]);
+	unstable_sort(SERIES_DATA(sorted), len, VECT_BYTE_SIZE(type), compares[type]);
 
 	median = get_vect_decimal(type, SERIES_DATA(sorted), len/2);
 	if (len%2 == 0) {
@@ -904,7 +904,7 @@ return_number:
 	REBCNT skp = VECT_BYTE_SIZE(type);
 	REBYTE *data = VAL_SERIES(vect)->data + (idx * skp);
 	ASSERT1(type < VT_MAX, RP_ASSERTS);
-	reb_qsort(data, len, skp, reversed ? compares_rev[type] : compares[type]);
+	unstable_sort(data, len, skp, reversed ? compares_rev[type] : compares[type]);
 }
 
 /***********************************************************************
@@ -1023,6 +1023,9 @@ REBOOL Get_Vector_Spec_From_Symbol(REBCNT sym, REBINT *type, REBINT *sign, REBIN
 		if (len > size && size == 0) size = len;
 		iblk = bp;
 		bp++;
+	}
+	else if (IS_END(bp)) {
+		size = 0;
 	}
 	else return 0;
 	// Index offset:
@@ -1380,6 +1383,16 @@ static void reverse_vector(REBVAL *value, REBCNT len)
 		// fall thru
 
 	case A_TO:
+		// CASE: make vector! #{01FF} ;== #(uint8! [1 255]) 
+		if (IS_BINARY(arg)) {
+			len = VAL_LEN(arg);
+			ser = Make_Vector(0, 1, 1, 8, len); //== uint8!
+			if (len > 0) {
+				COPY_MEM(SERIES_DATA(ser), VAL_BIN_DATA(arg), len);
+			}
+			SET_VECTOR(value, ser);
+			break;
+		}
 		// CASE: make vector! [...]
 		if (IS_BLOCK(arg) && Make_Vector_Spec(arg, value)) break;
 		goto bad_make;
@@ -1403,13 +1416,13 @@ static void reverse_vector(REBVAL *value, REBCNT len)
 
 	case A_SORT:
 		len = Partial(value, 0, D_ARG(8), 0);
-		Sort_Vector(value, len, D_REF(10));
 		if (
 		//	D_REF(2) ||	// case sensitive
 			D_REF(3) ||	// skip
 			D_REF(5) 	// comparator
 		//	D_REF(9) 	// all fields
 			) Trap0(RE_FEATURE_NA);
+		Sort_Vector(value, len, D_REF(10));
 		break;
 			
 	case A_RANDOM:

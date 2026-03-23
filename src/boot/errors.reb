@@ -134,6 +134,7 @@ Script: [
 	handle-exists:      [{handle already exists under id} :arg1 "and have different size"]
 
 	vector-not-compatible: [{Vectors not compatible for operation}]
+	type-mismatch:         [{type mismatch:} :arg2 {must be same type as} :arg1]
 ]
 
 Math: [

@@ -305,6 +305,7 @@ Rebol [
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1342
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1461
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1478
+;@@ https://github.com/Oldes/Rebol-issues/issues/2688
 
 	--test-- "valid arrow-like words"
 		--assert word? try [load {<-->}]
@@ -313,6 +314,7 @@ Rebol [
 		--assert word? try [load {<~~~>}]
 
 	--test-- "valid left-arrow-like words"
+		--assert word? try [load {<-}]
 		--assert word? try [load {<<}]
 		--assert word? try [load {<<<}]
 		--assert word? try [load {<<<<}]
@@ -323,6 +325,7 @@ Rebol [
 		--assert all [block? b: try [load {<<<""}] parse b [word! string!]]
 
 	--test-- "valid right-arrow-like words"
+		--assert word? try [load {->}]
 		--assert word? try [load {>>}]
 		--assert word? try [load {>>>}]
 		--assert word? try [load {>>>>}]
@@ -350,6 +353,7 @@ Rebol [
 
 	--test-- "valid left-arrow-like lit-words"
 		--assert lit-word? try [load {'<} ]
+		--assert lit-word? try [load {'<-}]
 		--assert lit-word? try [load {'<<}]
 		--assert lit-word? try [load {'<=}]
 		--assert lit-word? try [load {'<<<}]
@@ -358,6 +362,7 @@ Rebol [
 
 	--test-- "valid right-arrow-like lit-words"
 		--assert lit-word? try [load {'>} ]
+		--assert lit-word? try [load {'->}]
 		--assert lit-word? try [load {'>>}]
 		--assert lit-word? try [load {'>=}]
 		--assert lit-word? try [load {'>>>}]
@@ -461,6 +466,16 @@ Rebol [
 	--test-- "valid `emails`"
 		--assert email? load {name@where}
 		--assert email? load {a@šiška}
+
+===end-group===
+
+
+===start-group=== "File"
+	--test-- "valid `files`"
+		--assert file? transcode/one {%abc}
+		--assert file? transcode/one {%"abc"}
+		--assert file? transcode/one {%a@c}
+		--assert file? transcode/one {%a%40c}
 
 ===end-group===
 

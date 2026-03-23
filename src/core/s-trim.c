@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -279,6 +279,15 @@ static REBFLG find_in_uni(REBU32 *up, REBINT len, REBU32 c)
 	// /auto option
 	else if (flags & AM_TRIM_AUTO) {
 		trim_auto(ser, index, tail);
+		if (flags & AM_TRIM_TAIL) {
+			tail = SERIES_TAIL(ser);
+			for (; index < tail; tail--) {
+				REBYTE b = BIN_HEAD(ser)[tail - 1];
+				if (!IS_WHITE(b)) break;
+			}
+			SERIES_TAIL(ser) = tail;
+			TERM_SERIES(ser);
+		}
 	}
 	// /lines option
 	else if (flags & AM_TRIM_LINES) {

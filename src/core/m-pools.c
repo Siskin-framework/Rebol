@@ -126,7 +126,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 	void *ptr;
 
 	if (!(ptr = malloc(size))) return 0;
-#ifdef DEBUG
+#if defined(DEBUG) || defined(_DEBUG)
 	PG_Mem_Make++;
 	if (Reb_Opts && Reb_Opts->watch_alloc)
 		Debug_Fmt(BOOT_STR(RS_WATCH, 4), size);
@@ -136,7 +136,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 		Check_Security(SYM_MEMORY, POL_EXEC, 0);
 	}
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(_DEBUG)
 	// Fill the allocated memory with content to detect
 	// potential issues where it should have been cleared.
 	memset(ptr, 42, size);

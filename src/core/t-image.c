@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@
 **  Module:  t-image.c
 **  Summary: image datatype
 **  Section: datatypes
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Oldes
 **  Notes:
 **
 ***********************************************************************/
@@ -138,12 +138,20 @@
 
 /***********************************************************************
 **
-*/	void Fill_Alpha_Line(REBYTE *rgba, REBYTE alpha, REBINT len)
+*/	void Fill_Channel_Line(REBYTE *rgba, REBYTE value, REBINT len, REBCNT sym)
 /*
 ***********************************************************************/
 {
+	REBCNT idx=0;
+	switch (sym) {
+	case SYM_ALPHA: idx = C_A; break;
+	case SYM_RED:   idx = C_R; break;
+	case SYM_GREEN: idx = C_G; break;
+	case SYM_BLUE:  idx = C_B; break;
+	case SYM_OPACITY: idx = C_A; value = 255 - value; break;
+	}
 	for (; len > 0; len--, rgba += 4)
-		rgba[C_A] = alpha;
+		rgba[idx] = value;
 }
 
 
@@ -154,7 +162,7 @@
 ***********************************************************************/
 {
 	for (; dupy > 0; dupy--, ip += w)
-		Fill_Alpha_Line((REBYTE *)ip, alpha, dupx);
+		Fill_Channel_Line((REBYTE *)ip, alpha, dupx, SYM_ALPHA);
 }
 
 
@@ -188,6 +196,25 @@
 	return 0;
 }
 
+FORCE_INLINE
+/***********************************************************************
+**
+*/	REBYTE Luminosity(REBYTE r, REBYTE g, REBYTE b)
+/*
+***********************************************************************/
+{
+	return (REBYTE)((0.299 * r) + (0.587 * g) + (0.114 * b));
+}
+
+FORCE_INLINE
+/***********************************************************************
+**
+*/	REBCNT Grayscale(REBCNT r, REBCNT g, REBCNT b)
+/*
+***********************************************************************/
+{
+	return (r + g + b) / 3;
+}
 
 /***********************************************************************
 **
@@ -212,6 +239,19 @@
 	case SYM_ABGR: c0 = C_A; c1 = C_B; c2 = C_G; c3 = C_R; alpha =  1; break;
 	case SYM_OBGR: c0 = C_A; c1 = C_B; c2 = C_G; c3 = C_R; alpha = -1; break;
 	case SYM_BGR:  c0 = C_B; c1 = C_G; c2 = C_R; c3 = C_A; break;
+	
+	case SYM_LUMINOSITY: {
+		for (; len > 0; len--, rgba += 4, ++bin) {
+			bin[0] = Luminosity(rgba[C_R], rgba[C_G], rgba[C_B]);
+		}
+		break;
+	}
+	case SYM_GRAY: {
+		for (; len > 0; len--, rgba += 4, ++ bin) {
+			bin[0] = Grayscale(rgba[C_R], rgba[C_G], rgba[C_B]);
+		}
+		break;
+	}
 	default: return;
 	}
 
@@ -270,6 +310,15 @@
 	case SYM_BGRO: b = 0; g = 1; r = 2; a = 3; alpha = -1; break;
 	case SYM_ABGR: a = 0; b = 1; g = 2; r = 3; alpha =  1; break;
 	case SYM_OBGR: a = 0; b = 1; g = 2; r = 3; alpha = -1; break;
+
+	case SYM_GRAY:
+	case SYM_LUMINOSITY: {
+		REBYTE* bin = (REBYTE*)trg;
+		for (; len > 0; len--, src++, bin+=4) {
+			bin[C_R] = bin[C_G] = bin[C_B] = *src;
+		}
+		break;
+	}
 	default: return;
 	}
 
@@ -321,34 +370,47 @@
 
 /***********************************************************************
 **
-*/	void Alpha_To_Bin(REBYTE *bin, REBYTE *rgba, REBINT len, REBCNT type)
+*/	void Channel_To_Bin(REBYTE* bin, REBYTE* rgba, REBINT len, REBCNT type)
 /*
 ***********************************************************************/
 {
-	if (type == SYM_ALPHA) {
-		for (; len > 0; len--, rgba += 4)
-			*bin++ = rgba[C_A];
-	} else { // SYM_OPACITY
+	REBCNT idx = 0;
+	switch (type) {
+	case SYM_ALPHA: idx = C_A; break;
+	case SYM_RED:   idx = C_R; break;
+	case SYM_GREEN: idx = C_G; break;
+	case SYM_BLUE:  idx = C_B; break;
+	case SYM_OPACITY:
 		for (; len > 0; len--, rgba += 4)
 			*bin++ = 255 - rgba[C_A];
+		return;
 	}
+	for (; len > 0; len--, rgba += 4)
+		*bin++ = rgba[idx];
 }
+
+
 
 /***********************************************************************
 **
-*/	void Bin_To_Alpha(REBYTE *rgba, REBCNT size, REBYTE *bin, REBINT len, REBCNT type)
+*/	void Bin_To_Channel(REBYTE *rgba, REBCNT size, REBYTE *bin, REBINT len, REBCNT sym)
 /*
 ***********************************************************************/
 {
+	REBCNT idx = 0;
 	if (len > (REBINT)size) len = size; // avoid over-run
-
-	if (type == SYM_ALPHA) {
-		for (; len > 0; len--, rgba += 4)
-			rgba[C_A] = *bin++;
-	} else { // SYM_OPACITY
+	switch (sym) {
+	case SYM_ALPHA: idx = C_A; break;
+	case SYM_RED:   idx = C_R; break;
+	case SYM_GREEN: idx = C_G; break;
+	case SYM_BLUE:  idx = C_B; break;
+	case SYM_OPACITY:
 		for (; len > 0; len--, rgba += 4)
 			rgba[C_A] = 255 - *bin++;
+		return;
 	}
+	for (; len > 0; len--, rgba += 4)
+		rgba[idx] = *bin++;
 }
 
 
@@ -615,7 +677,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 
 		// Load alpha channel data:
 		if (IS_BINARY(block)) {
-			Bin_To_Alpha(ip, size, VAL_BIN_DATA(block), VAL_LEN(block), SYM_ALPHA);
+			Bin_To_Channel(ip, size, VAL_BIN_DATA(block), VAL_LEN(block), SYM_ALPHA);
 //			VAL_IMAGE_TRANSP(value)=VITT_ALPHA;
 			block++;
 		}
@@ -787,7 +849,7 @@ INLINE REBCNT ARGB_To_BGR(REBCNT i)
 			if (IS_PAIR(count)) // rectangular fill
 				Fill_Alpha_Rect((REBCNT *)ip, (REBYTE)n, w, dupx, dupy);
 			else
-				Fill_Alpha_Line(ip, (REBYTE)n, dup);
+				Fill_Channel_Line(ip, (REBYTE)n, dup, SYM_ALPHA);
 		} else if (IS_TUPLE(arg)) { // RGB
 			if (IS_PAIR(count)) // rectangular fill
 				Fill_Rect((REBCNT *)ip, TO_PIXEL_TUPLE(arg), w, dupx, dupy, only);
@@ -1341,6 +1403,12 @@ is_true:
 				VAL_PAIR_X(val) = (REBD32)VAL_IMAGE_WIDE(data);
 				VAL_PAIR_Y(val) = (REBD32)VAL_IMAGE_HIGH(data);
 				break;
+			case SYM_WIDTH:
+				SET_INTEGER(val, VAL_IMAGE_WIDE(data));
+				break;
+			case SYM_HEIGHT:
+				SET_INTEGER(val, VAL_IMAGE_HIGH(data));
+				break;
 
 			case SYM_RGB:
 			case SYM_BGR:
@@ -1364,12 +1432,24 @@ is_true:
 				Set_Binary(val, nser);
 				break;
 
+			case SYM_LUMINOSITY:
+			case SYM_GRAY:
+				nser = Make_Binary(len);
+				SERIES_TAIL(nser) = len;
+				Color_To_Bin(QUAD_HEAD(nser), src, len, sym);
+				Set_Binary(val, nser);
+				break;
+
 			case SYM_ALPHA:
+			case SYM_RED:
+			case SYM_GREEN:
+			case SYM_BLUE:
 			case SYM_OPACITY:
 				nser = Make_Binary(len);
 				SERIES_TAIL(nser) = len;
-				Alpha_To_Bin(QUAD_HEAD(nser), src, len, sym);
+				Channel_To_Bin(QUAD_HEAD(nser), src, len, sym);
 				Set_Binary(val, nser);
+				break;
 				break;
 
 			case SYM_COLOR:
@@ -1401,9 +1481,10 @@ is_true:
 					n = VAL_INT32(val);
 					if (n < 0 || n > 255) return PE_BAD_RANGE;
 					Fill_Line((REBCNT *)src, TO_PIXEL_COLOR(n,n,n,0xff), len, 1);
-				} else if (IS_BINARY(val)) {
+				} else if ((IS_VECTOR(val) && VAL_VEC_WIDTH(val) == 1) || IS_BINARY(val)) {
 					Bin_To_RGB(src, len, VAL_BIN_DATA(val), VAL_LEN(val) / 3);
-				} else return PE_BAD_SET;
+				}
+				else return PE_BAD_SET;
 				break;
 
 			case SYM_RGBA:
@@ -1423,20 +1504,36 @@ is_true:
 					n = VAL_INT32(val);
 					if (n < 0 || n > 255) return PE_BAD_RANGE;
 					Fill_Line((REBCNT *)src, TO_PIXEL_COLOR(n,n,n,n), len, FALSE);
-				} else if (IS_BINARY(val)) {
+				} else if ((IS_VECTOR(val) && VAL_VEC_WIDTH(val) == 1) || IS_BINARY(val)) {
 					Bin_To_Color(src, VAL_BIN_DATA(val), VAL_LEN(val) / 4, sym);
 				} else return PE_BAD_SET;
 				break;
 
 			case SYM_ALPHA:
+			case SYM_RED:
+			case SYM_GREEN:
+			case SYM_BLUE:
 			case SYM_OPACITY:
 				if (IS_INTEGER(val)) {
 					n = VAL_INT32(val);
 					if (n < 0 || n > 255) return PE_BAD_RANGE;
-					Fill_Alpha_Line(src, (REBYTE)n, len);
-				} else if (IS_BINARY(val)) {
-					Bin_To_Alpha(src, len, VAL_BIN_DATA(val), VAL_LEN(val), sym);
+					Fill_Channel_Line(src, (REBYTE)n, len, sym);
+				} else if ((IS_VECTOR(val) && VAL_VEC_WIDTH(val) == 1) || IS_BINARY(val)) {
+					Bin_To_Channel(src, len, VAL_BIN_DATA(val), VAL_LEN(val), sym);
 				} else return PE_BAD_SET;
+				break;
+
+			case SYM_LUMINOSITY:
+			case SYM_GRAY:
+				if (IS_INTEGER(val)) {
+					n = VAL_INT32(val);
+					if (n < 0 || n > 255) return PE_BAD_RANGE;
+					Fill_Line((REBCNT*)src, TO_PIXEL_COLOR(n, n, n, n), len, FALSE);
+				}
+				else if ((IS_VECTOR(val) && VAL_VEC_WIDTH(val) == 1) || IS_BINARY(val)) {
+					Bin_To_Color(src, VAL_BIN_DATA(val), VAL_LEN(val), sym);
+				}
+				else return PE_BAD_SET;
 				break;
 
 			default:

@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -215,6 +215,12 @@ static int Check_Char_Range(REBVAL *val, REBCNT limit)
 **
 */	REBNATIVE(as)
 /*
+**	NOTE: It is not possible to coerce a binary with vectors, because
+**	vector info is encoded in the series and casting it to binary
+**	would destroy it.
+**	It is also not possible to coerce a binary with strings, because
+**	strings are internally UTF-8 encoded and modifying binary directly
+**	could corrupt this encoding!
 ***********************************************************************/
 {
 	REBVAL *type = D_ARG(1);
