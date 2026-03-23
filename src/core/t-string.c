@@ -64,19 +64,28 @@ static void str_to_char(REBVAL *out, REBVAL *val, REBCNT idx)
 
 static void swap_chars(REBVAL *val1, REBVAL *val2)
 {
-	REBU32 c1;
-	REBU32 c2;
 	REBSER *s1 = VAL_SERIES(val1);
 	REBSER *s2 = VAL_SERIES(val2);
+	REBLEN  i1 = VAL_INDEX(val1);
+	REBLEN  i2 = VAL_INDEX(val2);
 
-	c1 = GET_UTF8_CHAR(s1, VAL_INDEX(val1));
-	c2 = GET_UTF8_CHAR(s2, VAL_INDEX(val2));
-
-	if (!IS_UTF8_SERIES(s1) && c2 > 0x7F) UTF8_SERIES(s1);
-	SET_ANY_CHAR(s1, VAL_INDEX(val1), c2);
-	
-	if (!IS_UTF8_SERIES(s2) && c1 > 0x7F) UTF8_SERIES(s2);
-	SET_ANY_CHAR(s2, VAL_INDEX(val2), c1);
+	if (IS_UTF8_SERIES(s1) || IS_UTF8_SERIES(s2)) {
+		REBU32 c1 = UTF8_Get_Codepoint(BIN_SKIP(s1, i1));
+		REBU32 c2 = UTF8_Get_Codepoint(BIN_SKIP(s2, i2));
+		if (s1 == s2 && UTF8_Codepoint_Size(c1) != UTF8_Codepoint_Size(c2)) {
+			// Swaping chars with different widths in the same series
+			// would invalidate one of the value indexes!
+			Trap0(RE_FEATURE_NA);
+		}
+		UTF8_Replace_Codepoint(s1, i1, c2);
+		UTF8_Replace_Codepoint(s2, i2, c1);		
+	}
+	else {
+		// Fast byte swap
+		REBYTE tmp = BIN_HEAD(s1)[i1];
+		BIN_HEAD(s1)[i1] = BIN_HEAD(s2)[i2];
+		BIN_HEAD(s2)[i2] = tmp;
+	}
 }
 
 static void reverse_string(REBVAL *value, REBCNT len)
