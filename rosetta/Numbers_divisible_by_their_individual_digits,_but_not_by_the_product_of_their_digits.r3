@@ -11,8 +11,8 @@ divisible?: function [
     p: 1
     c: n
     while [c > 0][
-        d: c // 10                         ;; extract rightmost digit
-        if any [d = 0  not zero? n // d][  ;; digit is 0 or doesn't divide n → fail
+        d: c % 10                          ;; extract rightmost digit
+        if any [d == 0  not zero? n % d][  ;; digit is 0 or doesn't divide n → fail
             return false
         ]
         p: p * d                           ;; accumulate digit product
@@ -25,8 +25,8 @@ count: 0
 repeat i 999 [
     if divisible? i [
         prin pad i -4                       ;; right-align in 4-char field
-        count: count + 1
-        if zero? count // 20 [prin newline] ;; newline every 20th number
+        ++ count
+        if zero? count % 20 [prin newline]  ;; newline every 20th number
     ]
 ]
 
