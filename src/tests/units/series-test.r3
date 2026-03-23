@@ -1997,6 +1997,10 @@ try/with [
 			"🙂b" == s1
 			"ač" == s2 
 		]
+		--assert all [
+			"🙂b" == swap s: "ab" "🙂"
+			2 == length? s
+		]
 	--test-- "swap string (same series)"
 		--assert all [
 			s1: "ab" s2: next s1
@@ -2011,9 +2015,18 @@ try/with [
 			 "a🙂" == s2
 		]
 		--assert all [
-		;; swaping of chars with different widths in the same string is not available!
-			error? e: try [swap s1: "🙂b" next s1]
-			e/id = 'feature-na
+			s1: "ab🙂" s2: next s1
+			"a🙂" == swap s2 s1
+			"ba🙂" == s1
+			"a🙂" == s2
+		]
+		--assert all [
+			"b🙂" == swap s1: "🙂b" next s1
+		]
+	--test-- "swap invalidating index (known issue)"
+		--assert all [
+			"b🙂" == swap s1: "🙂b" s2: next s1
+			"🙂" == length? s2 ;@@ Known issue!!! The index is not valid anymore.
 		]
 	--test-- "swap binary"
 		--assert all [

@@ -72,13 +72,17 @@ static void swap_chars(REBVAL *val1, REBVAL *val2)
 	if (IS_UTF8_SERIES(s1) || IS_UTF8_SERIES(s2)) {
 		REBU32 c1 = UTF8_Get_Codepoint(BIN_SKIP(s1, i1));
 		REBU32 c2 = UTF8_Get_Codepoint(BIN_SKIP(s2, i2));
-		if (s1 == s2 && UTF8_Codepoint_Size(c1) != UTF8_Codepoint_Size(c2)) {
-			// Swaping chars with different widths in the same series
-			// would invalidate one of the value indexes!
-			Trap0(RE_FEATURE_NA);
+		// Replacing a character with different width may invalidate index!
+        // Replace higher index first to keep lower index valid
+        // when both operate on the same series buffer
+		if (i2 > i1) {
+			SET_ANY_CHAR(s2, i2, c1);
+			SET_ANY_CHAR(s1, i1, c2);
 		}
-		UTF8_Replace_Codepoint(s1, i1, c2);
-		UTF8_Replace_Codepoint(s2, i2, c1);		
+		else {
+			SET_ANY_CHAR(s1, i1, c2);
+			SET_ANY_CHAR(s2, i2, c1);
+		}
 	}
 	else {
 		// Fast byte swap
