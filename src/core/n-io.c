@@ -1400,3 +1400,15 @@ chk_neg:
 	SET_FALSE(D_RET);
 	return R_RET;
 }
+
+/***********************************************************************
+**
+*/	REBNATIVE(ttyq)
+/*
+//  tty?: native [
+//		"Returns TRUE if standard input is connected to a terminal."
+//  ]
+***********************************************************************/
+{
+	return OS_Is_TTY() ? R_TRUE : R_FALSE;
+}
