@@ -45,72 +45,7 @@ my-console: context [
 						]
 					]
 					#"^-" [ ; Tab Completion
-						last-part: any [
-							find/last/tail event/port/data SP
-							event/port/data
-						]
-						either last-part/1 == #"%" [ ; File completion
-							last-part: as file! next last-part
-							path-parts: split-path last-part
-							files: sort read path-parts/1
-							matching-part: none
-							either perfect-match: find files last-part [
-								append event/port/data SP
-							][
-								best-matches: clear []
-								foreach file files [
-									if parse file [last-part to end][
-										append best-matches as string! file
-									]
-								]
-								either single? best-matches [
-									missing-part: skip best-matches/1 length? last-part
-									append event/port/data join missing-part SP
-								][
-									print ["^[[G^[[K" mold best-matches]
-									min-length: length? best-matches/1
-									foreach match next best-matches [
-										min-length: min min-length length? match
-									]
-									if match-count: catch [
-										repeat char-count min-length [
-											char: best-matches/1/:char-count
-											foreach word best-matches [
-												if char != word/:char-count [
-													throw char-count - 1
-												]
-											]
-										]
-									][
-										matching-part: skip copy/part best-matches/1 match-count length? last-part
-									]
-								]
-							]
-							if matching-part [
-								append event/port/data matching-part
-							]
-						] [ ; Word completion
-							all-words: sort union words-of system/contexts/lib words-of system/contexts/user
-
-							written-text: copy event/port/data
-
-							either perfect-match: find all-words to-word written-text [
-								append event/port/data SP
-							][
-								best-matches: clear []
-								foreach word all-words [
-									if parse to-string word [ written-text to end ] [
-										append best-matches word
-									]
-								]
-								either single? best-matches [
-									missing-part: skip to-string best-matches/1 length? written-text
-									append event/port/data join missing-part SP
-								] [
-									print ["^[[G^[[K" mold best-matches]
-								]
-							]
-						]
+						complete-input event/port/data
 					]
 				][
 					append event/port/data event/key
@@ -152,6 +87,82 @@ my-console: context [
 		buffer: make string! 1000
 		emit: func[str][ append buffer str ]
 	]
+
+
+	complete-input: function[
+		input-data [string!]
+	][
+		part: any [
+			find/last/tail input-data SP
+			input-data
+		]
+		case [
+			part/1 == #"%" [ ; File completion
+				part: as file! next part
+				path-parts: split-path part
+				files: sort read path-parts/1
+				matching-part: none
+				either perfect-match: find files part [
+					append input-data SP
+				][
+					best-matches: clear []
+					foreach file files [
+						if parse file [part to end][
+							append best-matches as string! file
+						]
+					]
+					either single? best-matches [
+						missing-part: skip best-matches/1 length? part
+						append input-data join missing-part SP
+					][
+						print ["^[[G^[[K" mold best-matches]
+						min-length: length? best-matches/1
+						foreach match next best-matches [
+							min-length: min min-length length? match
+						]
+						if match-count: catch [
+							repeat char-count min-length [
+								char: best-matches/1/:char-count
+								foreach word best-matches [
+									if char != word/:char-count [
+										throw char-count - 1
+									]
+								]
+							]
+						][
+							matching-part: skip copy/part best-matches/1 match-count length? part
+						]
+					]
+				]
+				if matching-part [
+					append input-data matching-part
+				]
+			]
+			not empty? part [ ; Word completion
+				;@@ all-words should not be created on each completion call!
+				all-words: sort union words-of system/contexts/lib words-of system/contexts/user
+				forall all-words [all-words/1: to string! all-words/1]
+
+				either perfect-match: find all-words part [
+					append input-data SP
+				][
+					best-matches: clear []
+					foreach word all-words [
+						if parse word [ part to end ] [
+							append best-matches word
+						]
+					]
+					either single? best-matches [
+						missing-part: skip to string! best-matches/1 length? part
+						append append input-data missing-part SP
+					] [
+						print ["^[[G^[[K" mold best-matches]
+					]
+				]
+			]
+		]
+	]
+
 	modify port 'line false
 	prin as-red prompt
 	wait [port]
