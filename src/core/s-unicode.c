@@ -676,7 +676,7 @@ done:
 	const REBLEN uni_len = len / 4;
 
 	for (i = 0; i < uni_len; i++) {
-		dst_len = UTF8_Codepoint_Size(uni[i]);
+		dst_len += UTF8_Codepoint_Size(uni[i]);
 	}
 
 	if (!dst_ser)

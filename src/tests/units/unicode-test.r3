@@ -632,6 +632,10 @@ Rebol [
 		--assert all ["🙂b" == swap a next b  a/1 == #"🙂"  b == "aá"]
 		--assert all ["🙂b" == swap a tail b  a/1 == #"🙂"  b == "aá"]
 
+	--test-- "random"
+		s: "ábč🙂" random/seed 1
+		--assert "🙂báč" == random s
+		
 	--test-- "random/only"
 		s: "ábč🙂"
 		--assert loop 10 [unless find s random/only s [break/return false] true]
