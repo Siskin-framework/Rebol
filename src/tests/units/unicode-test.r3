@@ -795,10 +795,12 @@ Rebol [
 
 ===start-group=== "char column width"
 	--test-- "zero width chars"
-		s: #"^(200b)"
+		c: #"^(200b)"
 		--assert 0 = c/width
 		s: "a​b"
+		--assert 1 = s/1/width
 		--assert 0 = s/2/width
+		--assert 1 = s/3/width
 	--test-- "wide chars"
 		c: #"🙂"
 		--assert 2 = c/width
