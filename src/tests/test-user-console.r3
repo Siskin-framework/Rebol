@@ -38,7 +38,7 @@ my-console: context [
 							clear event/port/data
 							unless unset? :res [
 								emit as-green "== "
-								emit mold res
+								emit mold :res
 								print buffer
 								clear buffer
 							]
@@ -73,6 +73,7 @@ my-console: context [
 			;]
 			resize    [
 				;print ["^[[G^[[Ksize:" event/offset]
+				emit "^[[G^[[K"
 				emit as-red prompt
 				emit event/port/data
 			]
@@ -140,7 +141,7 @@ my-console: context [
 			]
 			not empty? part [ ; Word completion
 				;@@ all-words should not be created on each completion call!
-				all-words: sort union words-of system/contexts/lib words-of system/contexts/user
+				all-words: sort union words-of system/contexts/lib words-of self
 				forall all-words [all-words/1: to string! all-words/1]
 
 				either perfect-match: find all-words part [
