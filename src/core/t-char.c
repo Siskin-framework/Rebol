@@ -52,6 +52,28 @@
 	return (num > 0);
 }
 
+/***********************************************************************
+**
+*/	REBINT PD_Char(REBPVS* pvs)
+/*
+***********************************************************************/
+{
+	REBVAL* sel;
+	if (IS_WORD(sel = pvs->select)) {
+		if (VAL_WORD_CANON(sel) == SYM_WIDTH) {
+			if (pvs->setval) return PE_BAD_SET;
+
+			SET_INTEGER(pvs->store, UTF8_Width(VAL_CHAR(pvs->value)));
+			return PE_USE;
+		}
+		else return PE_BAD_SELECT;
+	}
+	else
+		return PE_BAD_SELECT;
+
+	return PE_OK;
+}
+
 
 /***********************************************************************
 **

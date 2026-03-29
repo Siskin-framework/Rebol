@@ -793,4 +793,19 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "char column width"
+	--test-- "zero width chars"
+		s: #"^(200b)"
+		--assert 0 = c/width
+		s: "a​b"
+		--assert 0 = s/2/width
+	--test-- "wide chars"
+		c: #"🙂"
+		--assert 2 = c/width
+		s: "a⚡中"
+		--assert 1 = s/1/width
+		--assert 2 = s/2/width
+		--assert 2 = s/3/width
+===end-group===
+
 ~~~end-file~~~
