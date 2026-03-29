@@ -1403,6 +1403,18 @@ chk_neg:
 
 /***********************************************************************
 **
+*/	REBNATIVE(ttyq)
+/*
+//  tty?: native [
+//		"Returns TRUE if standard input is connected to a terminal."
+//  ]
+***********************************************************************/
+{
+	return OS_Is_TTY() ? R_TRUE : R_FALSE;
+}
+
+/***********************************************************************
+**
 */	REBNATIVE(read_key)
 /*
 //  read-key: native [
