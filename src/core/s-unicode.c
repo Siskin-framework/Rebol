@@ -698,8 +698,8 @@ done:
 // cross-platform wcwidth
 #define DEFINE_IN_RANGE(TYPE)                                \
 struct utf8range_##TYPE {                                    \
-##TYPE lower;     /* lower inclusive */                      \
-##TYPE upper;     /* upper inclusive */                      \
+TYPE lower;       /* lower inclusive */                      \
+TYPE upper;       /* upper inclusive */                      \
 };                                                           \
 static int utf8_in_range_##TYPE(                             \
     const struct utf8range_##TYPE *ranges, int num, TYPE ch) \
