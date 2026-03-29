@@ -607,11 +607,11 @@ view: object [
 	]
 ]
 
-console: object [
+console: construct [
 	history: []
 	;; The following flags are updated by the `read-key` call
 	;; and can be used to detect if those keys were also pressed.
-	control?: shift?: alt?: _
+	control?: shift?: alt?: none
 ]
 
 license: none
