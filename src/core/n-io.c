@@ -1403,12 +1403,26 @@ chk_neg:
 
 /***********************************************************************
 **
-*/	REBNATIVE(ttyq)
+*/	REBNATIVE(read_key)
 /*
-//  tty?: native [
-//		"Returns TRUE if standard input is connected to a terminal."
+//  read-key: native [
+//		"Reads a single keypress from the console without echoing it."
 //  ]
 ***********************************************************************/
 {
-	return OS_Is_TTY() ? R_TRUE : R_FALSE;
+	REBKEY key = { 0 };
+	SET_NONE(D_RET);
+	if (OS_Read_Key(&key)) {
+		SET_LOGIC(Get_System(SYS_CONSOLE, CONSOLE_CONTROLQ), GET_FLAG(key.flags, EVF_CONTROL));
+		SET_LOGIC(Get_System(SYS_CONSOLE, CONSOLE_SHIFTQ), GET_FLAG(key.flags, EVF_SHIFT));
+		SET_LOGIC(Get_System(SYS_CONSOLE, CONSOLE_ALTQ), GET_FLAG(key.flags, EVF_ALT));
+		if (key.uchar) SET_CHAR(D_RET, key.uchar);
+		else if (key.virtu) {
+			REBVAL* arg = Get_System(SYS_CATALOG, CAT_EVENT_KEYS);
+			if (IS_BLOCK(arg) && key.virtu <= (REBINT)VAL_TAIL(arg)) {
+				*D_RET = *VAL_BLK_SKIP(arg, key.virtu - 1);
+			}
+		}
+	}
+	return R_RET;
 }

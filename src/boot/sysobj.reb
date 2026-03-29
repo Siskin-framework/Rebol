@@ -227,7 +227,9 @@ catalog: object [
 		control
 		alt
 		pause
-		capital	
+		capital
+		backtab
+		begin
 	]
 	file-types: []
 ]
@@ -603,6 +605,13 @@ view: object [
 		work-origin:
 		work-size: 0x0
 	]
+]
+
+console: object [
+	history: []
+	;; The following flags are updated by the `read-key` call
+	;; and can be used to detect if those keys were also pressed.
+	control?: shift?: alt?: _
 ]
 
 license: none
