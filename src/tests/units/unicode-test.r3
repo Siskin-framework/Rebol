@@ -793,7 +793,7 @@ Rebol [
 
 ===end-group===
 
-===start-group=== "char column width"
+===start-group=== "char column (terminal) width"
 	--test-- "zero width chars"
 		c: #"^(200b)"
 		--assert 0 = c/width
@@ -808,6 +808,23 @@ Rebol [
 		--assert 1 = s/1/width
 		--assert 2 = s/2/width
 		--assert 2 = s/3/width
+===end-group===
+
+===start-group=== "char utf8 size (number of bytes)"
+	--test-- "zero width chars"
+		c: #"^(200b)"
+		--assert 3 = c/size
+		s: "a​b"
+		--assert 1 = s/1/size
+		--assert 3 = s/2/size
+		--assert 1 = s/3/size
+	--test-- "wide chars"
+		c: #"🙂"
+		--assert 4 = c/size
+		s: "a⚡中"
+		--assert 1 = s/1/size
+		--assert 3 = s/2/size
+		--assert 3 = s/3/size
 ===end-group===
 
 ~~~end-file~~~
