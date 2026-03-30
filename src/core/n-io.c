@@ -1425,9 +1425,9 @@ chk_neg:
 	REBKEY key = { 0 };
 	SET_NONE(D_RET);
 	if (OS_Read_Key(&key)) {
-		SET_LOGIC(Get_System(SYS_CONSOLE, CONSOLE_CONTROLQ), GET_FLAG(key.flags, EVF_CONTROL));
-		SET_LOGIC(Get_System(SYS_CONSOLE, CONSOLE_SHIFTQ), GET_FLAG(key.flags, EVF_SHIFT));
-		SET_LOGIC(Get_System(SYS_CONSOLE, CONSOLE_ALTQ), GET_FLAG(key.flags, EVF_ALT));
+		SET_LOGIC(Get_System(SYS_STATE, STATE_CONTROLQ), GET_FLAG(key.flags, EVF_CONTROL));
+		SET_LOGIC(Get_System(SYS_STATE, STATE_SHIFTQ), GET_FLAG(key.flags, EVF_SHIFT));
+		SET_LOGIC(Get_System(SYS_STATE, STATE_ALTQ), GET_FLAG(key.flags, EVF_ALT));
 		if (key.uchar) SET_CHAR(D_RET, key.uchar);
 		else if (key.virtu) {
 			REBVAL* arg = Get_System(SYS_CATALOG, CAT_EVENT_KEYS);
