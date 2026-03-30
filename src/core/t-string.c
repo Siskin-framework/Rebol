@@ -737,6 +737,36 @@ FORCE_INLINE
 			n = i + VAL_INDEX(data) - 1;
 		}
 	}
+	else if (IS_WORD(pvs->select)) {
+		if (pvs->setval) return PE_BAD_SET;
+
+		REBU32  len;
+		REBSER* ser  = VAL_SERIES(pvs->value);
+		REBCNT  idx  = VAL_INDEX(pvs->value);
+		REBCNT  tail = VAL_TAIL(pvs->value);
+		REBYTE* data = VAL_BIN_DATA(pvs->value);
+
+		if (idx > tail) idx = tail;
+
+		switch (VAL_WORD_CANON(pvs->select)) {
+		case SYM_LENGTH:
+			len = IS_UTF8_SERIES(ser)
+				? Length_As_UTF8_Code_Points(data)
+				: tail - idx;
+			break;
+		case SYM_WIDTH:
+			len = Length_As_Terminal_Width(data, VAL_BIN_TAIL(pvs->value));
+			break;
+		case SYM_SIZE:
+			len = tail - idx;
+			break;
+		default:
+			return PE_BAD_SELECT;
+		}
+
+		SET_INTEGER(pvs->store, len);
+		return PE_USE;
+	}
 	else return PE_BAD_SELECT;
 
 	if (val == 0) {

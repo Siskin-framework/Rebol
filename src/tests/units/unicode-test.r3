@@ -827,4 +827,66 @@ Rebol [
 		--assert 3 = s/3/size
 ===end-group===
 
+===start-group=== "string column (terminal) width"
+	--test-- "zero width chars"
+		s: "a​b"
+		--assert 2 = s/width
+		s: next s
+		--assert 1 = s/width
+		s: next s
+		--assert 1 = s/width
+		s: next s
+		--assert 0 = s/width
+	--test-- "wide chars"
+		s: "a⚡中"
+		--assert 5 = s/width
+		s: next s
+		--assert 4 = s/width
+		s: next s
+		--assert 2 = s/width
+		s: next s
+		--assert 0 = s/width
+===end-group===
+
+===start-group=== "string utf8 size (number of bytes)"
+	--test-- "zero width chars"
+		s: "a​b"
+		--assert 5 = s/size
+		s: next s
+		--assert 4 = s/size
+		s: next s
+		--assert 1 = s/size
+		s: next s
+		--assert 0 = s/size
+	--test-- "wide chars"
+		s: "a⚡中"
+		--assert 7 = s/size
+		s: next s
+		--assert 6 = s/size
+		s: next s
+		--assert 3 = s/size
+		s: next s
+		--assert 0 = s/size
+===end-group===
+
+===start-group=== "string codepoints length"
+	--test-- "zero width chars"
+		s: "a​b"
+		--assert 3 = s/length
+		s: next s
+		--assert 2 = s/length
+		s: next s
+		--assert 1 = s/length
+		s: next s
+		--assert 0 = s/length
+	--test-- "wide chars"
+		s: "a⚡中"
+		--assert 3 = s/length
+		s: next s
+		--assert 2 = s/length
+		s: next s
+		--assert 1 = s/length
+		s: next s
+		--assert 0 = s/length
+===end-group===
 ~~~end-file~~~

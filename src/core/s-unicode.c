@@ -1055,6 +1055,24 @@ u16_error:
 	return size;
 }
 
+
+/***********************************************************************
+**
+*/	REBLEN Length_As_Terminal_Width(const REBYTE* str, const REBYTE* end)
+/*
+**		Returns the column width required for the given UTF-8 string.
+**
+***********************************************************************/
+{
+	REBLEN width = 0;
+	REBLEN len = end - str;
+	while (str < end) {
+		REBU32 ch = UTF8_Decode_Codepoint(&str, &len);
+		width += UTF8_Width(ch);
+	}
+	return width;
+}
+
 /***********************************************************************
 **
 */	REBCNT Length_As_UTF8(REBUNI *src, REBCNT len, REBOOL uni, REBOOL ccr)
