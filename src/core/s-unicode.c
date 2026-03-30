@@ -695,7 +695,10 @@ done:
 }
 
 // -------------------------------------------------------------------------
-// cross-platform wcwidth
+// Cross-platform wcwidth implementation
+// Ranges collected using:
+// https://gist.github.com/Oldes/2f31b16f333151744991b22a3e15e792
+
 #define DEFINE_IN_RANGE(TYPE)                                \
 struct utf8range_##TYPE {                                    \
 TYPE lower;       /* lower inclusive */                      \
@@ -719,8 +722,9 @@ DEFINE_IN_RANGE(u32)
 
 /* From https://unicode.org/Public/UNIDATA/UnicodeData.txt */
 static const struct utf8range_u16 unicode_zero_u16[] = {
- {0x0000,0x001F}, {0x007F,0x009F},
- //								   {0x00AD,0x00AD}, // ??? https://github.com/jquast/wcwidth/issues/8
+  {0x0000,0x001F},
+  {0x007F,0x009F},
+//{0x00AD,0x00AD}, // ??? https://github.com/jquast/wcwidth/issues/8
 													 {0x0300,0x036F}, {0x0483,0x0489}, {0x0591,0x05BD},
   {0x05BF,0x05BF}, {0x05C1,0x05C2}, {0x05C4,0x05C5}, {0x05C7,0x05C7}, {0x0600,0x0605}, {0x0610,0x061A},
   {0x061C,0x061C}, {0x064B,0x065F}, {0x0670,0x0670}, {0x06D6,0x06DD}, {0x06DF,0x06E4}, {0x06E7,0x06E8},
@@ -803,7 +807,6 @@ static const struct utf8range_u32 unicode_wide_u32[] = {
  {0x1F7E0,0x1F7F0}, {0x1F90C,0x1F93A}, {0x1F93C,0x1F945}, {0x1F947,0x1F9FF}, {0x1FA70,0x1FAF8}, {0x20000,0x3FFFD},
 };
 
-
 #define ARRAYSIZE(A) (sizeof(A) / sizeof(*(A)))
 /***********************************************************************
 **
@@ -811,10 +814,7 @@ static const struct utf8range_u32 unicode_wide_u32[] = {
 /*
 ***********************************************************************/
 {
-	/* short circuit for common case */
-	if (ch <= 0x7F) {
-		return 1;
-	}
+	if (ch > 0x1F && ch < 0x7F) return 1; // common case
 	if (ch <= 0xFFFF) {
 		// zero-widths
 		if (utf8_in_range_u16(unicode_zero_u16, ARRAYSIZE(unicode_zero_u16), (u16)ch)) {
