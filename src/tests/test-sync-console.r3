@@ -116,7 +116,7 @@ start-console: function/with [
     ctx/eval-ctx: context [
         new-console: :start-console
     ]
-    debug-file: open/new/write %console-out.txt
+
     ;; Using bind/copy to be able start a console from another console
     do bind/copy [
         clear history
@@ -150,7 +150,7 @@ start-console: function/with [
         ]
         skip-to-end: does [
             pos: tail line
-            skip-to col: line/width
+            col: line/width
         ]
         prompt-width: function/with [][
             either prev-prompt = prompt [ width ][
@@ -168,6 +168,7 @@ start-console: function/with [
             ;    emit [clear-line mold key LF prompt line]
             ;]
             clear buffer
+            prev-col: col
             switch/default key [
                 ;- DEL/Backspace  
                 #"^~"
@@ -176,14 +177,14 @@ start-console: function/with [
                         skip-to col: col - pos/-1/width
                         pos: remove back pos
                         emit ["^[[K" pos]
-                        skip-to col
+                        if tail? pos [prev-col: col]
                     ]
                 ]
                 delete [
                     unless tail? pos [
                         pos: remove pos
                         emit ["^[[K" pos]
-                        skip-to col: col - pos/width
+                        col: col - pos/width
                     ]
                 ]
                 ;- ENTER          
@@ -204,7 +205,7 @@ start-console: function/with [
                             set/any 'res try/all code
                         ]
                         pos: clear line
-                        col: 0
+                        col: prev-col: 0
                         case [
                             unset? :res [] ;; ignore
                             error? :res [
@@ -229,7 +230,7 @@ start-console: function/with [
                     unless empty? line [
                         emit [LF as-purple"(escape)" LF prompt]
                         pos: clear line
-                        col: 0
+                        col: prev-col: 0
                     ]
                 ]
                 ;- TAB             
@@ -238,7 +239,7 @@ start-console: function/with [
                     either 0:0:0.01 > (stats/timer - time) [
                         pos: insert pos "  "
                         emit at pos -2
-                        skip-to col: col + 2
+                        col: col + 2
                     ][
                         if tail? pos [
                             set [matching-part: best-matches:] complete-input/with line eval-ctx
@@ -258,24 +259,23 @@ start-console: function/with [
                 ]
                 ;- Navigation      
                 up [
-                    ;emit [clear-line history-pos mold/flat history LF]
                     if history-pos < length? history [
                         ++ history-pos
                         emit [clear-line prompt ]
                         append clear line history/:history-pos
                         emit line
                         skip-to-end
+                        prev-col: col
                     ]
                 ]
                 down [
-                    ;emit [clear-line history-pos mold/flat history LF]
                     if history-pos > 1 [
                         -- history-pos
-                        ; emit [clear-line mold/flat history LF prompt ]
                         emit [clear-line prompt ]
                         append clear line history/:history-pos
                         emit line
                         skip-to-end
+                        prev-col: col
                     ]
                 ]
                 left [
@@ -291,7 +291,6 @@ start-console: function/with [
                                 ]
                             ]
                         ][ skip-back ]
-                        skip-to col
                     ]
                 ]
                 right [
@@ -307,12 +306,11 @@ start-console: function/with [
                                 ]
                             ]
                         ][ skip-next ]
-                        skip-to col
                     ]
                 ]
                 home [
                     pos: head pos
-                    skip-to col: 0
+                    col: 0
                 ]
                 end [
                     pos: tail pos
@@ -324,10 +322,12 @@ start-console: function/with [
                     key > 0#1F
                 ][
                     emit back pos: insert pos key
-                    skip-to col: col + key/width
+                    col: col + key/width
+                    if tail? pos [prev-col: col]
                 ]
             ]
-            write debug-file ajoin [mold buffer LF]
+            ;; Move cursor only if really changed its position.
+            if prev-col != col [skip-to col]
             prin buffer
         ]
     ] :ctx
@@ -335,6 +335,9 @@ start-console: function/with [
     #(unset) ;; return unset on exit
 ] repl
 
+
+;; Debug output...
+;echo %console-out.txt
 
 ;; Start new console
 start-console/prompt/banner as-red "## " ajoin [
