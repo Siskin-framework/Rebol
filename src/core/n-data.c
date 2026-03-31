@@ -963,7 +963,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 
 	*D_RET = *value;
 
-	if (IS_INTEGER(value)) {
+	if (IS_INTEGER(value) || IS_CHAR(value)) {
 		VAL_INT64(value)++;
 	}
 	else if (ANY_SERIES(value)) {
@@ -999,7 +999,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 
 	*D_RET = *value;
 
-	if (IS_INTEGER(value)) {
+	if (IS_INTEGER(value) || IS_CHAR(value)) {
 		VAL_INT64(value)--;
 	}
 	else if (ANY_SERIES(value)) {

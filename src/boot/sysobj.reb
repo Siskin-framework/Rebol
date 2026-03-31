@@ -227,7 +227,9 @@ catalog: object [
 		control
 		alt
 		pause
-		capital	
+		capital
+		backtab
+		begin
 	]
 	file-types: []
 ]
@@ -258,6 +260,9 @@ state: object [
 	]
 	last-error:  none ; used by WHY?
 	last-result: none ; used to store last console result
+	;; The following 3 flags are updated by the `read-key` call
+	;; and can be used to detect if those keys were also pressed.
+	control?: shift?: alt?: none
 	wait-list: []     ; List of ports to add to 'wait
 ]
 
@@ -603,6 +608,10 @@ view: object [
 		work-origin:
 		work-size: 0x0
 	]
+]
+
+console: construct [
+	history: []
 ]
 
 license: none
