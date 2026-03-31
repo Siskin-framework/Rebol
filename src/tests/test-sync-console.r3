@@ -321,6 +321,6 @@ start-console: function/with [
 ;; Start new console
 start-console/prompt/banner as-red "## " ajoin [
     LF as-yellow {Welcome to this simple console experiment.^/}
-    {It's possible to start another console with its own context using } as-green "start-console" {.^/}
+    {It's possible to start another console with its own context using } as-green "new-console" {.^/}
     {(use CTRL+C to exit)^/}
 ]
