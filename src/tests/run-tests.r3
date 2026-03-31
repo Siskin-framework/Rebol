@@ -19,6 +19,7 @@ dt [ ;- delta time
 		%units/bincode-test.r3
 		%units/bitset-test.r3
 		%units/call-test.r3
+		%units/char-test.r3
 		%units/codecs-test.r3
 		%units/codecs-test-pdf.r3
 		%units/compare-test.r3
