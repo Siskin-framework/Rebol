@@ -184,7 +184,7 @@ start-console: function/with [
                     unless tail? pos [
                         pos: remove pos
                         emit ["^[[K" pos]
-                        col: col - pos/width
+                        prev-col: none ;; force cursor position refresh
                     ]
                 ]
                 ;- ENTER          
