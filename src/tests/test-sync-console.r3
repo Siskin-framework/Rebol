@@ -1,14 +1,15 @@
 Rebol [
-	title: "Custom console test"
-	needs: 3.21.12
-	purpose: {
-		Custom user (sync) console test.
-		It should be possible to call `wait` in it without any issues.
+    title: "Custom console test"
+    needs: 3.21.12
+    purpose: {
+        Custom user (sync) console test.
+        It should be possible to call `wait` in it without any issues.
 
-		Todo:
-		* Better `complete-input`
-		* Replace navigation on line not using BS (backspace) chars.
-	}
+        Todo:
+        * Better `complete-input`
+        * Replace navigation on line not using BS (backspace) chars.
+        * Multiline input
+    }
 ]
 
 repl: context [
@@ -24,10 +25,12 @@ repl: context [
         buffer:     copy ""  ;; stdout buffer
         time:       none     ;; used to detect TAB while PASTE
         key:        none     ;; current key
+        eval-ctx:   none     ;; used to hold per/session evaluation context
     ]
     ;; Input completion function.
     complete-input: function [
         input   [string!] "Current line to be completed"
+        /with ctx [object!]
         return: [block!] "[matching-part best-matches]"
     ][
         part: any [
@@ -51,7 +54,6 @@ repl: context [
                     either single? best-matches [
                         matching-part: skip best-matches/1 length? part
                     ][
-                        emit ["^[[G^[[K" mold best-matches LF]
                         min-length: length? best-matches/1
                         foreach match next best-matches [
                             min-length: min min-length length? match
@@ -73,7 +75,7 @@ repl: context [
             ]
             not empty? part [ ; Word completion
                 ;@@ all-words should not be created on each completion call!
-                all-words: sort union words-of system/contexts/lib words-of self
+                all-words: sort union words-of system/contexts/lib words-of any [ctx system/contexts/user]
                 forall all-words [all-words/1: to string! all-words/1]
 
                 either matching-part: did find all-words part [
@@ -102,12 +104,15 @@ start-console: function/with [
     /prompt prom [string!]
     /banner text [string!]
 ][
-	if banner [print text]
+    if banner [print text]
     ctx: make state []
     ctx/prompt: either prompt [prom][
-    	;; Using numbered prompt to test nested consoles
+        ;; Using numbered prompt to test nested consoles
         prompt-counter: prompt-counter + 1
         ajoin [ as-yellow prompt-counter as-red "] " ]
+    ]
+    ctx/eval-ctx: context [
+        new-console: :start-console
     ]
     ;; Using bind/copy to be able start a console from another console
     do bind/copy [
@@ -171,7 +176,15 @@ start-console: function/with [
                             insert history copy line
                             history-pos: 0
                         ]
-                        set/any 'res try/all [ do line ]
+                        code: try [transcode line]
+                        either error? code [
+                            ;@@ TODO: handle multiline input here
+                            res: code
+                        ][
+                            code: bind/new/set code eval-ctx
+                            code: bind code system/contexts/lib
+                            set/any 'res try/all code
+                        ]
                         pos: clear line
                         case [
                             unset? :res [] ;; ignore
@@ -210,7 +223,7 @@ start-console: function/with [
                         ]
                     ][
                         if tail? pos [
-                            set [matching-part: best-matches:] complete-input line
+                            set [matching-part: best-matches:] complete-input/with line eval-ctx
                             if matching-part [
                                 append pos matching-part
                                 emit matching-part
@@ -307,7 +320,7 @@ start-console: function/with [
 
 ;; Start new console
 start-console/prompt/banner as-red "## " ajoin [
-	LF as-yellow {Welcome to this simple console experiment.^/}
-	{It's possible to start another console with its own context using } as-green "start-console" {.^/}
-	{(use CTRL+C to exit)^/}
+    LF as-yellow {Welcome to this simple console experiment.^/}
+    {It's possible to start another console with its own context using } as-green "start-console" {.^/}
+    {(use CTRL+C to exit)^/}
 ]
