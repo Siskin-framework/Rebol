@@ -806,20 +806,15 @@ error:
 		Set_Input_Mode(ENABLE_ECHO_INPUT, value);
 		break;
 	case MODE_CONSOLE_LINE:
-		// Already in the requested mode, nothing to do.
-		if (value && GET_FLAG(req->modes, RDM_READ_LINE)) break;
-		if (!value && !GET_FLAG(req->modes, RDM_READ_LINE)) break;
-		// Update input modes.
-		Set_Input_Mode(ENABLE_LINE_INPUT | ENABLE_QUICK_EDIT_MODE | ENABLE_PROCESSED_INPUT, value);
-		Set_Input_Mode(ENABLE_WINDOW_INPUT | ENABLE_EXTENDED_FLAGS, !value);
-		if (value) {
-			SET_FLAG(req->modes, RDM_READ_LINE);
+		if (value ^ GET_FLAG(req->modes, RDM_READ_LINE)) {
+			// Update input modes.
+			Set_Input_Mode(ENABLE_LINE_INPUT | ENABLE_QUICK_EDIT_MODE | ENABLE_PROCESSED_INPUT, value);
+			Set_Input_Mode(ENABLE_WINDOW_INPUT | ENABLE_EXTENDED_FLAGS, !value);
+			ASSIGN_FLAG(req->modes, RDM_READ_LINE, value);
 		}
-		else {
-			CLR_FLAG(req->modes, RDM_READ_LINE);
-			SET_FLAG(req->flags, RRF_PENDING);
-			SET_FLAG(Devices[req->device]->flags, RDO_AUTO_POLL);
-		}
+		// Turn autopolling on when not in the line mode (required for async key reading).
+		ASSIGN_FLAG(req->modes, RRF_PENDING, !value);
+		ASSIGN_FLAG(Devices[req->device]->flags, RDO_AUTO_POLL, !value);
 		break;
 	case MODE_CONSOLE_ERROR:
 		Std_Err = value ? GetStdHandle(STD_ERROR_HANDLE) : 0;

@@ -266,7 +266,7 @@ FORCE_INLINE
 **
 */	REBLEN UTF8_Prev_Char_Size(const REBYTE *str, REBLEN index)
 /*
-**		Returns the index of the previous UTF-8 character
+**		Returns the number of bytes in the previous UTF-8 character.
 **
 ***********************************************************************/
 {

@@ -81,7 +81,8 @@ extern int  Read_Line(STD_TERM*, char*, int);
 extern void Close_StdIO(void);
 
 
-static struct termios original_settings;
+static struct termios settings_original;
+static struct termios settings_raw;
 struct pollfd poller;
 
 static int Get_Console_Size(int *cols, int *rows)
@@ -476,7 +477,11 @@ static int Read_Key_Event(REBEVT *evt) {
 	else
 		SET_FLAG(dev->flags, SF_DEV_NULL);
 
-	tcgetattr(Std_Inp, &original_settings);
+	tcgetattr(Std_Inp, &settings_original);
+	settings_raw = settings_original;
+	settings_raw.c_lflag &= ~(ICANON | ECHO);// | ISIG);
+	settings_raw.c_cc[VMIN]  = 1;
+	settings_raw.c_cc[VTIME] = 0;
 
 	SET_FLAG(req->flags, RRF_OPEN);
 	SET_FLAG(dev->flags, RDF_OPEN);
@@ -673,16 +678,17 @@ static int Read_Key_Event(REBEVT *evt) {
 ***********************************************************************/
 {
 	long total;
-	struct termios settings;
 	REBDEV *dev;
+	REBOOL value;
 	int flags;
 
 	dev = Devices[req->device];
+	value = (REBOOL)req->modify.value;
 
 	switch (req->modify.mode) {
 		case MODE_CONSOLE_ECHO:
 			if (Std_Out >= 0) {
-				if (req->modify.value
+				if (value
 					? (write(Std_Out, "\x1B[28m", 5)) != 5 // echo ON
 					: (write(Std_Out, "\x1B[8m",  4)) != 4 // echo OFF 
 				) {
@@ -692,41 +698,21 @@ static int Read_Key_Event(REBEVT *evt) {
 			}
 			break;
 		case MODE_CONSOLE_LINE:
-			//flags = fcntl(Std_Inp, F_GETFL, 0);
-			settings = original_settings;
-			if (req->modify.value) {
-				// Read line
-				SET_FLAG(req->modes, RDM_READ_LINE);
-				CLR_FLAG(dev->flags, RDO_AUTO_POLL);
-				CLR_FLAG(req->flags, RRF_PENDING);
-				settings.c_lflag |= ICANON | ECHO;
-				//flags &= ~O_NONBLOCK;
-				tcsetattr(Std_Inp, TCSANOW, &settings);
+			if (value ^ GET_FLAG(req->modes, RDM_READ_LINE)) {
+				ASSIGN_FLAG(req->modes, RDM_READ_LINE, value);
 
+				tcsetattr(Std_Inp, TCSADRAIN , value ? &settings_original : &settings_raw);
 				if(!GET_FLAG(req->modes, RDM_CGI)) {
-					// Turn off bracketed paste - https://cirw.in/blog/bracketed-paste
-					write(Std_Out, "\e[?2004l", 8);
+					// Set bracketed paste mode - https://cirw.in/blog/bracketed-paste
+					write(Std_Out, value ? "\e[?2004l" : "\e[?2004h", 8);
 				}
 			}
-			else {
-				// Read key
-				CLR_FLAG(req->modes, RDM_READ_LINE);
-				SET_FLAG(req->flags, RRF_PENDING);
-				SET_FLAG(dev->flags, RDO_AUTO_POLL);
-				settings.c_lflag &= ~(ICANON | ECHO);
-				// Set stdin to non-blocking mode
-				//flags |= O_NONBLOCK;
-				tcsetattr(Std_Inp, TCSANOW, &settings);
-
-				if(!GET_FLAG(req->modes, RDM_CGI)) {
-					// Turn on bracketed paste - https://cirw.in/blog/bracketed-paste
-					write(Std_Out, "\e[?2004h", 8);
-				}
-			}
-			//fcntl(Std_Inp, F_SETFL, flags);
+			// Turn autopolling on when not in the line mode (required for async key reading).
+			ASSIGN_FLAG(req->modes, RRF_PENDING, !value);
+			ASSIGN_FLAG(dev->flags, RDO_AUTO_POLL, !value);
 			break;
 		case MODE_CONSOLE_ERROR:
-			Std_Out = req->modify.value ? STDERR_FILENO : STDOUT_FILENO;
+			Std_Out = value ? STDERR_FILENO : STDOUT_FILENO;
 			break;
 	}
 	return DR_DONE;
