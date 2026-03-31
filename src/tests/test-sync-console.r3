@@ -7,8 +7,9 @@ Rebol [
 
         Todo:
         * Better `complete-input`
-        * Replace navigation on line not using BS (backspace) chars.
         * Multiline input
+        * Treat entire grapheme clusters as single units, e.g. 🏳️‍🌈
+        * Use cyclic completion (print possible matches only with SHIFT+TAB)
     }
 ]
 
@@ -26,6 +27,7 @@ repl: context [
         time:       none     ;; used to detect TAB while PASTE
         key:        none     ;; current key
         eval-ctx:   none     ;; used to hold per/session evaluation context
+        col: 0
     ]
     ;; Input completion function.
     complete-input: function [
@@ -114,6 +116,7 @@ start-console: function/with [
     ctx/eval-ctx: context [
         new-console: :start-console
     ]
+    debug-file: open/new/write %console-out.txt
     ;; Using bind/copy to be able start a console from another console
     do bind/copy [
         clear history
@@ -133,14 +136,29 @@ start-console: function/with [
         skip-back: does [
             unless head? pos [
                 pos: back pos
-                emit-ch BS pos/1/width
+                -- col
             ]
         ]
         skip-next: does [
             unless tail? pos [
-                emit pos/1
                 pos: next pos
+                ++ col
             ]
+        ]
+        skip-to: func[pos][
+            emit ["^[[" prompt-width + pos + 1 #"G"]
+        ]
+        skip-to-end: does [
+            pos: tail line
+            skip-to col: line/width
+        ]
+        prompt-width: function/with [][
+            either prev-prompt = prompt [ width ][
+                tmp: sys/remove-ansi copy prev-prompt: prompt
+                width: tmp/width ;; in columns
+            ]
+        ][  ;; cache previous prompt width
+            prev-prompt: none width: 0
         ]
 
         forever [
@@ -155,17 +173,17 @@ start-console: function/with [
                 #"^~"
                 #"^H" [
                     unless head? pos [
-                        emit-ch BS pos/-1/width
+                        skip-to col: col - pos/-1/width
                         pos: remove back pos
                         emit ["^[[K" pos]
-                        emit-ch BS pos/width
+                        skip-to col
                     ]
                 ]
                 delete [
                     unless tail? pos [
                         pos: remove pos
                         emit ["^[[K" pos]
-                        emit-ch BS pos/width
+                        skip-to col: col - pos/width
                     ]
                 ]
                 ;- ENTER          
@@ -186,6 +204,7 @@ start-console: function/with [
                             set/any 'res try/all code
                         ]
                         pos: clear line
+                        col: 0
                         case [
                             unset? :res [] ;; ignore
                             error? :res [
@@ -210,6 +229,7 @@ start-console: function/with [
                     unless empty? line [
                         emit [LF as-purple"(escape)" LF prompt]
                         pos: clear line
+                        col: 0
                     ]
                 ]
                 ;- TAB             
@@ -218,9 +238,7 @@ start-console: function/with [
                     either 0:0:0.01 > (stats/timer - time) [
                         pos: insert pos "  "
                         emit at pos -2
-                        unless tail? pos [
-                            emit-ch BS pos/width
-                        ]
+                        skip-to col: col + 2
                     ][
                         if tail? pos [
                             set [matching-part: best-matches:] complete-input/with line eval-ctx
@@ -234,7 +252,7 @@ start-console: function/with [
                                     emit [LF prompt line]
                                 ;]
                             ]
-                            pos: tail pos
+                            skip-to-end
                         ]
                     ]
                 ]
@@ -245,8 +263,8 @@ start-console: function/with [
                         ++ history-pos
                         emit [clear-line prompt ]
                         append clear line history/:history-pos
-                        pos: tail line
                         emit line
+                        skip-to-end
                     ]
                 ]
                 down [
@@ -256,8 +274,8 @@ start-console: function/with [
                         ; emit [clear-line mold/flat history LF prompt ]
                         emit [clear-line prompt ]
                         append clear line history/:history-pos
-                        pos: tail line
                         emit line
+                        skip-to-end
                     ]
                 ]
                 left [
@@ -273,6 +291,7 @@ start-console: function/with [
                                 ]
                             ]
                         ][ skip-back ]
+                        skip-to col
                     ]
                 ]
                 right [
@@ -288,28 +307,27 @@ start-console: function/with [
                                 ]
                             ]
                         ][ skip-next ]
+                        skip-to col
                     ]
                 ]
                 home [
                     pos: head pos
-                    emit-ch BS pos/width
+                    skip-to col: 0
                 ]
                 end [
-                    emit pos
                     pos: tail pos
+                    col: line/width
                 ]
             ][
                 if all [
                     char? key
                     key > 0#1F
                 ][
-                    pos: insert pos key
-                    emit back pos
-                    unless tail? pos [
-                        emit-ch BS pos/width
-                    ]
+                    emit back pos: insert pos key
+                    skip-to col: col + key/width
                 ]
             ]
+            write debug-file ajoin [mold buffer LF]
             prin buffer
         ]
     ] :ctx
