@@ -87,7 +87,7 @@ validate-autogram: function/with [
         num
     ]
 
-    find-counts-and-chars: function/with [
+    find-counts-and-chars: function [
         "Find all (number-word char) pairs described in sentence"
         sentence      [string!]
         /include-punct
@@ -112,19 +112,18 @@ validate-autogram: function/with [
             ]
         ]
         results
-    ][
-        leading-number: [
-            "twenty" | "thirty" | "forty" | "fifty" | "sixty" | "seventy" | "eighty" | "ninety"
-        ]
-        single-number: [
-            "seventeen" | "thirteen" | "fourteen" | "eighteen" | "nineteen" | "fifteen" |
-            "sixteen"   | "seventy"  | "single"   | "eleven"   | "twelve"   | "twenty"  |
-            "thirty"    | "eighty"   | "ninety"   | "three"    | "seven"    | "eight"   |
-            "forty"     | "fifty"    | "sixty"    | "zero"     | "four"     | "five"    |
-            "nine"      | "one"      | "two"      | "six"      | "ten"
-        ]
-        char-rule: charset [#"a" - #"z" ",-'.!"]
     ]
+    leading-number: [
+        "twenty" | "thirty" | "forty" | "fifty" | "sixty" | "seventy" | "eighty" | "ninety"
+    ]
+    single-number: [
+        "seventeen" | "thirteen" | "fourteen" | "eighteen" | "nineteen" | "fifteen" |
+        "sixteen"   | "seventy"  | "single"   | "eleven"   | "twelve"   | "twenty"  |
+        "thirty"    | "eighty"   | "ninety"   | "three"    | "seven"    | "eight"   |
+        "forty"     | "fifty"    | "sixty"    | "zero"     | "four"     | "five"    |
+        "nine"      | "one"      | "two"      | "six"      | "ten"
+    ]
+    char-rule: charset [#"a" - #"z" ",-'.!"]
 ]
 
 sentences: [
