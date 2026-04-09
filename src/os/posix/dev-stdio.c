@@ -276,7 +276,18 @@ static int Parse_CSI_Sequence(REBEVT *evt, REBYTE *c) {
 		if (c[2] == '~') {
 			evt->data = EVK_DELETE; return DR_DONE;        // ESC[3~
 		}
+		if (c[2] == '^') {
+			SET_FLAG(evt->flags, EVF_CONTROL);
+			evt->data = EVK_DELETE; return DR_DONE;        // ESC[3^
+		}
 		if (!READ_BYTE(&c[3])) return DR_ERROR;
+		if (c[2] == ';' && c[3] == '5') {
+			if (1 != read(Std_Inp, &c[4], 1)) return DR_ERROR;
+			if (c[4] == '~') {
+				SET_FLAG(evt->flags, EVF_CONTROL);
+				evt->data = EVK_DELETE; return DR_DONE;    // ESC[3;5~
+			}
+		}
 		if (c[3] == '~') {
 			SET_FLAG(evt->flags, EVF_SHIFT);
 			switch (c[2]) {
@@ -405,12 +416,22 @@ static int Read_Key_Event(REBEVT *evt) {
 
 	evt->type = EVT_KEY;
 	evt->data = 0;
+	evt->flags = 0;
 
 	if (c[0] == '\e') {
 		return Parse_Escape_Sequence(evt, c);
 	}
 	else if ((c[0] & 0x80) == 0) {
 		// plain ASCII
+		// Normalize backspace
+		if (c[0] == 0x7F || c[0] == 0x08) {
+			evt->type = EVT_CONTROL;
+			if (c[0] != settings_original.c_cc[VERASE])
+				SET_FLAG(evt->flags, EVF_CONTROL);
+			evt->data = EVK_BACKSPACE;
+			return DR_DONE;
+		}
+		// else..
 		evt->data = c[0];
 	}
 	else {
@@ -597,24 +618,10 @@ static int Read_Key_Event(REBEVT *evt) {
 					// Wait for input with timeout, allowing SIGINT to be checked periodically
 					struct pollfd pfd = { Std_Inp, POLLIN, 0 };
 					int ready = poll(&pfd, 1, 40); // 40ms timeout
-					if (ready < 0) {
-						if (errno == EINTR) {
-							// Signal received (e.g. SIGINT) - check if we should exit
-							if (bExitReadKeyLoop) {
-								req->key.uchar = 0x03; // Ctrl+C
-								req->key.flags = 1 << EVF_CONTROL;
-								return DR_DONE;
-							}
-							continue;
-						}
-						// Real error
-						req->error = errno;
-						return DR_ERROR;
-					}
-
-					if (ready == 0) {
-						// Timeout - check escape flag
+					if (ready < 0 && errno == EINTR) {
+						// Signal received (e.g. SIGINT) - check if we should exit
 						if (bExitReadKeyLoop) {
+				ctrl_c:
 							req->key.uchar = 0x03; // Ctrl+C
 							req->key.flags = 1 << EVF_CONTROL;
 							return DR_DONE;
@@ -622,7 +629,14 @@ static int Read_Key_Event(REBEVT *evt) {
 						continue;
 					}
 
-					// Input available - read and parse
+					if (ready <= 0) {
+						// Timeout or error - check escape flag
+						if (bExitReadKeyLoop) goto ctrl_c;
+						continue;
+					}
+					// Data is available - Read_Key_Event can now read safely.
+					// Parse_Escape_Sequence uses poll(0) internally to check if more
+					// bytes follow the ESC byte, which is still non-blocking as intended.
 					result = Read_Key_Event(&evt);
 
 				} while (result == DR_IGNORE);

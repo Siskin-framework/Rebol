@@ -1,7 +1,7 @@
 Rebol [
-	title: "Rosetta code: Greed"
-	file: %Greed.r3
-	url: https://rosettacode.org/wiki/Greed
+    title: "Rosetta code: Greed"
+    file: %Greed.r3
+    url: https://rosettacode.org/wiki/Greed
     note: "Translated from PicoLisp version"
 ]
 

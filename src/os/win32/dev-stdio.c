@@ -598,6 +598,7 @@ error:
 		}
 		else {
 			WCHAR surrogate_high = 0;
+			req->key.uchar = 0;
 			req->key.virtu = 0;
 			req->key.flags = 0;
 			bExitReadKeyLoop = FALSE;
@@ -639,6 +640,12 @@ error:
 						+ (((REBU32)(surrogate_high - 0xD800)) << 10)
 						+ ((REBU32)(wc - 0xDC00));
 					surrogate_high = 0;
+				}
+				else if (wc == 0x08 || wc == 0x7F) { // normalize backspace
+					req->key.virtu = EVK_BACKSPACE;
+				}
+				else if (wc == 0x1B) {
+					req->key.virtu = EVK_ESCAPE;
 				}
 				else {
 					// For non-printable keys, look up the virtual key code
