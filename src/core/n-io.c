@@ -1425,11 +1425,15 @@ chk_neg:
 	REBKEY key = { 0 };
 	SET_NONE(D_RET);
 	if (OS_Read_Key(&key)) {
+		// On CTRL+C, clear the signal (it has been handled).
+		if (key.uchar == 0x03) CLR_SIGNAL(SIG_ESCAPE);
+		// Update the states of special keys.
 		SET_LOGIC(Get_System(SYS_STATE, STATE_CONTROLQ), GET_FLAG(key.flags, EVF_CONTROL));
 		SET_LOGIC(Get_System(SYS_STATE, STATE_SHIFTQ), GET_FLAG(key.flags, EVF_SHIFT));
 		SET_LOGIC(Get_System(SYS_STATE, STATE_ALTQ), GET_FLAG(key.flags, EVF_ALT));
-		if (key.uchar) SET_CHAR(D_RET, key.uchar);
+		if (key.uchar) SET_CHAR(D_RET, key.uchar); // Return a char...
 		else if (key.virtu) {
+			// ... or a word.
 			REBVAL* arg = Get_System(SYS_CATALOG, CAT_EVENT_KEYS);
 			if (IS_BLOCK(arg) && key.virtu <= (REBINT)VAL_TAIL(arg)) {
 				*D_RET = *VAL_BLK_SKIP(arg, key.virtu - 1);

@@ -111,6 +111,8 @@ static int Get_Console_Size(int *cols, int *rows)
 	return 0;
 }
 
+static int bExitReadKeyLoop = 0;
+
 static void Handle_Signal(int sig)
 {
 	//printf("sig: %i %i %i %i\n", sig, SIGINT, SIGHUP, SIGTERM);
@@ -125,6 +127,7 @@ static void Handle_Signal(int sig)
 //	SET_FLAG(evt.flags, EVF_HAS_CODE);
 //	RL_Event(&evt);
 
+	bExitReadKeyLoop = 1;
 	// Start escape sequence...
 	RL_Escape(0);
 }
@@ -582,21 +585,64 @@ static int Read_Key_Event(REBEVT *evt) {
 			else {
 				// read-key
 				REBEVT evt;
-				DEVICE_CMD result;
+				int result;
+
+				req->key.uchar = 0;
+				req->key.virtu = 0;
+				req->key.flags = 0;
+
+				bExitReadKeyLoop = 0;
+
 				do {
+					// Wait for input with timeout, allowing SIGINT to be checked periodically
+					struct pollfd pfd = { Std_Inp, POLLIN, 0 };
+					int ready = poll(&pfd, 1, 40); // 40ms timeout
+					if (ready < 0) {
+						if (errno == EINTR) {
+							// Signal received (e.g. SIGINT) - check if we should exit
+							if (bExitReadKeyLoop) {
+								req->key.uchar = 0x03; // Ctrl+C
+								req->key.flags = 1 << EVF_CONTROL;
+								return DR_DONE;
+							}
+							continue;
+						}
+						// Real error
+						req->error = errno;
+						return DR_ERROR;
+					}
+
+					if (ready == 0) {
+						// Timeout - check escape flag
+						if (bExitReadKeyLoop) {
+							req->key.uchar = 0x03; // Ctrl+C
+							req->key.flags = 1 << EVF_CONTROL;
+							return DR_DONE;
+						}
+						continue;
+					}
+
+					// Input available - read and parse
 					result = Read_Key_Event(&evt);
+
 				} while (result == DR_IGNORE);
 
-				if (result == DR_DONE) {
-					req->key.uchar = evt.data;
-					req->key.flags = evt.flags;
-					if (evt.type == EVT_CONTROL) {
-						req->key.uchar = 0;
-						req->key.virtu = evt.data;
-					}
-					return DR_DONE;
+				if (result == DR_ERROR) {
+					req->error = errno;
+					return DR_ERROR;
 				}
-				return DR_ERROR;
+
+				// Map parsed event back to req->key
+				req->key.flags = evt.flags;
+				if (evt.type == EVT_CONTROL) {
+					req->key.uchar = 0;
+					req->key.virtu = evt.data;
+				} else {
+					req->key.uchar = evt.data;
+					req->key.virtu = 0;
+				}
+
+				return DR_DONE;
 			}
 		}
 		else {

@@ -39,6 +39,7 @@
 ***********************************************************************/
 
 #include <stdio.h>
+#include <signal.h>
 #include <windows.h>
 #include <process.h>
 
@@ -140,6 +141,7 @@ static int ANSI_Attr  = -1;
 DWORD dwOriginalOutMode = 0;
 DWORD dwOriginalInpMode = 0;
 WORD wOriginalAttributes = 0;
+BOOL bExitReadKeyLoop = FALSE;
 
 int Update_Graphic_Mode(int attribute, int value, BOOL set);
 const REBYTE* Parse_ANSI_sequence(const REBYTE *cp, const REBYTE *ep);
@@ -181,7 +183,7 @@ const WORD Key_To_Event[] = {
 
 BOOL WINAPI Handle_Break(DWORD dwCtrlType)
 {
-	//printf("\nHandle_Break %i\n", dwCtrlType);
+	//printf("\nHandle_Break %i type: %i\n", Handled_Break, dwCtrlType);
 	if(Handled_Break) {
 		// CTRL-C was catched durring ReadConsoleW and was already processed
 		Handled_Break = FALSE;
@@ -191,6 +193,13 @@ BOOL WINAPI Handle_Break(DWORD dwCtrlType)
 	if (dwCtrlType >= CTRL_CLOSE_EVENT) OS_Exit(100, 0); // close button, shutdown, etc.
 	RL_Escape(0);
 	return TRUE;	// We handled it
+}
+
+static void Handle_Break_Raw(int sig) {
+	//printf("\nHandle_Break_Raw %i %i\n", sig, bExitReadKeyLoop);
+	//puts("");
+	bExitReadKeyLoop = TRUE;
+	RL_Escape(0);
 }
 
 static void Set_Input_Mode(DWORD mode, BOOL set) {
@@ -323,6 +332,7 @@ static dbgout(char *fmt, int d, char *s)
 			CloseHandle(Std_Echo);
 			Std_Echo = 0;
 		}
+		signal(SIGINT, SIG_DFL);
 		OS_Close_StdIO();  // frees host's input buffer
 		FreeConsole();
 		CLR_FLAG(dev->flags, RDF_OPEN);
@@ -590,11 +600,21 @@ error:
 			WCHAR surrogate_high = 0;
 			req->key.virtu = 0;
 			req->key.flags = 0;
-
+			bExitReadKeyLoop = FALSE;
+			signal(SIGINT, Handle_Break_Raw);
 			while (1) {
 				DWORD cNumRead;
 				INPUT_RECORD ir;
-
+				if (WaitForSingleObject(Std_Inp, 40) != WAIT_OBJECT_0) {
+					if (bExitReadKeyLoop) {
+						req->key.uchar = 0x03; // CTRL+C
+						req->key.virtu = 0;
+						req->key.flags = 1 << EVF_CONTROL; // synthetic - set flags directly
+						signal(SIGINT, SIG_DFL);
+						return DR_DONE;
+					}
+					continue;
+				}
 				if (!ReadConsoleInputW(Std_Inp, &ir, 1, &cNumRead)) break;
 				if (cNumRead == 0 || ir.EventType != KEY_EVENT) continue;
 
@@ -608,6 +628,8 @@ error:
 					|| ker.wVirtualKeyCode == VK_CONTROL
 					|| ker.wVirtualKeyCode == VK_MENU)
 					continue;
+
+				//if (ker.wVirtualKeyCode == VK_ESCAPE) wc = 0; // return ESC as a word
 
 				// Handle surrogate pairs (characters outside BMP, e.g. emoji)
 				if (wc >= 0xD800 && wc <= 0xDBFF) { surrogate_high = wc; continue; }
@@ -623,7 +645,8 @@ error:
 					req->key.uchar = wc;
 					if (wc == 0) req->key.virtu = Normalize_Virtual_Key(ker.wVirtualKeyCode);
 				}
-
+			return_key:
+				signal(SIGINT, SIG_DFL);
 				ASSIGN_FLAG(req->key.flags, EVF_SHIFT, GetKeyState(VK_SHIFT) < 0);
 				BOOL alt_pressed = GetKeyState(VK_MENU) < 0; // VK_MENU is the Alt key
 				BOOL ctrl_pressed = GetKeyState(VK_CONTROL) < 0;
@@ -808,10 +831,13 @@ error:
 	case MODE_CONSOLE_LINE:
 		if (value ^ GET_FLAG(req->modes, RDM_READ_LINE)) {
 			// Update input modes.
-			Set_Input_Mode(ENABLE_LINE_INPUT | ENABLE_QUICK_EDIT_MODE | ENABLE_PROCESSED_INPUT, value);
+			Set_Input_Mode(ENABLE_LINE_INPUT | ENABLE_QUICK_EDIT_MODE, value);
 			Set_Input_Mode(ENABLE_WINDOW_INPUT | ENABLE_EXTENDED_FLAGS, !value);
 			ASSIGN_FLAG(req->modes, RDM_READ_LINE, value);
 		}
+		// un/register CTRL+C handler for raw input mode.
+		
+		SetConsoleCtrlHandler(Handle_Break, value);
 		// Turn autopolling on when not in the line mode (required for async key reading).
 		ASSIGN_FLAG(req->modes, RRF_PENDING, !value);
 		ASSIGN_FLAG(Devices[req->device]->flags, RDO_AUTO_POLL, !value);

@@ -64,7 +64,7 @@ print "Rosetta Code top 100 languages by tasks solved:"
 foreach [language pages] data [
     if n > 100 [break]    ;; Stop after the top 100
     ;; Print rank, language name (highlighted), and solution count
-    print rejoin [pad n -3 ". " pad pages as-yellow language " (" pages ")"]
+    print rejoin [pad n -3 ". " as-yellow language " (" pages ")"]
     ++ n
 ]
 ;; Timestamp when the data fetch completed
