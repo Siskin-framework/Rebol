@@ -229,6 +229,7 @@ catalog: object [
 		pause
 		capital
 		backtab
+		backspace
 		begin
 	]
 	file-types: []
