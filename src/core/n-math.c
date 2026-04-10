@@ -1052,3 +1052,20 @@ static REBDEC lerp_decimal(REBDEC s, REBDEC e, REBDEC t) {
 	}
 	return R_RET;
 }
+
+/***********************************************************************
+**
+*/	REBNATIVE(idivide)
+/*
+//	idivide: native [
+//		{Returns the first integer divided by the second}
+//		value1  [integer!]
+//		value2  [integer!]
+//	]
+***********************************************************************/
+{
+	REBI64 n = VAL_INT64(D_ARG(2));
+	if (n == 0) Trap0(RE_ZERO_DIVIDE);
+	SET_INTEGER(D_RET, VAL_INT64(D_ARG(1)) / n);
+	return R_RET;
+}
