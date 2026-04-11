@@ -85,6 +85,22 @@ static struct termios settings_original;
 static struct termios settings_raw;
 struct pollfd poller;
 
+
+#ifdef DEBUG_STDIO
+// Output debug messages to stderr (redirect to file like: 2>debug.log)
+static void Debug_Dump_Bytes(const char *label, const REBYTE *buf, int len) {
+    fprintf(stderr, "%s [%d bytes]:", label, len);
+    for (int i = 0; i < len; i++) {
+        if (buf[i] >= 0x20 && buf[i] < 0x7F)
+            fprintf(stderr, " '%c'", buf[i]);
+        else
+            fprintf(stderr, " %02X", buf[i]);
+    }
+    fprintf(stderr, "\n");
+    fflush(stderr);
+}
+#endif
+
 static int Get_Console_Size(int *cols, int *rows)
 {
 	#ifdef TIOCGWINSZ
@@ -171,6 +187,13 @@ static void Close_StdIO_Local(void)
 		Std_Echo = 0;
 	}
 }
+
+//static int _read_byte(REBYTE *c) {
+//	int res = read(Std_Inp, c, 1);
+//	Debug_Dump_Bytes("read1", c, 1);
+//	return res == 1;
+//}
+//#define READ_BYTE(c) _read_byte(c) 
 
 #define READ_BYTE(c) (1 == read(Std_Inp, c, 1))
 
@@ -263,8 +286,8 @@ static int Parse_CSI_Sequence(REBEVT *evt, REBYTE *c) {
 		}
 		else if (c[2] == '0') {
 			// Bracketed paste mode markers ESC[200~ and ESC[201~
-			if (!READ_BYTE(&c[4]) || !READ_BYTE(&c[5])) return DR_ERROR;
-			if (c[5] == '~') {
+			if (!READ_BYTE(&c[4])) return DR_ERROR;
+			if (c[4] == '~') {
 				switch (c[3]) {
 				case '0': evt->data = EVK_PASTE_START; return DR_DONE; // ESC[200~
 				case '1': evt->data = EVK_PASTE_END;   return DR_DONE; // ESC[201~
@@ -412,6 +435,10 @@ static int Read_Key_Event(REBEVT *evt) {
 	REBYTE c[8];
 	REBINT len;
 
+#ifdef DEBUG_STDIO
+	memset(c,0,8);
+#endif
+
 	if (read(Std_Inp, c, 1) <= 0) return DR_ERROR;
 
 	evt->type = EVT_KEY;
@@ -419,7 +446,15 @@ static int Read_Key_Event(REBEVT *evt) {
 	evt->flags = 0;
 
 	if (c[0] == '\e') {
-		return Parse_Escape_Sequence(evt, c);
+		int res = Parse_Escape_Sequence(evt, c);
+#ifdef DEBUG_STDIO
+		switch(res) {
+		case DR_DONE:   Debug_Dump_Bytes("esc_ok", c, strlen(c)); break;
+		case DR_IGNORE: Debug_Dump_Bytes("esc_ig", c, strlen(c)); break;
+		case DR_ERROR:  Debug_Dump_Bytes("esc_er", c, strlen(c)); break;
+		}
+#endif
+		return res;
 	}
 	else if ((c[0] & 0x80) == 0) {
 		// plain ASCII
