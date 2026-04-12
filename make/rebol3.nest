@@ -1432,16 +1432,15 @@ eggs: [
 			]
 
 			;- static musl builds
-			"Rebol/Bulk linux-x64-musl-static" [
+			"Rebol/Core linux-x86-musl-static" [
 				name:     %rebol3-core-linux-x64-musl-static
 				:target-linux
-				:include-core-bulk
+				:include-rebol-core
 				:static-musl
 				:make-x64-exe
 			]
 			"Rebol/Bulk linux-x64-musl-static" [
 				name:     %rebol3-bulk-linux-x64-musl-static
-				include:  %/usr/include/x86_64-linux-musl
 				:target-linux
 				:include-rebol-bulk
 				:static-musl
