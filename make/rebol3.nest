@@ -110,6 +110,13 @@ target-turris: [
 	compiler: gcc
 ]
 
+static-musl: [
+	;@@ Needs: sudo apt install musl-tool
+	compiler: musl-gcc
+	flags: -static
+	define: STATIC_MUSL
+]
+
 #if Linux? [
 	cross-haiku-x86: [
 		compiler: %/tools/cross-tools-x86/bin/i586-pc-haiku-gcc
@@ -1421,6 +1428,23 @@ eggs: [
 				name:     %rebol3-bulk-linux-x64
 				:target-linux
 				:include-rebol-bulk
+				:make-x64-exe
+			]
+
+			;- static musl builds
+			"Rebol/Bulk linux-x64-musl-static" [
+				name:     %rebol3-core-linux-x64-musl-static
+				:target-linux
+				:include-core-bulk
+				:static-musl
+				:make-x64-exe
+			]
+			"Rebol/Bulk linux-x64-musl-static" [
+				name:     %rebol3-bulk-linux-x64-musl-static
+				include:  %/usr/include/x86_64-linux-musl
+				:target-linux
+				:include-rebol-bulk
+				:static-musl
 				:make-x64-exe
 			]
 		]
