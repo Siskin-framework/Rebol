@@ -85,19 +85,19 @@ static struct termios settings_original;
 static struct termios settings_raw;
 struct pollfd poller;
 
-
+//#define DEBUG_STDIO
 #ifdef DEBUG_STDIO
 // Output debug messages to stderr (redirect to file like: 2>debug.log)
 static void Debug_Dump_Bytes(const char *label, const REBYTE *buf, int len) {
-    fprintf(stderr, "%s [%d bytes]:", label, len);
-    for (int i = 0; i < len; i++) {
-        if (buf[i] >= 0x20 && buf[i] < 0x7F)
-            fprintf(stderr, " '%c'", buf[i]);
-        else
-            fprintf(stderr, " %02X", buf[i]);
-    }
-    fprintf(stderr, "\n");
-    fflush(stderr);
+	fprintf(stderr, "%s [%d bytes]:", label, len);
+	for (int i = 0; i < len; i++) {
+		if (buf[i] >= 0x20 && buf[i] < 0x7F)
+			fprintf(stderr, " '%c'", buf[i]);
+		else
+			fprintf(stderr, " %02X", buf[i]);
+	}
+	fprintf(stderr, "\n");
+	fflush(stderr);
 }
 #endif
 
@@ -203,6 +203,7 @@ static int Parse_CSI_Sequence(REBEVT *evt, REBYTE *c) {
 	// Reference: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 
 	evt->type = EVT_CONTROL;
+	if (!READ_BYTE(&c[1])) return DR_ERROR;
 
 	// Single-byte final sequences ESC [ <final>
 	switch (c[1]) {
@@ -368,6 +369,7 @@ static int Parse_SS3_Sequence(REBEVT *evt, REBYTE *c) {
 	// keys and keypad keys. Some terminals send these instead of or in
 	// addition to CSI sequences depending on their keypad mode (DECCKM).
 	// Reference: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+	if (1 != read(Std_Inp, &c[1], 1)) return DR_ERROR;
 	evt->type = EVT_CONTROL;
 	switch (c[1]) {
 	// Arrow keys (sent instead of CSI sequences in application cursor key mode)
@@ -418,13 +420,34 @@ static int Parse_Escape_Sequence(REBEVT *evt, REBYTE *c) {
 		evt->data = EVK_ESCAPE;
 		return DR_DONE;
 	}
-	if (2 != read(Std_Inp, &c[0], 2)) return DR_ERROR;
+	if (1 != read(Std_Inp, &c[0], 1)) return DR_ERROR;
+#ifdef DEBUG_STDIO
+	Debug_Dump_Bytes("esc[0]", c, 1);
+#endif
 
 	if (c[0] == '[') return Parse_CSI_Sequence(evt, c);
 	if (c[0] == 'O') return Parse_SS3_Sequence(evt, c);
 	if (c[0] == 'b' || c[0] == 'f') {
 		SET_FLAG(evt->flags, EVF_CONTROL);
 		evt->data = (c[0] == 'b') ? EVK_LEFT : EVK_RIGHT;
+		return DR_DONE;
+	}
+
+	// Unrecognized ESC <char> — treat as Alt+char
+	// Only applies to single printable or control characters
+	if (c[0] >= 0x20 && c[0] < 0x7F) {
+		// Alt+printable: ESC a = Alt+a, ESC A = Alt+A, etc.
+		evt->type = EVT_KEY;
+		evt->data = c[0];
+		SET_FLAG(evt->flags, EVF_ALT);
+		return DR_DONE;
+	}
+	if (c[0] >= 0x01 && c[0] < 0x20) {
+		// Alt+control: ESC ^A = Alt+Ctrl+A, etc.
+		evt->type = EVT_CONTROL;
+		evt->data = c[0];
+		SET_FLAG(evt->flags, EVF_ALT);
+		SET_FLAG(evt->flags, EVF_CONTROL);
 		return DR_DONE;
 	}
 	return DR_IGNORE; // unrecognized sequence
@@ -457,6 +480,9 @@ static int Read_Key_Event(REBEVT *evt) {
 		return res;
 	}
 	else if ((c[0] & 0x80) == 0) {
+#ifdef DEBUG_STDIO
+		 Debug_Dump_Bytes("ascii", c, strlen(c));
+#endif
 		// plain ASCII
 		// Normalize backspace
 		if (c[0] == 0x7F || c[0] == 0x08) {
@@ -465,6 +491,9 @@ static int Read_Key_Event(REBEVT *evt) {
 				SET_FLAG(evt->flags, EVF_CONTROL);
 			evt->data = EVK_BACKSPACE;
 			return DR_DONE;
+		}
+		if (c[0] > 0 && c[0] <= 0x1F) {
+			SET_FLAG(evt->flags, EVF_CONTROL);
 		}
 		// else..
 		evt->data = c[0];
@@ -539,8 +568,13 @@ static int Read_Key_Event(REBEVT *evt) {
 	tcgetattr(Std_Inp, &settings_original);
 	settings_raw = settings_original;
 	settings_raw.c_lflag &= ~(ICANON | ECHO);// | ISIG);
+	settings_raw.c_iflag &= ~(IXON | IXOFF); // disable XON/XOFF flow control so Ctrl+Q and Ctrl+S reach the app
 	settings_raw.c_cc[VMIN]  = 1;
 	settings_raw.c_cc[VTIME] = 0;
+	// Keep ISIG enabled so Ctrl+C still generates SIGINT for RL_Escape
+	// but disable Ctrl+Z suspension specifically
+	settings_raw.c_cc[VSUSP] = _POSIX_VDISABLE; // disable Ctrl+Z -> SIGTSTP
+	settings_raw.c_cc[VQUIT] = _POSIX_VDISABLE; // optionally disable Ctrl+\ -> SIGQUIT
 
 	SET_FLAG(req->flags, RRF_OPEN);
 	SET_FLAG(dev->flags, RDF_OPEN);
