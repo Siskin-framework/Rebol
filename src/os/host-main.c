@@ -184,7 +184,7 @@ void Host_Repl(void) {
 					break;
 				case ';':
 					// skip comment to the end of line;
-					line_len += strlen(utf8byte) - 1;
+					line_len += AS_REBLEN(strlen(utf8byte)) - 1;
 					goto end_line;
 				}
 			}
