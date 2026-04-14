@@ -329,6 +329,15 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "idivide"
+	--test-- "idivide"
+		--assert 2 == idivide 23 10
+		--assert all [error? e: try [idivide 2 0] e/id = 'zero-divide]
+		--assert all [error? e: try [idivide 2.0 1] e/id = 'expect-arg]
+		--assert all [error? e: try [idivide 2 1.0] e/id = 'expect-arg]
+===end-group===
+
+
 ===start-group=== "integer issues"
 	--test-- "issue-502"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/502

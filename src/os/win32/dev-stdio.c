@@ -652,7 +652,6 @@ error:
 					req->key.uchar = wc;
 					if (wc == 0) req->key.virtu = Normalize_Virtual_Key(ker.wVirtualKeyCode);
 				}
-			return_key:
 				signal(SIGINT, SIG_DFL);
 				ASSIGN_FLAG(req->key.flags, EVF_SHIFT, GetKeyState(VK_SHIFT) < 0);
 				BOOL alt_pressed = GetKeyState(VK_MENU) < 0; // VK_MENU is the Alt key
@@ -689,7 +688,7 @@ error:
 ***********************************************************************/
 {
 	REBEVT evt;
-	DWORD  cNumRead, i, k, repeat; 
+	DWORD  cNumRead, i, repeat; 
 	INPUT_RECORD irInBuf[8];
 	if (Std_Inp && ReadConsoleInput(Std_Inp, irInBuf, 8, &cNumRead)) {
 		//printf("cNumRead: %u\n", cNumRead);
