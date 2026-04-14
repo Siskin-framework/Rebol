@@ -52,6 +52,8 @@ decrypt: function [data cipher [word!]] [
 		read update port        ; get decrypted data
 	][	copy #{} ]              ; there were no data
 	close port                  ; and close the port as is not needed anymore
+	;; remove the padding
+	clear skip output bytes
 	real-sum: checksum/with output 'sha256 my-secret/password
 	either real-sum = expected-sum [output][none]
 ]

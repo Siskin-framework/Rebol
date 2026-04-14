@@ -77,7 +77,10 @@ Rebol [
 	--test-- "Length-specified script embedding"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1941
 		--assert [print "hello"] = load {rebol [length: 14] print "hello" other stuff}
-		--assert 1 = try [do {rebol [length: 2] 1 other stuff}]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2596
+		code: {return 3^/rebol [length: 2] 1 2}
+		--assert 3 = try [do code] ;; when the input is string, the header is not evaluated
+		--assert 1 = try [do to binary! code] ;; only when it is binary value
 		--assert [lib-local a] = words-of import {rebol [length: 5] a: 1 b: 2 print "evil code"}
 		--assert [lib-local a] = words-of import/check {rebol [length: 5 checksum: #{E9A16FDEC8FF093599E2AA10C30D2D98D1C541C5}] a: 1 b: 2 print "evil code"} #{E9A16FDEC8FF093599E2AA10C30D2D98D1C541C5}
 

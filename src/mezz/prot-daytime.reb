@@ -27,7 +27,7 @@ system/options/log/daytime: 1
 daytime-sync-awake: func[event /local port type][
 	port: event/port
 	type: event/type
-	sys/log/debug 'DAYTIME ["Sync-Awake event:" type]
+	log-trace 'DAYTIME ["Sync-Awake event:" type]
 	switch type [
 		lookup  [ open port return false]
 		connect [ read port return false]
@@ -115,7 +115,7 @@ sys/make-scheme [
 		timeout: 15
 	]
 ;	awake: func[event][
-;		sys/log/info 'DAYTIME ["Awake event:" type]
+;		log-info 'DAYTIME ["Awake event:" type]
 ;		true
 ;	]
 	actor: [
@@ -144,7 +144,7 @@ sys/make-scheme [
 			if binary? port/extra/data [
 				port/data: trim/tail/head to string! port/extra/data
 			]
-			sys/log/info 'DAYTIME ["Server:" port/data]
+			log-info 'DAYTIME ["Server:" port/data]
 			close port
 			all [
 				port/data

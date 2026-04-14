@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2013-2023 Rebol Open Source Developers
+**  Copyright 2013-2025 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,6 +84,7 @@ enum {
 #define DR_PEND   1	// request is still pending
 #define DR_DONE   0	// request is complete w/o errors
 #define DR_ERROR -1	// request had an error
+#define DR_IGNORE -2 // unrecognized escape sequence
 
 // REBOL Device Flags and Options (bitnums):
 enum {
@@ -118,7 +119,8 @@ enum {
 
 enum {
 	RDM_NULL,		// Null device
-	RDM_READ_LINE,
+	RDM_READ_LINE,	// Read line mode
+	RDM_CGI
 };
 
 // Serial Parity
@@ -134,6 +136,12 @@ enum {
 	SERIAL_FLOW_CONTROL_HARDWARE,
 	SERIAL_FLOW_CONTROL_SOFTWARE
 };
+
+typedef struct {
+	REBU32 uchar;
+	REBU16 virtu;
+	REBU16 flags;
+} REBKEY;
 
 
 #pragma pack(4)
@@ -164,6 +172,7 @@ struct rebol_device {
 #define DEFINE_DEV(w,t,v,c,m,s) REBDEV w = {t, v, 0, c, m, 0, 0, s}
 
 // Request structure:		// Allowed to be extended by some devices
+// NOTE: when size of this struct is modified, reflect it in the make-reb-lib.reb file! (CHECK_STRUCT_ALIGN)
 struct rebol_devreq {
 	u32 clen;				// size of extended structure
 
@@ -190,6 +199,7 @@ struct rebol_devreq {
 	union {
 		REBYTE *data;		// data to transfer
 		REBREQ *sock;		// temp link to related socket
+		const REBYTE *cdata;
 	};
 	u32  length;			// length to transfer
 	u32  actual;			// length actually transferred
@@ -200,7 +210,9 @@ struct rebol_devreq {
 			REBCHR *path;			// file string (in OS local format)
 			i64  size;				// file size
 			i64  index;				// file index position
-			I64  time;				// file modification time (struct)
+			I64  modified_time;     // file modification time (struct)
+			I64  accessed_time;     // file access time (struct)
+			I64  created_time;      // file creartion time (struct)
 		} file;
 		struct {
 			u32  local_ip;			// local address used
@@ -214,6 +226,7 @@ struct rebol_devreq {
 			u32  buffer_cols;
 			u32  window_rows;
 			u32  window_cols;
+			i32  length;            // number of bytes already available to read (from stdio) 
 		} console;
 		struct {
 			u32 device_in;  // requested device ID (1-based; 0 = none)
@@ -240,6 +253,8 @@ struct rebol_devreq {
 			u8	stop_bits;			// 1 or 2
 			u8	flow_control;		// hardware or software
 		} serial;
+
+		REBKEY key;
 
 	};
 };

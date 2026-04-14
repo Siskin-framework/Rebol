@@ -88,8 +88,13 @@ Rebol [
 
 	--test-- "issue-903"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/903
-		--assert all [error? e: try [do "<> 0"]  e/id = 'missing-arg]
+		--assert all [error? e: try [do "<> 0"]  e/id = 'no-op-arg]
 		--assert all [error? e: try [do next [1 <> 0]]  e/id = 'missing-arg]
+
+	--test-- "do string with Rebol header"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2596
+		--assert "Rebol []" == do "{Rebol []}"
+		--assert "^/Rebol []" == try [do "{^/Rebol []}"]
 		
 ===end-group===
 
@@ -113,7 +118,7 @@ Rebol [
 
 	--test-- "do needs"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/891
-		--assert all [error? e: try [do "rebol[needs: 255.8.5]"] e/id = 'needs]
+		--assert all [error? e: try [do to binary! "rebol[needs: 255.8.5]"] e/id = 'needs]
 
 ===end-group===
 
@@ -461,7 +466,59 @@ Rebol [
 	--assert x = [a b "a"]
 	--assert tail? compose/into [a (b)] tail x
 	--assert x = [a b "a" a 2]
+
+	--test-- "compose map"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2685
+	m1: #[a: (zero) b: [(red)] c: (now) d: #[k: (white)]] 
+	--assert all [
+		map? m2: compose m1
+		paren? m1/a
+		m2/a == 0
+		paren? m2/b/1
+		date? m2/c
+		paren? m2/d/k
+	]
+	--assert all [
+		map? m2: compose/deep m1
+		paren? m1/a
+		m2/a == 0
+		m2/b/1 == red
+		date? m2/c
+		m2/d/k == white
+	]
+	remove/key m1 'c
+	--assert all [
+		map? m2: compose/deep m1
+		paren? m1/a
+		m2/a == 0
+		m2/b/1 == red
+		none? m2/c
+		m2/d/k == white
+	]
+
+	a: 1 f1: func[b][compose #[num: (a + b)]]
+	--assert #[num: 3] = try [f1 2]
 	
+	f2: closure/with [b][compose #[num: (a + b)]][a: 1]
+	--assert #[num: 3] = try [f2 2]
+
+	--assert #[num: 4] = use[v][v: 4 compose #[num: (v)]]
+	--assert #[num: 5] = apply func [val] [compose/deep #[num: (val)]] [5]
+	
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2686
+	--assert #[num: [one two three]] = compose #[num: ([one two three])]
+
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2687
+	*obp: make object! [one: 1 two: 2 tmp: #[three: (one + two)]]
+	*ob1: make *obp [one: 11]
+	*ob2: make *obp [two: 22]
+	*ob3: make *ob1 [two: 22]
+
+	--assert [3 13 23 33] = map-each obj reduce [*obp *ob1 *ob2 *ob3] [
+		select compose/deep obj/tmp 'three
+	]
+	
+
 ===end-group===
 
 ===start-group=== "unset value passing"
@@ -553,15 +610,15 @@ Rebol [
 		obj:  object [a: 3 b: 4]
 		obj2: object [z: 0 a: none b: 7]
 		--assert obj2 = set obj obj2
-		--assert "make object! [a: none b: 7]" = mold/flat obj
-		--assert "make object! [z: 0 a: none b: 7]" = mold/flat obj2
+		--assert "make object! [a: _ b: 7]" = mold/flat obj
+		--assert "make object! [z: 0 a: _ b: 7]" = mold/flat obj2
 
 	--test-- "set-11"
 		obj:  object [a: 3 b: 4]
 		obj2: object [z: 0 a: none b: 7]
 		--assert obj2 = set/some obj obj2
 		--assert "make object! [a: 3 b: 7]" = mold/flat obj
-		--assert "make object! [z: 0 a: none b: 7]" = mold/flat obj2
+		--assert "make object! [z: 0 a: _ b: 7]" = mold/flat obj2
 
 	--test-- "set-12"
 		o1: object [a: 1 b: 2 ]
@@ -845,7 +902,8 @@ Rebol [
 		]
 	--test-- "catch/with function!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1521
-		on-catch: func[value name][
+		;; using `any-type!` as `value` may be `unset!`
+		on-catch: func[value [any-type!] name][
 			if :name = 'foo    [return join "b" :value]
 			if unset?   :value [return true]
 			if integer? :value [return value * 10]
@@ -882,6 +940,18 @@ Rebol [
 			"b3" = catch/all/with [a: 1 throw/name 3 'foo a: 2] :on-catch 
 			a = 1
 		]
+	--test-- "catch/with function! argument validation"
+		--assert all [
+			error? e: try [catch/with [throw 1] func[v [word!]][]]
+			e/id = 'expect-arg
+		]
+		--assert all [
+			error? e: try [catch/all/with [throw/name 1 'foo] func[v n [integer!]][]]
+			e/id = 'expect-arg
+		]
+		--assert [1 #(none)] == try [catch/with [throw 1] func[v [integer!] n][reduce [v n]]]
+		--assert [1 foo] == try [catch/all/with [throw/name 1 'foo] func[v [integer!] n [word!]][reduce [v n]]]
+		--assert [1 #(none) #(none)] == catch/with [throw 1] func[a b c][reduce [a b c]]
 
 	--test-- "catch/quit/name"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2549
@@ -1080,10 +1150,9 @@ Rebol [
 ===start-group=== "WAIT"
 	--test-- "wait -1"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/342
-		--assert all [
-			error? err: try [wait -1]
-			err/id = 'out-of-range
-		]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2597
+		--assert none? try [wait -1]
+		--assert none? try [wait -1:0:0]
 
 ===end-group===
 

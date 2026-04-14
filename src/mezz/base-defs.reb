@@ -68,13 +68,13 @@ foreach [codec handler] system/codecs [
 		]
 		; Media-types block format: [.abc .def type ...]
 		if codec/suffixes [ ;append to file-types only if there is any suffix
-			append append system/options/file-types codec/suffixes codec/name
+			append append system/catalog/file-types codec/suffixes codec/name
 		]
 	]
 ]
 
 ; Special import case for extensions:
-append system/options/file-types switch/default fourth system/version [
+append system/catalog/file-types switch/default fourth system/version [
 	3 [[%.rebx %.dll extension]]  ; Windows
 	2 [[%.rebx %.dylib %.so extension]]  ; OS X
 	4 7 [[%.rebx %.so extension]]  ; Other Posix
@@ -147,10 +147,7 @@ scalar?: func [
 	value [any-type!]
 ][find scalar! type? :value]
 
-true?: func [
-	"Returns true if an expression can be used as true."
-	val [any-type!] ;- we want unset! not to fail.
-] [not not :val]
+true?: :did ;; `did` is defined in n-control.c
 
 quote: func [
 	"Returns the value passed to it without evaluation."

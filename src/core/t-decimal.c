@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2024 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -411,14 +411,8 @@ REBOOL almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 				break;
 
 			case REB_DATE:
-			{
-				REB_TIMEF time = {12,0,0,0};
-				if (VAL_TIME(val) != NO_TIME) {
-					Split_Time(VAL_TIME(val), &time);
-				}
-				d1 = Gregorian_To_Julian_Date(VAL_DATE(val), time) - 2400000.5;
+				d1 = Date_To_Timestamp_Decimal(val);
 				break;
-			}
 
 #ifdef removed
 //			case REB_ISSUE:

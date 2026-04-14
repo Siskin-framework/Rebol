@@ -28,7 +28,7 @@
 
   if find system/codecs 'jpeg [
     system/codecs/jpeg/suffixes: [%.jpg %.jpeg]
-    append append system/options/file-types system/codecs/jpeg/suffixes 'jpeg
+    append append system/catalog/file-types system/codecs/jpeg/suffixes 'jpeg
   ]
 
 ***********************************************************************/

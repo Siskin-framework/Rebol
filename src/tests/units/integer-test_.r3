@@ -37,6 +37,19 @@ Red [
 	--test-- "min1" --assert -3  = min -3 2
 ===end-group===
 
+
+===start-group=== "prime?"
+	--test-- "not prime"
+		--assert all [
+			not prime? -1
+			not prime? 0
+			not prime? 1
+		]
+	--test-- "prime"
+		--assert 25 == length? collect [repeat i 100 [if prime? i [keep i]]]
+===end-group===
+
+
 ===start-group=== "negative?/positive?"
 	--test-- "neg1" --assert true  = negative? -1
 	--test-- "neg2" --assert false = negative? 0

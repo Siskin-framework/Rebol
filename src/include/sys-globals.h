@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,6 +36,10 @@ PVAR REBYTE **PG_Boot_Strs;	// Special strings in boot.reb (RS_ constants)
 PVAR REB_STATS *PG_Reb_Stats;
 PVAR REBU64 PG_Mem_Usage;	// Overall memory used
 PVAR REBU64 PG_Mem_Limit;	// Memory limit set by SECURE
+#if defined(DEBUG) || defined(_DEBUG)
+PVAR REBU64 PG_Mem_Make;	// Number of allocations
+PVAR REBU64 PG_Mem_Free;    // Number of memory releases
+#endif
 
 //-- Symbol Table:
 PVAR REBSER *PG_Word_Names;	// Holds all word strings. Never removed.
@@ -67,6 +71,10 @@ PVAR jmp_buf *Halt_State;	// Pointer to saved CPU state for HALT/QUIT handlers
 PVAR REBCNT	Eval_Signals;	// Signal flags
 
 
+//PVAR REBDEV *Devices[];
+PVAR REBREQ *Std_IO;
+PVAR REBARGS Main_Args;
+
 
 /***********************************************************************
 **
@@ -84,6 +92,7 @@ TVAR REBINT	GC_Ballast;		// Bytes allocated to force automatic GC
 TVAR REBOOL	GC_Active;		// TRUE when recycle is enabled (set by RECYCLE func)
 TVAR REBSER	*GC_Protect;	// A stack of protected series (removed by pop)
 TVAR REBSER	*GC_Series;		// An array of protected series (removed by address)
+TVAR REBSER *GC_Mark_Queue; // An array of series to be marked (to avoid deep recursion in GC)
 TVAR REBSER	**GC_Infants;	// A small list of last N series created (nursery)
 TVAR REBINT	GC_Last_Infant;	// Index to last infant above (circular)
 TVAR REBFLG GC_Stay_Dirty;  // Do not free memory, fill it with 0xBB
@@ -114,6 +123,10 @@ TVAR REBSER *Trace_Buffer;	// Holds backtrace lines
 
 TVAR REBI64 Eval_Natives;
 TVAR REBI64 Eval_Functions;
+
+#ifdef DEBUG_HASH_COLLISIONS
+TVAR REBI64 Eval_Collisions; // Hash collisions
+#endif
 
 //-- Other per thread globals:
 TVAR REBSER *Bind_Table;	// Used to quickly bind words to contexts

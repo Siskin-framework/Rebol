@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -124,8 +124,9 @@ x*/	RXIARG Value_To_RXI(REBVAL *val)
 		COPY_MEM(arg.tuple_bytes, VAL_TUPLE(val), MAX_TUPLE);
 		break;
 	case RXE_STRUCT:
-		arg.structure.data = VAL_STRUCT_DATA(val);
-		arg.structure.fields = VAL_STRUCT_FIELDS(val);
+		arg.structure.series = VAL_STRUCT_DATA(val);
+		arg.structure.id     = VAL_STRUCT_ID(val);
+		arg.structure.offset = VAL_STRUCT_OFFSET(val);
 		break;
 	case RXE_NULL:
 	default:
@@ -183,11 +184,21 @@ x*/	void RXI_To_Value(REBVAL *val, RXIARG arg, REBCNT type)
 		COPY_MEM(VAL_TUPLE(val), arg.tuple_bytes, MAX_TUPLE);
 		break;
 	case RXE_STRUCT:
-		//TODO: review!
-		// There is no room in RXIARG to pass the spec part of the struct!
-		VAL_STRUCT_DATA(val) = arg.structure.data;
-		VAL_STRUCT_FIELDS(val) = arg.structure.fields;
+	{
+		// RXIARG is too small to hold all neccessary values...
+		// so we must use central struct spec container when creating a struct value from external source
+		// Avoid returning structs from the extension unless they are newly created, to prevent this lookup.
+		REBSER *spec = RL_Struct_Spec(arg.structure.id);
+		if (!spec) {
+			SET_NONE(val); // or error instead?!
+		}
+		else {
+			VAL_STRUCT_SPEC(val) = spec;
+			VAL_STRUCT_DATA(val) = arg.structure.series;
+			VAL_STRUCT_OFFSET(val) = arg.structure.offset;
+		}
 		break;
+	}
 	case RXE_NULL:
 		VAL_INT64(val) = 0;
 		break;
@@ -298,19 +309,31 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 {
 	RXICBI *cbi;
 	REBVAL *event = D_ARG(1);
-	REBCNT n;
+	REBCNT n, err = 0;
 
 	// Sanity check:
 	if (VAL_EVENT_TYPE(event) != EVT_CALLBACK || !(cbi = VAL_EVENT_SER(event)))
 		return R_NONE;
 
 	n = Do_Callback(cbi->obj, cbi->word, cbi->args, &(cbi->result));
+	if (n) {
+		RXI_To_Value(ds, cbi->result, n);
+	}
+	else {
+		// In case of error, resolve it now so the CBI may be freed
+		err = GET_EXT_ERROR(&cbi->result);
+	}
 
-	SET_FLAG(cbi->flags, RXC_DONE);
+	if (GET_FLAG(cbi->flags, RXC_ALLOC)) {
+		FREE_MEM(cbi->args);
+		FREE_MEM(cbi);
+	}
+	else {
+		SET_FLAG(cbi->flags, RXC_DONE);
+	}
 
-	if (!n) Trap_Num(RE_INVALID_ARG, GET_EXT_ERROR(&cbi->result));
-
-	RXI_To_Value(ds, cbi->result, n);
+	if (err) Trap_Num(RE_INVALID_ARG, err);
+	
 	return R_RET;
 }
 
@@ -360,26 +383,26 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 		path = Value_To_OS_Path(val, FALSE);
 
 		// Try to load the DLL file:
-		if (!(dll = OS_OPEN_LIBRARY((REBCHR*)SERIES_DATA(path), &error))) {
+		if (!(dll = OS_Open_Library((REBCHR*)SERIES_DATA(path), &error))) {
 			DS_PUSH_INTEGER(error);
 			Trap2(RE_NO_EXTENSION, val, DS_TOP);
 		}
 
 		// Call its info() function for header and code body:
-		if (!(info = OS_FIND_FUNCTION(dll, cs_cast(BOOT_STR(RS_EXTENSION, 0))))){
-			OS_CLOSE_LIBRARY(dll);
+		if (!(info = OS_Find_Function(dll, cs_cast(BOOT_STR(RS_EXTENSION, 0))))){
+			OS_Close_Library(dll);
 			Trap1(RE_BAD_EXTENSION, val);
 		}
 
 		// Obtain info string as UTF8:
 		if (!(code = info(0, Extension_Lib()))) {
-			OS_CLOSE_LIBRARY(dll);
+			OS_Close_Library(dll);
 			Trap1(RE_EXTENSION_INIT, val);
 		}
 
 		// Import the string into REBOL-land:
-		src = Copy_Bytes(code, -1); // Nursery protected
-		call = OS_FIND_FUNCTION(dll, cs_cast(BOOT_STR(RS_EXTENSION, 2))); // zero is allowed
+		src = Copy_Bytes(code, UNKNOWN); // Nursery protected
+		call = OS_Find_Function(dll, cs_cast(BOOT_STR(RS_EXTENSION, 2))); // zero is allowed
 	}
 	else {
 		// Hosted extension:
@@ -525,7 +548,10 @@ x*/	int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result)
 				VAL_SERIES(val) = Make_Binary(len);
 				VAL_INDEX(val) = 0;
 				VAL_TAIL(val) = len;
-				memcpy(VAL_BIN_HEAD(val), errmsg, len);
+				COPY_MEM(VAL_BIN_HEAD(val), errmsg, len);
+			}
+			else {
+				SET_NONE(val);
 			}
 			Trap1(RE_COMMAND_FAIL, val);
 		}

@@ -94,8 +94,9 @@ context [
 	make-dir %../../build/
 	probe to-real-file write    %../../build/rebol-extension.h amalgamate [
 		%reb-c.h
-		%reb-ext.h
 		%reb-args.h
+		%reb-ext.h
+		%reb-ext-handler.h
 		%reb-device.h
 		%reb-file.h
 		%reb-filereq.h

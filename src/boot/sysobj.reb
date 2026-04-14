@@ -55,8 +55,6 @@ options: object [  ; Options supplied to REBOL during startup
 	probe-limit: 16000 ; Max probed output size
 	module-paths: none ;@@ DEPRECATED!
 	default-suffix: %.reb ; Used by IMPORT if no suffix is provided
-	file-types: []
-	mime-types: none
 	result-types: none
 
 	; verbosity of logs per service (codecs, schemes)
@@ -69,6 +67,18 @@ options: object [  ; Options supplied to REBOL during startup
 		tar:  1
 	]
 	domain-name: none ; Specifies system's domain name (used in SMTP scheme so far)
+	no-color: false
+	ansi: #[
+		gray:   "^[[1;30m"
+		red:    "^[[1;31m"
+		green:  "^[[1;32m"
+		yellow: "^[[1;33m"
+		blue:   "^[[1;34m"
+		purple: "^[[1;35m"
+		cyan:   "^[[1;36m"
+		white:	"^[[1;37m"
+		reset:  "^[[0m"
+	]
 ]
 
 catalog: object [
@@ -92,10 +102,11 @@ catalog: object [
 	boot-flags: [
 		script args do import version debug secure
 		help vers quiet verbose
-		secure-min secure-max trace halt cgi boot-level no-window
+		secure-min secure-max trace halt cgi boot-level no-window no-color
 	]
 	bitsets: object [
 		crlf:          #(bitset! #{0024})                             ;charset "^/^M"
+		not-crlf:      complement crlf
 		space:         #(bitset! #{0040000080})                       ;charset " ^-"
 		whitespace:    #(bitset! #{0064000080})                       ;charset "^/^M^- "
 		numeric:       #(bitset! #{000000000000FFC0})                 ;0-9
@@ -108,13 +119,19 @@ catalog: object [
 		uri-component: #(bitset! #{0000000041E6FFC07FFFFFE17FFFFFE2}) ;A-Z a-z 0-9 !'()*-._~
 		quoted-printable: #(bitset! #{FFFFFFFFFFFFFFFBFFFFFFFFFFFFFFFF})
 	]
+	structs: make map! [] ;; filled using `register` native function
+	compressions: [
+		; will be filled on boot from `Init_Compression` in `u-compress.c`
+	]
 	checksums: [
 		; will be filled on boot from `Init_Crypt` in `n-crypt.c
 	]
-	compressions: [deflate zlib gzip] ;; these are always available
 	elliptic-curves: [
 		; will be filled on boot from `Init_Crypt` in `n-crypt.c`
 	]
+	filters: [
+		; image resizing filters filled from u-image-resize.c
+	] 
 	ciphers: [
 		; will be filled on boot from `Init_Crypt` in `n-crypt.c`
 	]
@@ -159,8 +176,8 @@ catalog: object [
 		alt-up 
 		aux-down 
 		aux-up 
-		key
-		key-up ; Move above when version changes!!!
+		key    ;; Key down event (with a physical key information)
+		key-up ;; Key up event
 
 		scroll-line
 		scroll-page
@@ -175,6 +192,8 @@ catalog: object [
 
 		control    ;; used to pass control key events to a console port
 		control-up ;; only on Windows?
+
+		char ;; 
 	]
 	event-keys: [
 		; Event types. Order dependent for C and REBOL.
@@ -208,8 +227,12 @@ catalog: object [
 		control
 		alt
 		pause
-		capital	
+		capital
+		backtab
+		backspace
+		begin
 	]
+	file-types: []
 ]
 
 contexts: construct [
@@ -238,30 +261,50 @@ state: object [
 	]
 	last-error:  none ; used by WHY?
 	last-result: none ; used to store last console result
-	wait-list: []     ; List of ports to add to 'wait
+	;; The following 3 flags are updated by the `read-key` call
+	;; and can be used to detect if those keys were also pressed.
+	control?: shift?: alt?: none
+	quit?: none   ;; Used by `catch/quit` to indicate that a quit is requested.
+	wait-list: [] ;; List of ports to add to 'wait
 ]
 
 modules: object [
 	help:    none
 	;; external native extensions
-	blend2d:       https://github.com/Siskin-framework/Rebol-Blend2D/releases/download/0.0.18.1/
+	blend2d:       https://github.com/Siskin-framework/Rebol-Blend2D/releases/download/0.12.0/
 	blurhash:      https://github.com/Siskin-framework/Rebol-BlurHash/releases/download/1.0.0/
+	brotli:        https://github.com/Oldes/Rebol-Brotli/releases/download/0.1.0/
+	deflate:       https://github.com/Oldes/Rebol-Deflate/releases/download/0.1.0/
 	easing:        https://github.com/Siskin-framework/Rebol-Easing/releases/download/1.0.0/
 	mathpresso:    https://github.com/Siskin-framework/Rebol-MathPresso/releases/download/0.1.0/
-	miniaudio:     https://github.com/Oldes/Rebol-MiniAudio/releases/download/0.11.18.0/
-	sqlite:        https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.42.0.0/
+	miniaudio:     https://github.com/Oldes/Rebol-MiniAudio/releases/download/0.11.23.0/
+	speak:         https://github.com/Oldes/Rebol-Speak/releases/download/0.0.1/
+	sqlite:        https://github.com/Siskin-framework/Rebol-SQLite/releases/download/3.46.0.0/
 	triangulate:   https://github.com/Siskin-framework/Rebol-Triangulate/releases/download/1.6.0.0/
+	webp:          https://github.com/Oldes/Rebol-WebP/releases/download/1.4.0.0/
+	zlib-ng:       https://github.com/Oldes/Rebol-Zlib-ng/releases/download/2.3.2/
+	zstd:          https://github.com/Oldes/Rebol-Zstd/releases/download/0.1.0/
 	;; optional modules, protocol and codecs
+	github:           https://src.rebol.tech/modules/github.reb
+	identify:         https://src.rebol.tech/modules/identify.reb
 	httpd:            https://src.rebol.tech/modules/httpd.reb
 	prebol:           https://src.rebol.tech/modules/prebol.reb
+	scheduler:        https://src.rebol.tech/modules/scheduler.reb
+	soundex:          https://src.rebol.tech/modules/soundex.reb
 	spotify:          https://src.rebol.tech/modules/spotify.reb
+	thru-cache:       https://src.rebol.tech/modules/thru-cache.reb
+	to-ascii:         https://src.rebol.tech/modules/to-ascii.reb
 	unicode-utils:    https://src.rebol.tech/modules/unicode-utils.reb
+	upgrade:          https://src.rebol.tech/modules/upgrade.reb
 	daytime:          https://src.rebol.tech/mezz/prot-daytime.reb
 	mail:             https://src.rebol.tech/mezz/prot-mail.reb
 	mysql:            https://src.rebol.tech/mezz/prot-mysql.reb
+	rdap:             https://src.rebol.tech/mezz/prot-rdap.reb
+	css:              https://src.rebol.tech/mezz/codec-css.reb
 	csv:              https://src.rebol.tech/mezz/codec-csv.reb
 	ico:              https://src.rebol.tech/mezz/codec-ico.reb
 	pdf:              https://src.rebol.tech/mezz/codec-pdf.reb
+	srt:              https://src.rebol.tech/mezz/codec-srt.reb
 	swf:              https://src.rebol.tech/mezz/codec-swf.reb
 	xml:              https://src.rebol.tech/mezz/codec-xml.reb
 	json:             https://src.rebol.tech/mezz/codec-json.reb
@@ -455,8 +498,11 @@ standard: object [
 	file-info: construct [
 		name:
 		size:
-		date:
 		type:
+		date:     ;; same as `modified` (it is here just for backwards compatibility)
+		modified:
+		accessed:
+		created:
 	]
 
 	net-info: construct [
@@ -471,6 +517,7 @@ standard: object [
 		buffer-rows:
 		window-cols:
 		window-rows:
+		length:      ; number of bytes already available to read (from stdio) 
 	]
 
 	vector-info: construct [
@@ -478,6 +525,15 @@ standard: object [
 		type:       ; integer! or decimal! so far
 		size:       ; size per value in bits
 		length:     ; number of values
+		minimum:
+		maximum:
+		range:      ; maximum - minimum
+		sum:
+		mean:       ; average
+		median:
+		variance:
+		population-deviation:
+		sample-deviation:
 	]
 
 	date-info: construct [
@@ -529,6 +585,7 @@ standard: object [
 		made-blocks:
 		made-objects:
 		recycles:
+		collisions:
 	]
 
 	type-spec: construct [
@@ -553,6 +610,10 @@ view: object [
 		work-origin:
 		work-size: 0x0
 	]
+]
+
+console: construct [
+	history: []
 ]
 
 license: none

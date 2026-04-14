@@ -69,7 +69,7 @@ secure: function/with [
 
 	; Check if SECURE is secured:
 	if pol-obj/secure <> 0.0.0 [
-		if pol-obj/secure == 'throw [cause-error 'access 'security :policy]
+		if pol-obj/secure == 2.2.2 [cause-error 'access 'security :policy]
 		quit/return 101 ; an arbitrary code
 	]
 
@@ -205,6 +205,7 @@ protect-system-object: func [
 
 	unprotect/values [
 		system/options ; some are modified by scripts
+		system/catalog/file-types
 	]
 	unprotect/words [
 		system/script

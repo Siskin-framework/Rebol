@@ -2,7 +2,7 @@
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **  Licensed under the Apache License, Version 2.0
 **  This is a code-generated file.
@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Datatype Definitions
-**  Build: 3.16.0
-**  Date:  4-Apr-2024
+**  Build: 3.21.15
+**  Date:  14-Apr-2026
 **  File:  reb-types.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -56,34 +56,35 @@
 	REB_SET_PATH,                 // 26
 	REB_GET_PATH,                 // 27
 	REB_LIT_PATH,                 // 28
-	REB_MAP,                      // 29
-	REB_DATATYPE,                 // 30
-	REB_TYPESET,                  // 31
-	REB_WORD,                     // 32
-	REB_SET_WORD,                 // 33
-	REB_GET_WORD,                 // 34
-	REB_LIT_WORD,                 // 35
-	REB_REFINEMENT,               // 36
-	REB_ISSUE,                    // 37
-	REB_NATIVE,                   // 38
-	REB_ACTION,                   // 39
-	REB_REBCODE,                  // 40
-	REB_COMMAND,                  // 41
-	REB_OP,                       // 42
-	REB_CLOSURE,                  // 43
-	REB_FUNCTION,                 // 44
-	REB_FRAME,                    // 45
-	REB_OBJECT,                   // 46
-	REB_MODULE,                   // 47
-	REB_ERROR,                    // 48
-	REB_TASK,                     // 49
-	REB_PORT,                     // 50
-	REB_GOB,                      // 51
-	REB_EVENT,                    // 52
-	REB_HANDLE,                   // 53
-	REB_STRUCT,                   // 54
-	REB_LIBRARY,                  // 55
-	REB_UTYPE,                    // 56
+	REB_HASH,                     // 29
+	REB_MAP,                      // 30
+	REB_DATATYPE,                 // 31
+	REB_TYPESET,                  // 32
+	REB_WORD,                     // 33
+	REB_SET_WORD,                 // 34
+	REB_GET_WORD,                 // 35
+	REB_LIT_WORD,                 // 36
+	REB_REFINEMENT,               // 37
+	REB_ISSUE,                    // 38
+	REB_NATIVE,                   // 39
+	REB_ACTION,                   // 40
+	REB_REBCODE,                  // 41
+	REB_COMMAND,                  // 42
+	REB_OP,                       // 43
+	REB_CLOSURE,                  // 44
+	REB_FUNCTION,                 // 45
+	REB_FRAME,                    // 46
+	REB_OBJECT,                   // 47
+	REB_MODULE,                   // 48
+	REB_ERROR,                    // 49
+	REB_TASK,                     // 50
+	REB_PORT,                     // 51
+	REB_GOB,                      // 52
+	REB_EVENT,                    // 53
+	REB_HANDLE,                   // 54
+	REB_STRUCT,                   // 55
+	REB_LIBRARY,                  // 56
+	REB_UTYPE,                    // 57
     REB_MAX
 };
 
@@ -121,6 +122,7 @@
 #define IS_SET_PATH(v)		(VAL_TYPE(v)==REB_SET_PATH)
 #define IS_GET_PATH(v)		(VAL_TYPE(v)==REB_GET_PATH)
 #define IS_LIT_PATH(v)		(VAL_TYPE(v)==REB_LIT_PATH)
+#define IS_HASH(v)			(VAL_TYPE(v)==REB_HASH)
 #define IS_MAP(v)			(VAL_TYPE(v)==REB_MAP)
 #define IS_DATATYPE(v)		(VAL_TYPE(v)==REB_DATATYPE)
 #define IS_TYPESET(v)		(VAL_TYPE(v)==REB_TYPESET)
@@ -157,9 +159,9 @@
 ***********************************************************************/
 #define TS_NUMBER (((REBU64)1<<REB_INTEGER)|((REBU64)1<<REB_DECIMAL)|((REBU64)1<<REB_PERCENT))
 #define TS_SCALAR (((REBU64)1<<REB_INTEGER)|((REBU64)1<<REB_DECIMAL)|((REBU64)1<<REB_PERCENT)|((REBU64)1<<REB_MONEY)|((REBU64)1<<REB_CHAR)|((REBU64)1<<REB_PAIR)|((REBU64)1<<REB_TUPLE)|((REBU64)1<<REB_TIME)|((REBU64)1<<REB_DATE))
-#define TS_SERIES (((REBU64)1<<REB_BINARY)|((REBU64)1<<REB_STRING)|((REBU64)1<<REB_FILE)|((REBU64)1<<REB_EMAIL)|((REBU64)1<<REB_REF)|((REBU64)1<<REB_URL)|((REBU64)1<<REB_TAG)|((REBU64)1<<REB_IMAGE)|((REBU64)1<<REB_VECTOR)|((REBU64)1<<REB_BLOCK)|((REBU64)1<<REB_PAREN)|((REBU64)1<<REB_PATH)|((REBU64)1<<REB_SET_PATH)|((REBU64)1<<REB_GET_PATH)|((REBU64)1<<REB_LIT_PATH))
+#define TS_SERIES (((REBU64)1<<REB_BINARY)|((REBU64)1<<REB_STRING)|((REBU64)1<<REB_FILE)|((REBU64)1<<REB_EMAIL)|((REBU64)1<<REB_REF)|((REBU64)1<<REB_URL)|((REBU64)1<<REB_TAG)|((REBU64)1<<REB_IMAGE)|((REBU64)1<<REB_VECTOR)|((REBU64)1<<REB_BLOCK)|((REBU64)1<<REB_PAREN)|((REBU64)1<<REB_PATH)|((REBU64)1<<REB_SET_PATH)|((REBU64)1<<REB_GET_PATH)|((REBU64)1<<REB_LIT_PATH)|((REBU64)1<<REB_HASH))
 #define TS_STRING (((REBU64)1<<REB_STRING)|((REBU64)1<<REB_FILE)|((REBU64)1<<REB_EMAIL)|((REBU64)1<<REB_REF)|((REBU64)1<<REB_URL)|((REBU64)1<<REB_TAG))
-#define TS_BLOCK (((REBU64)1<<REB_BLOCK)|((REBU64)1<<REB_PAREN)|((REBU64)1<<REB_PATH)|((REBU64)1<<REB_SET_PATH)|((REBU64)1<<REB_GET_PATH)|((REBU64)1<<REB_LIT_PATH))
+#define TS_BLOCK (((REBU64)1<<REB_BLOCK)|((REBU64)1<<REB_PAREN)|((REBU64)1<<REB_PATH)|((REBU64)1<<REB_SET_PATH)|((REBU64)1<<REB_GET_PATH)|((REBU64)1<<REB_LIT_PATH)|((REBU64)1<<REB_HASH))
 #define TS_PATH (((REBU64)1<<REB_PATH)|((REBU64)1<<REB_SET_PATH)|((REBU64)1<<REB_GET_PATH)|((REBU64)1<<REB_LIT_PATH))
 #define TS_WORD (((REBU64)1<<REB_WORD)|((REBU64)1<<REB_SET_WORD)|((REBU64)1<<REB_GET_WORD)|((REBU64)1<<REB_LIT_WORD)|((REBU64)1<<REB_REFINEMENT)|((REBU64)1<<REB_ISSUE))
 #define TS_FUNCTION (((REBU64)1<<REB_NATIVE)|((REBU64)1<<REB_ACTION)|((REBU64)1<<REB_REBCODE)|((REBU64)1<<REB_COMMAND)|((REBU64)1<<REB_OP)|((REBU64)1<<REB_CLOSURE)|((REBU64)1<<REB_FUNCTION))

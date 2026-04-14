@@ -2,7 +2,7 @@ REBOL [
 	Title:   "Codec: UTC time as used in ASN.1 data structures (BER/DER)"
 	Author:  "Oldes"
 	Rights:  "Copyright (C) 2018 Oldes. All rights reserved."
-	License: "BSD-3"
+	License: MIT
 	Test:    %tests/units/crypt-test.r3
 ]
 

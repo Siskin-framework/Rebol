@@ -74,6 +74,7 @@ Rebol [
 	--assert g2/size = wh
 
 	--test-- "gob hidden flag"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/307
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1579
 		g: make gob! [flags: [hidden]]
 		--assert g/flags = [hidden]

@@ -204,7 +204,14 @@ Rebol [
 			]
 		]
 		try [delete %tmp2574]
-		--assert {"�"} = mold to string! #{F09F989C}
+
+	--test-- "mold/form string with char above Basic Multilingual Plane"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/683
+		--assert {"😜"} = mold to string! #{F09F989C}
+
+	--test-- "mold string with null char"
+		--assert {"^^@a"} == mold {^@a}
+		--assert {{^^@"}} == mold {^@"}
 
 
 ===end-group=== 
@@ -213,23 +220,35 @@ Rebol [
 	
 	--test-- "mold url"
 		--assert "ftp://"  = mold ftp://
-		--assert "ftp://%C5%A1" = mold ftp://š
+		--assert "ftp://š" = mold ftp://š
 		--assert "ftp://+" = mold ftp://+
-		--assert "ftp://+" = mold ftp://%2b
-		--assert "ftp://+" = mold ftp://%2B
+		--assert "ftp://%2b" = mold ftp://%2b
+		--assert "ftp://%2B" = mold ftp://%2B
 		--assert "ftp://%20" = mold ftp://%20
 	--test-- "mold append url"
 		--assert "ftp://a" = mold append ftp:// #"a"
 		--assert "ftp://a" = mold append ftp://  "a"
-		--assert "ftp://%C5%A1" = mold append ftp://  "š"
+		--assert "ftp://š" = mold append ftp://  "š"
 		--assert "ftp://+" = mold append ftp://  "+"
-		--assert "ftp://%2528" = mold append ftp:// "%28"
-		--assert "ftp://%28" = dehex mold append ftp:// "%28"
+		--assert "ftp://%28" = mold append ftp:// "%28"
+		--assert "ftp://(" = dehex mold append ftp:// "%28"
 	--test-- "mold url escaping"
 		for i 0 255 1 [
 			f2: try [load mold f1: append copy a:/ to char! i]
-			--assert f1 == f2
+			--assert f2 == f1
 		]
+	--test-- "url with construction syntax needed"
+		--assert {#(url! "")}  == mold clear ftp://
+		--assert {#(url! "a")} == mold as url! "a"
+		--assert {#(url! "a:")} == mold as url! "a:"
+		--assert {#(url! ":a")} == mold as url! ":a"
+		--assert {#(url! "::a")} == mold as url! "::a"
+		--assert "a::"  == mold as url! "a::"
+		--assert "a::a" == mold as url! "a::a"
+		--assert "a:a"  == mold as url! next "aa:a"
+		--assert {#(url! "aa:a" 2)} == mold/all as url! next "aa:a"
+		--assert {#(url! "a:a" 2)} == mold as url! next "a:a"
+		--assert {#(url! "%aa")} == mold as url! "%aa"
 
 ===end-group=== 
 
@@ -248,6 +267,8 @@ Rebol [
 		--assert "%a%02c" == mold to-file "a^Bc"
 		--assert "%a%20b" == mold to-file "a^ b"
 
+		--assert "%a@b" == mold to-file "a@b"
+
 ===end-group=== 
 
 
@@ -262,29 +283,79 @@ Rebol [
 ===end-group=== 
 
 
+===start-group=== "mold integer!"
+	--test-- "mold min integer"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2650
+		--assert "-9223372036854775808" == mold 0#8000000000000000
+	--test-- "mold max integer"
+		--assert "9223372036854775807" == mold 0#7FFFFFFFFFFFFFFF
+
+===end-group=== 
+
 ===start-group=== "mold-all"
-	
-	--test-- "mold-true" --assert "true" = mold true
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2159
+	--test-- "mold-true" --assert "#(true)" = mold true
 
 	--test-- "mold-all-true" --assert "#(true)" = mold/all true
 
-	--test-- "mold-false" --assert "false" = mold false
+	--test-- "mold-false" --assert "#(false)" = mold false
 
 	--test-- "mold-all-false" --assert "#(false)" = mold/all false
 
-	--test-- "mold-none" --assert "none" = mold none
+	--test-- "mold-none" --assert "_" = mold none
 
-	--test-- "mold-all-none" --assert "#(none)" = mold/all none
+	--test-- "mold-all-none" --assert "_" = mold/all none
 
-	--test-- "mold-block" --assert "[true false none]" = mold [#(true) #(false) #(none)]
+	--test-- "mold-block" --assert "[true false none #(true) #(false) _]" = mold [true false none #(true) #(false) #(none)]
 
 	--test-- "mold-all-block"
-		--assert "[#(true) #(false) #(none)]" = mold/all [#(true) #(false) #(none)]
+		--assert "[true false none #(true) #(false) _]" = mold/all [true false none #(true) #(false) #(none)]
 
 	--test-- "mold/all block at tail"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1192
 		--assert "#(path! [p p] 3)" = mold/all next next 'p/p
 		--assert "#(block! [a b] 3)" = mold/all next next [a b]
+
+	--test-- "mold/all series"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2022
+		--assert {#(email! "")}      == mold/all #(email! "")
+		--assert {#(email! "a")}     == mold/all #(email! "a")
+		--assert {#(url! "")}        == mold/all #(url! "")
+		--assert {#(url! "a")}       == mold/all #(url! "a")
+		--assert {#(tag! "")}        == mold/all #(tag! "")
+		--assert {#(image! 0x0 #{})} == mold/all #(image! 0x0 #{})
+		--assert {#(path! [])}       == mold/all quote #(path! [])
+		--assert {#(set-path! [])}   == mold/all quote #(set-path! [])
+		--assert {#(get-path! [])}   == mold/all quote #(get-path! [])
+		--assert {#(lit-path! [])}   == mold/all quote #(lit-path! [])
+		--assert {#(path! [a])}      == mold/all quote #(path! [a])
+		--assert {#(set-path! [a])}  == mold/all quote #(set-path! [a])
+		--assert {#(get-path! [a])}  == mold/all quote #(get-path! [a])
+		--assert {#(lit-path! [a])}  == mold/all quote #(lit-path! [a])
+		--assert {#(path! [])}       == mold/all clear quote  a/b
+		--assert {#(set-path! [])}   == mold/all clear quote  a/b:
+		--assert {#(get-path! [])}   == mold/all clear quote :a/b
+		--assert {#(lit-path! [])}   == mold/all clear quote 'a/b
+		--assert {#(path! [b])}      == mold/all remove quote  a/b
+		--assert {#(set-path! [b])}  == mold/all remove quote  a/b:
+		--assert {#(get-path! [b])}  == mold/all remove quote :a/b
+		--assert {#(lit-path! [b])}  == mold/all remove quote 'a/b
+
+	--test-- "mold/all block with index over tail"
+		a: [1 2 3 4]
+		b: tail a
+		clear a 
+		--assert "[]" == mold/all b
+		a: 'a/b/c/d/e
+		b: tail a
+		clear a 
+		--assert "#(path! [])" == mold/all b
+	--test-- "mold/all string with index over tail"
+		a: "12345678"
+		b: tail a
+		clear a 
+		--assert {#(string! "" 9)} == mold/all b
+
 
 ===end-group=== 
 
@@ -433,6 +504,14 @@ Rebol [
 	system/options/binary-base: bb
 ===end-group===
 
+
+===start-group=== "reform"
+	--test-- "reform binary!"
+		--assert "Number of input words:  25104 ^/" == reform ["Number of input words: " 25104 LF]
+		--assert "dab is reversed: bad" == reform ["dab" "is reversed:" "bad"]
+===end-group===
+
+
 ===start-group=== "form binary!"
 	;-- form on binary! removes decoration..
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2413
@@ -447,13 +526,22 @@ Rebol [
 ===start-group=== "mold email!"
 	--test-- "issue-159"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/159
-		--assert "a@b" = mold a@b
+		--assert "a@b" == mold a@b
 	--test-- "issue-2406"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2406
-		--assert "a@%C5%A1i%C5%A1ka" = mold a@šiška
-		--assert "a@šiška"           = form a@šiška
-		--assert "a@%C5%A1" = mold a@%C5%A1
-		--assert "a@š"      = form a@%C5%A1
+		--assert "a@šiška" == mold a@šiška
+		--assert "a@šiška" == form a@šiška
+		--assert "a@š"     == mold a@%C5%A1
+		--assert "a@š"     == form a@%C5%A1
+	--test-- "email with construction syntax needed"
+		--assert {#(email! "")}  == mold clear a@b
+		--assert {#(email! "a")} == mold as email! "a"
+		--assert {#(email! "@a")} == mold as email! "@a"
+		--assert {#(email! "a@")} == mold as email! "a@"
+		--assert {#(email! "a@/")} == mold as email! "a@/"
+		--assert {#(email! "a@@")} == mold as email! "a@@"
+		--assert {#(email! "a@b@")} == mold as email! "a@b@"
+		--assert {#(email! "%@b")} == mold as email! "%@b"
 ===end-group===
 
 ===start-group=== "mold ref!"
@@ -526,7 +614,7 @@ Rebol [
 	--test-- "mold unset!"
 		--assert "#(unset)" = mold ()
 		--assert "#(unset)" = mold/all ()
-		--assert   "unset!" = mold type? () 
+		--assert "#(unset!)" = mold type? () 
 		--assert "#(unset!)" = mold/all type? () 
 	--test-- "form unset!"
 		--assert "" = form ()
@@ -534,13 +622,30 @@ Rebol [
 ===end-group===
 
 ===start-group=== "mold path!"
-	--test-- "mold path"
-		--assert "a/b" = mold 'a/b
-		--assert "b" = mold next 'a/b
-		--assert "#(path! [a b] 2)" = mold/all next 'a/b
-	--test-- "mold empty path"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/868
-		--assert "#(path! [])" = mold make path! []
+
+	--test-- "mold path!"
+		--assert "a/b" = mold 'a/b
+		--assert   "b" = mold next 'a/b
+		--assert    "" = mold clear 'a/b
+	--test-- "mold/all path!"
+		--assert "a/b" = mold/all 'a/b
+		--assert "#(path! [a b] 2)" = mold/all next 'a/b
+		--assert "#(path! [])"     = mold/all clear 'a/b
+	--test-- "form path!"
+		--assert "a/b" = form 'a/b
+		--assert   "b" = form next 'a/b
+		--assert    "" = form clear 'a/b
+
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1947
+	--assert equal? make path! [ ] load mold/all make path! [ ]
+	--assert equal? make path! [a] load mold/all make path! [a]
+	--assert equal? make lit-path! [ ] load mold/all make lit-path! [ ]
+	--assert equal? make lit-path! [a] load mold/all make lit-path! [a]
+	--assert equal? make get-path! [ ] load mold/all make get-path! [ ]
+	--assert equal? make get-path! [a] load mold/all make get-path! [a]
+	--assert equal? make set-path! [ ] load mold/all make set-path! [ ]
+	--assert equal? make set-path! [a] load mold/all make set-path! [a]
 
 ===end-group===
 
@@ -576,9 +681,9 @@ Rebol [
 ===start-group=== "mold error!"
 	--test-- "mold error!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1003
-		--assert {make error! [code: 101 type: 'Note id: 'exited arg1: none arg2: none arg3: none near: none where: none]} = mold/flat make error! [type: 'Note id: 'exited]
-		--assert {#(error! [code: 101 type: Note id: exited arg1: #(none) arg2: #(none) arg3: #(none) near: #(none) where: #(none)])} = mold/all/flat make error! [type: 'Note id: 'exited]
-		--assert {#(error! [code: 401 type: Math id: overflow arg1: #(none) arg2: #(none) arg3: #(none) near: #(none) where: #(none)])} = mold/all/flat make error! [type: 'Math id: 'overflow]
+		--assert {make error! [code: 101 type: 'Note id: 'exited arg1: _ arg2: _ arg3: _ near: _ where: _]} = mold/flat make error! [type: 'Note id: 'exited]
+		--assert {#(error! [code: 101 type: Note id: exited arg1: _ arg2: _ arg3: _ near: _ where: _])} = mold/all/flat make error! [type: 'Note id: 'exited]
+		--assert {#(error! [code: 401 type: Math id: overflow arg1: _ arg2: _ arg3: _ near: _ where: _])} = mold/all/flat make error! [type: 'Math id: 'overflow]
 ===end-group===
 
 

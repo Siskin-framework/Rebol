@@ -3,6 +3,7 @@
 **  REBOL Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -94,11 +95,11 @@
 	if ((size + extra) > SERIES_SPACE(series)) {
 		if (IS_LOCK_SERIES(series)) Crash(RP_LOCKED_SERIES);
 		//DISABLE_GC; // Don't let GC occur just for an expansion.
-
+#ifdef DEBUG
 		if (Reb_Opts->watch_expand) {
 			Debug_Fmt(cb_cast("Expand %x wide: %d tail: %d delta: %d"), series, wide, series->tail, delta);
 		}
-
+#endif
 		// Create a new series that is bigger.
 		// Have we recently expanded the same series?
 		x = 1;
@@ -119,7 +120,7 @@
 			Trap0(RE_PAST_END);
 		}
 
-		newser = Make_Series(new_size, wide, TRUE);
+		newser = Make_Series(new_size, wide, new_size < 512*1024);
 		// If necessary, add series to the recently expanded list:
 		if (Prior_Expand[n] != series) {
 			n = (REBUPT)(Prior_Expand[0]) + 1;
@@ -131,11 +132,11 @@
 		//ENABLE_GC;
 
 		// Copy the series up to the expansion point:
-		memcpy(newser->data, series->data, start);
+		COPY_MEM(newser->data, series->data, start);
 
 		// Copy the series after the expansion point:
 		// In AT_TAIL cases, this just moves the terminator to the new tail.
-		memcpy(newser->data + start + extra, series->data + start, size - start);
+		COPY_MEM(newser->data + start + extra, series->data + start, size - start);
 
 		newser->tail = series->tail + delta;
 
@@ -260,7 +261,8 @@
 	REBCNT len = source->tail + 1;
 	REBSER *series = Make_Series(len, SERIES_WIDE(source), FALSE);
 
-	memcpy(series->data, source->data, len * SERIES_WIDE(source));
+	COPY_MEM(series->data, source->data, len * SERIES_WIDE(source));
+	if (IS_UTF8_SERIES(source)) UTF8_SERIES(series);
 	series->tail = source->tail;
 	return series;
 }
@@ -276,8 +278,12 @@
 {
 	REBSER *series = Make_Series(length+1, SERIES_WIDE(source), FALSE);
 
-	memcpy(series->data, source->data + index * SERIES_WIDE(source), (length+1) * SERIES_WIDE(source));
+	COPY_MEM(series->data, source->data + index * SERIES_WIDE(source), (length+1) * SERIES_WIDE(source));
 	series->tail = length;
+	if (IS_UTF8_SERIES(source)) {
+
+		UTF8_SERIES(series);
+	}
 	return series;
 }
 
@@ -548,7 +554,7 @@
 
 	ser = Make_Series(len+1, SERIES_WIDE(buf), FALSE);
 
-	memcpy(ser->data, buf->data, SERIES_WIDE(buf) * len);
+	COPY_MEM(ser->data, buf->data, SERIES_WIDE(buf) * len);
 	ser->tail = len;
 	TERM_SERIES(ser);
 

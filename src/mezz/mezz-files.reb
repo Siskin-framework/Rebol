@@ -92,6 +92,8 @@ input: func [
 	either hide [
 		also request-password prin LF
 	][
+		;; Make sure that we are using readline mode.
+		modify port 'line true
 		all [
 			line: read port
 			to string! line
@@ -104,9 +106,10 @@ ask: func [
 	question [series!] "Prompt to user"
 	/hide "Turns off echoing inputs"
 	/char "Waits only on single key press and returns char as a result"
+	 limit [bitset! string! block! char! none!] "Limit input to specified chars or control words"
 ][
 	prin question
-	input/:hide
+	either char [wait-for-key/only limit][input/:hide]
 ]
 
 confirm: func [
@@ -160,7 +163,9 @@ dir-tree: func [
 			exit
 		]
 		set [directory value] split-path directory
-		prin "^[[31;1m"
+		unless system/options/no-color [
+			prin system/options/ansi/red
+		]
 	]
 
 	prefix:       any [prefix ""]
@@ -175,7 +180,9 @@ dir-tree: func [
 			formed: either :on-value [
 				on-value directory/:value depth
 			][	join either dir? value [" ^[[32;1m"][" ^[[33;1m"][value "^[[m"] ]
-			print ajoin [indent prefix "[^[[m" formed ]
+			formed: ajoin [indent prefix "[^[[m" formed ]
+			any [if system/options/no-color [formed: sys/remove-ansi formed] true]
+			print formed
 		]
 		all [
 			dir? value									; if this is directory
@@ -197,10 +204,10 @@ dir-tree: func [
 	unless block? value [exit]
 
 	str: [
-		"^[[31;1m├───"
-		"^[[31;1m│   "
-		"^[[31;1m└───"
-		"^[[31;1m    "
+		"^[[31;1m    " ;├───"
+		"^[[31;1m    " ;│   "
+		"^[[31;1m    " ;└───"
+		"^[[31;1m    " ;    "
 	]
 
 	sort/compare value func[a b][
@@ -273,7 +280,7 @@ list-dir: closure/with [
 		value depth
 		/local info date time size
 	][
-		info: query/mode value [name size date]
+		info: query value [:name :size :date]
 		unless info [
 			return ajoin [
 				"^[[1;35m *** Invalid symbolic link:  ^[[0;35m"

@@ -2,7 +2,7 @@
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **  Licensed under the Apache License, Version 2.0
 **  This is a code-generated file.
@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Bootstrap Structure and Root Module
-**  Build: 3.16.0
-**  Date:  4-Apr-2024
+**  Build: 3.21.15
+**  Date:  14-Apr-2026
 **  File:  boot.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -19,8 +19,8 @@
 ***********************************************************************/
 
 
-#define MAX_NATS      208
-#define NAT_SPEC_SIZE 102672
+#define MAX_NATS      233
+#define NAT_SPEC_SIZE 154623
 #define CHECK_TITLE   16298111
 
 extern const REBYTE Native_Specs[];
@@ -84,9 +84,8 @@ typedef struct REBOL_Task_Context {
 	REBVAL this_context;
 	REBVAL buf_emit;
 	REBVAL buf_words;
-	REBVAL buf_utf8;
+	REBVAL buf_scan;
 	REBVAL buf_print;
-	REBVAL buf_form;
 	REBVAL buf_mold;
 	REBVAL mold_loop;
 	REBVAL err_temps;
@@ -102,10 +101,9 @@ typedef struct REBOL_Task_Context {
 #define TASK_THIS_CONTEXT      (&Task_Context->this_context)
 #define TASK_BUF_EMIT          (&Task_Context->buf_emit)
 #define TASK_BUF_WORDS         (&Task_Context->buf_words)
-#define TASK_BUF_UTF8          (&Task_Context->buf_utf8)
+#define TASK_BUF_SCAN          (&Task_Context->buf_scan)
 #define TASK_BUF_PRINT         (&Task_Context->buf_print)
-#define TASK_BUF_FORM          (&Task_Context->buf_form)
 #define TASK_BUF_MOLD          (&Task_Context->buf_mold)
 #define TASK_MOLD_LOOP         (&Task_Context->mold_loop)
 #define TASK_ERR_TEMPS         (&Task_Context->err_temps)
-#define TASK_MAX 16
+#define TASK_MAX 15

@@ -37,6 +37,24 @@ Rebol [
 		--assert 30 = to integer! #"^(1E)"
 		--assert 94 = to integer! #"^^"
 
+	--test-- "to char! surrogates"
+		--assert all [
+			error? err: try [make char! 55348]
+			err/arg1 = 55348
+			err/id = 'invalid-char
+		]
+		--assert all [
+			error? err: try [#"^A" + 55348]
+			err/arg1 = 55349
+			err/id = 'invalid-char
+		]
+	--test-- "to char! over range"
+		--assert all [
+			error? err: try [to char! 0#110000]
+			err/arg1 = 0#110000
+			err/id = 'invalid-char
+		]
+
 	--test-- "to char! issue!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1130
 		--assert all [
@@ -61,28 +79,73 @@ Rebol [
 		--assert 20-Sep-2021/12:46:42 =   to date! 1632142002
 		--assert 20-Sep-2021/10:58:32 = make date! 1632135512
 		--assert 20-Sep-2021/10:58:32 =   to date! 1632135512
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2632
+		--assert  1-Jan-1970/00:00:00 = to date!  0
+		--assert 31-Dec-1969/23:59:59 = to date! -1
 	--test-- "make/to date! decimal!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2551
-		--assert 17-Nov-1858/00:00:00 = make date! 0.0
-		--assert 17-Nov-1858/00:00:00 =   to date! 0.0
-		--assert 01-Jan-1900/00:00:00 = make date! 15020.0
-		--assert 01-Jan-1900/00:00:00 =   to date! 15020.0
-		--assert 02-May-2003/12:00:00 = make date! 52761.5
-		--assert 02-May-2003/12:00:00 =   to date! 52761.5
-		--assert 10-Jun-2023/01:30:00 = make date! 60105.0625
-		--assert 10-Jun-2023/01:30:00 =   to date! 60105.0625
-		--assert 10-Jun-2023/19:30:00 = make date! 60105.8125
-		--assert 10-Jun-2023/19:30:00 =   to date! 60105.8125
-		--assert 01-Jan-2023/12:00:00 = make date! 59945.5
-		--assert 01-Jan-2023/12:00:00 =   to date! 59945.5
-		--assert 01-Jan-2023/19:30:00 = make date! 59945.8125
-		--assert 01-Jan-2023/19:30:00 =   to date! 59945.8125
-		--assert 01-Jan-2023/01:30:00 = make date! 59945.0625
-		--assert 01-Jan-2023/01:30:00 =   to date! 59945.0625
-		--assert 31-Aug-2132/00:00:00 = make date! 99999.0
-		--assert 31-Aug-2132/00:00:00 =   to date! 99999.0
-		--assert 01-Sep-2132/00:00:00 = make date! 100000.0
-		--assert 01-Sep-2132/00:00:00 =   to date! 100000.0
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2631
+		--assert 17-Nov-1858/00:00:00    == make date! -3506716800.0
+		--assert 17-Nov-1858/00:00:00    ==   to date! -3506716800.0
+		--assert 01-Jan-1900/00:00:00    == make date! -2208988800.0
+		--assert 01-Jan-1900/00:00:00    ==   to date! -2208988800.0
+		--assert 31-Dec-1969/23:59:59.9  ==   to date! -0.1
+		--assert 01-Jan-1970/00:00:00    ==   to date!  0.0
+		--assert 01-Jan-1970/00:00:00.1  ==   to date!  0.1
+		--assert 02-May-2003/12:00:00    == make date! 1051876800.0
+		--assert 02-May-2003/12:00:00    ==   to date! 1051876800.0
+		--assert 10-Jun-2023/01:30:00    == make date! 1686360600.0
+		--assert 10-Jun-2023/01:30:00    ==   to date! 1686360600.0
+		--assert 10-Jun-2023/19:30:00    == make date! 1686425400.0
+		--assert 10-Jun-2023/19:30:00    ==   to date! 1686425400.0
+		--assert 01-Jan-2023/12:00:00    == make date! 1672574400.0
+		--assert 01-Jan-2023/12:00:00    ==   to date! 1672574400.0
+		--assert 01-Jan-2023/19:30:00    == make date! 1672601400.0
+		--assert 01-Jan-2023/19:30:00    ==   to date! 1672601400.0
+		--assert 01-Jan-2023/01:30:00    == make date! 1672536600.0
+		--assert 01-Jan-2023/01:30:00    ==   to date! 1672536600.0
+		--assert 31-Aug-2132/00:00:00    == make date! 5133196800.0
+		--assert 31-Aug-2132/00:00:00    ==   to date! 5133196800.0
+		--assert 01-Sep-2132/00:00:00    == make date! 5133283200.0
+		--assert 01-Sep-2132/00:00:00    ==   to date! 5133283200.0
+
+		--assert 16-Nov-1858/23:59:59.75 == make date! -3506716800.25
+		--assert 16-Nov-1858/23:59:59.75 ==   to date! -3506716800.25
+		--assert 31-Dec-1899/23:59:59.75 == make date! -2208988800.25
+		--assert 31-Dec-1899/23:59:59.75 ==   to date! -2208988800.25
+		--assert 02-May-2003/12:00:00.25 == make date! 1051876800.25
+		--assert 02-May-2003/12:00:00.25 ==   to date! 1051876800.25
+		--assert 10-Jun-2023/01:30:00.25 == make date! 1686360600.25
+		--assert 10-Jun-2023/01:30:00.25 ==   to date! 1686360600.25
+		--assert 10-Jun-2023/19:30:00.25 == make date! 1686425400.25
+		--assert 10-Jun-2023/19:30:00.25 ==   to date! 1686425400.25
+		--assert 01-Jan-2023/12:00:00.25 == make date! 1672574400.25
+		--assert 01-Jan-2023/12:00:00.25 ==   to date! 1672574400.25
+		--assert 01-Jan-2023/19:30:00.25 == make date! 1672601400.25
+		--assert 01-Jan-2023/19:30:00.25 ==   to date! 1672601400.25
+		--assert 01-Jan-2023/01:30:00.25 == make date! 1672536600.25
+		--assert 01-Jan-2023/01:30:00.25 ==   to date! 1672536600.25
+		--assert 31-Aug-2132/00:00:00.25 == make date! 5133196800.25
+		--assert 31-Aug-2132/00:00:00.25 ==   to date! 5133196800.25
+		--assert 01-Sep-2132/00:00:00.25 == make date! 5133283200.25
+		--assert 01-Sep-2132/00:00:00.25 ==   to date! 5133283200.25
+	--test-- "make/to date! block!"
+		--assert 1-Feb-2000 == make date! [2000 2 1]
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2619
+		--assert 1-Feb-2000/1:02:03   == make date! [2000 2 1 1 2 3]
+		--assert 1-Feb-2000/1:02:03.4 == make date! [2000 2 1 1 2 3.4]
+		--assert 1-Feb-2000/1:02:03   == make date! [1-Feb-2000 1 2 3]
+		--assert 1-Feb-2000/1:02:03.4 == make date! [1-Feb-2000 1 2 3.4]
+		;; time must be in correct range < 24:0:0
+		--assert error? try [make date! [2000 2 1 24  0  0]]
+		--assert error? try [make date! [2000 2 1 23 60  0]]
+		--assert error? try [make date! [2000 2 1 23 59 60]]
+		--assert 1-Feb-2000/23:59:59.99 == make date! [2000 2 1 23 59 59.99]
+		;; including timezone...
+		--assert 1-Feb-2000/1:02:03+2:00   == make date! [2000 2 1 1 2 3 2:00]
+		--assert 1-Feb-2000/1:02:03.4+2:00 == make date! [2000 2 1 1 2 3.4 2:00]
+		--assert 1-Feb-2000/1:02:03+2:00   == make date! [1-Feb-2000 1 2 3 2:00]
+		--assert 1-Feb-2000/1:02:03.4+2:00 == make date! [1-Feb-2000 1 2 3.4 2:00]
 ===end-group===
 
 ===start-group=== "make/to integer"
@@ -118,6 +181,8 @@ Rebol [
 		--assert 1685750400 == to integer! 3-Jun-2023/0:00
 		--assert 1685750400 == make integer! 3-Jun-2023
 		--assert 1685750400 == make integer! 3-Jun-2023/0:00
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2632
+		--assert -1 == to integer! 31-Dec-1969/23:59:59
 
 	--test-- "make/to integer! string!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2164
@@ -174,26 +239,48 @@ Rebol [
 	
 	--test-- "make/to decimal! date!"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2551
-		--assert 0.0            = make decimal! 17-Nov-1858/00:00:00
-		--assert 0.0            =   to decimal! 17-Nov-1858/00:00:00
-		--assert 15020.0        = make decimal! 01-Jan-1900/00:00:00
-		--assert 15020.0        =   to decimal! 01-Jan-1900/00:00:00
-		--assert 52761.5        = make decimal! 02-May-2003/12:00:00
-		--assert 52761.5        =   to decimal! 02-May-2003/12:00:00
-		--assert 60105.0625     = make decimal! 10-Jun-2023/01:30:00
-		--assert 60105.0625     =   to decimal! 10-Jun-2023/01:30:00
-		--assert 60105.8125     = make decimal! 10-Jun-2023/19:30:00
-		--assert 60105.8125     =   to decimal! 10-Jun-2023/19:30:00
-		--assert 59945.5        = make decimal! 01-Jan-2023/12:00:00
-		--assert 59945.5        =   to decimal! 01-Jan-2023/12:00:00
-		--assert 59945.8125     = make decimal! 01-Jan-2023/19:30:00
-		--assert 59945.8125     =   to decimal! 01-Jan-2023/19:30:00
-		--assert 59945.0625     = make decimal! 01-Jan-2023/01:30:00
-		--assert 59945.0625     =   to decimal! 01-Jan-2023/01:30:00
-		--assert 99999.0        = make decimal! 31-Aug-2132/00:00:00
-		--assert 99999.0        =   to decimal! 31-Aug-2132/00:00:00
-		--assert 100000.0       = make decimal! 01-Sep-2132/00:00:00
-		--assert 100000.0       =   to decimal! 01-Sep-2132/00:00:00
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2631
+		--assert -3506716800.0  == make decimal! 17-Nov-1858/00:00:00
+		--assert -3506716800.0  ==   to decimal! 17-Nov-1858/00:00:00
+		--assert -2208988800.0  == make decimal! 01-Jan-1900/00:00:00
+		--assert -2208988800.0  ==   to decimal! 01-Jan-1900/00:00:00
+		--assert  1051876800.0  == make decimal! 02-May-2003/12:00:00
+		--assert  1051876800.0  ==   to decimal! 02-May-2003/12:00:00
+		--assert  1686360600.0  == make decimal! 10-Jun-2023/01:30:00
+		--assert  1686360600.0  ==   to decimal! 10-Jun-2023/01:30:00
+		--assert  1686425400.0  == make decimal! 10-Jun-2023/19:30:00
+		--assert  1686425400.0  ==   to decimal! 10-Jun-2023/19:30:00
+		--assert  1672574400.0  == make decimal! 01-Jan-2023/12:00:00
+		--assert  1672574400.0  ==   to decimal! 01-Jan-2023/12:00:00
+		--assert  1672601400.0  == make decimal! 01-Jan-2023/19:30:00
+		--assert  1672601400.0  ==   to decimal! 01-Jan-2023/19:30:00
+		--assert  1672536600.0  == make decimal! 01-Jan-2023/01:30:00
+		--assert  1672536600.0  ==   to decimal! 01-Jan-2023/01:30:00
+		--assert  5133196800.0  == make decimal! 31-Aug-2132/00:00:00
+		--assert  5133196800.0  ==   to decimal! 31-Aug-2132/00:00:00
+		--assert  5133283200.0  == make decimal! 01-Sep-2132/00:00:00
+		--assert  5133283200.0  ==   to decimal! 01-Sep-2132/00:00:00
+
+		--assert -3506716800.25 == make decimal! 16-Nov-1858/23:59:59.75
+		--assert -3506716800.25 ==   to decimal! 16-Nov-1858/23:59:59.75
+		--assert -2208988800.25 == make decimal! 31-Dec-1899/23:59:59.75
+		--assert -2208988800.25 ==   to decimal! 31-Dec-1899/23:59:59.75
+		--assert  1051876800.25 == make decimal! 02-May-2003/12:00:00.25
+		--assert  1051876800.25 ==   to decimal! 02-May-2003/12:00:00.25
+		--assert  1686360600.25 == make decimal! 10-Jun-2023/01:30:00.25
+		--assert  1686360600.25 ==   to decimal! 10-Jun-2023/01:30:00.25
+		--assert  1686425400.25 == make decimal! 10-Jun-2023/19:30:00.25
+		--assert  1686425400.25 ==   to decimal! 10-Jun-2023/19:30:00.25
+		--assert  1672574400.25 == make decimal! 01-Jan-2023/12:00:00.25
+		--assert  1672574400.25 ==   to decimal! 01-Jan-2023/12:00:00.25
+		--assert  1672601400.25 == make decimal! 01-Jan-2023/19:30:00.25
+		--assert  1672601400.25 ==   to decimal! 01-Jan-2023/19:30:00.25
+		--assert  1672536600.25 == make decimal! 01-Jan-2023/01:30:00.25
+		--assert  1672536600.25 ==   to decimal! 01-Jan-2023/01:30:00.25
+		--assert  5133196800.25 == make decimal! 31-Aug-2132/00:00:00.25
+		--assert  5133196800.25 ==   to decimal! 31-Aug-2132/00:00:00.25
+		--assert  5133283200.25 == make decimal! 01-Sep-2132/00:00:00.25
+		--assert  5133283200.25 ==   to decimal! 01-Sep-2132/00:00:00.25
 ===end-group===
 
 
@@ -280,7 +367,7 @@ Rebol [
 		--assert error? try [make pair! quote #FF        ] ; issue!
 		--assert error? try [make pair! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [make pair! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [make pair! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [make pair! quote #(uint32! [0 0]) ] ; vector!
 		--assert error? try [make pair! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [make pair! quote #(typeset! [integer! percent!]) ] ; typeset!
 	--test-- "to pair! .."
@@ -317,7 +404,7 @@ Rebol [
 		--assert error? try [to pair! quote #FF           ] ; issue!
 		--assert error? try [to pair! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [to pair! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [to pair! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [to pair! quote #(uint32! [0 0]) ] ; vector!
 		--assert error? try [to pair! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [to pair! quote #(typeset! [integer! percent!]) ] ; typeset!
 	--test-- "to pair! string! (long)"
@@ -366,7 +453,7 @@ Rebol [
 		--assert #(true)  = try [make logic! quote #FF ] ; issue!
 		--assert #(true)  = try [make logic! quote #(bitset! #{FF}) ] ; bitset!
 		--assert #(true)  = try [make logic! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert #(true)  = try [make logic! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert #(true)  = try [make logic! quote #(uint32! [0 0]) ] ; vector!
 		--assert #(true)  = try [make logic! quote #(object! [a: 1]) ] ; object!
 		--assert #(true)  = try [make logic! quote #(typeset! [integer! percent!]) ] ; typeset!
 	--test-- "to logic! .."
@@ -402,7 +489,7 @@ Rebol [
 		--assert #(true)  = try [to logic! quote #FF ] ; issue!
 		--assert #(true)  = try [to logic! quote #(bitset! #{FF}) ] ; bitset!
 		--assert #(true)  = try [to logic! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert #(true)  = try [to logic! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert #(true)  = try [to logic! quote #(uint32! [0 0]) ] ; vector!
 		--assert #(true)  = try [to logic! quote #(object! [a: 1]) ] ; object!
 		--assert #(true)  = try [to logic! quote #(typeset! [integer! percent!]) ] ; typeset!
 ===end-group===
@@ -463,7 +550,7 @@ Rebol [
 		--assert  error?  try [make block! quote #FF        ] ; issue!
 		--assert  error?  try [make block! quote #(bitset! #{FF})        ] ; bitset!
 		--assert  error?  try [make block! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert  [0 0] = try [make block! quote #(u32! 2 [0 0])        ] ; vector!
+		--assert  [0 0] = try [make block! quote #(uint32! [0 0])        ] ; vector!
 		--assert [a: 1] = try [make block! quote #(object! [a: 1])       ] ; object!
 		--assert  error?  try [make block! #(typeset! [integer! percent!]) ] ; typeset!
 
@@ -496,7 +583,7 @@ Rebol [
 		--assert [a b]        = try [to block! quote :a/b          ] ; get-path!
 		--assert [/ref]       = try [to block! quote /ref          ] ; refinement!
 		--assert [#FF]        = try [to block! quote #FF           ] ; issue!
-		--assert [0 0]        = try [to block! quote #(vector! integer! 32 2 [0 0])        ] ; vector!
+		--assert [0 0]        = try [to block! quote #(uint32! [0 0])        ] ; vector!
 		--assert [a: 1]       = try [to block! quote #(object! [a: 1])                     ] ; object!
 		--assert [#(bitset! #{FF})]         = try [to block! quote #(bitset! #{FF})        ] ; bitset!
 		--assert [#(image! 1x1 #{FFFFFF})]  = try [to block! quote #(image! 1x1 #{FFFFFF}) ] ; image!
@@ -541,7 +628,7 @@ Rebol [
 		--assert error? try [make path! quote #FF ] ; issue!
 		--assert error? try [make path! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [make path! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert  path? try [make path! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert  path? try [make path! quote #(uint32! [0 0]) ] ; vector!
 		--assert  path? try [make path! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [make path! quote #(typeset! [integer! percent!]) ] ; typeset!
 
@@ -578,7 +665,7 @@ Rebol [
 		--assert  path? try [to path! quote #FF ] ; issue!
 		--assert  path? try [to path! quote #(bitset! #{FF}) ] ; bitset!
 		--assert  path? try [to path! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert  path? try [to path! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert  path? try [to path! quote #(uint32! [0 0]) ] ; vector!
 		--assert  path? try [to path! quote #(object! [a: 1]) ] ; object!
 		--assert  path? try [to path! quote #(typeset! [integer! percent!]) ] ; typeset!
 ===end-group===
@@ -619,7 +706,7 @@ Rebol [
 		--assert error? try [make map! quote #FF ] ; issue!
 		--assert error? try [make map! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [make map! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [make map! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [make map! quote #(uint32! [0 0]) ] ; vector!
 		--assert   map? try [make map! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [make map! quote #(typeset! [integer! percent!]) ] ; typeset!
 	--test-- "to map! .."
@@ -655,7 +742,7 @@ Rebol [
 		--assert error? try [to map! quote #FF ] ; issue!
 		--assert error? try [to map! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [to map! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [to map! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [to map! quote #(uint32! [0 0]) ] ; vector!
 		--assert   map? try [to map! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [to map! quote #(typeset! [integer! percent!]) ] ; typeset!
 ===end-group===
@@ -698,9 +785,9 @@ Rebol [
 		--assert "a/b"        = try [make string! quote 'a/b       ] ; lit-path!
 		--assert "ref"        = try [make string! quote /ref       ] ; refinement!
 		--assert "FF"         = try [make string! quote #FF        ] ; issue!
-		--assert "0 0"        = try [make string! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert "0 0"        = try [make string! quote #(uint32! [0 0]) ] ; vector!
 		--assert "a: 1"       = try [make string! quote #(object! [a: 1]) ] ; object!
-		--assert "make bitset! #{FF}"  = try [make string! quote #(bitset! #{FF}) ] ; bitset!
+		--assert "#(bitset! #{FF})"  = try [make string! quote #(bitset! #{FF}) ] ; bitset!
 		--assert "make image! [1x1 #{FFFFFF}]"  = try [make string! quote #(image! 1x1 #{FFFFFF}) ] ; image!
 		--assert "integer! percent!"  = try [make string! quote #(typeset! [integer! percent!]) ] ; typeset!
 	--test-- "to string! ..."
@@ -740,16 +827,15 @@ Rebol [
 		--assert "a/b"        = try [to string! quote 'a/b       ] ; lit-path!
 		--assert "ref"        = try [to string! quote /ref       ] ; refinement!
 		--assert "FF"         = try [to string! quote #FF        ] ; issue!
-		--assert "0 0"        = try [to string! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert "0 0"        = try [to string! quote #(uint32! [0 0]) ] ; vector!
 		--assert "a: 1"       = try [to string! quote #(object! [a: 1]) ] ; object!
-		--assert "make bitset! #{FF}"  = try [to string! quote #(bitset! #{FF}) ] ; bitset!
+		--assert "#(bitset! #{FF})"  = try [to string! quote #(bitset! #{FF}) ] ; bitset!
 		--assert "make image! [1x1 #{FFFFFF}]"  = try [to string! quote #(image! 1x1 #{FFFFFF}) ] ; image!
 		--assert "integer! percent!"  = try [to string! quote #(typeset! [integer! percent!]) ] ; typeset!
 
 	--test-- "to string! with chars outside the BMP"
-		;; current Rebol is able to use only 16bit Unicode..
-		--assert #{EFBFBD} = to binary! to string! #{F09F989A}
-		--assert #{EFBFBD} = to binary! to string! #{F09F989C}
+		--assert #{F09F989A} = to binary! to string! #{F09F989A}
+		--assert #{F09F989C} = to binary! to string! #{F09F989C}
 ===end-group===
 
 ===start-group=== "make/to tag"
@@ -786,9 +872,9 @@ Rebol [
 		--assert <a/b>  = try [make tag! quote 'a/b ] ; lit-path!
 		--assert <ref>  = try [make tag! quote /ref ] ; refinement!
 		--assert <FF>   = try [make tag! quote #FF ] ; issue!
-		--assert <make bitset! #{FF}>  = try [make tag! quote #(bitset! #{FF}) ] ; bitset!
+		--assert <#(bitset! #{FF})>  = try [make tag! quote #(bitset! #{FF}) ] ; bitset!
 		--assert <make image! [1x1 #{FFFFFF}]>  = try [make tag! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert <0 0>  = try [make tag! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert <0 0>  = try [make tag! quote #(uint32! [0 0]) ] ; vector!
 		--assert <a: 1>  = try [make tag! quote #(object! [a: 1]) ] ; object!
 		--assert <integer! percent!>  = try [make tag! quote #(typeset! [integer! percent!]) ] ; typeset!
 	--test-- "to tag! .."
@@ -823,9 +909,9 @@ Rebol [
 		--assert <a/b>  = try [to tag! quote 'a/b ] ; lit-path!
 		--assert <ref>  = try [to tag! quote /ref ] ; refinement!
 		--assert <FF>   = try [to tag! quote #FF ] ; issue!
-		--assert <make bitset! #{FF}>  = try [to tag! quote #(bitset! #{FF}) ] ; bitset!
+		--assert <#(bitset! #{FF})>  = try [to tag! quote #(bitset! #{FF}) ] ; bitset!
 		--assert <make image! [1x1 #{FFFFFF}]>  = try [to tag! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert <0 0>  = try [to tag! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert <0 0>  = try [to tag! quote #(uint32! [0 0]) ] ; vector!
 		--assert <a: 1>  = try [to tag! quote #(object! [a: 1]) ] ; object!
 		--assert <integer! percent!>  = try [to tag! quote #(typeset! [integer! percent!]) ] ; typeset!
 ===end-group===
@@ -866,7 +952,7 @@ Rebol [
 		--assert error? try [make typeset! quote #FF ] ; issue!
 		--assert error? try [make typeset! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [make typeset! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [make typeset! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [make typeset! quote #(uint32! [0 0]) ] ; vector!
 		--assert error? try [make typeset! quote #(object! [a: 1]) ] ; object!
 		--assert #(typeset! [integer! percent!])  = try [make typeset! quote #(typeset! [integer! percent!]) ] ; typeset!
 	--test-- "to typeset! .."
@@ -903,7 +989,7 @@ Rebol [
 		--assert error? try [to typeset! quote #FF ] ; issue!
 		--assert error? try [to typeset! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [to typeset! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [to typeset! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [to typeset! quote #(uint32! [0 0]) ] ; vector!
 		--assert error? try [to typeset! quote #(object! [a: 1]) ] ; object!
 		--assert #(typeset! [integer! percent!])  = try [to typeset! quote #(typeset! [integer! percent!]) ] ; typeset!
 ===end-group===
@@ -944,7 +1030,7 @@ Rebol [
 		--assert error? try [make event! quote #FF ] ; issue!
 		--assert error? try [make event! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [make event! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [make event! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [make event! quote #(uint32! [0 0]) ] ; vector!
 		--assert error? try [make event! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [make event! quote #(typeset! [integer! percent!]) ] ; typeset!
 	--test-- "to event! .."
@@ -981,7 +1067,7 @@ Rebol [
 		--assert error? try [to event! quote #FF ] ; issue!
 		--assert error? try [to event! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [to event! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [to event! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [to event! quote #(uint32! [0 0]) ] ; vector!
 		--assert error? try [to event! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [to event! quote #(typeset! [integer! percent!]) ] ; typeset!
 ===end-group===
@@ -1024,7 +1110,7 @@ Rebol [
 		--assert 'FF  = try [make word! quote #FF ] ; issue!
 		--assert error? try [make word! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [make word! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [make word! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [make word! quote #(uint32! [0 0]) ] ; vector!
 		--assert error? try [make word! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [make word! quote #(typeset! [integer! percent!]) ] ; typeset!
 	--test-- "to word! ..."
@@ -1062,7 +1148,7 @@ Rebol [
 		--assert 'FF  = try [to word! quote #FF ] ; issue!
 		--assert error? try [to word! quote #(bitset! #{FF}) ] ; bitset!
 		--assert error? try [to word! quote #(image! 1x1 #{FFFFFF}) ] ; image!
-		--assert error? try [to word! quote #(vector! integer! 32 2 [0 0]) ] ; vector!
+		--assert error? try [to word! quote #(uint32! [0 0]) ] ; vector!
 		--assert error? try [to word! quote #(object! [a: 1]) ] ; object!
 		--assert error? try [to word! quote #(typeset! [integer! percent!]) ] ; typeset!
 ===end-group===

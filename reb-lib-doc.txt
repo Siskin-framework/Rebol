@@ -2,7 +2,7 @@ Host/Extension API
 
 =r3
 
-=*Updated for 3.16.0 on 4-Apr-2024
+=*Updated for 3.21.15 on 14-Apr-2026
 
 =*Describes the functions of reb-lib, the REBOL API (both the DLL and extension library.)
 
@@ -47,7 +47,7 @@ to determine version compatiblity with the caller.
 
 ===RL_Init
 
-:Function: - <tt class=word>int RL_Init(REBARGS *rargs, void *lib)</tt>
+:Function: - <tt class=word>REBARGS* RL_Init(int argc, char **argv)</tt>
 
 :Summary: - Initialize the REBOL interpreter.
 
@@ -221,7 +221,7 @@ the evaluation block and its index.
 
 ===RL_Print
 
-:Function: - <tt class=word>void RL_Print(REBYTE *fmt, ...)</tt>
+:Function: - <tt class=word>void RL_Print(const REBYTE *fmt, ...)</tt>
 
 :Summary: - Low level print of formatted data to the console.
 
@@ -442,6 +442,8 @@ to make a copy of the string if needed.
 :Notes: - Strings are allowed to move in memory. Therefore, you will want
 to make a copy of the string if needed.
 
+This function should be DEPRECATED! All strings should be UTF-8 encoded now.
+
 
 ===RL_Map_Word
 
@@ -526,9 +528,9 @@ The string is allocated with OS_MAKE and you can OS_FREE it any time.
 
 ===RL_Get_Char
 
-:Function: - <tt class=word>int RL_Get_Char(REBSER *series, u32 index)</tt>
+:Function: - <tt class=word>REBU32 RL_Get_Char(REBSER *series, u32 index)</tt>
 
-:Summary: - Get a character from byte or unicode string.
+:Summary: - Get a character from UTF8 encoded string.
 
 :Returns: - A Unicode character point from string. If index is
 at or past the tail, a -1 is returned.
@@ -715,11 +717,16 @@ Does not add a terminator.
 <br><tt class=word>ccr </tt> - Convert LF/CRLF
 <br><tt class=word>uni </tt> - keep uni version even for plain ascii
 
+Note:
+uni is not used anymore! Instead there is REBCNT err,
+which is used to report error position. But not used here,
+because this function may be used by old extensions:/
+
 
 
 ===RL_Register_Handle
 
-:Function: - <tt class=word>REBCNT RL_Register_Handle(REBYTE *name, REBCNT size, void* free_func)</tt>
+:Function: - <tt class=word>REBCNT RL_Register_Handle(const REBYTE *name, REBCNT size, void* free_func)</tt>
 
 :Summary: - Stores handle's specification (required data size and optional free callback.
 
@@ -771,7 +778,7 @@ or NOT_FOUND if handle with give ID is already registered.
 
 ===RL_Register_Handle_Spec
 
-:Function: - <tt class=word>REBCNT RL_Register_Handle_Spec(REBYTE *name, REBHSP *spec)</tt>
+:Function: - <tt class=word>REBCNT RL_Register_Handle_Spec(const REBYTE *name, REBHSP *spec)</tt>
 
 :Summary: - Stores handle's specification (required data size and optional callbacks).
 It's an extended version of old RL_Register_Handle function.
@@ -814,6 +821,72 @@ or NOT_FOUND if handle with give ID is already registered.
 :Arguments: - <tt class=word>ser</tt> - series as a REBYTE or REBUNI.
 <br><tt class=word>len</tt> - number of source bytes consumed.
 <br><tt class=word>uni</tt> - if series is REBYTE (0) or REBUNI (1)
+
+
+
+===RL_Struct_Spec
+
+:Function: - <tt class=word>REBSER* RL_Struct_Spec(REBCNT id)</tt>
+
+:Summary: - Get struct specification.
+
+:Returns: - Returns a struct specification data.
+
+:Arguments: - <tt class=word>id</tt> - unique struct id (counted as a hash of the specification)
+
+
+
+===RL_Encode_UTF8_Char
+
+:Function: - <tt class=word>REBCNT RL_Encode_UTF8_Char(REBYTE *dst, REBU32 chr)</tt>
+
+:Summary: - Converts a single char to UTF8 code-point.
+
+:Returns: - Returns length of char stored in dst
+
+:Arguments: - <tt class=word>dst </tt> - UTF8 encoded data
+<br><tt class=word>chr </tt> - Unicode character.
+
+
+
+===RL_Mem_Alloc
+
+:Function: - <tt class=word>void* RL_Mem_Alloc(void *opaque, size_t size)</tt>
+
+:Summary: - Allocates memory either using a memory pool or standard dynamic memory allocation.
+It keeps info about this memory and checks if memory use is not over policy.
+Such allocated memory must be freed using `RL_Mem_Free` function!
+
+:Returns: - Pointer to the newly allocated memory
+
+:Arguments: - <tt class=word>opaque </tt> - unused
+<br><tt class=word>size   </tt> - required memory size
+
+
+
+===RL_Mem_Free
+
+:Function: - <tt class=word>void RL_Mem_Free(void* opaque, void* address)</tt>
+
+:Summary: - Frees memory allocated using the `RL_Mem_Alloc` function.
+
+:Returns: - nothing
+
+:Arguments: - <tt class=word>opaque </tt> - unused
+<br><tt class=word>address</tt> - memory address to be freed
+
+
+
+===RL_Register_Compress_Method
+
+:Function: - <tt class=word>int RL_Register_Compress_Method(const REBYTE* name, COMPRESS_FUNC encoder, DECOMPRESS_FUNC decoder)</tt>
+
+:Summary: - Register external compression functions.
+
+:Returns: - TRUE if succesfully registered.
+
+:Arguments: - <tt class=word>name</tt> - null ternimanted name of the compression method
+<br><tt class=word>encoder</tt> - external compress function
 
 
 

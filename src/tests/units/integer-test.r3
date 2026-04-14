@@ -329,6 +329,15 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "idivide"
+	--test-- "idivide"
+		--assert 2 == idivide 23 10
+		--assert all [error? e: try [idivide 2 0] e/id = 'zero-divide]
+		--assert all [error? e: try [idivide 2.0 1] e/id = 'expect-arg]
+		--assert all [error? e: try [idivide 2 1.0] e/id = 'expect-arg]
+===end-group===
+
+
 ===start-group=== "integer issues"
 	--test-- "issue-502"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/502
@@ -369,6 +378,14 @@ Rebol [
 		f: 0
 		loop count [if (random a) <= b [f: f + 1]]
 		--assert (b / a) = round/to (f / count) 0.1
+===end-group===
+
+
+===start-group=== "PRIME?"
+	--test-- "prime?"
+		--assert not prime? 42
+		--assert prime? 43
+		--assert prime? 99'504'028'301'131
 ===end-group===
 
 ~~~end-file~~~

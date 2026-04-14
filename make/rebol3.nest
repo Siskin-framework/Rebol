@@ -18,18 +18,27 @@ temp:     %make/tmp/
 stack-size: 4194304 ;= 4MB (4 * 1024 * 1024)
 optimize:   2
 
-version: 3.16.0
+version: 3.21.15
+
+;flags: "-ggdb3"
+;define: DEBUG
 
 #if Linux?   [ defines: TO_LINUX   ]
 #if macOS?   [ defines: TO_MACOS   ]
 #if (system/platform = 'haiku)   [ defines: TO_HAIKU   ]
-#if Windows? [ defines: TO_WINDOWS ]
+#if Windows? [ defines: [TO_WINDOWS _CRT_SECURE_NO_WARNINGS]]
 #if OpenBSD? [ defines: TO_OPENBSD ]
 #if FreeBSD? [ defines: TO_FREEBSD ]
 #if (system/platform = 'NetBSD)  [ defines: TO_NETBSD  ]
 #if (system/platform = 'Turris)  [ defines: TO_LINUX   ]
+#if (system/platform = 'DragonFlyBSD)  [ defines: TO_DRAGONFLYBSD  ]
 
 #if Posix? [ clfag: -Wno-pointer-sign ] ;@@ Review these warnings and fix them!
+
+;- Most operating systems are little-endian these days.
+#either (find [AmigaOS] system/platform) [
+	defines: ENDIAN_BIG
+][	defines: ENDIAN_LITTLE ]
 
 target-windows: [
 	os:       windows
@@ -76,6 +85,13 @@ target-netbsd: [
 	vendor:   pc
 	compiler: gcc
 ]
+target-dragonflybsd: [
+	os:       dragonflybsd
+	sys:      dragonflybsd
+	platform: DragonFlyBSD
+	vendor:   pc
+	compiler: clang
+]
 target-haiku: [
 	os:       haiku
 	sys:      haiku
@@ -84,7 +100,7 @@ target-haiku: [
 	compiler: clang
 
 	library: [%network %iconv]
-	defines: [ENDIAN_LITTLE USE_OLD_PIPE]
+	defines: USE_OLD_PIPE
 ]
 target-turris: [
 	os:       turris
@@ -92,6 +108,13 @@ target-turris: [
 	platform: Turris
 	vendor:   pc
 	compiler: gcc
+]
+
+static-musl: [
+	;@@ Needs: sudo apt install musl-tool
+	compiler: musl-gcc
+	flags: -static
+	define: STATIC_MUSL
 ]
 
 #if Linux? [
@@ -166,7 +189,9 @@ core-files: [
 	%core/f-int.c
 	%core/f-math.c
 	%core/f-modify.c
-	%core/f-qsort.c
+;	%core/f-qsort.c         ;pathologically slow for large partially sorted inputs
+	%core/f-stablemerge-sort.c
+	%core/f-adp-symmetry-psort.c
 	%core/f-random.c
 	%core/f-round.c
 	%core/f-series.c
@@ -182,6 +207,7 @@ core-files: [
 	%core/n-data.c
 ;	%core/n-draw.c          ;old source
 ;	%core/n-graphics.c      ;old source
+	%core/n-hash.c
 ;	%core/n-image.c         ;optional, use: include-image-natives
 	%core/n-io.c
 	%core/n-loop.c
@@ -256,7 +282,6 @@ core-files: [
 ;	%core/u-rc4.c             ;optional, use: include-cryptography
 ;	%core/u-rsa.c             ;optional, use: include-cryptography
 ;	%core/u-uECC.c            ;optional, use: include-cryptography
-	%core/u-zlib.c
 ;	%core/u-wav.c             ;optional, use: include-native-wav-codec
 
 	%core/u-mbedtls.c
@@ -276,36 +301,23 @@ core-files: [
 ]
 
 host-files: [
-	%os/host-main.c
 	%os/host-args.c
 	%os/host-device.c
 	%os/host-stdio.c
 	%os/dev-net.c
 	%os/dev-dns.c
-;	%os/dev-checksum.c
-;	%os/host-ext-sokol.c
-;	%os/host-view.c
 	#if Windows? [
 		%os/win32/host-lib.c
 		%os/win32/dev-stdio.c
 		%os/win32/dev-file.c
 		%os/win32/dev-event.c
-;		%os/win32/dev-clipboard.c
-;		%os/win32/dev-audio.c
-;		%os/win32/dev-serial.c
-;		%os/win32/host-event.c
-;		%os/win32/host-window.c
-;		%os/win32/host-graphics.c
-;		%os/win32/host-compositor.c
 	]
 	#if Posix? [
 		%os/posix/host-lib.c
 		%os/posix/host-readline.c
-		;%os/posix/host-window.c
 		%os/posix/dev-file.c
 		%os/posix/dev-stdio.c
 		%os/posix/dev-event.c
-		;%os/posix/dev-serial.c
 	]
 ]
 
@@ -314,12 +326,8 @@ host-files-view: [
 		%os/win32/sys-utils.c
 		%os/win32/sys-codecs.cpp
 		%os/win32/sys-d2d.cpp
-		;%os/win32/host-image.c
-		;%win32/sys-codecs-ini.c
-
 		%os/win32/host-event.c
 		%os/win32/host-window.c
-		;%os/win32/host-graphics.c
 		%os/win32/host-compositor.c
 	]
 ]
@@ -344,10 +352,15 @@ mezz-sys-files: [
 ]
 mezz-lib-files: [
 ;-- lib: mid-level lib context:
+	#if macOS? [
+		%mezz/mezz-osx-dialogs.reb
+	]
+	%mezz/mezz-ansi.reb
 	%mezz/mezz-secure.reb
 	%mezz/mezz-types.reb
 	%mezz/mezz-func.reb
 	%mezz/mezz-debug.reb
+	%mezz/mezz-logger.reb
 	%mezz/mezz-control.reb
 	%mezz/mezz-save.reb
 	%mezz/mezz-series.reb
@@ -396,9 +409,10 @@ boot-host-files: [] ; may be used for custom boot script
 config: [ ;- this is list of configuration (optional) defines
 	INCLUDE_MBEDTLS ;- replaced original checksum implementations
 	COLOR_CONSOLE   ;- use ANSI escape sequences in prompt and results
+	DEBUG_HASH_COLLISIONS
 
 	;*** Unfinished features **************************************************/
-	;INCLUDE_TASK    ;- tasks are not implemented yet, so include it only on demand
+	INCLUDE_TASK    ;- tasks are not implemented yet, so include it only on demand
 
 	;*** Other (not recommanded) options **************************************/
 	;HAS_WIDGET_GOB  ;- used in t-gob.c
@@ -416,6 +430,7 @@ config: [ ;- this is list of configuration (optional) defines
 	;FORCE_ANSI_ESC_EMULATION_ON_WINDOWS  ; would not try to use MS' built-in VIRTUAL_TERMINAL_PROCESSING
 	;EXCLUDE_VECTOR_MATH  ; don't include vector math support (like: 3 * #[vector! integer! 8 3 [1 2 3]]); Used in t-vector.c file
 	;WRITE_ANY_VALUE_TO_CLIPBOARD ; https://github.com/Oldes/Rebol-issues/issues/1619
+	;CONSTRUCT_LIT_WORD_AS_WORD   ; https://github.com/Oldes/Rebol-issues/issues/2502
 
 	;SERIES_LABELS ; used for special debug purposes
 	;SHOW_SIZEOFS  ; for debugging ports to some new systems
@@ -423,6 +438,7 @@ config: [ ;- this is list of configuration (optional) defines
 	;NDEBUG        ; removes some asserts
 	;TEST_SCAN
 	;_DEBUG
+	;ALEVEL=2      ; maximal assert level
 
 	;*** Memory pool special defines (were not used!) *************************/
 	; these were found in sources, but never actually used...
@@ -446,7 +462,7 @@ include-image-natives: [
 ]
 
 include-native-bmp-codec: [config: INCLUDE_BMP_CODEC core-files: %core/u-bmp.c]
-include-native-png-codec: [config: INCLUDE_PNG_CODEC core-files: %core/u-png.c]
+include-native-png-codec: [config: INCLUDE_PNG_CODEC core-files: %core/u-png.c core-files: %core/u-zlib.c]
 include-native-qoi-codec: [config: INCLUDE_QOI_CODEC core-files: %core/u-qoi.c]
 include-native-jpg-codec: [config: INCLUDE_JPG_CODEC core-files: %core/u-jpg.c]
 include-native-gif-codec: [config: INCLUDE_GIF_CODEC core-files: %core/u-gif.c]
@@ -556,7 +572,7 @@ include-iconv: [
 	#if macOS? [
 		library: %iconv
 	]
-	#if (any [OpenBSD? FreeBSD?]) [
+	#if (find [OpenBSD FreeBSD NetBSD DragonFlyBSD] system/platform) [
 		include: %/usr/local/include
 		library: %/usr/local/lib/
 		library: %iconv
@@ -655,6 +671,10 @@ include-curves-x: [
 	config: MBEDTLS_ECP_DP_CURVE25519_ENABLED  ; costs 7.6kB
 	config: MBEDTLS_ECP_DP_CURVE448_ENABLED    ; costs 7.6kB; together with CURVE25519 8.1!
 ]
+include-des: [
+	config: MBEDTLS_DES_C        ; The DES block cipher.
+	core-files: %core/mbedtls/des.c
+]
 
 include-cryptography: [
 	; so far cca 183kB uncompressed (basic AES, all ellyptic curves, rsa, rc4, bignum, entropy )
@@ -664,26 +684,25 @@ include-cryptography: [
 		library: %Bcrypt ;; used by mbedtls_platform_entropy_poll
 	]
 
-	define: MBEDTLS_ASN1_PARSE_C ; The generic ASN1 parser.
-	define: MBEDTLS_ASN1_WRITE_C ; The generic ASN1 writer.
-
-	define: MBEDTLS_CTR_DRBG_C   ; The CTR_DRBG AES-based random generator.
-
-	define: MBEDTLS_AES_C        ; The AES block cipher.
-	define: MBEDTLS_DHM_C        ; The Diffie-Hellman-Merkle module.
-	define: MBEDTLS_ECDSA_C      ; The elliptic curve DSA library.
-	define: MBEDTLS_ECP_C        ; The elliptic curve over GF(p) library.
-	define: MBEDTLS_ECDH_C       ; The elliptic curve Diffie-Hellman library.
-	define: MBEDTLS_BIGNUM_C     ; The multi-precision integer library. Required for: RSA, ECDSA, ECP, DHM
-	define: MBEDTLS_ENTROPY_C    ; The platform-specific entropy code.
-	define: MBEDTLS_OID_C        ; Required for RSA
-	define: MBEDTLS_PKCS1_V15
+	config: MBEDTLS_CTR_DRBG_C   ; The CTR_DRBG AES-based random generator.
+	config: MBEDTLS_AES_C        ; The AES block cipher.
+	config: MBEDTLS_AESNI_C      ; Enable AES acceleration on some Intel processors
+	config: MBEDTLS_DHM_C        ; The Diffie-Hellman-Merkle module.
+	config: MBEDTLS_ECDSA_C      ; The elliptic curve DSA library.
+	config: MBEDTLS_ECP_C        ; The elliptic curve over GF(p) library.
+	config: MBEDTLS_ECDH_C       ; The elliptic curve Diffie-Hellman library.
+	config: MBEDTLS_BIGNUM_C     ; The multi-precision integer library. Required for: RSA, ECDSA, ECP, DHM
+	config: MBEDTLS_ENTROPY_C    ; The platform-specific entropy code.
+	config: MBEDTLS_OID_C        ; Required for RSA
+	config: MBEDTLS_PKCS1_V15
+	config: MBEDTLS_PKCS1_V21
 
 	core-files: [
 		%core/n-crypt.c
 		%core/p-crypt.c
 
 		%core/mbedtls/aes.c
+		%core/mbedtls/aesni.c
 		%core/mbedtls/asn1parse.c
 		%core/mbedtls/asn1write.c
 		%core/mbedtls/dhm.c
@@ -700,10 +719,10 @@ include-cryptography: [
 		%core/mbedtls/ecdsa.c
 		%core/mbedtls/ecp.c
 		%core/mbedtls/ecp_curves.c
-		%core/mbedtls/hash_info.c
 	]
 
 	:include-curves-sec1
+	:include-curves-x
 
 	:include-rsa
 	
@@ -718,9 +737,11 @@ include-cryptography: [
 ]
 
 include-cryptography-bulk: [
+	:include-des
+
 	:include-curves-koblitz
 	:include-curves-brainpool
-	:include-curves-x
+	
 
 	:include-cipher-mode-ccm
 	:include-cipher-mode-cbc	
@@ -777,6 +798,19 @@ include-lzma-compression: [
 	core-files: %core/u-lzma.c
 ]
 
+include-lz4-compression: [
+	config: INCLUDE_LZ4
+	include: %src/core/lz4/
+	files: [
+		%core/lz4/lz4.c
+		%core/lz4/lz4hc.c
+	]
+]
+
+include-lzav-compression: [
+	config: INCLUDE_LZAV
+]
+
 include-lzw-compression: [
 	config: INCLUDE_LZW
 	core-files: %core/u-lzw.c
@@ -800,6 +834,8 @@ include-brotli-compression: [
 		%core/brotli/dec/huffman.c
 		%core/brotli/dec/decode.c
 		%core/brotli/dec/bit_reader.c
+		%core/brotli/dec/prefix.c
+		%core/brotli/dec/static_init_dec.c
 		%core/brotli/enc/backward_references.c
 		%core/brotli/enc/backward_references_hq.c
 		%core/brotli/enc/bit_cost.c
@@ -820,7 +856,31 @@ include-brotli-compression: [
 		%core/brotli/enc/memory.c
 		%core/brotli/enc/metablock.c
 		%core/brotli/enc/static_dict.c
+		%core/brotli/enc/static_init.c
+		%core/brotli/enc/static_dict_lut.c
 		%core/brotli/enc/utf8_util.c
+	]
+]
+
+include-zlib-compression: [
+	;= Original but slower Adler's implementation.
+	config: INCLUDE_DEPRECATED_ZLIB
+	core-files: %core/u-zlib.c
+]
+include-deflate-compression: [
+	config: INCLUDE_DEFLATE
+	core-files: [
+		%core/deflate/lib/adler32.c
+		%core/deflate/lib/crc32.c
+		%core/deflate/lib/deflate_compress.c
+		%core/deflate/lib/deflate_decompress.c
+		%core/deflate/lib/gzip_compress.c
+		%core/deflate/lib/gzip_decompress.c
+		%core/deflate/lib/utils.c
+		%core/deflate/lib/zlib_compress.c
+		%core/deflate/lib/zlib_decompress.c
+		%core/deflate/lib/x86/cpu_features.c
+		%core/deflate/lib/arm/cpu_features_arm.c
 	]
 ]
 
@@ -832,6 +892,7 @@ include-png-filter-native: [
 include-view: [
 	; currently only on Windows!
 	host-files: :host-files-view
+	core-files: %core/n-request-color.c
 	#if Windows? [
 		define: REB_VIEW
 		:include-image-os-codec
@@ -927,10 +988,15 @@ include-prebol:              [mezz-lib-files: %modules/prebol.reb           ]
 include-native-oid: [core-files: %core/n-oid.c] ; `form-oid` native (used in DER codec)
 
 
+;- Deflate is part of the Base!
+
+;:include-zlib-compression   ;= Original Adler's implementation
+:include-deflate-compression ;= libdeflate's zlib, gzip and deflate
+
 ;- Product specifications                                                       
 
 include-rebol-core: [
-	:include-mezz-ansi
+;	:include-mezz-ansi
 	:include-clipboard
 	:include-cryptography
 	:include-bincode
@@ -960,9 +1026,11 @@ include-rebol-bulk: [
 	:include-rebol-core
 	:include-optional-checksums
 	:include-image-natives
-	:include-lzma-compression
-	:include-lzw-compression
-	:include-brotli-compression
+	:include-lz4-compression
+	:include-lzav-compression
+	:include-lzma-compression   ;= cca 17kB
+	:include-lzw-compression    ;= cca 2kB
+	:include-brotli-compression ;= cca 330kB
 	:include-crush-compression
 	:include-base36-encoding
 	:include-base85-encoding
@@ -1016,6 +1084,7 @@ common: [
 
 	;define: :config
 	define: {REBOL_OPTIONS_FILE=\"gen-config.h\"} ;@@ TODO: should be auto-escaped!
+	define: UNICODE
 
 	;cflags: [-ffast-math]
 
@@ -1029,21 +1098,16 @@ common: [
 			%Ole32
 			;%m
 		]
-		defines: ENDIAN_LITTLE
-		defines: [UNICODE _UNICODE]
-		defines: _CRT_SECURE_NO_WARNINGS
 	]
 	#if macOS? [
 		library: %m
-		defines: ENDIAN_LITTLE
 		defines: USE_OLD_PIPE
 		cflags:  -Wno-pointer-sign
 		flag:    -mmacosx-version-min=10.9
 		entitlements: %make/Entitlements.plist
 	]
-	#if (find [Linux OpenBSD FreeBSD NetBSD Turris] system/platform) [
+	#if (find [Linux OpenBSD FreeBSD NetBSD DragonFlyBSD Turris] system/platform) [
 		library: %m
-		defines: ENDIAN_LITTLE
 	]
 ]
 
@@ -1153,6 +1217,7 @@ make-exe: [
 	:common-host
 	defines: [REB_EXE]
 	do %make/pre-make.r3 "$NEST_SPEC"
+	file: %os/host-main.c ;; application entry point
 ]
 make-x86-exe:   [:arch-x86   :make-exe ]
 make-x64-exe:   [:arch-x64   :make-exe ]
@@ -1165,10 +1230,9 @@ make-riscv64-exe:  [:arch-riscv64  :make-exe ]
 ; for making Rebol as a shared library
 make-dll: [
 	:common
-	;:common-host
+	:common-host
 	defines: [REB_API]
 	flags:   [-O2 shared]
-	upx: off
 	#if Posix? [ flag: fPIC upx: off ]
 	#if macOS? [ flag: fno-common strip: off lflag: "compatibility_version 3.0"]
 	do %make/pre-make.r3 "$NEST_SPEC"
@@ -1176,10 +1240,14 @@ make-dll: [
 ; for testing host app using shared library
 make-host: [
 	:common
-	files: none ;includes only host files
-	:common-host
+	files: only [
+		%os/host-main.c
+	]
+	#if Windows? [
+		resource: %make/r3.rc
+	]
 	#if Posix? [upx: off]
-	do %make/pre-make.r3 "$NEST_SPEC"
+	;do %make/pre-make.r3 "$NEST_SPEC"
 ]
 make-x86-dll:  [:arch-x86 :make-dll  ]
 make-x64-dll:  [:arch-x64 :make-dll  ]
@@ -1193,9 +1261,6 @@ make-ext-test: [
 	files: only %tests/extension/test.c
 	flags: [-O2 shared]
 	compiler: clang
-	#if Windows? [
-		defines: _CRT_SECURE_NO_WARNINGS
-	]
 	#if Linux? [
 		flag: -fPIC
 		compiler: gcc
@@ -1265,20 +1330,40 @@ eggs: [
 			:include-rebol-bulk
 			:make-x64-exe
 		]
+		"Rebol/Bulk windows-arm64" [
+			name:     %rebol3-bulk-windows-arm64
+			:target-windows
+			:include-rebol-bulk
+			:make-arm64-exe
+			upx:      off
+		]
 
 		"Rebol/Core windows-x86 shared library" [
-			name:     %lib-rebol3-core-windows-x86
+			name:    %lib-rebol3-core-windows-x86
 			:target-windows
 			:include-rebol-core
 			:make-x86-dll
-			upx:      off ; library compiled using MSVC seems to make problems when UPXed  
+		]
+		"Rebol/Bulk windows-x86 shared library" [
+			name:    %lib-rebol3-bulk-windows-x86
+			:target-windows
+			:include-rebol-bulk
+			:make-x86-dll
 		]
 		"Rebol/Core windows-x86 host application" [
-			name:     %host-core-windows-x86
-			shared:   %lib-rebol3-core-windows-x86
+			name:    %host-core-windows-x86
+			library: %lib-rebol3-core-windows-x86
 			:target-windows
 			:include-rebol-core
 			:make-x86-host
+		]
+		"Rebol/Bulk windows-x86 host application" [
+			name:    %host-bulk-windows-x86
+			library: %lib-rebol3-bulk-windows-x86
+			:target-windows
+			:make-x86-host
+			define: REB_VIEW
+			define: TEST_EXTENSIONS
 		]
 
 		"Rebol/Core windows-x64 shared library" [
@@ -1287,12 +1372,26 @@ eggs: [
 			:include-rebol-core
 			:make-x64-dll
 		]
+		"Rebol/Bulk windows-x64 shared library" [
+			name:     %lib-rebol3-bulk-windows-x64
+			:target-windows
+			:include-rebol-bulk
+			:make-x64-dll
+		]
 		"Rebol/Core windows-x64 host application" [
 			name:     %host-core-windows-x64
-			shared:   %lib-rebol3-core-windows-x64
+			library:  %lib-rebol3-core-windows-x64
 			:target-windows
 			:include-rebol-core
 			:make-x64-host
+		]
+		"Rebol/Bulk windows-x64 host application" [
+			name:     %host-bulk-windows-x64
+			library:  %lib-rebol3-bulk-windows-x64
+			:target-windows
+			:make-x64-host
+			define: REB_VIEW
+			define: TEST_EXTENSIONS
 		]
 	]
 	#if Linux? [
@@ -1329,6 +1428,22 @@ eggs: [
 				name:     %rebol3-bulk-linux-x64
 				:target-linux
 				:include-rebol-bulk
+				:make-x64-exe
+			]
+
+			;- static musl builds
+			"Rebol/Core linux-x86-musl-static" [
+				name:     %rebol3-core-linux-x64-musl-static
+				:target-linux
+				:include-rebol-core
+				:static-musl
+				:make-x64-exe
+			]
+			"Rebol/Bulk linux-x64-musl-static" [
+				name:     %rebol3-bulk-linux-x64-musl-static
+				:target-linux
+				:include-rebol-bulk
+				:static-musl
 				:make-x64-exe
 			]
 		]
@@ -1388,6 +1503,43 @@ eggs: [
 				:include-rebol-bulk
 				:make-arm64-exe
 			]
+
+			"Rebol/Core linux-arm64 shared library" [
+				name:   %rebol3-core-linux-arm64.so
+				lflag:  "-Wl,-rpath,/usr/local/lib -Wl,-soname,librebol-core.so.3"
+				:target-linux
+				:include-rebol-core
+				:make-arm64-dll
+				library: %m
+			]
+			"Rebol/Bulk linux-arm64 shared library" [
+				name:   %rebol3-bulk-linux-arm64.so
+				lflag:  "-Wl,-rpath,/usr/local/lib -Wl,-soname,librebol-bulk.so.3"
+				:target-linux
+				:include-rebol-bulk
+				:make-arm64-dll
+				library: %m
+			]
+
+
+			;; Hosts linked to Rebol libraries expects that the library is installed (symlink)
+			;; in the /usr/local/lib location or somehwere where points LD_LIBRARY_PATH
+			;; (export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/)
+			"Rebol/Core linux-arm64 host application" [
+				name:   %host-core-linux-arm64
+				library: %rebol-core
+				:target-linux
+				:include-rebol-core
+				:make-arm64-host
+			]
+			"Rebol/Bulk linux-arm64 host application" [
+				name:   %host-bulk-linux-arm64
+				library: %rebol-bulk
+				:target-linux
+				:include-rebol-bulk
+				:make-arm64-host
+			]
+
 		]
 		#if (system/build/arch = 'mips64le) [
 			"Rebol/Base linux-mips64le" [
@@ -1619,7 +1771,7 @@ eggs: [
 		]
 
 		"Rebol/Core macos-arm64 shared library" [
-			name:   %lib-rebol3-core-macos-arm64
+			name:   %rebol3-core-macos-arm64.dylib
 			lflag:  "-Wl,-install_name,'/usr/local/lib/librebol-core.3.dylib'"
 			:target-macos
 			:include-rebol-core
@@ -1627,14 +1779,14 @@ eggs: [
 		]
 		"Rebol/Core macos-arm64 host application" [
 			name:   %host-core-macos-arm64
-			shared: %lib-rebol3-core-macos-arm64
+			library: %rebol3-core-macos-arm64
 			:target-macos
 			:include-rebol-core
 			:make-arm64-host
 		]
 
 		"Rebol/Bulk macos-arm64 shared library" [
-			name:   %lib-rebol3-bulk-macos-arm64
+			name:   %rebol3-bulk-macos-arm64.dylib
 			lflag:  "-Wl,-install_name,'/usr/local/lib/librebol.3.dylib'"
 			:target-macos
 			:include-rebol-bulk
@@ -1642,10 +1794,11 @@ eggs: [
 		]
 		"Rebol/Bulk macos-arm64 host application" [
 			name:   %host-bulk-macos-arm64
-			shared: %lib-rebol3-bulk-macos-arm64
+			library: %rebol3-bulk-macos-arm64
 			:target-macos
 			:include-rebol-bulk
 			:make-arm64-host
+			define: TEST_EXTENSIONS
 		]
 	]
 	#if OpenBSD? [
@@ -1683,6 +1836,24 @@ eggs: [
 			:target-openbsd
 			:include-rebol-bulk
 			:make-x64-exe
+		]
+
+		"Rebol/Base openbsd-arm64" [
+			name:   %rebol3-base-openbsd-arm64
+			:target-openbsd
+			:make-arm64-exe
+		]
+		"Rebol/Core openbsd-arm64" [
+			name:   %rebol3-core-openbsd-arm64
+			:target-openbsd
+			:include-rebol-core
+			:make-arm64-exe
+		]
+		"Rebol/Bulk openbsd-arm64" [
+			name:   %rebol3-bulk-openbsd-arm64
+			:target-openbsd
+			:include-rebol-bulk
+			:make-arm64-exe
 		]
 
 		"Rebol/Core openbsd-x64 shared library" [
@@ -1752,6 +1923,61 @@ eggs: [
 			:include-rebol-bulk
 			:make-x64-exe
 		]
+
+		"Rebol/Base netbsd-arm64" [
+			name:   %rebol3-base-netbsd-arm64
+			:target-netbsd
+			:make-arm64-exe
+		]
+		"Rebol/Core netbsd-arm64" [
+			name:   %rebol3-core-netbsd-arm64
+			:target-netbsd
+			:include-rebol-core
+			:make-arm64-exe
+		]
+		"Rebol/Bulk netbsd-arm64" [
+			name:   %rebol3-bulk-netbsd-arm64
+			:target-netbsd
+			:include-rebol-bulk
+			:make-arm64-exe
+		]
+	]
+	#if (system/platform = 'dragonflybsd) [
+		"Rebol/Base dragonflybsd-x64" [
+			name:   %rebol3-base-dragonflybsd-x64
+			:target-dragonflybsd
+			:make-x64-exe
+		]
+		"Rebol/Core dragonflybsd-x64" [
+			name:   %rebol3-core-dragonflybsd-x64
+			:target-dragonflybsd
+			:include-rebol-core
+			:make-x64-exe
+		]
+		"Rebol/Bulk dragonflybsd-x64" [
+			name:   %rebol3-bulk-dragonflybsd-x64
+			:target-dragonflybsd
+			:include-rebol-bulk
+			:make-x64-exe
+		]
+
+		"Rebol/Base dragonflybsd-arm64" [
+			name:   %rebol3-base-dragonflybsd-arm64
+			:target-dragonflybsd
+			:make-arm64-exe
+		]
+		"Rebol/Core dragonflybsd-arm64" [
+			name:   %rebol3-core-dragonflybsd-arm64
+			:target-dragonflybsd
+			:include-rebol-core
+			:make-arm64-exe
+		]
+		"Rebol/Bulk dragonflybsd-arm64" [
+			name:   %rebol3-bulk-dragonflybsd-arm64
+			:target-dragonflybsd
+			:include-rebol-bulk
+			:make-arm64-exe
+		]
 	]
 	#if (system/platform = 'haiku) [
 		"Rebol/Base haiku-x86" [
@@ -1818,8 +2044,17 @@ eggs: [
 		:arch-x64
 		:make-ext-test
 	]
-
 	"Amalgamate extension include file" [
 		do %make/tools/amalgamate-ext.r3
+	]
+	
+	#if Windows? [ ;@@ what about other systems?
+		"Test app (using Rebol shared library)" [
+			name: %test-reb
+			:arch-x64
+			files: only %test-app.c
+			library:  %lib-rebol3-bulk-windows-x64
+			:target-windows
+		]
 	]
 ]

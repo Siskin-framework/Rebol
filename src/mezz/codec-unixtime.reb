@@ -1,6 +1,6 @@
 REBOL [
 	title:  "Codec: Unix time stamp"
-	name:   'codec-unixtime
+	name:   unixtime
 	author: "Oldes"
 	version: 0.1.0
 	date:    17-Sep-2019

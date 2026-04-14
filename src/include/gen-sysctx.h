@@ -2,7 +2,7 @@
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **  Licensed under the Apache License, Version 2.0
 **  This is a code-generated file.
@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Sys Context
-**  Build: 3.16.0
-**  Date:  4-Apr-2024
+**  Build: 3.21.15
+**  Date:  14-Apr-2026
 **  File:  sysctx.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -33,6 +33,7 @@ enum SYS_CTX_object {
 	SYS_CTX_EXPORT,
 	SYS_CTX_ASSERT_UTF8,
 	SYS_CTX_LOG,
+	SYS_CTX_REMOVE_ANSI,
 	SYS_CTX_MAKE_PORT_P,
 	SYS_CTX_URL_PARSER,
 	SYS_CTX_DECODE_URL,

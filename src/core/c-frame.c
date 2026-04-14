@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Developers
+**  Copyright 2012-2026 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -123,8 +123,10 @@
 
 	//DISABLE_GC;
 	words = Make_Block(len + 1); // size + room for SELF
+	CLEAR_SERIES(words);
 	BARE_SERIES(words);
 	frame = Make_Block(len + 1);
+	CLEAR_SERIES(frame);
 	//ENABLE_GC;
 	// Note: cannot use Append_Frame for first word.
 	value = Append_Value(frame);
@@ -483,8 +485,10 @@
 		words = Collect_Frame(BIND_ONLY, parent, block); // GC safe
 		object = Create_Frame(words, 0); // GC safe
 		if (parent) {
+#ifdef DEBUG
 			if (Reb_Opts->watch_obj_copy)
 				Debug_Fmt(BOOT_STR(RS_WATCH, 2), SERIES_TAIL(parent) - 1, FRM_WORD_SERIES(object));
+#endif
 			// Copy parent values and deep copy blocks and strings:
 			COPY_VALUES(FRM_VALUES(parent)+1, FRM_VALUES(object)+1, SERIES_TAIL(parent) - 1);
 			Copy_Deep_Values(object, 1, SERIES_TAIL(object), TS_CLONE);
@@ -814,6 +818,7 @@
 	REBINT *binds = WORDS_HEAD(Bind_Table); // GC safe to do here
 	REBCNT n;
 	REBFLG selfish = !IS_SELFLESS(frame);
+	REBVAL *val;
 
 	for (; NOT_END(value); value++) {
 		if (ANY_WORD(value)) {
@@ -838,11 +843,20 @@
 				}
 			}
 		}
-		else if (ANY_BLOCK(value) && (mode & BIND_DEEP))
+		else if ((ANY_BLOCK_OR_MAP(value)) && (mode & BIND_DEEP)) {
+			// Recursion check: (variation of: Find_Same_Block(MOLD_LOOP, value))
+			for (val = BLK_HEAD(MOLD_LOOP); NOT_END(val); val++) {
+				if (VAL_SERIES(val) == VAL_SERIES(value)) return;
+			}
+			val = Append_Value(MOLD_LOOP);
+			Set_Block(val, VAL_SERIES(value));
 			Bind_Block_Words(frame, VAL_BLK_DATA(value), mode);
+			Remove_Last(MOLD_LOOP);
+		}
 		else if ((IS_FUNCTION(value) || IS_CLOSURE(value)) && (mode & BIND_FUNC))
 			Bind_Block_Words(frame, BLK_HEAD(VAL_FUNC_BODY(value)), mode);
 	}
+	
 }
 
 
@@ -949,7 +963,7 @@
 				VAL_WORD_FRAME(value) = frame; // func body
 			}
 		}
-		else if (ANY_BLOCK(value))
+		else if (ANY_BLOCK_OR_MAP(value))
 			Bind_Relative_Words(frame, VAL_SERIES(value));
 	}
 }
@@ -1034,7 +1048,7 @@
 	REBINT *binds = WORDS_HEAD(Bind_Table);
 
 	for (; NOT_END(data); data++) {
-		if (ANY_BLOCK(data))
+		if (ANY_BLOCK_OR_MAP(data))
 			Rebind_Block(src_frame, dst_frame, VAL_BLK_DATA(data), modes);
 		else if (ANY_WORD(data) && VAL_WORD_FRAME(data) == src_frame) {
 			VAL_WORD_FRAME(data) = dst_frame;
@@ -1170,7 +1184,7 @@
 */	REBSER* Get_Object_Words(REBVAL *object)
 /*
 **		Returns block of object's words converted to simple word (not set-word)
-**		Note:  used in query/mode function to return default modes
+**		Note:  used in query function to return default modes
 **
 ***********************************************************************/
 {

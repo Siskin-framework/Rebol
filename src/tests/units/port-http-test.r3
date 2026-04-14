@@ -36,8 +36,10 @@ system/schemes/http/spec/timeout: 30
 		--assert string? try [read http://www.rebol.com]
 	--test-- "query url"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/467
-		--assert error? try [query https://www]
-		--assert object? query https://www.google.com
+		--assert error? try [query https://www object!]
+		--assert object? query https://www.google.com object!
+		--assert map?    query https://www.google.com map!
+		--assert block?  query https://www.google.com block!
 
 	--test-- "read/seek/part"
 		; first results without read/part
@@ -126,6 +128,21 @@ system/schemes/http/spec/timeout: 30
 			block? res: try [read/all https://httpbin.org/status/206]
 			res/1 = 206
 		]
+
+	--test-- "query with a space"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2606
+		--assert all [ ;= OK
+			block? res: try [read/all append http://httpbin.org/get? "q=Some query&v=[]"]
+			res/1 = 200
+			map? try [data: decode 'json res/3]
+			data/args/q == "Some query"
+			data/args/v == "[]"
+		]
+
+	--test-- "GET request with Unicode character in query"
+		--assert "hergé at DuckDuckGo" = parse read https://duckduckgo.com/?q=hergé [thru "<title>" return copy title to "<"]
+		--assert "hergé at DuckDuckGo" = parse read https://duckduckgo.com/?q=herg%25C3%25A9 [thru "<title>" return copy title to "<"]
+		
 ===end-group===
 
 ===start-group=== "HTTP scheme - Redirection messages"

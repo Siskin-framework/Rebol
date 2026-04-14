@@ -1,10 +1,10 @@
 REBOL [
+	Title:   "Codec: CSV"
 	Name:    csv
 	Type:    module
+	Version: 1.2.0
 	Options: [delay]
 	Exports: [to-csv load-csv]
-	Version: 1.2.0
-	Title:   "Codec: CSV"
 	Purpose: "Loads and formats CSV data, for enterprise or mezzanine use."
 	Author: ["Brian Hawley" "Oldes"]
 	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-csv.reb
@@ -19,7 +19,7 @@ REBOL [
 		1.1.5 20-Dec-2011 @BrianH "Fixed a bug in the R2 TO-CSV with the number 34"
 		1.2.0 25-May-2022 @Oldes  "Removed Rebol2 compatibility part and converted to Rebol3 codec"
 	]
-	License: 'mit
+	License: MIT
 	References: http://www.rebol.org/view-script.r?script=csv-tools.r
 ]
 

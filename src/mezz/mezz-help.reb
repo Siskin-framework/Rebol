@@ -3,7 +3,7 @@ REBOL [
 	Title: "REBOL 3 Mezzanine: Help"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2022 Rebol Open Source Contributors
+		Copyright 2012-2024 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -15,8 +15,8 @@ REBOL [
 import (module [
 	Title:  "Help related functions"
 	Name:    help
-	Version: 3.0.0
-	Exports: [? help about usage what license source dump-obj]
+	Version: 3.0.1
+	Exports: [? help about usage what license source dump-obj bugs changes]
 ][
 	buffer: none
 	cols:   80 ; default terminal width
@@ -68,6 +68,50 @@ import (module [
       ^[[1;32musage^[[m   - program cmd line options
 }
 
+	help-usage: {
+  ^[[4;1;36mCommand line usage^[[m:
+  
+      ^[[1;32mREBOL |options| |script| |arguments|^[[m
+  
+  ^[[4;1;36mStandard options^[[m:
+  
+      ^[[1;32m--args data^[[m      Explicit arguments to script (quoted)
+      ^[[1;32m--do expr^[[m        Evaluate expression (quoted)
+      ^[[1;32m--help (-?)^[[m      Display this usage information (then quit)
+      ^[[1;32m--script file^[[m    Explicit script filename
+      ^[[1;32m--version tuple^[[m  Script must be this version or greater
+  
+  ^[[4;1;36mSpecial options^[[m:
+  
+      ^[[1;32m--boot level^[[m     Valid levels: base sys mods
+      ^[[1;32m--debug flags^[[m    For user scripts (system/options/debug)
+      ^[[1;32m--halt (-h)^[[m      Leave console open when script is done
+      ^[[1;32m--import file^[[m    Import a module prior to script
+      ^[[1;32m--quiet (-q)^[[m     No startup banners or information
+      ^[[1;32m--secure policy^[[m  Can be: none allow ask throw quit
+      ^[[1;32m--trace (-t)^[[m     Enable trace mode during boot
+      ^[[1;32m--verbose^[[m        Show detailed startup information
+      ^[[1;32m--cgi (-c)^[[m       Starts in a CGI mode
+      ^[[1;32m--no-color^[[m       Reduce the use of ANSI color escape sequences
+
+  ^[[4;1;36mOther quick options^[[m:
+  
+      ^[[1;32m-s^[[m               No security
+      ^[[1;32m+s^[[m               Full security
+      ^[[1;32m-v^[[m               Display version only (then quit)
+  
+  ^[[4;1;36mExamples^[[m:
+  
+      REBOL script.r
+      REBOL -s script.r
+      REBOL script.r 10:30 test@example.com
+      REBOL --do "watch: on" script.r}
+
+	if system/options/no-color [
+		sys/remove-ansi help-text
+		sys/remove-ansi help-usage
+	]
+
 	output: func[value][
 		buffer: insert buffer form reduce value
 	]
@@ -84,11 +128,11 @@ import (module [
 		"Prepends the appropriate variant of a or an into a string"
 		s [string!]
 	][
-		form reduce [pick ["an" "a"] make logic! find "aeiou" s/1 s]
+		form reduce [pick ["an" "a"] make logic! find "aeiou" s/1 as-yellow s]
 	]
 
 	form-type: func [value] [
-		a-an head clear back tail mold type? :value
+		a-an head clear back tail form type? :value
 	]
 
 	form-val: func [val /local limit hdr tmp] [
@@ -99,18 +143,20 @@ import (module [
 			object?       :val [ words-of val ]
 			module?       :val [
 				hdr: spec-of :val
-				either val: select hdr 'title [ if #"." <> last val [append val #"."] ][ val: copy "" ]
-				if tmp: select hdr 'exports [	append append val #" " mold/flat tmp ]
+				val: copy any [select hdr 'title ""]
+				if all [tmp: last val tmp <> #"."] [append val #"."]
+				if tmp: select hdr 'version [ append val ajoin [SP "Version: " tmp] ]
+				if tmp: select hdr 'exports [ append append val SP mold/flat tmp ]
 				val
 			]
 			any-function? :val [ any [title-of :val spec-of :val] ]
 			datatype?     :val [ get in spec-of val 'title ]
-			typeset?      :val [ to block! val]
+			typeset?      :val [ ajoin [#"[" val #"]"] ]
 			port?         :val [ reduce [val/spec/title val/spec/ref] ]
 			image?        :val [ mold/part/all/flat val max-desc-width]
 			gob?          :val [ return reform ["offset:" val/offset "size:" val/size] ]
-			vector?       :val [ mold/part/all/flat val max-desc-width]
-			;none?         :val [ mold/all val]
+			vector?       :val [ reform ["length:" length? val mold/part/flat val max-desc-width] ]
+			any [logic? :val none? :val unset? :val] [ form val ]
 			true [:val]
 		]
 		unless string? val [val: mold/part/flat val max-desc-width]
@@ -126,10 +172,11 @@ import (module [
 
 	dump-obj: func [
 		"Returns a string with information about an object value"
-		obj [any-object!]
+		obj [any-object! map!]
 		/weak "Provides sorting and does not displays unset values"
 		/match "Include only those that match a string or datatype"
 			pattern
+		/not-none "Ignore NONE values"
 		/local start wild type str result user?
 	][
 		result: clear ""
@@ -138,7 +185,10 @@ import (module [
 		wild: all [string? pattern  find pattern "*"]
 		foreach [word val] obj [
 			type: type?/word :val
-			if all [weak type = 'unset!][ continue ]
+			if any [
+				all [weak type = 'unset!]
+				all [not-none type = 'none!]
+			][ continue ]
 			str: either find [function! closure! native! action! op! object!] type [
 				reform [word mold spec-of :val words-of :val]
 			][
@@ -165,7 +215,7 @@ import (module [
 					]
 				][ continue ]
 
-				str: join "^[[1;32m" form-pad word 15
+				str: join "^[[1;32m" form-pad either map? :obj [mold/flat :word][word] 15
 				append str "^[[m "
 				append str form-pad type 11 - min 0 ((length? str) - 15)
 				append result rejoin [
@@ -176,6 +226,7 @@ import (module [
 				]
 			]
 		]
+		if system/options/no-color [sys/remove-ansi result]
 		copy result
 	]
 
@@ -190,13 +241,19 @@ import (module [
 	?: help: func [
 		"Prints information about words and values"
 		'word [any-type!]
+		/doc "Open web browser to related documentation"
 		/into "Help text will be inserted into provided string instead of printed"
 			string [string!] "Returned series will be past the insertion"
-		/local value spec args refs rets type ret desc arg def des ref str cols tmp
+		/local value spec args refs rets type ret desc arg def des ref str cols tmp ret-desc
 	][
-		;@@ quering buffer width in CI under Windows now throws error: `Access error: protocol error: 6`
-		;@@ it should return `none` like under Posix systems!
-		cols: any [ attempt [ query/mode system/ports/input 'buffer-cols ] 120]
+		if all [
+			doc
+			word? :word
+			any-function? get :word
+		][
+			browse join https://rebol.tech/docs/functions.html# word
+		]
+		cols: query system/ports/output 'window-cols
 		max-desc-width: cols - 35
 		buffer: any [string  clear ""]
 		catch [
@@ -312,7 +369,7 @@ import (module [
 					spec: copy/deep spec-of :value
 					args: copy []
 					refs: none
-					rets: none
+					rets: ret-desc: none
 					type: type? :value
 					
 					clear find spec /local
@@ -326,7 +383,7 @@ import (module [
 								repend args [arg def des]
 							)
 							|
-							quote return: set rets block!
+							quote return: set rets block! opt [set ret-desc string!]
 						]
 						opt [refinement! refs:]
 						to end
@@ -351,7 +408,7 @@ import (module [
 							]
 						]
 					]
-					output ["    " uppercase form word "is" a-an mold type "value."]
+					output ["    " uppercase form word "is" a-an form :type "value."]
 
 					unless empty? args [
 						output "^/^/^[[4;1;36mARGUMENTS^[[m:"
@@ -387,16 +444,27 @@ import (module [
 					]
 					if rets [
 						output  "^/^/^[[4;1;36mRETURNS^[[m:"
+						if ret-desc [output ["^/    " ret-desc]]
 						output ["^/    " mold rets ]
 					]
 					output newline
+					throw true
+				]
+				module? :value [
+					output ajoin [
+						"^[[1;32m" uppercase mold :word "^[[m is " a-an "module with:^/"
+						"^[[4;1;36mSPEC^[[m:^/"
+						dump-obj/not-none spec-of :value
+						"^/^[[4;1;36mBODY^[[m:^/"
+						dump-obj :value
+					]
 					throw true
 				]
 				'else [
 					word: uppercase mold word
 					type: form-type :value
 					output ajoin ["^[[1;32m" word "^[[m is " type " of value: ^[[32m"]
-					output either any [any-object? value] [
+					output either any [any-object? value map? value] [
 						output lf dump-obj :value
 					][
 						max-desc-width: cols - (length? word) - (length? type) - 21
@@ -406,6 +474,7 @@ import (module [
 				]
 			]
 		]
+		if system/options/no-color [sys/remove-ansi head buffer]
 		either into [buffer][print head buffer]
 	]
 
@@ -449,6 +518,7 @@ import (module [
 		output ajoin [
 			"^[[1mTIP:^[[m use for example ^[[1;32mhelp system/codecs/" codec/name "^[[m to see more info.^/"
 		]
+		if system/options/no-color [sys/remove-ansi head buffer]
 	]
 
 	about: func [
@@ -460,44 +530,7 @@ import (module [
 	usage: func [
 		"Prints command-line arguments"
 	][
-		print {
-  ^[[4;1;36mCommand line usage^[[m:
-  
-      ^[[1;32mREBOL |options| |script| |arguments|^[[m
-  
-  ^[[4;1;36mStandard options^[[m:
-  
-      ^[[1;32m--args data^[[m      Explicit arguments to script (quoted)
-      ^[[1;32m--do expr^[[m        Evaluate expression (quoted)
-      ^[[1;32m--help (-?)^[[m      Display this usage information (then quit)
-      ^[[1;32m--script file^[[m    Explicit script filename
-      ^[[1;32m--version tuple^[[m  Script must be this version or greater
-  
-  ^[[4;1;36mSpecial options^[[m:
-  
-      ^[[1;32m--boot level^[[m     Valid levels: base sys mods
-      ^[[1;32m--debug flags^[[m    For user scripts (system/options/debug)
-      ^[[1;32m--halt (-h)^[[m      Leave console open when script is done
-      ^[[1;32m--import file^[[m    Import a module prior to script
-      ^[[1;32m--quiet (-q)^[[m     No startup banners or information
-      ^[[1;32m--secure policy^[[m  Can be: none allow ask throw quit
-      ^[[1;32m--trace (-t)^[[m     Enable trace mode during boot
-      ^[[1;32m--verbose^[[m        Show detailed startup information
-  
-  ^[[4;1;36mOther quick options^[[m:
-  
-      ^[[1;32m-s^[[m               No security
-      ^[[1;32m+s^[[m               Full security
-      ^[[1;32m-v^[[m               Display version only (then quit)
-  
-  ^[[4;1;36mExamples^[[m:
-  
-      REBOL script.r
-      REBOL -s script.r
-      REBOL script.r 10:30 test@example.com
-      REBOL --do "watch: on" script.r}
-
-      ; --cgi (-c)       Load CGI utiliy module and modes
+		print help-usage
 	]
 
 
@@ -520,12 +553,13 @@ import (module [
 		{Prints a list of known functions}
 		'name [word! lit-word! unset!] "Optional module name"
 		/args "Show arguments not titles"
-		/local ctx vals arg list size
+		/local ctx vals arg list size a
 	][
 		list: make block! 400
 		size: 10 ; defines minimal function name padding
 
 		ctx: any [select system/modules :name lib]
+		a: system/options/ansi
 
 		foreach [word val] ctx [
 			if any-function? :val [
@@ -544,22 +578,20 @@ import (module [
 		vals: make string! size
 		foreach [word arg] sort/skip list 2 [
 			append/dup clear vals #" " size
-			print rejoin ["^[[1;32m" head change vals word "^[[0m " any [arg ""]]
+			print rejoin [a/green head change vals word a/reset SP any [arg ""]]
 		]
 		exit
 	]
-])
-
 ;-- old alpha functions:
 ;pending: does [
 ;	comment "temp function"
 ;	print "Pending implementation."
 ;]
 ;
-;say-browser: does [
-;	comment "temp function"
-;	print "Opening web browser..."
-;]
+browse: func[url [url!]] [
+	log-info 'REBOL ["Opening web browser:" as-green url]
+	lib/browse url
+]
 ;
 ;upgrade: function [
 ;	"Check for newer versions (update REBOL)."
@@ -584,26 +616,23 @@ import (module [
 ;docs: func [
 ;	"Browse on-line documentation."
 ;][
-;	say-browser
 ;	browse http://www.rebol.com/r3/docs
 ;	exit
 ;]
-;
-;bugs: func [
-;	"View bug database."
-;][
-;	say-browser
-;	browse http://curecode.org/rebol3/
-;	exit
-;]
-;
-;changes: func [
-;	"What's new about this version."
-;][
-;	say-browser
-;	browse http://www.rebol.com/r3/changes.html
-;	exit
-;]
+
+bugs: func [
+	"View bug database."
+][
+	browse https://github.com/Oldes/Rebol-issues/issues
+	exit
+]
+
+changes: func [
+	"What's new about this version."
+][
+	browse https://github.com/Oldes/Rebol3/blob/master/CHANGES.md
+	exit
+]
 ;
 ;why?: func [
 ;	"Explain the last error in more detail."
@@ -619,7 +648,6 @@ import (module [
 ;		error? err: any [:err system/state/last-error]
 ;		err/type ; avoids lower level error types (like halt)
 ;	][
-;		say-browser
 ;		err: lowercase ajoin [err/type #"-" err/id]
 ;		browse join http://www.rebol.com/r3/docs/errors/ [err ".html"]
 ;	][
@@ -649,3 +677,5 @@ import (module [
 ;	]
 ;	exit
 ;]
+])
+

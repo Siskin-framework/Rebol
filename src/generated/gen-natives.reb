@@ -38,6 +38,14 @@ swap-endian: native [
          range [number! series!]
 ]
 
+;-- src/core/n-control.c
+
+
+did: native [
+        "Returns TRUE if the given value is truthy (not NONE or FALSE)."
+        value [any-type!] "Value to test"
+  ]
+
 ;-- src/core/n-data.c
 
 
@@ -65,6 +73,14 @@ truncate: native [
         series [series!] "Series to be truncated"
       /part   "Also shorten resulted series to a length or end position"
        range  [number! series!]
+    ]
+
+;-- src/core/n-hash.c
+
+
+hash: native [
+        {Computes a hash value from any Rebol value. This number may change between different Rebol versions!}
+        value [any-type!]
     ]
 
 ;-- src/core/n-io.c
@@ -95,6 +111,16 @@ access-os: native [
         /set          "To set or kill pid (sig 15)"
         value [integer! block!] "Argument, such as uid, gid, or pid (in which case, it could be a block with the signal no)"
     ]
+
+
+tty?: native [
+        "Returns TRUE if standard input is connected to a terminal."
+  ]
+
+
+read-key: native [
+        "Reads a single keypress from the console without echoing it."
+  ]
 
 ;-- src/core/n-math.c
 
@@ -157,7 +183,7 @@ sqrt: native [
 
 number?: native [
         {Returns TRUE if the value is any type of number and not a NaN. }
-        value
+        value [any-type! unset!]
     ]
 
 
@@ -214,6 +240,33 @@ lcm: native [
         b [integer!]
     ]
 
+
+fraction: native [
+        {Returns the fractional part of a decimal value}
+        number [decimal!]
+    ]
+
+
+prime?: native [
+        {Returns true if value is a prime number}
+        number [integer!]
+    ]
+
+
+lerp: native [
+        {Linearly interpolates between start and end by factor}
+        start  [number! tuple! pair!]
+        end    [number! tuple! pair!]
+        factor [number!] "Interpolation factor, clamped to 0.0-1.0"
+    ]
+
+
+idivide: native [
+        {Returns the first integer divided by the second}
+        value1  [integer!]
+        value2  [integer!]
+    ]
+
 ;-- src/core/n-strings.c
 
 
@@ -226,6 +279,25 @@ checksum: native [
         /part {Limits to a given length}
          length
     ]
+
+;-- src/core/n-system.c
+
+
+register: native [
+        "Register value in a system/catalog"
+        'name [word! set-word! lit-word!]  "Unique ID for the value in the catalog"
+        value [struct!] "Value to be registered (so far only structs)"
+  ]
+
+;-- src/core/t-bitset.c
+
+
+complement?: native [
+        "Returns TRUE if the bitset is complemented"
+        value [bitset!]
+    ]
+
+;-- src/core/u-compress.c
 
 
 compress: native [
@@ -246,14 +318,6 @@ decompress: native [
         /size
             bytes [integer!] {Number of uncompressed bytes.}
 ]
-
-;-- src/core/t-bitset.c
-
-
-complement?: native [
-        "Returns TRUE if the bitset is complemented"
-        value [bitset!]
-    ]
 
 ;-- src/core/n-crypt.c
 
@@ -281,16 +345,19 @@ rsa-init: native [
 
 
 rsa: native [
-        "Encrypt/decrypt/sign/verify data using RSA cryptosystem. Only one refinement must be used!"
-        rsa-key [handle!] "RSA context created using `rsa-init` function"
-        data    [binary!] "Data to work with."
-        /encrypt  "Use public key to encrypt data"
-        /decrypt  "Use private key to decrypt data"
-        /sign     "Use private key to sign data. Result is PKCS1 v1.5 binary"
-        /verify   "Use public key to verify signed data (returns TRUE or FALSE)"
-         signature [binary!] "Result of the /sign call"
-        /hash     "Signature's message digest algorithm"
-         algorithm [word! none!]
+    "Encrypt, decrypt, sign, or verify data using the RSA cryptosystem."
+    "Only one of the action refinements may be used per call."
+    rsa-key   [handle!]             "RSA context created via rsa-init"
+    data      [binary! any-string!] "Input data or ciphertext"
+    /encrypt                        "Encrypt with public key (PKCS#1 v1.5 or RSAES-OAEP if /oaep)"
+    /decrypt                        "Decrypt with private key (PKCS#1 v1.5 or RSAES-OAEP if /oaep)"
+    /sign                           "Sign with private key"
+    /verify                         "Verify with public key (returns TRUE or FALSE)"
+     signature [binary!]            "Signature for /verify"
+    /hash                           "Specify digest algorithm (for sign/verify)"
+     algorithm [word! none!]        "Hash algorithm (e.g. SHA256) or NONE"
+    /oaep                           "Enable RSAES-OAEP for encrypt/decrypt"
+    /pss                            "Enable RSASSA-PSS for sign/verify"
   ]
 
 
@@ -368,3 +435,155 @@ iconv: native [
         /to                                    {Transcode to a new binary}
         target   [word! integer! tag! string!] {Target codepage id}
     ]
+
+;-- src/core/n-image.c
+
+
+hsv-to-rgb: native [
+        "Converts HSV (hue, saturation, value) to RGB"
+        hsv [tuple!]
+    ]
+
+
+rgb-to-hsv: native [
+        "Converts RGB value to HSV (hue, saturation, value)"
+        rgb [tuple!]
+    ]
+
+
+color-distance: native [
+        "Human perception weighted Euclidean distance between two RGB colors"
+        a [tuple!]
+        b [tuple!]
+    ]
+
+
+image-diff: native [
+        "Count difference (using weighted RGB distance) of two images of the same size. Returns 0% if images are same and 100% if completely different."
+        a [image!]      "If sizes of the input images are not same..."
+        b [image!]      "... then only the smaller part is compared!"
+        /part           "Limit computation only to a part of the image"
+         offset [pair!] "Zero based top-left corner"
+         size   [pair!] "Size of the sub-image to use"
+    ]
+
+
+tint: native [
+        "Mixing colors (tint and or brightness)"
+        target [tuple! image!] "Target RGB color or image (modifed)"
+        rgb    [tuple!]        "Color to use for mixture"
+        amount [number!]       "Effect amount"
+    ]
+
+
+luminosity: native [
+        "Convert a color or an image to grayscale using Luminosity formula"
+        target [tuple! image!] "Target RGB color or image (modifed)"
+        return: [
+            integer!  "When input is a tuple"
+            image!    "When input is an image"
+        ]
+    ]
+
+
+grayscale: native [
+        "Convert a color or an image to grayscale using Average method"
+        target [tuple! image!] "Target RGB color or image (modifed)"
+        return: [
+            integer!  "When input is a tuple"
+            image!    "When input is an image"
+        ]
+    ]
+
+
+resize: native [
+        "Resizes an image to the given size."
+         image    [image!]         "Image to resize"
+         size     [pair! percent! integer!]
+                                   "Size of the new image (integer value is used as width)"
+        /filter                    "Using given filter type (default is Lanczos)"
+         name     [word! integer!] "One of: system/catalog/filters"
+        /blur
+         factor  [number!]   "The blur factor where > 1 is blurry, < 1 is sharp"
+    ]
+
+
+premultiply: native [
+        "Premultiplies RGB channel with its alpha channel"
+         image    [image!]         "Image to premultiply (modified)"
+    ]
+
+
+blur: native [
+        "Blur (Gaussian) given image"
+         image    [image!]  "Image to blur (modified)"
+         radius   [number!] "Blur amount"
+    ]
+
+
+image: native [
+        "Interface to basic image encoding/decoding (only on Windows and macOS so far!)"
+        /load      "Image file to load or binary to decode"
+         src-file  [file! binary!]
+        /save      "Encodes image to file or binary"
+         dst-file  [none! file! binary!] "If NONE is used, binary is made internally"
+         dst-image [none! image!]  "If NONE, loaded image may be used if there is any"
+        /frame     "Some image formats may contain multiple images"
+         num       [integer!]  "1-based index of the image to receive"
+        /as        "Used to define which codec should be used"
+         type      [word!] "One of: [PNG JPEG JPEGXR BMP DDS GIF TIFF] read only: [DNG ICO HEIF]"
+;       /scale
+;        sc        [pair! percent!]
+  ]
+
+;-- src/core/n-request-color.c
+
+
+request-color: native [
+        {Asks user to select a color.}
+        /default  "Default RGB color"
+         color    [tuple!]
+    ]
+
+;-- src/core/u-png-filter.c
+
+
+filter: native [
+        "PNG delta filter"
+        data   [binary!] "Input"
+        width  [number!] "Scanline width"
+        type   [integer! word!] "1..4 or one of: [sub up average paeth]"
+        /skip bpp [integer!] "Bytes per pixel"
+    ]
+
+
+unfilter: native [
+        "Reversed PNG delta filter"
+        data  [binary!]  "Input"
+        width [number!]  "Scanline width (not counting the type byte)"
+        /as   "Filter type. If not used, type is decoded from first byte on each line."
+         type [integer! word!] "1..4 or one of: [sub up average paeth]"
+        /skip
+         bpp [integer!]  "Bytes per pixel"
+    ]
+
+;-- src/core/u-dialect.c
+
+
+delect: native [
+        "Parses a common form of dialects. Returns updated input block."
+         dialect [object!] "Describes the words and datatypes of the dialect"
+         input [block!]    "Input stream to parse"
+         output [block!]   "Resulting values, ordered as defined (modified)"
+         /in               "Search for var words in specific objects (contexts)"
+         where [block!]    "Block of objects to search (non objects ignored)"
+         /all              "Parse entire block, not just one command at a time"
+    ]
+
+;-- src/core/n-oid.c
+
+
+form-oid: native [
+        "Return the x.y.z.... style numeric string for the given OID"
+        oid [binary!]
+  ]

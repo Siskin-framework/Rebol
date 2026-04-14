@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,12 +47,11 @@
 	REBOOL sync = FALSE; // act synchronously
 	REBVAL tmp;
 
-	port = Validate_Port_Value(port_value);
+	port = Validate_Port_With_Request(port_value, RDI_DNS, &sock);
 
 	arg = D_ARG(2);
 	*D_RET = *D_ARG(1);
 
-	sock = Use_Port_State(port, RDI_DNS, sizeof(*sock));
 	spec = OFV(port, STD_PORT_SPEC);
 
 	sock->timeout = 4000; // where does this go? !!!
@@ -61,7 +60,7 @@
 
 	case A_READ:
 		if (!IS_OPEN(sock)) {
-			if (OS_DO_DEVICE(sock, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, sock->error);
+			if (OS_Do_Device(sock, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, sock->error);
 			sync = TRUE;
 		}
 
@@ -85,13 +84,13 @@
 		}
 		else Trap_Port(RE_INVALID_SPEC, port, -10);
 
-		result = OS_DO_DEVICE(sock, RDC_READ);
+		result = OS_Do_Device(sock, RDC_READ);
 		if (result < 0) Trap_Port(RE_READ_ERROR, port, sock->error);
 
 		// Wait for it...
 		if (sync && result == DR_PEND) {
 			for (len = 0; GET_FLAG(sock->flags, RRF_PENDING) && len < 10; len++) {
-				OS_WAIT(2000, 0);
+				OS_Wait(2000, 0);
 			}
 			len = 1;
 			goto pick;
@@ -109,24 +108,25 @@ pick:
 		if (len == 1) {
 			if (!sock->net.host_info || !GET_FLAG(sock->flags, RRF_DONE)) return R_NONE;
 			if (sock->error) {
-				OS_DO_DEVICE(sock, RDC_CLOSE);
-				Trap_Port(RE_READ_ERROR, port, sock->error);
+				OS_Do_Device(sock, RDC_CLOSE);
+				return R_NONE;
+				//Trap_Port(RE_READ_ERROR, port, sock->error);
 			}
 			if (GET_FLAG(sock->modes, RST_REVERSE)) {
 				Set_String(D_RET, Copy_Bytes(sock->data, LEN_BYTES(sock->data)));
 			} else {
 				Set_Tuple(D_RET, (REBYTE*)&sock->net.remote_ip, 4);
 			}
-			OS_DO_DEVICE(sock, RDC_CLOSE);
+			OS_Do_Device(sock, RDC_CLOSE);
 		} else Trap_Range(arg);
 		break;
 
 	case A_OPEN:
-		if (OS_DO_DEVICE(sock, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, -12);
+		if (OS_Do_Device(sock, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, -12);
 		break;
 
 	case A_CLOSE:
-		OS_DO_DEVICE(sock, RDC_CLOSE);
+		OS_Do_Device(sock, RDC_CLOSE);
 		break;
 
 	case A_OPENQ:

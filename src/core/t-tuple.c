@@ -63,6 +63,9 @@
 		else if (IS_CHAR(data)) {
 			n = VAL_CHAR(data);
 		}
+		else if (IS_DECIMAL(data)) {
+			n = AS_INT(round(VAL_DECIMAL(data)));
+		}
 		else return FALSE;
 		if (n > 255 || n < 0) return FALSE;
 		*vp = n;
@@ -173,7 +176,7 @@
 	}
 	*--out = 0;
 
-	return out-start;
+	return AS_REBLEN(out-start);
 }
 
 
@@ -267,21 +270,6 @@
 		goto ret_value;
 	}
 
-	// !!!! merge with SWITCH below !!!
-	if (action == A_COMPLEMENT) {
-		for (;len > 0; len--, vp++)
-			*vp = (REBYTE)~*vp;
-		goto ret_value;
-	}
-	if (action == A_RANDOM) {
-		if (D_REF(2)) Trap0(RE_BAD_REFINES); // seed
-		for (;len > 0; len--, vp++) {
-			if (*vp)
-				*vp = (REBYTE)(Random_Int(D_REF(3)) % (1+*vp));
-		}
-		goto ret_value;
-	}
-
 	//a = 1; //???
 	switch (action) {
 	case A_LENGTHQ:
@@ -352,7 +340,7 @@
 		VAL_SET(value, REB_TUPLE);
 		vp = VAL_TUPLE(value);
 		if (IS_ISSUE(arg)) {
-			REBUNI c;
+			REBU32 c;
 			ap = Get_Word_Name(arg);
 			len = (REBINT)LEN_BYTES(ap);  // UTF-8 len
 			if (len & 1) goto bad_arg; // must have even # of chars
@@ -360,7 +348,7 @@
 			if (len > MAX_TUPLE) goto bad_arg; // valid even for UTF-8
 			VAL_TUPLE_LEN(value) = len;
 			for (alen = 0; alen < len; alen++) {
-				if (!Scan_Hex2(ap, &c, 0)) goto bad_arg;
+				if (!Scan_Hex2(ap, &c)) goto bad_arg;
 				*vp++ = (REBYTE)c;
 				ap += 2;
 			}
@@ -375,6 +363,22 @@
 		else goto bad_arg;
 
 		for (; alen < MAX_TUPLE; alen++) *vp++ = 0;
+		goto ret_value;
+
+	case A_COMPLEMENT:
+		for (; len > 0; len--, vp++)
+			*vp = (REBYTE)~*vp;
+		goto ret_value;
+
+	case A_RANDOM:
+		if (D_REF(2)) { // seed
+			Set_Random(Compute_CRC24(vp, len));
+			return R_UNSET;
+		}
+		for (; len > 0; len--, vp++) {
+			if (*vp)
+				*vp = (REBYTE)(Random_Int(D_REF(3)) % (1 + *vp));
+		}
 		goto ret_value;
 
 bad_arg:

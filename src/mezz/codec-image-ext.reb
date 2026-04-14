@@ -1,9 +1,10 @@
 REBOL [
-	title:  "REBOL 3 image codecs extensions"
-	name:   'codec-image-ext
-	author: "Oldes"
+	title:  "Image codec extensions"
+	name:    image-ext
+	type:    module
 	version: 0.3.0
 	date:    30-Aug-2021
+	author: "Oldes"
 	history: [
 		0.1.0 10-Nov-2020 "Oldes" {Extend native PNG codec with `size?` function}
 		0.2.0 08-Mar-2021 "Oldes" {Extend native PNG with `chunks` function}
@@ -33,7 +34,7 @@ if find codecs 'png [
 		if block? data [
 			;- Composing previously decoded chunks back to binary...
 			if #{49484452} <> data/1 [
-				sys/log/error 'PNG ["First chunk must be IHDR, but is:" as-red mold to string! tag]
+				log-error 'PNG ["First chunk must be IHDR, but is:" as-red mold to string! tag]
 				return none
 			]
 			out: binary 10000
@@ -41,7 +42,7 @@ if find codecs 'png [
 			foreach [tag dat] data [
 				if tag = #{49454E44} [continue] ; IEND is added automatically
 				unless all [binary? tag 4 = length? tag binary? dat][
-					sys/log/error 'PNG ["Wrong chunk input!" as-red tag]
+					log-error 'PNG ["Wrong chunk input!" as-red tag]
 					return none
 				]
 				len: length? dat
@@ -65,19 +66,19 @@ if find codecs 'png [
 		]
 
 		unless binary? data [ data: read data ]
-		sys/log/info 'PNG ["^[[1;32mDecode PNG data^[[m (^[[1m" length? data "^[[mbytes )"]
+		log-info 'PNG ["^[[1;32mDecode PNG data^[[m (^[[1m" length? data "^[[mbytes )"]
 		unless parse data [#{89504E470D0A1A0A} data: to end][ return none ]
 		bin: binary data
 		out: make block! 12
 		; in cloud builds the console width is not resolved!
-		num: try/with [-40 + query/mode console:// 'window-cols][40]
+		num: try/with [-40 + query console:// 'window-cols][40]
 		while [8 < length? bin/buffer][
 			len: binary/read bin 'ui32be
 			tag: copy/part bin/buffer 4
 			; check if we are interested in specific tags
 			if all [tags none? find tags tag][
 				; ignore this tag
-				sys/log/more 'PNG rejoin [form tag #" " as-red to string! tag " ^[[33m" pad len 10 "^[[35mignored"]
+				log-debug 'PNG rejoin [form tag #" " as-red to string! tag " ^[[33m" pad len 10 "^[[35mignored"]
 				bin/buffer: skip bin/buffer len + 8
 				continue
 			]
@@ -89,7 +90,7 @@ if find codecs 'png [
 			dat: binary/read/with bin 'BYTES len
 			; read CRC and compare with computed value...
 			if crc <> binary/read bin 'si32be [
-				sys/log/error 'PNG "CRC check failed!"
+				log-error 'PNG "CRC check failed!"
 				return none
 			]
 			; use some user friendly info output for specific chunks...
@@ -106,7 +107,7 @@ if find codecs 'png [
 			; cropped to fit on single line...
 			if num < length? info [ change skip tail info -3 "..." ]
 			; output info...
-			sys/log/more 'PNG rejoin [form tag #" " as-red to string! tag " ^[[33m" pad len 10 info]
+			log-debug 'PNG rejoin [form tag #" " as-red to string! tag " ^[[33m" pad len 10 info]
 			; store data...
 			append/only append out tag dat
 		]

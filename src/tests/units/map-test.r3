@@ -18,15 +18,27 @@ Rebol [
 		--assert 1 = m/a
 		--assert empty? make map! []
 
+	--test-- "make map! paren!"
+		--assert map? try [m: make map! to paren! [a: 1 b: 2]]
+		--assert 1 = m/a
+
 	--test-- "#[map! []]"
 		m: #(map! [a: 1 b: 2])
 		--assert 2 = m/b
 		--assert empty? #(map! [])
 
-	--test-- "#()"
+	--test-- "#[]"
 		m: #[a: 1 b: 2]
 		--assert 2 = m/b
 		--assert empty? #[]
+
+	--test-- "word binding inside maps"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2593
+		a: 1
+		m1: make map! [k a]
+		m2: #[k a]
+		--assert 1 = try [get m1/k]
+		--assert 1 = try [get m2/k]
 
 	--test-- "case sensitivity"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1153
@@ -62,6 +74,13 @@ Rebol [
 		--assert 21 = m/(#"A")
 		;@@ https://github.com/Oldes/Rebol-issues/issues/471
 		--assert none? select m none 
+	
+	--test-- "protected series keys"
+		m: #["key" 1]
+		--assert all [
+			error? e: try [append first keys-of m "x"]
+			e/id = 'protected
+		]
 
 
 ===end-group===
@@ -81,12 +100,14 @@ Rebol [
 	--assert 1 = length? m
 	--assert 1 = length? append/part m [b 2] 0
 	--assert 2 = length? append/part m [b 2] 2
-	--assert 2 = length? append/dup  m [c 3] 0
-	--assert 3 = length? append/dup  m [c 3] 1
-	--assert 4 = length? append/dup  m [d 4] 2
-	--assert 4 = length? append/part m [e 5 f 6] 1 ;no-op!
-	--assert 5 = length? append/part m [e 5 f 6] 2
-	--assert [1 2 3 4 5] = values-of m
+	--assert 2 = length? append/part m [e 5 f 6] 1 ;no-op!
+	--assert 3 = length? append/part m [e 5 f 6] 2
+	--assert [1 2 5] = values-of m
+	--assert all [
+		error? e: try [append/dup  m [c 3] 0] e/id = 'bad-refines
+		error? e: try [append/dup  m [c 3] 1] e/id = 'bad-refines
+		error? e: try [append/dup  m [c 3] 2] e/id = 'bad-refines
+	]
 
 	--test-- "append/part map! with odd part"
 	--assert []     == body-of append/part make map! [] [a 1 b 2 c 3] 1
@@ -125,6 +146,54 @@ Rebol [
 		mf4-m: make map! [b 1]
 		--assert 'b	= find mf4-m first [b:]
 		--assert 'b	= find mf4-m first [b:]
+===end-group===
+
+
+===start-group=== "compare"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2341
+	--test-- "equal?"
+	--assert equal? #[a: 1 b: 2] #[b: 2 a: 1]
+	--assert equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1 c: "A"]
+	--assert equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1  c "A"]
+	--assert equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1 'c "A"]
+	--assert not equal? #[a: 1] #[b: 2 c: 3 a: 1]
+	--assert not equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1]
+
+	--test-- "strict-equal?"
+	--assert     strict-equal? #[a: 1 b: 2] #[b: 2 a: 1]
+	--assert not strict-equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1 c: "A"]
+	--assert not strict-equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1  c "A"]
+	--assert not strict-equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1 'c "A"]
+	--assert not strict-equal? #[a: 1] #[b: 2 c: 3 a: 1]
+	--assert not strict-equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1]
+
+	;; repeating above tests with large enough maps, because hashing is not used in small enough maps
+
+	--test-- "equal? (large maps)"
+	--assert equal? #[e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9 a: 1 b: 2]        #[b: 2 a: 1        e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert equal? #[e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9 a: 1 b: 2 c: "a"] #[b: 2 a: 1 c: "A" e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert equal? #[e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9 a: 1 b: 2 c: "a"] #[b: 2 a: 1  c "A" e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert equal? #[e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9 a: 1 b: 2 c: "a"] #[b: 2 a: 1 'c "A" e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert not equal? #[a: 1] #[b: 2 c: 3 a: 1 e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert not equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1 e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+
+	--test-- "strict-equal? (large maps)"
+	--assert     strict-equal? #[e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9 a: 1 b: 2       ] #[b: 2 a: 1         e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert not strict-equal? #[e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9 a: 1 b: 2 c: "a"] #[b: 2 a: 1 c: "A"  e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert not strict-equal? #[e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9 a: 1 b: 2 c: "a"] #[b: 2 a: 1  c "A"  e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert not strict-equal? #[e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9 a: 1 b: 2 c: "a"] #[b: 2 a: 1 'c "A"  e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert not strict-equal? #[a: 1] #[b: 2 c: 3 a: 1 e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+	--assert not strict-equal? #[a: 1 b: 2 c: "a"] #[b: 2 a: 1 e: 1 f: 2 g: 3 h: 4 i: 5 j: 6 k: 7 l: 8 m: 9]
+
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2438
+	--test-- "equal? (after remove)"
+	m: remove/key #[a: 1 b: 2] 'b
+	--assert     equal? :m #[a: 1]
+	--assert     equal? #[a: 1] :m
+	--assert not equal? :m #[a: 1 b: 2]
+	--assert not equal? #[a: 1 b: 2] :m
+
+
 ===end-group===
 
 
@@ -237,6 +306,20 @@ Rebol [
 		--assert not (m !== m)
 		--assert "" !== m
 
+	--test-- "select from cleared map"
+		m: make map! 50
+		--assert none? select m 'a
+		m/a: 1
+		--assert 1 == select m 'a
+		clear m
+		--assert none? select m 'a
+
+	--test-- "map expansion"
+		m: make map! []
+		;; Appending many values requires multiple expansions and rehashing
+		repeat i 100 [k: join "a" i m/:k: i] ;; no crash
+		--assert 100 == m/("a100")
+
 ===end-group===
 
 
@@ -310,6 +393,15 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1804
 		m: make map! [1-1-2000 1 10:00 2 1.1.1 3 ]
 		--assert [1-Jan-2000 10:00 1.1.1] = keys-of m
+
+	--test-- "foreach consistent with keys-of"
+	;@@ https://github.com/red/red/issues/5533
+		m: make map! []
+		m/a: 1
+		--assert [a] == keys-of m
+		b: copy []
+		foreach [k v] m [append b k]
+		--assert [a] == b
 
 ===end-group===
 

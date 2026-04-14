@@ -23,6 +23,30 @@ Rebol [
 		; --assert 12:34:56.1 = round/to 12:34:56 0.3
 		; --assert 12:34:56.1 = round/to 12:34:56 30%
 
+	--test-- "time limits"
+	;; Red language is storing time as 64bit decimal value, while in Rebol3 64bit integer is used,
+	;; so Red has larger range, but is not so precise.
+	;@@ https://github.com/Oldes/Rebol-issues/issues/277
+		--assert -596523:14:08.999999999 = try [-1.0 + -596523:14:07.999999999]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/958
+		--assert 1193046:28:15           = try [make time! (2 ** 32) - 1]
+		--assert 1193046:28:15.010000384 = try [make time! (2 ** 32) - 0.99]
+		--assert 1193046:28:14.989999616 = try [make time! (2 ** 32) - 1.01]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1383
+		--assert 2562047:47:14 = to time! 9223372034
+		--assert 2562047:47:15 = to time! 9223372035
+		--assert 2562047:47:16 = to time! 9223372036
+		--assert  9223372036   = to integer! to time!  9223372036
+		--assert -9223372036   = to integer! to time! -9223372036
+		--assert  9223372036.0 = to decimal! to time!  9223372036.0
+		--assert -9223372036.0 = to decimal! to time! -9223372036.0
+		--assert all [error? e: try [to time!  9223372036.5] e/id = 'out-of-range]
+		--assert all [error? e: try [to time! -9223372036.5] e/id = 'out-of-range]
+		--assert all [error? e: try [0:0:0.1 + to-time 9223372036] e/id = 'type-limit]
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2464
+		--assert 1.0e-9 = to decimal! 0:0:0.000000001
+		--assert 0.0    = to decimal! 0:0:0.0000000001
+		
 	--test-- "compare with 0"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2463
 		--assert 0 < 0:0:0.1
@@ -71,11 +95,6 @@ Rebol [
 		--assert time? t: try [load "596523:00"]
 		--assert t = load "596522:60"
 
-	--test-- "issue-277"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/277
-		--assert error? e: try [-1.0 + -596523:14:07.999999999]
-		--assert e/id = 'type-limit
-
 	--test-- "issue-289"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/289
 		t: 225:00 --assert 224:59:59 = (t - 1)
@@ -89,12 +108,6 @@ Rebol [
 	--test-- "issue-1033"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1033
 		--assert "-1:02:03.45" = mold make time! [-1 2 3.45]
-		
-	--test-- "issue-958"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/958
-		--assert error? try [make time! (2 ** 32) - 1]
-		--assert error? try [make time! (2 ** 32) - 0.99]
-		--assert error? try [make time! (2 ** 32) - 1.01]
 
 	--test-- "issue-1391"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1391

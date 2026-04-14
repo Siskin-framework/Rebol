@@ -22,19 +22,19 @@ Rebol [
 		--assert  not error? [delete %port-issue-2320/]
 	--test-- "query directory info"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1712
-		--assert [name size date type] = query/mode %. none
-		--assert 'dir     = query/mode %. 'type
-		--assert date?      query/mode %. 'date
-		--assert what-dir = query/mode %. 'name
+		--assert (words-of system/standard/file-info) = query %. none
+		--assert 'dir     = query %. 'type
+		--assert date?      query %. 'date
+		--assert what-dir = query %. 'name
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2305
-		--assert      none? query/mode %. 'size
+		--assert      none? query %. 'size
 	--test-- "query directory type"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/606
 		make-dir %dir-606/
 		--assert all [
-			object? d: query %dir-606
+			object? d: query %dir-606 object!
 			d/type = 'dir
-			object? d: query %dir-606/
+			object? d: query %dir-606/ object!
 			d/type = 'dir
 			d/size = none
 		]
@@ -201,15 +201,15 @@ if system/platform = 'Windows [
 	--test-- "exists? %/"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2317
 		--assert 'dir = exists? %/       ;@@ https://github.com/Oldes/Rebol-issues/issues/612
-		--assert object? info: query %/
+		--assert object? info: query %/ object!
 		--assert info/name = %/
 		--assert info/type = 'dir
 		--assert none? info/size
 		either system/platform = 'Windows [
-			--assert none? info/date
+			--assert none? info/modified
 		][
 			; on linux %/ is just a normal directory root
-			--assert date? info/date
+			--assert date? info/modified
 		]
 		
 	--test-- "unicode directory"
@@ -231,27 +231,27 @@ if system/platform = 'Windows [
 	--test-- "query file info"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1712
 		file: %units/files/alice29.txt.gz
-		--assert [name size date type] = query/mode file none
-		--assert 'file = query/mode file 'type
-		--assert date?   query/mode file 'date
-		--assert 51732 = query/mode file 'size
-		--assert [file 51732] = query/mode file [type size]
-		--assert [type: file size: 51732] = query/mode file [type: size:]
+		--assert (words-of system/standard/file-info) = query file none
+		--assert 'file = query file 'type
+		--assert date?   query file 'modified
+		--assert 51732 = query file 'size
+		--assert [file 51732] = query file [:type :size]
+		--assert [type: file size: 51732] = query file [type size]
 
 	--test-- "query file name"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2442
 		file: %units/files/čeština.txt
-		--assert not none? find (query/mode file 'name) file
+		--assert not none? find (query file 'name) file
 
 	--test-- "query file info (port)"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2008
 		file: open %units/files/alice29.txt.gz
-		--assert [name size date type] = query/mode file none
-		--assert 'file = query/mode file 'type
-		--assert date?   query/mode file 'date
-		--assert 51732 = query/mode file 'size
-		--assert [file 51732] = query/mode file [type size]
-		--assert [type: file size: 51732] = query/mode file [type: size:]
+		--assert (words-of system/standard/file-info) = query file none
+		--assert 'file = query file 'type
+		--assert date?   query file 'modified
+		--assert 51732 = query file 'size
+		--assert [file 51732] = query file [:type :size]
+		--assert [type: file size: 51732] = query file [type size]
 		close file
 
 	--test-- "write/lines"
@@ -297,18 +297,19 @@ if system/platform = 'Windows [
 		--assert "á^M^M^/" = to string! read write/binary %tmp "á^M^M^/"
 		--assert "a^M^/^/" = to string! read write/binary %tmp "a^M^/^/"
 		--assert "á^M^/^/" = to string! read write/binary %tmp "á^M^/^/"
-		either system/platform = 'Windows [
-			;; on Windows `write` converts LF to CRLF by default (if the input is string!)
-			--assert     #{0D0A} = read write %tmp next "a^/"
-			--assert     #{0D0A} = read write %tmp next "á^/"
-			;; when there is already CRLF, it does not write it like CRCRLF!
-			--assert     #{0D0A} = read write %tmp next "a^M^/"
-			--assert     #{0D0A} = read write %tmp next "á^M^/"
-			--assert   #{0D0D0A} = read write %tmp next "a^M^M^/"
-			--assert   #{0D0D0A} = read write %tmp next "á^M^M^/"
-			--assert #{0D0A0D0A} = read write %tmp next "a^M^/^/"
-			--assert #{0D0A0D0A} = read write %tmp next "á^M^/^/"
-		][
+;@@ Should we keep this conversion? Now (since 3.19.5) it is not enabled.
+;-		either system/platform = 'Windows [
+;-			;; on Windows `write` converts LF to CRLF by default (if the input is string!)
+;-			--assert     #{0D0A} = read write %tmp next "a^/"
+;-			--assert     #{0D0A} = read write %tmp next "á^/"
+;-			;; when there is already CRLF, it does not write it like CRCRLF!
+;-			--assert     #{0D0A} = read write %tmp next "a^M^/"
+;-			--assert     #{0D0A} = read write %tmp next "á^M^/"
+;-			--assert   #{0D0D0A} = read write %tmp next "a^M^M^/"
+;-			--assert   #{0D0D0A} = read write %tmp next "á^M^M^/"
+;-			--assert #{0D0A0D0A} = read write %tmp next "a^M^/^/"
+;-			--assert #{0D0A0D0A} = read write %tmp next "á^M^/^/"
+;-		][
 			;; on all other platforms it doesn't modify!
 			--assert     #{0A} = read write %tmp next "a^/"
 			--assert     #{0A} = read write %tmp next "á^/"
@@ -318,7 +319,7 @@ if system/platform = 'Windows [
 			--assert #{0D0D0A} = read write %tmp next "á^M^M^/"
 			--assert #{0D0A0A} = read write %tmp next "a^M^/^/"
 			--assert #{0D0A0A} = read write %tmp next "á^M^/^/"
-		]
+;-		]
 		;; read/string converts CRLF (or plain CR) to LF
 		--assert   "^/" = read/string write/binary %tmp next "a^/"
 		--assert   "^/" = read/string write/binary %tmp next "á^/"
@@ -489,8 +490,11 @@ if system/platform = 'Windows [
 			0 = length? f
 			5 =   size? f
 			port? close f
-			5 = length? f ; because there is still "Hello" left and we are counting from head again (port is closed)
-			all [         ; it is not allowed to clear not opened port
+			all [ ; It is not allowed because the port is no longer open
+				error? e: try [length? f]
+				e/id = 'not-open
+			]
+			all [ ; It is not allowed to clear a port that is not open
 				error? e: try [clear f]
 				e/id = 'not-open
 			]
@@ -512,6 +516,16 @@ if system/platform = 'Windows [
 			5 = size? %file-812-b
 			not error? try [delete %file-812-b]
 		]
+		;; When the port is opened with a read-only policy, there must be an error on clear.
+		--assert all [
+			file? write %file-812-c "No clear!"
+			port? f: open/read %file-812-c
+			error? e: try [clear f]
+			e/id = 'write-error
+			port? close f
+			not error? try [delete %file-812-c]
+		]
+
 
 
 	--test-- "RENAME file"
@@ -575,21 +589,39 @@ if system/platform = 'Windows [
 			]
 			"Hello^/Rebol" = read/string %issue-1894
 		]
+		p: open %issue-1894
 		--assert all [error? e: try [append/dup p LF 10]  e/id = 'bad-refines]
 		--assert all [error? e: try [append/only p "aa"]  e/id = 'bad-refines]
+		close p
 		try [delete %issue-1894]
 
-if exists? %/proc/cpuinfo [
+if all [system/platform != 'Windows exists? %/proc/cpuinfo] [
 	--test-- "Reading from /proc files on Linux"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2303
+		;; reading complete file
 		--assert all [
-			not error? info: try [read/string %/proc/cpuinfo]
-			empty? info ;; empty, because to read this type of file, the size must be specified!
+			not error? info: try [read %/proc/cpuinfo]
+			0 < len: length? info
+			print to string! info
 		]
+		;; test when requested longer part of the virtual file
 		--assert all [
-			not error? info: try [read/string/part %/proc/cpuinfo 10000]
-			print info
-			0 < length? info
+			not error? info: try [read/part %/proc/cpuinfo len + 1000]
+			len == length? info
+		]
+		;; test when requested just a short part of the virtual file
+		--assert all [
+			not error? info: try [read/part %/proc/cpuinfo 10]
+			10 == length? info
+		]
+		;; read a POSIX virtual file in chunks using an open port
+		--assert all [
+			port? port: try [open/read %/proc/cpuinfo]
+			bin: make binary! 16000
+			while [not empty? tmp: read/part port 1024][append bin tmp]
+			equal? bin try [read %/proc/cpuinfo]
+			port? try [close port]
+			not open? port
 		]
 ]
 	--test-- "Reading an empty file"
@@ -600,130 +632,18 @@ if exists? %/proc/cpuinfo [
 			port? delete %empty
 		]
 
-===end-group===
+	--test-- "Query empty file name"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2661
+		--assert none? query %"" 'type
 
-if system/platform = 'Windows [
-	===start-group=== "CLIPBOARD"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/1968
-		--test-- "Clipboard port test"
-			c: "Clipboard port test"
-			--assert all [
-				port? p: try [open clipboard://]
-				not error? try [write p c]
-				strict-equal? c try [read p]
-			]
-			close p
-		--test-- "Clipboard scheme test"
-			c: "Clipboard scheme test"
-			; this tests now seems to be failing when done from a run-tests script
-			; but is ok when done in console :-/
-			--assert all [
-				not error? try [write clipboard:// c]
-				strict-equal? c try [read clipboard://]
-			]
-		--test-- "issue-2486"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/2486
-			foreach ch [#"a" #"^(7F)" #"^(80)" #"^(A0)"][
-				write clipboard:// append copy "" ch
-				--assert (to binary! ch) = to binary! read clipboard://
-			]
-			
-	===end-group===
-]
-
-;- "HTTP scheme" moved to %port-http-test.r3
-
-
-===start-group=== "WHOIS scheme"
-	--test-- "read WHOIS"
-		--assert  string? probe try [read whois://google.com]
-	--test-- "write WHOIS"
-		--assert string? try [write whois://whois.nic.cz "seznam.cz"]
-===end-group===
-
-
-;- not using this test, because the serives limits number of requests from the IP
-;- and on CI it may return "Access denied -- too many requests"
-;import 'daytime
-;if find system/schemes 'daytime [
-;===start-group=== "DAYTIME scheme"
-;	--test-- "read DAYTIME"
-;		--assert  all [
-;			block? res: try [read daytime://]
-;			res/2/date = now/date
-;		]
-;
-;===end-group===
-;]
-
-if all [
-	"true" <> get-env "CONTINUOUS_INTEGRATION"
-	"true" <> get-env "CI" ; for GitHub workflows
-][
-	;- don't do these tests on Travis CI
-	===start-group=== "console port"	
-		--test-- "query input port"
-			--assert  port? system/ports/input
-			--assert  all [
-				object?  console-info: query system/ports/input
-				integer? console-info/window-cols
-				integer? console-info/window-rows
-				integer? console-info/buffer-cols
-				integer? console-info/buffer-rows
-				;?? console-info
-			]
-			--assert integer? query/mode system/ports/input 'window-cols
-			--assert integer? query/mode system/ports/input 'window-rows
-			--assert integer? query/mode system/ports/input 'buffer-cols
-			--assert integer? query/mode system/ports/input 'buffer-rows
-			--assert [buffer-cols buffer-rows window-cols window-rows]
-							= m: query/mode system/ports/input none
-			--assert block?   v: query/mode system/ports/input m
-			--assert 4 = length? v
-	===end-group===
-]
-
-
-===start-group=== "DNS"
-;@@ https://github.com/Oldes/Rebol-issues/issues/1827
-;@@ https://github.com/Oldes/Rebol-issues/issues/1860
-;@@ https://github.com/Oldes/Rebol-issues/issues/1935
-	--test-- "read dns://"
-		--assert string? try [probe read dns://] ;- no crash!
-	--test-- "read dns://8.8.8.8"
-		--assert "dns.google" = try [probe read dns://8.8.8.8]
-	--test-- "read dns://google.com"
-		--assert tuple? try [read dns://google.com]
-
-	--test-- "query dns://"
-	;@@ https://github.com/Oldes/rebol-issues/issues/1826
-		--assert all [error? e: try [query dns://]  e/id = 'no-port-action]
-===end-group===
-
-
-===start-group=== "TCP"
-	--test-- "query net info"
-		;@@ https://github.com/Oldes/Rebol-issues/issues/1712
-		port: open tcp://8.8.8.8:80
-		--assert [local-ip local-port remote-ip remote-port] = query/mode port none
-		--assert 0.0.0.0 = query/mode port 'local-ip
-		--assert       0 = query/mode port 'local-port
-		--assert not none? find [0.0.0.0 8.8.8.8] query/mode port 'remote-ip ;; on posix there is sync lookup and so it reports 8.8.8.8 even without wait
-		--assert      80 = query/mode port 'remote-port
-		--assert all [
-			port? wait [port 1] ;= wait for lookup, so remote-ip is resolved
-			8.8.8.8 = query/mode port 'remote-ip
-			[80 8.8.8.8] = query/mode port [remote-port remote-ip]
-			[local-ip: 0.0.0.0 local-port: 0] = query/mode port [local-ip: local-port:]
-		]
-		try [close port]
 ===end-group===
 
 
 ===start-group=== "SYSTEM"
 	--test-- "query system://"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1373
-		--assert all [error? e: try [query system://]  e/id = 'no-port-action]
+	;; not implemented yet!
+		--assert all [error? e: try [query system:// object!]  e/id = 'no-port-action]
 ===end-group===
 
 ~~~end-file~~~

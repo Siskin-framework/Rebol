@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -169,7 +169,7 @@ enum {
 #define TS_CODE ((CP_DEEP | TS_SERIES) & ~TS_NOT_COPIED)
 
 #define TS_FUNCLOS (TYPESET(REB_FUNCTION) | TYPESET(REB_CLOSURE))
-#define TS_CLONE ((CP_DEEP | TS_SERIES | TS_FUNCLOS) & ~TS_NOT_COPIED)
+#define TS_CLONE ((CP_DEEP | TS_SERIES | TS_FUNCLOS | TYPESET(REB_MAP)) & ~TS_NOT_COPIED)
 
 // Modes allowed by Bind related functions:
 enum {
@@ -206,6 +206,7 @@ enum REB_Mold_Opts {
 };
 
 #define GET_MOPT(v, f) GET_FLAG(v->opts, f)
+#define SET_MOPT(v, f) SET_FLAG(v->opts, f)
 
 // Special flags for decimal formatting:
 #define DEC_MOLD_PERCENT 1  // follow num with %
@@ -231,6 +232,16 @@ enum {
 	LOAD_NEXT,			// Load next value
 	LOAD_NORMAL,		// Convert header, load script
 	LOAD_REQUIRE		// Header is required, else error
+};
+
+// Protect function flags:
+enum {
+	PROT_SET,
+	PROT_DEEP,
+	PROT_HIDE,
+	PROT_WORD,
+	PROT_WORDS,
+	PROT_LOCK
 };
 
 // General constants:
@@ -287,7 +298,11 @@ enum {
 #define ALIGN(s, a) (((s) + (a)-1) & ~((a)-1))
 
 #ifndef ALEVEL
-#define ALEVEL 1
+# if defined(DEBUG) || defined(_DEBUG)
+#  define ALEVEL 1
+# else
+#  define ALEVEL 0
+# endif
 #endif
 
 #define ASSERT(c,m) if (!(c)) Crash(m);		// (breakpoint in Crash() to see why)
@@ -331,7 +346,6 @@ enum {
 //#define DO_BLOCK(v) Do_Block(VAL_SERIES(v), VAL_INDEX(v))
 #define DO_BLK(v) Do_Blk(VAL_SERIES(v), VAL_INDEX(v))
 
-#define DEAD_END	return 0	// makes compiler happy (for never used return case)
 
 #define	NO_RESULT	((REBCNT)(-1))
 #define	ALL_BITS	((REBCNT)(-1))
@@ -348,15 +362,17 @@ enum {
 #define BUF_EMIT  VAL_SERIES(TASK_BUF_EMIT)
 #define BUF_WORDS VAL_SERIES(TASK_BUF_WORDS)
 #define BUF_PRINT VAL_SERIES(TASK_BUF_PRINT)
-#define BUF_FORM  VAL_SERIES(TASK_BUF_FORM)
+//#define BUF_FORM  VAL_SERIES(TASK_BUF_FORM)
 #define BUF_MOLD  VAL_SERIES(TASK_BUF_MOLD)
-#define BUF_UTF8  VAL_SERIES(TASK_BUF_UTF8)
+#define BUF_SCAN  VAL_SERIES(TASK_BUF_SCAN)
+//#define BUF_UTF8  VAL_SERIES(TASK_BUF_UTF8)
+#define BUF_UCS2  VAL_SERIES(TASK_BUF_UCS2)
 #define MOLD_LOOP VAL_SERIES(TASK_MOLD_LOOP)
 
 #ifdef OS_WIDE_CHAR
 #define BUF_OS_STR BUF_MOLD
 #else
-#define BUF_OS_STR BUF_FORM
+#define BUF_OS_STR BUF_MOLD
 #endif
 
 // Save/Unsave Macros:
@@ -415,6 +431,7 @@ typedef struct rebol_opts {
 	REBFLG	watch_series;
 	REBFLG	watch_expand;
 	REBFLG	crash_dump;
+	REBFLG	watch_alloc;
 } REB_OPTS;
 
 typedef struct rebol_time_fields {

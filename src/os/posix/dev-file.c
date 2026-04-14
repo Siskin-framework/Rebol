@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +43,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <errno.h>
@@ -50,6 +50,53 @@
 
 #include "reb-host.h"
 #include "host-lib.h"
+
+#if (defined TO_LINUX) && !defined(__HAIKU__ ) && !defined(STATIC_MUSL)
+#include <linux/stat.h>
+//#include <linux/fcntl.h>
+#include <fcntl.h>
+#define statx foo
+#define statx_timestamp foo_timestamp
+struct statx;
+struct statx_timestamp;
+#include <sys/stat.h>
+#undef statx
+#undef statx_timestamp
+
+#define AT_STATX_SYNC_TYPE	  0x6000
+#define AT_STATX_SYNC_AS_STAT 0x0000
+#define AT_STATX_FORCE_SYNC   0x2000
+#define AT_STATX_DONT_SYNC    0x4000
+
+// Manually define SYS_statx if not present in the system headers
+#  ifndef SYS_statx
+#    if defined __aarch64__ || defined __arm__
+#      define SYS_statx 397
+#    elif defined __alpha__
+#      define SYS_statx 522
+#    elif defined __i386__ || defined __powerpc64__
+#      define SYS_statx 383
+#    elif defined __sparc__
+#      define SYS_statx 360
+#    elif defined __x86_64__
+#      define SYS_statx 332
+#    elif defined __riscv && __riscv_xlen == 64 // riscv64
+#      define SYS_statx 291
+#    else
+#      warning "SYS_statx not defined for your architecture"
+#    endif
+#  endif
+
+static __attribute__((unused))
+ssize_t statx(int dfd, const char *filename, unsigned flags, unsigned int mask, struct statx *buffer)
+{
+	return syscall(SYS_statx, dfd, filename, flags, mask, buffer);
+}
+#else
+// stat on non Linux systems
+#include <sys/stat.h>
+#endif
+
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -62,6 +109,7 @@
 #ifndef S_IWRITE
 #define S_IWRITE S_IWUSR
 #endif
+
 
 // NOTE: the code below assumes a file id will never by zero. This should
 // be safe. In posix, zero is stdin, which is handled by dev-stdio.c.
@@ -126,7 +174,34 @@ static REBOOL Seek_File_64(REBREQ *file)
 static int Get_File_Info(REBREQ *file)
 {
 	struct stat info;
+#ifdef SYS_statx
+	struct statx infox;
+	if (statx(AT_FDCWD | AT_STATX_FORCE_SYNC, file->file.path, 0, STATX_BASIC_STATS | STATX_BTIME, &infox) == -1) {
+		goto use_stat;
+	}
 
+	if (S_ISDIR(infox.stx_mode)) {
+		SET_FLAG(file->modes, RFM_DIR);
+		file->file.size = MIN_I64; // using MIN_I64 to notify, that size should be reported as NONE
+	}
+	else {
+		CLR_FLAG(file->modes, RFM_DIR);
+		file->file.size = infox.stx_size;
+	}
+	file->file.modified_time.l = (i32)(infox.stx_mtime.tv_sec);
+	file->file.accessed_time.l = (i32)(infox.stx_atime.tv_sec);
+	file->file.modified_time.h = (i32)(infox.stx_mtime.tv_nsec);
+	file->file.accessed_time.h = (i32)(infox.stx_atime.tv_nsec);
+
+	if (infox.stx_btime.tv_sec) {
+		file->file.created_time.l  = (i32)(infox.stx_btime.tv_sec);
+		file->file.created_time.h  = (i32)(infox.stx_btime.tv_nsec);
+	} else {
+		file->file.created_time = file->file.modified_time;
+	}
+	return DR_DONE;
+#endif
+use_stat:
 	if (stat(file->file.path, &info)) {
 		file->error = errno;
 		return DR_ERROR;
@@ -140,7 +215,21 @@ static int Get_File_Info(REBREQ *file)
 		CLR_FLAG(file->modes, RFM_DIR);
 		file->file.size = info.st_size;
 	}
-	file->file.time.l = (long)(info.st_mtime);
+#ifdef TO_MACOS
+	file->file.modified_time.l = (i32)(info.st_mtimespec.tv_sec);
+	file->file.accessed_time.l = (i32)(info.st_atimespec.tv_sec);
+	file->file.created_time.l  = (i32)(info.st_birthtimespec.tv_sec);
+	file->file.modified_time.h = (i32)(info.st_mtimespec.tv_nsec);
+	file->file.accessed_time.h = (i32)(info.st_atimespec.tv_nsec);
+	file->file.created_time.h  = (i32)(info.st_birthtimespec.tv_nsec);
+#else
+	file->file.modified_time.l = (i32)(info.st_mtim.tv_sec);
+	file->file.accessed_time.l = (i32)(info.st_atim.tv_sec);
+	file->file.modified_time.h = (i32)(info.st_mtim.tv_nsec);
+	file->file.accessed_time.h = (i32)(info.st_atim.tv_nsec);
+	// creation time is not available, so use the modification time...
+	file->file.created_time = file->file.modified_time;
+#endif
 
 	return DR_DONE;
 }
@@ -405,7 +494,9 @@ static int Get_File_Info(REBREQ *file)
 	// Fetch file size (if fails, then size is assumed zero):
 	if (fstat(h, &info) == 0) {
 		file->file.size = info.st_size;
-		file->file.time.l = (i32)(info.st_mtime);
+		file->file.modified_time.l = (i32)(info.st_mtime);
+		file->file.accessed_time.l = (i32)(info.st_atime);
+		file->file.created_time.l = (i32)(info.st_ctime);
 	}
 
 	file->id = h;
@@ -432,7 +523,24 @@ fail:
 	return DR_DONE;
 }
 
-
+// Resolves real size of virtual files (like /proc/cpuinfo)
+// NOTE: always use read/part with files like /dev/urandom
+static size_t get_virtual_file_size(const char *filepath) {
+	#define BUFFER_SIZE 4096
+	#define READ_LIMIT 0x80000000 // Rebol has limit 2GB for series
+	char buffer[BUFFER_SIZE];
+	size_t size = 0;
+	int file = open(filepath, O_RDONLY, S_IREAD);
+	if (file) {
+		while (size < READ_LIMIT) {
+			size_t bytesRead = read(file, buffer, BUFFER_SIZE);
+			if (bytesRead == 0) break;
+			size += bytesRead;
+		}
+		close(file);
+	}
+	return size;
+}
 /***********************************************************************
 **
 */	DEVICE_CMD Read_File(REBREQ *file)
@@ -463,16 +571,31 @@ init_pattern:
 		if (!Seek_File_64(file)) return DR_ERROR;
 	}
 
-	// printf("read %d len %d\n", file->id, file->length);
-	num_bytes = read(file->id, file->data, file->length);
-	if (num_bytes < 0) {
-		file->error = -RFE_BAD_READ;
-		return DR_ERROR;
-	} else {
-		file->actual = num_bytes;
-		file->file.index += file->actual;
+	// virtual files on Posix report its size as 0, so try to resolve the real one
+	// but only in case, when user did not set /part
+	if (file->file.size == 0 && file->length == 0) {
+		file->file.size = get_virtual_file_size(file->file.path);
+		if (file->file.size > 0 && file->length < file->file.size) {
+			file->error = -RFE_RESIZE_SERIES;
+			return DR_ERROR;
+		}
 	}
 
+	// printf("read %d len %d\n", file->id, file->length);
+	file->actual = 0;
+	// Using the loop, because the reading may be done in chunks!
+	while (1) {
+		num_bytes = read(file->id, file->data + file->actual, file->length - file->actual);
+		if (num_bytes == 0) break;
+		if (num_bytes < 0) {
+			file->error = -RFE_BAD_READ;
+			return DR_ERROR;
+		}
+		file->actual += num_bytes;
+		// stop in case that we have enough data (requested just part of it)
+		if (file->actual >= file->length) break;
+	}
+	file->file.index += file->actual;
 	return DR_DONE;
 }
 
@@ -519,7 +642,9 @@ init_pattern:
 	// update new file info
 	if (fstat(file->id, &info) == 0) {
 		file->file.size = info.st_size;
-		file->file.time.l = (i32)(info.st_mtime);
+		file->file.modified_time.l = (i32)(info.st_mtime);
+		file->file.accessed_time.l = (i32)(info.st_atime);
+		file->file.created_time.l = (i32)(info.st_ctime);
 	}
 
 	return DR_DONE;

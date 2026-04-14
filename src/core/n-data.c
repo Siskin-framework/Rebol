@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -67,7 +67,7 @@
 }
 #endif
 
-static int Check_Char_Range(REBVAL *val, REBINT limit)
+static int Check_Char_Range(REBVAL *val, REBCNT limit)
 {
 	REBCNT len;
 
@@ -154,8 +154,6 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 	}
 
 	Trap_Arg(types);
-
-	return 0; // for compiler
 }
 
 
@@ -217,6 +215,12 @@ static int Check_Char_Range(REBVAL *val, REBINT limit)
 **
 */	REBNATIVE(as)
 /*
+**	NOTE: It is not possible to coerce a binary with vectors, because
+**	vector info is encoded in the series and casting it to binary
+**	would destroy it.
+**	It is also not possible to coerce a binary with strings, because
+**	strings are internally UTF-8 encoded and modifying binary directly
+**	could corrupt this encoding!
 ***********************************************************************/
 {
 	REBVAL *type = D_ARG(1);
@@ -895,7 +899,11 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	if (ANY_SERIES(val)) {
 		t = VAL_TAIL(val);
 		if (VAL_INDEX(val) >= t) return R_NONE;
-		VAL_INDEX(val) = 0;
+		if (IS_UTF8_STRING(val)) {
+			VAL_INDEX(val) = UTF8_Prev_Char_Position(VAL_BIN_HEAD(val), t);
+			t = 1;
+		}
+		else VAL_INDEX(val) = 0;
 	}
 	else if (IS_TUPLE(val)) t = VAL_TUPLE_LEN(val);
 	else if (IS_GOB(val)) {
@@ -931,7 +939,9 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 
 	*D_ARG(1) = *value;
 	index = VAL_INDEX(value); // same for VAL_GOB_INDEX
-	if (index < tail) VAL_INDEX(value) = index + 1;
+	if (index < tail) {
+		VAL_INDEX(value) += IS_UTF8_STRING(value) ? UTF8_Next_Char_Size(VAL_BIN_HEAD(value), index) : 1;
+	}
 	return Do_Ordinal(ds, 1);
 }
 
@@ -953,12 +963,14 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 
 	*D_RET = *value;
 
-	if (IS_INTEGER(value)) {
+	if (IS_INTEGER(value) || IS_CHAR(value)) {
 		VAL_INT64(value)++;
 	}
 	else if (ANY_SERIES(value)) {
 		n = VAL_INDEX(value);
-		if (n < VAL_TAIL(value)) VAL_INDEX(value) = n + 1;
+		if (n < VAL_TAIL(value)) {
+			VAL_INDEX(value) += IS_UTF8_STRING(value) ? UTF8_Next_Char_Size(VAL_BIN_HEAD(value), n) : 1;
+		}
 	}
 	else if (IS_DECIMAL(value)) {
 		VAL_DECIMAL(value) += 1.0;
@@ -987,12 +999,14 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 
 	*D_RET = *value;
 
-	if (IS_INTEGER(value)) {
+	if (IS_INTEGER(value) || IS_CHAR(value)) {
 		VAL_INT64(value)--;
 	}
 	else if (ANY_SERIES(value)) {
 		n = VAL_INDEX(value);
-		if (n > 0) VAL_INDEX(value) = n - 1;
+		if (n > 0) {
+			VAL_INDEX(value) -= IS_UTF8_STRING(value) ? UTF8_Prev_Char_Size(VAL_BIN_HEAD(value), n) : 1;
+		}
 	}
 	else if (IS_DECIMAL(value)) {
 		VAL_DECIMAL(value) -= 1.0;
@@ -1010,7 +1024,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 /*
 ***********************************************************************/
 {
-#ifdef _DEBUG
+#ifdef DEBUG
 	REBVAL *arg = D_ARG(1);
 
 	if (ANY_SERIES(arg)) {
@@ -1180,7 +1194,7 @@ static int Do_Ordinal(REBVAL *ds, REBINT n)
 	if (GET_FLAG(VAL_EVENT_FLAGS(val), EVF_HAS_DATA)) {
 		CLR_FLAG(VAL_EVENT_FLAGS(val), EVF_HAS_DATA);
 #ifdef REB_VIEW
-		gob = OS_GET_GOB_ROOT();
+		gob = OS_Get_Gob_Root();
 #endif
 	} else {
 		gob = VAL_EVENT_SER(val);

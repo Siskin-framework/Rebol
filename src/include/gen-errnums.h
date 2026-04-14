@@ -2,7 +2,7 @@
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **  Licensed under the Apache License, Version 2.0
 **  This is a code-generated file.
@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Error Structure and Constants
-**  Build: 3.16.0
-**  Date:  4-Apr-2024
+**  Build: 3.21.15
+**  Date:  14-Apr-2026
 **  File:  errnums.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -132,6 +132,8 @@
 	RE_INVALID_HANDLE,            // 362 "invalid handle"
 	RE_INVALID_VALUE_FOR,         // 363 ["invalid value" :arg1 "for:" :arg2]
 	RE_HANDLE_EXISTS,             // 364 ["handle already exists under id" :arg1 "and have different size"]
+	RE_VECTOR_NOT_COMPATIBLE,     // 365 ["Vectors not compatible for operation"]
+	RE_TYPE_MISMATCH,             // 366 ["type mismatch:" :arg2 "must be same type as" :arg1]
 	RE_SCRIPT_MAX,
 
 	RE_ZERO_DIVIDE = 400,         // 400 "attempt to divide by zero"
@@ -177,6 +179,8 @@
 	RE_CALL_FAIL,                 // 535 ["external process failed:" :arg1]
 	RE_PERMISSION_DENIED,         // 536 ["permission denied"]
 	RE_PROCESS_NOT_FOUND,         // 537 ["process not found:" :arg1]
+	RE_INVALID_UTF,               // 538 ["invalid Unicode encoding:" :arg1]
+	RE_INVALID_CHAR,              // 539 ["invalid UTF-8 character:" :arg1]
 	RE_ACCESS_MAX,
 
 	RE_COMMAND_FAIL = 600,        // 600 [:arg1]

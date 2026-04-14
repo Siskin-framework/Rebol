@@ -1,8 +1,11 @@
 REBOL [
 	Title:   "Codec: PuTTY Private Key"
+	name:    ppk
+	type:    module
+	version: 1.0.0
 	Author:  "Oldes"
 	Rights:  "Copyright (C) 2020 Oldes. All rights reserved."
-	License: "BSD-3"
+	License: MIT
 	Test:    %tests/units/rsa-test.r3
 	Note: {
 		* it extract (and inits) only RSA keys so far

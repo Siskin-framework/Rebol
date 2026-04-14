@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,6 +44,8 @@
 	REBINT	tail;
 	REBINT	len = 0;
 
+	//ASSERT1(VAL_BYTE_SIZE(value), RP_BAD_SIZE);
+
 	// Common setup code for all actions:
 	if (action != A_MAKE && action != A_TO) {
 		index = (REBINT)VAL_INDEX(value);
@@ -72,11 +74,22 @@
 		DECIDE(index > tail);
 
 	case A_NEXT:
-		if (index < tail) VAL_INDEX(value)++;
+		if (index < tail) {
+			if (IS_UTF8_STRING(value))
+				VAL_INDEX(value) += UTF8_Next_Char_Size(VAL_BIN(value), VAL_INDEX(value));
+			else
+				VAL_INDEX(value)++;
+				
+		}
 		break;
 
 	case A_BACK:
-		if (index > 0) VAL_INDEX(value)--;
+		if (index > 0) {
+			if (IS_UTF8_STRING(value))
+				VAL_INDEX(value) = UTF8_Prev_Char_Position(VAL_BIN(value), index);
+			else
+				VAL_INDEX(value)--;
+		}
 		break;
 
 	case A_SKIP:
@@ -84,28 +97,64 @@
 	case A_ATZ:
 		len = Get_Num_Arg(arg);
 		{
-			REBI64 i = (REBI64)index + (REBI64)len;
-			if (action == A_SKIP) {
-				if (IS_LOGIC(arg)) i--;
-			} else if (action == A_AT) {
-				if (len > 0) i--;
+			if (IS_UTF8_STRING(value)) {
+				if (action == A_SKIP) {
+					if (IS_LOGIC(arg)) len--;
+				}
+				else if (action == A_AT) {
+					if (len > 0) len--;
+				}
+				if (len > 0) {
+					while (len-- > 0 ) {
+						index += UTF8_Next_Char_Size(VAL_BIN(value), index);
+						if (index > tail) {
+							index = tail;
+							break;
+						}
+					}
+				}
+				else {
+					while (len++ < 0) {
+						index = UTF8_Prev_Char_Position(VAL_BIN(value), index);
+						if (index < 0) {
+							index = 0;
+							break;
+						}
+					}
+				}
+				VAL_INDEX(value) = (REBCNT)index;
 			}
-			if (i > (REBI64)tail) i = (REBI64)tail;
-			else if (i < 0) i = 0;
-			VAL_INDEX(value) = (REBCNT)i;
+			else {
+				REBI64 i = (REBI64)index + (REBI64)len;
+				if (action == A_SKIP) {
+					if (IS_LOGIC(arg)) i--;
+				}
+				else if (action == A_AT) {
+					if (len > 0) i--;
+				}
+				if (i > (REBI64)tail) i = (REBI64)tail;
+				else if (i < 0) i = 0;
+				VAL_INDEX(value) = (REBCNT)i;
+			}
 		}
 		break;
 
-	case A_INDEXQ:
-		SET_INTEGER(DS_RETURN, ((REBI64)index) + 1);
-		return R_RET;
-
+	
 	case A_INDEXZQ:
+	case A_INDEXQ:
+		if (IS_UTF8_STRING(value))
+			index = (REBI64)UTF8_Index_To_Position(VAL_BIN(value), index);
+		if (action == A_INDEXQ) index++;
 		SET_INTEGER(DS_RETURN, ((REBI64)index));
 		return R_RET;
 
 	case A_LENGTHQ:
-		SET_INTEGER(DS_RETURN, tail > index ? tail - index : 0);
+		if (IS_UTF8_STRING(value)) {
+			SET_INTEGER(DS_RETURN, tail > index ? Length_As_UTF8_Code_Points(VAL_BIN_DATA(value)) : 0);
+		}
+		else {
+			SET_INTEGER(DS_RETURN, tail > index ? tail - index : 0);
+		}
 		return R_RET;
 
 	case A_REMOVE:
@@ -118,7 +167,14 @@
 			}
 			else Trap0(RE_FEATURE_NA);
 		} else {
-			len = DS_REF(2) ? Partial(value, 0, DS_ARG(3), 0) : 1;
+			if (DS_REF(2)) {
+				len = Partial(value, 0, DS_ARG(3), 0);
+			}
+			else {
+				len = (IS_UTF8_STRING(value))
+					? UTF8_Next_Char_Size(VAL_BIN_HEAD(value), VAL_INDEX(value))
+					: 1;
+			}
 			index = (REBINT)VAL_INDEX(value);
 		}
 		if (index < tail && len != 0)
@@ -131,7 +187,6 @@
 	case A_DIVIDE:
 		if (IS_VECTOR(value)) return -1; // allow vector for actions above
 		//continue...
-	case A_REMAINDER:
 	case A_POWER:
 	case A_ODDQ:
 	case A_EVENQ:
@@ -177,8 +232,7 @@ is_true:
 
 	CHECK_STACK(&s);
 
-	while (!IS_END(s) && (VAL_TYPE(s) == VAL_TYPE(t) ||
-					(IS_NUMBER(s) && IS_NUMBER(t)))) {
+	while (!IS_END(s)) {
 		if ((diff = Cmp_Value(s, t, is_case)) != 0)
 			return diff;
 		s++, t++;
@@ -199,13 +253,18 @@ is_true:
 {
 	REBDEC	d1, d2;
 
-	if (VAL_TYPE(t) != VAL_TYPE(s) && !(IS_NUMBER(s) && IS_NUMBER(t)))
+	if ((ANY_NUMBER(s) && ANY_NUMBER(t)) || (ANY_WORD(s) && ANY_WORD(t))) {
+		//https://github.com/Oldes/Rebol-issues/issues/2501
+		if (is_case && VAL_TYPE(t) != VAL_TYPE(s))
+			return VAL_TYPE(s) - VAL_TYPE(t);
+	} else if (VAL_TYPE(t) != VAL_TYPE(s)) {
 		return VAL_TYPE(s) - VAL_TYPE(t);
+	}
 
 	switch(VAL_TYPE(s)) {
 
 	case REB_INTEGER:
-		if (IS_DECIMAL(t)) {
+		if (IS_DECIMAL(t) || IS_PERCENT(t)) {
 			d1 = (REBDEC)VAL_INT64(s);
 			d2 = VAL_DECIMAL(t);
 			goto chkDecimal;
@@ -225,7 +284,8 @@ is_true:
 		return THE_SIGN((REBINT)(ch1 - ch2));
 
 	case REB_DECIMAL:
-	case REB_MONEY:
+	case REB_PERCENT:
+		if (IS_MONEY(t)) goto chkMoney;
 			d1 = VAL_DECIMAL(s);
 		if (IS_INTEGER(t))
 			d2 = (REBDEC)VAL_INT64(t);
@@ -241,6 +301,10 @@ chkDecimal:
 		)
 			return -1;
 		return 1;
+	
+	case REB_MONEY:
+chkMoney:
+		return Cmp_Money(s, t);
 
 	case REB_PAIR:
 		return Cmp_Pair(s, t);
@@ -360,7 +424,7 @@ chkDecimal:
 ]
 ***********************************************************************/
 {
-	if(VAL_INT64(D_ARG(2))>=0) VAL_INT64(D_ARG(2)) += 1;
+	if(VAL_INT64(D_ARG(2))>=0 && !IS_BITSET(D_ARG(1))) VAL_INT64(D_ARG(2)) += 1;
 	Do_Act(D_RET, VAL_TYPE(D_ARG(1)), A_PICK);
 	return R_RET;
 }
@@ -377,7 +441,7 @@ chkDecimal:
 ]
 ***********************************************************************/
 {
-	if (VAL_INT64(D_ARG(2)) >= 0) VAL_INT64(D_ARG(2)) += 1;
+	if (VAL_INT64(D_ARG(2)) >= 0 && !IS_BITSET(D_ARG(1))) VAL_INT64(D_ARG(2)) += 1;
 	Do_Act(D_RET, VAL_TYPE(D_ARG(1)), A_POKE);
 	return R_RET;
 }

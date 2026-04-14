@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2021-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,7 +47,8 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
-void Host_Crash(char *reason);
+// Special access:
+extern REBDEV* Devices[];
 
 // Temporary globals: (either move or remove?!)
 // O: where it should be moved?
@@ -56,7 +57,7 @@ static REBREQ Std_IO_Req;
 static REBYTE *inbuf;
 static REBCNT inbuf_len = 32*1024;
 
-static REBYTE *Get_Next_Line()
+static REBYTE *Get_Next_Line(void)
 {
 	REBYTE *bp = inbuf;
 	REBYTE *out;
@@ -79,7 +80,7 @@ static REBYTE *Get_Next_Line()
 	return 0; // more input needed
 }
 
-static int Fetch_Buf()
+static int Fetch_Buf(void)
 {
 	REBCNT len = (REBCNT)strlen(cs_cast(inbuf));
 
@@ -108,7 +109,7 @@ static int Fetch_Buf()
 
 /***********************************************************************
 **
-*/	REBREQ *Open_StdIO(REBOOL cgi)
+*/	OS_API REBREQ *OS_Open_StdIO(REBOOL cgi)
 /*
 **		Open REBOL's standard IO device. This same device is used
 **		by both the host code and the R3 DLL itself.
@@ -128,14 +129,16 @@ static int Fetch_Buf()
 
 	inbuf = OS_Make(inbuf_len);
 	inbuf[0] = 0;
-	if (!cgi)
+	if (cgi)
+		SET_FLAG(Std_IO_Req.modes, RDM_CGI);
+	else
 		SET_FLAG(Std_IO_Req.modes, RDM_READ_LINE);
 	return &Std_IO_Req;
 }
 
 /***********************************************************************
 **
-*/	void Close_StdIO(void)
+*/	OS_API void OS_Close_StdIO(void)
 /*
 **		Frees REBOL's standard IO device resources.
 **
@@ -144,10 +147,9 @@ static int Fetch_Buf()
 	OS_Free(inbuf);
 }
 
-
 /***********************************************************************
 **
-*/	REBYTE *Get_Str(void)
+*/	RL_API REBYTE *OS_Read_Line(void)
 /*
 **		Get input of a null terminated UTF-8 string.
 **		Divides the input into lines.
@@ -175,7 +177,7 @@ static int Fetch_Buf()
 
 /***********************************************************************
 **
-*/	void Put_Str(REBYTE *buf)
+*/	RL_API void OS_Put_Str(REBYTE *buf)
 /*
 **		Outputs a null terminated UTF-8 string.
 **		If buf is larger than StdIO Device allows, error out.
@@ -190,4 +192,28 @@ static int Fetch_Buf()
 	OS_Do_Device(&Std_IO_Req, RDC_WRITE);
 
 	if (Std_IO_Req.error) Host_Crash("stdio write");
+}
+
+
+/***********************************************************************
+**
+*/	RL_API int OS_Read_Key(REBKEY *key)
+/*
+***********************************************************************/
+{
+	// Turn off readline mode, if active.
+	if (GET_FLAG(Std_IO_Req.modes, RDM_READ_LINE)) {
+		Std_IO_Req.modify.mode = MODE_CONSOLE_LINE;
+		Std_IO_Req.modify.value = FALSE;
+		OS_Do_Device(&Std_IO_Req, RDC_MODIFY);
+	}
+	// Turn off automatic events polling.
+	CLR_FLAG(Std_IO_Req.flags, RRF_PENDING);
+	CLR_FLAG(Devices[Std_IO_Req.device]->flags, RDO_AUTO_POLL);
+	// Read one key.
+	int err = OS_Do_Device(&Std_IO_Req, RDC_READ);
+
+	if (err != 0) return FALSE;
+	*key = Std_IO_Req.key;
+	return TRUE;
 }

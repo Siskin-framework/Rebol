@@ -41,7 +41,7 @@ static REBOOL Same_Object(REBVAL *val, REBVAL *arg)
 }
 
 
-static REBOOL Equal_Object(REBVAL *val, REBVAL *arg)
+static REBOOL Equal_Object(REBVAL *val, REBVAL *arg, REBFLG is_case)
 {
 	REBSER *f1;
 	REBSER *f2;
@@ -64,9 +64,9 @@ static REBOOL Equal_Object(REBVAL *val, REBVAL *arg)
 	for (n = 1; n < (REBINT)(f1->tail); n++) {
 		if (VAL_HIDDEN(BLK_SKIP(w1, n))) return VAL_HIDDEN(BLK_SKIP(w2, n));
 		if (VAL_HIDDEN(BLK_SKIP(w2, n))) return VAL_HIDDEN(BLK_SKIP(w1, n));
-		if (Cmp_Value(BLK_SKIP(w1, n), BLK_SKIP(w2, n), FALSE)) return FALSE;
+		if (Cmp_Value(BLK_SKIP(w1, n), BLK_SKIP(w2, n), is_case)) return FALSE;
 		// Use Compare_Values();
-		if (Cmp_Value(BLK_SKIP(f1, n), BLK_SKIP(f2, n), FALSE)) return FALSE;
+		if (Cmp_Value(BLK_SKIP(f1, n), BLK_SKIP(f2, n), is_case)) return FALSE;
 	}
 
 	return TRUE;
@@ -231,7 +231,7 @@ static REBSER *Trim_Object(REBSER *obj)
 {
 	if (mode < 0) return -1;
 	if (mode == 3) return Same_Object(a, b);
-	return Equal_Object(a, b);
+	return Equal_Object(a, b, mode > 1);
 }
 
 
@@ -269,21 +269,16 @@ static REBSER *Trim_Object(REBSER *obj)
 /*
 ***********************************************************************/
 {
-	REBINT n = 0;
+	REBCNT n = 0;
 
 	if (!VAL_OBJ_FRAME(pvs->value)) {
 		return PE_NONE; // Error objects may not have a frame.
 	}
 
-	if (IS_WORD(pvs->select)) {
+	if (ANY_WORD(pvs->select)) {
 		n = Find_Word_Index(VAL_OBJ_FRAME(pvs->value), VAL_WORD_SYM(pvs->select), FALSE);
 	}
-//	else if (IS_INTEGER(pvs->select)) {
-//		n = Int32s(pvs->select, 1);
-//	}
-	else return PE_BAD_SELECT;
-
-	if (n <= 0 || (REBCNT)n >= SERIES_TAIL(VAL_OBJ_FRAME(pvs->value)))
+	if (n == 0)
 		return PE_BAD_SELECT;
 
 	if (pvs->setval && IS_END(pvs->path+1) && VAL_PROTECTED(VAL_FRM_WORD(pvs->value, n)))

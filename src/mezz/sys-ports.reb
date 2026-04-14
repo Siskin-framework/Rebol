@@ -99,6 +99,8 @@ url-parser: make object! [
 	alpha:       system/catalog/bitsets/alpha
 	alpha-num:   system/catalog/bitsets/alpha-numeric
 	hex-digit:   system/catalog/bitsets/hex-digits
+	enhex-bits:  copy system/catalog/bitsets/uri
+	enhex-bits/(#"%"): true ;; ignore percentage char (it may be used for already escaped content)
 
 	;-- URL Character Sets
 	;URIs include components and subcomponents that are delimited by characters in the "reserved" set.
@@ -180,7 +182,7 @@ url-parser: make object! [
 	ip-literal:    [copy value [[#"[" thru #"]"] | ["%5B" thru "%5D"]]] ; simplified from [IPv6address | IPvFuture]
 	port:          [copy value [1 5 digit] (emit port to integer! to string! :value)]
 	pct-encoded:   [#"%" 2 hex-digit]
-	pchar:         [unreserved | pct-encoded | sub-delims | #":" | #"@"]	; path characters
+	pchar:         [unreserved | pct-encoded | sub-delims | #":" | #"@" | #"%"]	; path characters (allows also %)
 	path-abempty:  [copy value any-segments | path-empty]
 	path-absolute: [copy value [#"/" opt [segment-nz any-segments]]]
 	path-rootless: [copy value [segment-nz any-segments]]
@@ -189,7 +191,8 @@ url-parser: make object! [
 	segment-nz:    [some pchar]
 	segment-nz-nc: [some [unreserved | pct-encoded | sub-delims | #"@"]]	; non-zero-length segment with no colon
 	any-segments:  [any [#"/" segment]]
-	query:         [#"?" copy value any [pchar | slash | #"?"] (emit query    to string! dehex :value)]
+	;; not using dehex for the query value, because there may be escaped important chars like & and =
+	query:         [#"?" copy value any [pchar | slash | #"?"] (emit query    to string! :value)]
 	fragment:      [#"#" copy value any [pchar | slash | #"?"] (emit fragment to string! dehex :value)]
 
 	; Helper function
@@ -201,10 +204,10 @@ url-parser: make object! [
 		"Return object with URL components, or cause an error if not a valid URL"
 		url  [url! string!]
 	][
-		;@@ MOLD of the url! preserves (and also adds) the percent encoding.      
-		;@@ binary! is used to have `dehex` on results decode UTF8 chars correctly
-		;@@ see: https://github.com/Oldes/Rebol-issues/issues/1986                
-		result: either parse to binary! mold as url! url url-rules [
+		;; escape all not escaped chars of the url first
+		;; and convert it to binary, so it is treated as UTF-8 before parsing               
+		url: to binary! enhex/except url enhex-bits 
+		result: either parse url url-rules [
 			copy out
 		][
 			none

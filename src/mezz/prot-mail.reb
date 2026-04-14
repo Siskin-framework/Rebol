@@ -89,7 +89,7 @@ form-message: func[
 		if block? from [ parse from [to email! set from email!] ]
 	]
 	unless email? from [
-		sys/log/error 'MAIL ["Invalid FROM value: " as-red mold :from]
+		log-error 'MAIL ["Invalid FROM value: " as-red mold :from]
 		return none
 	]
 

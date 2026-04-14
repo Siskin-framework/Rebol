@@ -2,7 +2,7 @@
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **  Licensed under the Apache License, Version 2.0
 **  This is a code-generated file.
@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Function Prototypes
-**  Build: 3.16.0
-**  Date:  4-Apr-2024
+**  Build: 3.21.15
+**  Date:  14-Apr-2026
 **  File:  funcs.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: pre-make)
@@ -30,7 +30,6 @@ extern REBINT Codec_Markup(REBCDI *codi); // src/core/b-init.c
 extern void Register_Codec(const char *name, codo dispatcher); // src/core/b-init.c
 extern void Init_Task(void); // src/core/b-init.c
 extern void Init_Year(void); // src/core/b-init.c
-extern void Init_Compression(void); // src/core/b-init.c
 extern void Init_Core(REBARGS *rargs); // src/core/b-init.c
 extern void Dispose_Core(void); // src/core/b-init.c
 extern void Do_Op(REBVAL *func); // src/core/c-do.c
@@ -87,22 +86,22 @@ extern REBVAL *Find_Error_Info(ERROR_OBJ *error, REBINT *num); // src/core/c-err
 extern void Make_Error_Object(REBVAL *arg, REBVAL *value); // src/core/c-error.c
 extern REBSER *Make_Error(REBINT code, REBVAL *arg1, REBVAL *arg2, REBVAL *arg3); // src/core/c-error.c
 extern void Disarm_Throw_Error(REBVAL *err); // src/core/c-error.c
-extern void Trap0(REBCNT num); // src/core/c-error.c
-extern void Trap1(REBCNT num, REBVAL *arg1); // src/core/c-error.c
-extern void Trap2(REBCNT num, REBVAL *arg1, REBVAL *arg2); // src/core/c-error.c
-extern void Trap3(REBCNT num, REBVAL *arg1, REBVAL *arg2, REBVAL *arg3); // src/core/c-error.c
-extern void Trap_Arg(REBVAL *arg); // src/core/c-error.c
-extern void Trap_Type(REBVAL *arg); // src/core/c-error.c
-extern void Trap_Range(REBVAL *arg); // src/core/c-error.c
-extern void Trap_Word(REBCNT num, REBCNT sym, REBVAL *arg); // src/core/c-error.c
-extern void Trap_Action(REBCNT type, REBCNT action); // src/core/c-error.c
-extern void Trap_Math_Args(REBCNT type, REBCNT action); // src/core/c-error.c
-extern void Trap_Types(REBCNT errnum, REBCNT type1, REBCNT type2); // src/core/c-error.c
-extern void Trap_Expect(REBVAL *object, REBCNT index, REBCNT type); // src/core/c-error.c
-extern void Trap_Make(REBCNT type, REBVAL *spec); // src/core/c-error.c
-extern void Trap_Num(REBCNT err, REBCNT num); // src/core/c-error.c
-extern void Trap_Reflect(REBCNT type, REBVAL *arg); // src/core/c-error.c
-extern void Trap_Port(REBCNT errnum, REBSER *port, REBINT err_code); // src/core/c-error.c
+extern REB_NORETURN void Trap0(REBCNT num); // src/core/c-error.c
+extern REB_NORETURN void Trap1(REBCNT num, REBVAL *arg1); // src/core/c-error.c
+extern REB_NORETURN void Trap2(REBCNT num, REBVAL *arg1, REBVAL *arg2); // src/core/c-error.c
+extern REB_NORETURN void Trap3(REBCNT num, REBVAL *arg1, REBVAL *arg2, REBVAL *arg3); // src/core/c-error.c
+extern REB_NORETURN void Trap_Arg(REBVAL *arg); // src/core/c-error.c
+extern REB_NORETURN void Trap_Type(REBVAL *arg); // src/core/c-error.c
+extern REB_NORETURN void Trap_Range(REBVAL *arg); // src/core/c-error.c
+extern REB_NORETURN void Trap_Word(REBCNT num, REBCNT sym, REBVAL *arg); // src/core/c-error.c
+extern REB_NORETURN void Trap_Action(REBCNT type, REBCNT action); // src/core/c-error.c
+extern REB_NORETURN void Trap_Math_Args(REBCNT type, REBCNT action); // src/core/c-error.c
+extern REB_NORETURN void Trap_Types(REBCNT errnum, REBCNT type1, REBCNT type2); // src/core/c-error.c
+extern REB_NORETURN void Trap_Expect(REBVAL *object, REBCNT index, REBCNT type); // src/core/c-error.c
+extern REB_NORETURN void Trap_Make(REBCNT type, REBVAL *spec); // src/core/c-error.c
+extern REB_NORETURN void Trap_Num(REBCNT err, REBCNT num); // src/core/c-error.c
+extern REB_NORETURN void Trap_Reflect(REBCNT type, REBVAL *arg); // src/core/c-error.c
+extern REB_NORETURN void Trap_Port(REBCNT errnum, REBSER *port, REBINT err_code); // src/core/c-error.c
 extern REBINT Check_Error(REBVAL *val); // src/core/c-error.c
 extern void Init_Errors(REBVAL *errors); // src/core/c-error.c
 extern REBYTE *Security_Policy(REBCNT sym, REBVAL *name); // src/core/c-error.c
@@ -171,19 +170,19 @@ extern REBCNT Register_Handle_Spec(REBCNT sym, REBHSP *spec); // src/core/c-hand
 extern REBHOB* Make_Handle_Context(REBCNT sym); // src/core/c-handle.c
 extern REBCNT Find_Handle_Index(REBCNT sym); // src/core/c-handle.c
 extern void Init_Handles(void); // src/core/c-handle.c
+extern void Dispose_Handles(void); // src/core/c-handle.c
 extern REBVAL *Make_Port(REBVAL *spec); // src/core/c-port.c
-extern REBFLG Is_Port_Open(REBSER *port); // src/core/c-port.c
-extern void Set_Port_Open(REBSER *port, REBFLG flag); // src/core/c-port.c
-extern void *Use_Port_State(REBSER *port, REBCNT device, REBCNT size); // src/core/c-port.c
+extern REBVAL *Use_Port_State_Handle(REBSER *port, REBCNT device); // src/core/c-port.c
 extern REBFLG Pending_Port(REBVAL *port); // src/core/c-port.c
 extern REBINT Awake_System(REBSER *ports, REBINT only); // src/core/c-port.c
 extern REBINT Wait_Ports(REBSER *ports, REBCNT timeout, REBINT only); // src/core/c-port.c
 extern void Sieve_Ports(REBSER *ports); // src/core/c-port.c
-extern REBVAL *Form_Write(REBVAL *arg, REBYTE *newline); // src/core/c-port.c
 extern REBCNT Find_Action(REBVAL *object, REBCNT action); // src/core/c-port.c
 extern int Do_Port_Action(REBVAL *port_value, REBCNT action); // src/core/c-port.c
 extern void Secure_Port(REBCNT kind, REBREQ *req, REBVAL *name, REBSER *path); // src/core/c-port.c
 extern REBSER *Validate_Port_Value(REBVAL *value); // src/core/c-port.c
+extern REBSER *Validate_Port_With_Request(REBVAL *port_value, REBCNT device, REBREQ**req); // src/core/c-port.c
+extern void Release_Port_State(REBSER *port); // src/core/c-port.c
 extern void Register_Scheme(REBCNT sym, const PORT_ACTION *map, REBPAF fun); // src/core/c-port.c
 extern void Init_Ports(void); // src/core/c-port.c
 extern void Dispose_Ports(void); // src/core/c-port.c
@@ -235,8 +234,8 @@ extern REBYTE *Input_Str(void); // src/core/d-print.c
 extern REBYTE *Form_Hex_Pad(REBYTE *buf, REBU64 val, REBINT len); // src/core/d-print.c
 extern REBYTE *Form_Hex2(REBYTE *bp, REBCNT val); // src/core/d-print.c
 extern REBUNI *Form_Hex2_Uni(REBUNI *up, REBCNT val); // src/core/d-print.c
-extern REBUNI *Form_Hex_Esc_Uni(REBUNI *up, REBUNI c); // src/core/d-print.c
-extern REBUNI *Form_RGB_Uni(REBUNI *up, REBCNT val); // src/core/d-print.c
+extern REBYTE *Form_Hex_Esc(REBYTE *bp, REBINT c); // src/core/d-print.c
+extern REBYTE *Form_RGB(REBYTE *bp, REBCNT val); // src/core/d-print.c
 extern REBUNI *Form_Uni_Hex(REBUNI *out, REBCNT n); // src/core/d-print.c
 extern REBYTE *Form_Var_Args(REBYTE *bp, REBCNT max, const REBYTE *fmt, va_list args); // src/core/d-print.c
 extern void Prin_Value(REBVAL *value, REBCNT limit, REBOOL mold, REBOOL err); // src/core/d-print.c
@@ -277,9 +276,9 @@ extern REBYTE *Form_Int_Pad(REBYTE *buf, REBI64 val, REBINT max, REBINT len, REB
 extern REBYTE *Form_Int(REBYTE *buf, REBINT val); // src/core/f-math.c
 extern REBYTE *Form_Integer(REBYTE *buf, REBI64 val); // src/core/f-math.c
 extern REBINT Emit_Integer(REBYTE *buf, REBI64 val); // src/core/f-math.c
-extern REBINT Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT decimal_digits); // src/core/f-math.c
+extern REBLEN Emit_Decimal(REBYTE *cp, REBDEC d, REBFLG trim, REBYTE point, REBINT decimal_digits); // src/core/f-math.c
 extern REBCNT Modify_Block(REBCNT action, REBSER *dst_ser, REBCNT dst_idx, REBVAL *src_val, REBCNT flags, REBINT dst_len, REBINT dups); // src/core/f-modify.c
-extern REBCNT Modify_String(REBCNT action, REBSER *dst_ser, REBCNT dst_idx, REBVAL *src_val, REBCNT flags, REBINT dst_len, REBINT dups); // src/core/f-modify.c
+extern REBCNT Modify_String(REBCNT action, REBSER *dst_ser, REBCNT dst_idx, REBVAL *src_val, REBCNT flags, REBCNT dst_len, REBINT dups); // src/core/f-modify.c
 extern void Set_Random(REBI64 seed); // src/core/f-random.c
 extern REBI64 Random_Int(REBFLG secure); // src/core/f-random.c
 extern REBI64 Random_Range(REBI64 r, REBFLG secure); // src/core/f-random.c
@@ -326,7 +325,8 @@ extern void Set_String(REBVAL *value, REBSER *series); // src/core/f-stubs.c
 extern void Set_Binary(REBVAL *value, REBSER *series); // src/core/f-stubs.c
 extern void Set_Tuple(REBVAL *value, REBYTE *bytes, REBCNT len); // src/core/f-stubs.c
 extern void Set_Object(REBVAL *value, REBSER *series); // src/core/f-stubs.c
-extern REBCNT Val_Series_Len(REBVAL *value); // src/core/f-stubs.c
+extern REBLEN Val_Series_Len(REBVAL *value); // src/core/f-stubs.c
+extern REBLEN Val_String_Len(REBVAL *value); // src/core/f-stubs.c
 extern REBCNT Val_Byte_Len(REBVAL *value); // src/core/f-stubs.c
 extern REBFLG Get_Logic_Arg(REBVAL *arg); // src/core/f-stubs.c
 extern REBCNT Get_Part_Length(REBVAL *bval, REBVAL *eval); // src/core/f-stubs.c
@@ -342,14 +342,14 @@ extern REBVAL *Make_OS_Error(int errnum); // src/core/f-stubs.c
 extern REBSER *At_Head(REBVAL *value); // src/core/f-stubs.c
 extern REBSER *Collect_Set_Words(REBVAL *val); // src/core/f-stubs.c
 extern REBINT What_Reflector(REBVAL *word); // src/core/f-stubs.c
-extern const REBYTE *Scan_Item(const REBYTE *src, const REBYTE *end, REBUNI term, const REBYTE *invalid); // src/core/l-scan.c
+extern const REBYTE *Scan_File(const REBYTE *cp, REBCNT len, REBVAL *value); // src/core/l-scan.c
 extern REBSER *Scan_Source(const REBYTE *src, REBCNT len); // src/core/l-scan.c
 extern REBINT Scan_Header(const REBYTE *src, REBCNT len); // src/core/l-scan.c
 extern void Init_Scanner(void); // src/core/l-scan.c
 extern REBCNT Scan_Word(const REBYTE *cp, REBCNT len); // src/core/l-scan.c
 extern REBCNT Scan_Issue(const REBYTE *cp, REBCNT len); // src/core/l-scan.c
 extern const REBYTE *Scan_Hex(const REBYTE *cp, REBI64 *num, REBCNT minlen, REBCNT maxlen); // src/core/l-types.c
-extern REBOOL Scan_Hex2(const REBYTE *bp, REBUNI *n, REBFLG uni); // src/core/l-types.c
+extern REBOOL Scan_Hex2(const REBYTE *bp, REBU32 *n); // src/core/l-types.c
 extern REBINT Scan_Hex_Bytes(REBVAL *val, REBCNT maxlen, REBYTE *out); // src/core/l-types.c
 extern REBCNT Scan_Hex_Value(const void *src, REBCNT len, REBOOL uni); // src/core/l-types.c
 extern const REBYTE *Scan_Dec_Buf(const REBYTE *cp, REBCNT len, REBYTE *buf); // src/core/l-types.c
@@ -357,11 +357,9 @@ extern const REBYTE *Scan_Decimal(const REBYTE *cp, REBCNT len, REBVAL *value, R
 extern const REBYTE *Scan_Integer(const REBYTE *cp, REBCNT len, REBVAL *value); // src/core/l-types.c
 extern const REBYTE *Scan_Money(const REBYTE *cp, REBCNT len, REBVAL *value); // src/core/l-types.c
 extern const REBYTE *Scan_Date(const REBYTE *cp, REBCNT len, REBVAL *value); // src/core/l-types.c
-extern const REBYTE *Scan_String(const REBYTE *cp, REBCNT len, REBVAL *value); // src/core/l-types.c
-extern const REBYTE *Scan_File(const REBYTE *cp, REBCNT len, REBVAL *value); // src/core/l-types.c
-extern const REBYTE *Scan_Email(const REBYTE *cp, REBCNT len, REBVAL *value); // src/core/l-types.c
-extern const REBYTE *Scan_Ref(const REBYTE *cp, REBCNT len, REBVAL *value); // src/core/l-types.c
-extern const REBYTE *Scan_URL(const REBYTE *cp, REBCNT len, REBVAL *value); // src/core/l-types.c
+extern const REBYTE *Scan_Email(const REBYTE *cp, REBLEN len, REBVAL *value); // src/core/l-types.c
+extern const REBYTE *Scan_Ref(const REBYTE *cp, REBLEN len, REBVAL *value); // src/core/l-types.c
+extern const REBYTE *Scan_URL(const REBYTE *cp, REBLEN len, REBVAL *value); // src/core/l-types.c
 extern const REBYTE *Scan_Pair(const REBYTE *cp, REBCNT len, REBVAL *value); // src/core/l-types.c
 extern const REBYTE *Scan_Tuple(const REBYTE *cp, REBCNT len, REBVAL *value); // src/core/l-types.c
 extern const REBYTE *Scan_Spec_Integer(const REBYTE *cp, REBINT len, REBVAL *value); // src/core/l-types.c
@@ -371,14 +369,20 @@ extern const REBYTE *Scan_Any(const REBYTE *cp, REBCNT len, REBVAL *value, REBYT
 extern REBSER *Load_Markup(const REBYTE *cp, REBINT len); // src/core/l-types.c
 extern REBFLG Construct_Value(REBVAL *value, REBSER *spec); // src/core/l-types.c
 extern REBSER *Scan_Net_Header(REBSER *blk, REBYTE *str); // src/core/l-types.c
-extern REBCNT Recycle(REBOOL all); // src/core/m-gc.c
+extern REBI64 Recycle(REBFLG all, REBFLG pools); // src/core/m-gc.c
 extern void Save_Series(REBSER *series); // src/core/m-gc.c
 extern void Guard_Series(REBSER *series); // src/core/m-gc.c
 extern void Loose_Series(REBSER *series); // src/core/m-gc.c
 extern void Init_Memory(REBINT scale); // src/core/m-gc.c
 extern void Dispose_Memory(void); // src/core/m-gc.c
 extern void *Make_Mem(size_t size); // src/core/m-pools.c
+extern void *Make_Clear_Mem(size_t nmemb, size_t size); // src/core/m-pools.c
+extern void *Make_CMem(size_t size); // src/core/m-pools.c
 extern void Free_Mem(void *mem, size_t size); // src/core/m-pools.c
+extern void *Make_Managed_Mem(void *opaque, size_t size); // src/core/m-pools.c
+extern void *Make_Managed_CMem(size_t nmemb, size_t size); // src/core/m-pools.c
+extern void Free_Managed_Mem(void *opaque, void *address); // src/core/m-pools.c
+extern void Free_Managed_CMem(void *address); // src/core/m-pools.c
 extern void Init_Pools(REBINT scale); // src/core/m-pools.c
 extern void *Make_Node(REBCNT pool_id); // src/core/m-pools.c
 extern void Free_Node(REBCNT pool_id, REBNOD *node); // src/core/m-pools.c
@@ -394,6 +398,7 @@ extern REBCNT Check_Memory(void); // src/core/m-pools.c
 extern void Dump_All(REBINT size); // src/core/m-pools.c
 extern void Dump_Series_In_Pool(int pool_id); // src/core/m-pools.c
 extern void Dump_Handles(void); // src/core/m-pools.c
+extern REBLEN Free_Empty_Pool_Segments(REBCNT usage_threshold); // src/core/m-pools.c
 extern REBU64 Inspect_Series(REBCNT flags); // src/core/m-pools.c
 extern void Dispose_Hobs(void); // src/core/m-pools.c
 extern void Dispose_Pools(void); // src/core/m-pools.c
@@ -419,6 +424,14 @@ extern REBSER *Copy_Buffer(REBSER *buf, void *end); // src/core/m-series.c
 extern void Protected(REBVAL *word); // src/core/n-control.c
 extern void Protect_Series(REBVAL *val, REBCNT flags); // src/core/n-control.c
 extern void Protect_Object(REBVAL *value, REBCNT flags); // src/core/n-control.c
+extern REBCNT Hash_Probe(REBCNT hash, REBCNT idx, REBCNT len); // src/core/n-hash.c
+extern REBCNT Hash_Value(REBVAL* val); // src/core/n-hash.c
+extern REBCNT Hash_Block_Value(REBVAL *block); // src/core/n-hash.c
+extern REBCNT Hash_String_Value(REBVAL* val); // src/core/n-hash.c
+extern REBCNT Hash_Binary(const REBYTE* bin, REBCNT len); // src/core/n-hash.c
+extern REBCNT Hash_Word(const REBYTE* str, REBLEN len); // src/core/n-hash.c
+extern REBSER* Make_Hash_Array(REBCNT len); // src/core/n-hash.c
+extern REBSER* Hash_Block(REBVAL* block, REBCNT cased); // src/core/n-hash.c
 extern REBSER *Block_To_String_List(REBVAL *blk); // src/core/n-io.c
 extern void modulus(REBVAL *ret, REBVAL *val1, REBVAL *val2, REBOOL round); // src/core/n-math.c
 extern REBINT Compare_Values(REBVAL *a, REBVAL *b, REBINT strictness); // src/core/n-math.c
@@ -440,18 +453,14 @@ extern void Init_UDP_Scheme(void); // src/core/p-net.c
 extern void Init_Char_Cases(void); // src/core/s-cases.c
 extern void Dispose_Char_Cases(void); // src/core/s-cases.c
 extern REBINT Compute_CRC24(REBYTE *str, REBCNT len); // src/core/s-crc.c
-extern REBINT Hash_String(REBYTE *str, REBCNT len); // src/core/s-crc.c
-extern REBINT Hash_Word(const REBYTE *str, REBINT len); // src/core/s-crc.c
-extern REBINT Hash_Value(REBVAL *val, REBCNT hash_size); // src/core/s-crc.c
-extern REBSER *Make_Hash_Array(REBCNT len); // src/core/s-crc.c
-extern REBSER *Hash_Block(REBVAL *block, REBCNT cased); // src/core/s-crc.c
 extern void Init_CRC(void); // src/core/s-crc.c
 extern void Dispose_CRC(void); // src/core/s-crc.c
+extern REBCNT CRC_Word(const REBYTE* str, REBCNT len); // src/core/s-crc.c
 extern REBINT Compute_IPC(REBYTE *data, REBCNT length); // src/core/s-crc.c
 extern REBCNT CRC32(REBYTE *buf, REBCNT len); // src/core/s-crc.c
-extern REBSER *To_REBOL_Path(void *bp, REBCNT len, REBINT uni, REBFLG dir); // src/core/s-file.c
+extern REBSER *To_REBOL_Path(REBYTE *bp, REBCNT len, REBINT uni, REBFLG dir); // src/core/s-file.c
 extern REBSER *Value_To_REBOL_Path(REBVAL *val, REBOOL dir); // src/core/s-file.c
-extern REBSER *To_Local_Path(void *bp, REBCNT len, REBOOL uni, REBFLG full); // src/core/s-file.c
+extern REBSER *To_Local_Path(REBYTE *bp, REBCNT len, REBOOL wide, REBFLG full); // src/core/s-file.c
 extern REBSER *Value_To_Local_Path(REBVAL *val, REBFLG full); // src/core/s-file.c
 extern REBSER *Value_To_OS_Path(REBVAL *val, REBFLG full); // src/core/s-file.c
 extern REBINT Compare_Binary_Vals(REBVAL *v1, REBVAL *v2); // src/core/s-find.c
@@ -466,17 +475,18 @@ extern REBCNT Find_Byte_Str(REBSER *series, REBCNT index, REBYTE *b2, REBCNT l2,
 extern REBCNT Find_Str_Str(REBSER *ser1, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBSER *ser2, REBCNT index2, REBCNT len, REBCNT flags); // src/core/s-find.c
 extern REBCNT Find_Str_Tag(REBSER *ser1, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBSER *ser2, REBCNT index2, REBCNT len, REBCNT flags); // src/core/s-find.c
 extern REBCNT Find_Str_Str_Any(REBSER *ser1, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBSER *ser2, REBCNT index2, REBCNT len, REBCNT flags, REBVAL *wild); // src/core/s-find.c
-extern REBCNT Find_Str_Char(REBSER *ser, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBUNI c2, REBCNT flags); // src/core/s-find.c
-extern REBCNT Find_Str_Bitset(REBSER *ser, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBSER *bset, REBCNT flags); // src/core/s-find.c
+extern REBCNT Find_Str_Char(REBSER *ser, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBU32 c2, REBCNT flags); // src/core/s-find.c
+extern REBCNT Find_Str_Bitset(const REBSER *ser, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, const REBSER *bset, REBCNT flags); // src/core/s-find.c
 extern REBCNT Find_Str_Wild(REBSER *ser, REBCNT index, REBCNT tail); // src/core/s-find.c
 extern REBCNT Count_Lines(REBYTE *bp, REBCNT len); // src/core/s-find.c
 extern REBCNT Next_Line(REBYTE **bin); // src/core/s-find.c
 extern REBSER *Make_Binary(REBCNT length); // src/core/s-make.c
 extern REBSER *Make_Unicode(REBCNT length); // src/core/s-make.c
-extern REBSER *Copy_Bytes(const REBYTE *src, REBINT len); // src/core/s-make.c
+extern REBSER *Copy_Bytes(const REBYTE *src, REBLEN len); // src/core/s-make.c
 extern REBSER *Copy_Bytes_To_Unicode(REBYTE *src, REBINT len); // src/core/s-make.c
 extern REBSER *Copy_Wide_Str(void *src, REBINT len); // src/core/s-make.c
 extern REBSER *Copy_OS_Str(void *src, REBINT len); // src/core/s-make.c
+extern REBSER *Copy_Str(const REBYTE *src, REBLEN len); // src/core/s-make.c
 extern void Widen_String(REBSER *series); // src/core/s-make.c
 extern void Insert_Char(REBSER *dst, REBCNT index, REBCNT chr); // src/core/s-make.c
 extern void Insert_String(REBSER *dst, REBCNT idx, REBSER *src, REBCNT pos, REBCNT len, REBFLG no_expand); // src/core/s-make.c
@@ -491,18 +501,18 @@ extern void Append_String(REBSER *dst, REBSER *src, REBCNT i, REBCNT len); // sr
 extern void Append_Boot_Str(REBSER *dst, REBINT num); // src/core/s-make.c
 extern void Append_Int(REBSER *dst, REBINT num); // src/core/s-make.c
 extern void Append_Int_Pad(REBSER *dst, REBINT num, REBINT digs); // src/core/s-make.c
-extern REBSER *Append_UTF8(REBSER *dst, const REBYTE *src, REBINT len); // src/core/s-make.c
+extern REBSER *Append_UTF8(REBSER *dst, const REBYTE *src, REBLEN len); // src/core/s-make.c
 extern REBSER *Join_Binary(REBVAL *blk); // src/core/s-make.c
 extern REBSER *Emit(REB_MOLD *mold, char *fmt, ...); // src/core/s-mold.c
 extern REBSER *Prep_String(REBSER *series, REBYTE **str, REBCNT len); // src/core/s-mold.c
-extern REBUNI *Prep_Uni_Series(REB_MOLD *mold, REBCNT len); // src/core/s-mold.c
+extern REBYTE *Prep_Mold_Series(REB_MOLD *mold, REBCNT len); // src/core/s-mold.c
 extern void Pre_Mold(REBVAL *value, REB_MOLD *mold); // src/core/s-mold.c
 extern void End_Mold(REB_MOLD *mold); // src/core/s-mold.c
 extern void Post_Mold(REBVAL *value, REB_MOLD *mold); // src/core/s-mold.c
 extern void New_Indented_Line(REB_MOLD *mold); // src/core/s-mold.c
 extern void Mold_Binary(REBVAL *value, REB_MOLD *mold); // src/core/s-mold.c
 extern void Mold_Value(REB_MOLD *mold, REBVAL *value, REBFLG molded); // src/core/s-mold.c
-extern REBSER *Copy_Form_Value(REBVAL *value, REBCNT opts); // src/core/s-mold.c
+extern REBSER *Form_Value(REBVAL *value, REBCNT opts, REBFLG copy); // src/core/s-mold.c
 extern REBSER *Copy_Mold_Value(REBVAL *value, REBCNT opts); // src/core/s-mold.c
 extern REBSER *Form_Reduce(REBSER *block, REBCNT index, REBVAL *delimiter, REBOOL all); // src/core/s-mold.c
 extern REBSER *Form_Tight_Block(REBVAL *blk); // src/core/s-mold.c
@@ -510,10 +520,9 @@ extern void Reset_Mold(REB_MOLD *mold); // src/core/s-mold.c
 extern REBSER *Mold_Print_Value(REBVAL *value, REBCNT limit, REBFLG mold, REBOOL flat); // src/core/s-mold.c
 extern void Init_Mold(REBCNT size); // src/core/s-mold.c
 extern void Dispose_Mold(void); // src/core/s-mold.c
-extern REBOOL Is_Not_ASCII(REBYTE *bp, REBCNT len); // src/core/s-ops.c
-extern REBOOL Is_Wide(REBUNI *up, REBCNT len); // src/core/s-ops.c
-extern REBYTE *Qualify_String(REBVAL *val, REBINT max_len, REBCNT *length, REBINT opts); // src/core/s-ops.c
-extern REBSER *Prep_Bin_Str(REBVAL *val, REBCNT *index, REBCNT *length); // src/core/s-ops.c
+extern REBOOL Is_ASCII(const REBYTE *bp, REBLEN len); // src/core/s-ops.c
+extern REBOOL Is_Wide(REBUNI *up, REBLEN len); // src/core/s-ops.c
+extern REBYTE *Qualify_String(REBVAL *val, REBLEN max_len, REBCNT *length, REBINT opts); // src/core/s-ops.c
 extern REBSER *Xandor_Bitset(REBCNT action, REBVAL *value, REBVAL *arg); // src/core/s-ops.c
 extern REBSER *Xandor_Binary(REBCNT action, REBVAL *value, REBVAL *arg); // src/core/s-ops.c
 extern REBSER *Complement_Binary(REBVAL *value); // src/core/s-ops.c
@@ -534,27 +543,42 @@ extern REBSER *Split_Lines(REBVAL *val); // src/core/s-ops.c
 extern void Trim_String(REBSER *ser, REBCNT index, REBCNT len, REBCNT flags, REBVAL *with); // src/core/s-trim.c
 extern void Trim_Binary(REBSER *ser, REBCNT index, REBCNT len, REBCNT flags, REBVAL *with); // src/core/s-trim.c
 extern void Trim_Block(REBSER *ser, REBCNT index, REBCNT flags); // src/core/s-trim.c
+extern REBCNT UTF8_Codepoint_Size(REBU32 codepoint); // src/core/s-unicode.c
+extern REBCNT UTF8_Next_Char_Size(const REBYTE *str, REBLEN index); // src/core/s-unicode.c
+extern REBCNT UTF8_Decode_Step(REBCNT* state, REBCNT* codep, REBCNT byte); // src/core/s-unicode.c
+extern REBCNT UTF8_Prev_Char_Position(const REBYTE *str, REBLEN index); // src/core/s-unicode.c
+extern REBLEN UTF8_Prev_Char_Size(const REBYTE *str, REBLEN index); // src/core/s-unicode.c
+extern REBCNT UTF8_Index_To_Position(const REBYTE *str, REBLEN index); // src/core/s-unicode.c
+extern REBCNT UTF8_Skip_Forward(const REBYTE *str, REBLEN chars); // src/core/s-unicode.c
+extern REBCNT UTF8_Skip(const REBSER *ser, REBCNT index, REBINT chars); // src/core/s-unicode.c
+extern REBCNT UTF8_Validate_Index(const REBYTE *str, REBLEN index); // src/core/s-unicode.c
+extern REBLEN UTF8_Bytes_For_Char_Count(const REBYTE *str, REBLEN tail, REBLEN len); // src/core/s-unicode.c
+extern REBLEN UTF8_Bytes_For_Char_Count_Back(const REBYTE *str, REBLEN index, REBLEN num); // src/core/s-unicode.c
+extern REBCNT UTF8_Get_Codepoint(const REBYTE *src); // src/core/s-unicode.c
+extern void UTF8_Replace_Codepoint(REBSER *ser, REBLEN index, REBU32 codepoint); // src/core/s-unicode.c
+extern REBU32 Decode_Surrogate_Pair(const REBYTE *src); // src/core/s-unicode.c
+extern const REBYTE *UTF8_Check(const REBYTE *str, REBCNT len, REBFLG *surrogates); // src/core/s-unicode.c
+extern REBSER *UTF8_Copy_Surrogates(const REBYTE *str, REBCNT len, REBCNT *err); // src/core/s-unicode.c
+extern REBU32 UTF8_Decode_Codepoint(const REBYTE **RESTRICT str, REBCNT *RESTRICT len); // src/core/s-unicode.c
+extern REBSER *UTF8_To_UTF16(REBSER *dst_ser, const REBYTE *str, REBCNT len, REBFLG little_endian); // src/core/s-unicode.c
+extern REBSER* UTF8_To_UTF32(REBSER *dst_ser, const REBYTE *str, REBCNT len, REBFLG little_endian); // src/core/s-unicode.c
+extern REBSER *UTF32_To_UTF8(REBSER *dst_ser, const REBYTE *str, REBCNT len, REBFLG little_endian); // src/core/s-unicode.c
+extern REBINT UTF8_Width(REBU32 ch); // src/core/s-unicode.c
 extern REBINT What_UTF(const REBYTE *bp, REBCNT len); // src/core/s-unicode.c
-extern REBFLG Legal_UTF8_Char(const REBYTE *str, REBCNT len); // src/core/s-unicode.c
-extern const REBYTE *Check_UTF8(const REBYTE *str, REBCNT len); // src/core/s-unicode.c
-extern REBCNT Decode_UTF8_Char(const REBYTE **str, REBCNT *len); // src/core/s-unicode.c
 extern int Decode_UTF8(REBUNI *dst, const REBYTE *src, REBCNT len, REBFLG ccr); // src/core/s-unicode.c
-extern int Decode_UTF16(REBUNI *dst, const REBYTE *src, REBCNT len, REBFLG lee, REBFLG ccr); // src/core/s-unicode.c
-extern int Decode_UTF32(REBUNI *dst, const REBYTE *src, REBINT len, REBFLG lee, REBFLG ccr); // src/core/s-unicode.c
-extern REBSER *Decode_UTF_String(const REBYTE *bp, REBCNT len, REBINT utf, REBFLG ccr, REBFLG uni); // src/core/s-unicode.c
+extern REBSER *Decode_UTF_String(const REBYTE *bp, REBCNT len, REBINT utf, REBFLG ccr, REBCNT *err); // src/core/s-unicode.c
 extern REBCNT Length_As_UTF8_Code_Points(REBYTE *src); // src/core/s-unicode.c
+extern REBLEN Length_As_Terminal_Width(const REBYTE* str, const REBYTE* end); // src/core/s-unicode.c
 extern REBCNT Length_As_UTF8(REBUNI *src, REBCNT len, REBOOL uni, REBOOL ccr); // src/core/s-unicode.c
-extern REBCNT Encode_UTF8_Char(REBYTE *dst, REBCNT src); // src/core/s-unicode.c
+extern REBCNT Encode_UTF8_Char(REBYTE *dst, REBU32 chr); // src/core/s-unicode.c
 extern REBCNT Encode_UTF8(REBYTE *dst, REBINT max, void *src, REBLEN *len, REBFLG uni, REBFLG ccr); // src/core/s-unicode.c
-extern int Encode_UTF8_Line(REBSER *dst, REBSER *src, REBCNT idx); // src/core/s-unicode.c
-extern REBSER *Encode_UTF8_Value(REBVAL *arg, REBCNT len, REBFLG opts); // src/core/s-unicode.c
-extern REBSER *Encode_UTF8_String(void *src, REBCNT len, REBFLG uni, REBFLG opts); // src/core/s-unicode.c
+extern REBSER *Encode_UTF8_String(void *src, REBLEN len, REBFLG uni, REBFLG opts); // src/core/s-unicode.c
 extern REBINT CT_Bitset(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-bitset.c
-extern REBSER *Make_Bitset(REBCNT len); // src/core/t-bitset.c
+extern REBSER *Make_Bitset(REBLEN len); // src/core/t-bitset.c
 extern void Mold_Bitset(REBVAL *value, REB_MOLD *mold); // src/core/t-bitset.c
 extern REBFLG MT_Bitset(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-bitset.c
-extern REBINT Find_Max_Bit(REBVAL *val); // src/core/t-bitset.c
-extern REBFLG Check_Bit(REBSER *bset, REBCNT c, REBFLG uncased); // src/core/t-bitset.c
+extern REBCNT Find_Max_Bit(REBVAL *val); // src/core/t-bitset.c
+extern REBFLG Check_Bit(const REBSER *bset, REBCNT c, REBFLG uncased); // src/core/t-bitset.c
 extern REBFLG Check_Bit_Cased(REBSER *bset, REBCNT c); // src/core/t-bitset.c
 extern REBFLG Check_Bit_Str_Any(REBSER *bset, REBVAL *val, REBFLG uncased); // src/core/t-bitset.c
 extern REBFLG Check_Bit_Str_All(REBSER *bset, REBVAL *val, REBFLG uncased); // src/core/t-bitset.c
@@ -577,6 +601,7 @@ extern REBINT PD_Block(REBPVS *pvs); // src/core/t-block.c
 extern REBVAL *Pick_Block(REBVAL *block, REBVAL *selector); // src/core/t-block.c
 extern REBTYPE(Block); // src/core/t-block.c
 extern REBINT CT_Char(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-char.c
+extern REBINT PD_Char(REBPVS* pvs); // src/core/t-char.c
 extern REBTYPE(Char); // src/core/t-char.c
 extern REBINT CT_Datatype(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-datatype.c
 extern REBFLG MT_Datatype(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-datatype.c
@@ -590,8 +615,10 @@ extern REBI64 Days_Of_Date(REBINT day, REBINT month, REBINT year ); // src/core/
 extern void Date_Of_Days(REBI64 days, REBDAT *date); // src/core/t-date.c
 extern REBINT Diff_Date(REBDAT d1, REBDAT d2); // src/core/t-date.c
 extern REBCNT Week_Day(REBDAT date); // src/core/t-date.c
-extern REBCNT Date_To_Timestamp(REBVAL *date); // src/core/t-date.c
+extern REBI64 Date_To_Timestamp(REBVAL *date); // src/core/t-date.c
+extern REBDEC Date_To_Timestamp_Decimal(REBVAL *date); // src/core/t-date.c
 extern void Timestamp_To_Date(REBVAL *date, REBI64 epoch); // src/core/t-date.c
+extern void Timestamp_Decimal_To_Date(REBVAL *date, REBDEC epoch); // src/core/t-date.c
 extern void Normalize_Time(REBI64 *sp, REBINT *dp); // src/core/t-date.c
 extern void Adjust_Date_Zone(REBVAL *d, REBFLG to_utc); // src/core/t-date.c
 extern REBDEC Gregorian_To_Julian_Date(REBDAT date, REB_TIMEF time); // src/core/t-date.c
@@ -635,16 +662,18 @@ extern void Set_Pixel_Tuple(REBYTE *dp, REBVAL *tuple); // src/core/t-image.c
 extern void Set_Tuple_Pixel(REBYTE *dp, REBVAL *tuple); // src/core/t-image.c
 extern void Fill_Line(REBCNT *ip, REBCNT color, REBCNT len, REBOOL only); // src/core/t-image.c
 extern void Fill_Rect(REBCNT *ip, REBCNT color, REBCNT w, REBINT dupx, REBINT dupy, REBOOL only); // src/core/t-image.c
-extern void Fill_Alpha_Line(REBYTE *rgba, REBYTE alpha, REBINT len); // src/core/t-image.c
+extern void Fill_Channel_Line(REBYTE *rgba, REBYTE value, REBINT len, REBCNT sym); // src/core/t-image.c
 extern void Fill_Alpha_Rect(REBCNT *ip, REBYTE alpha, REBINT w, REBINT dupx, REBINT dupy); // src/core/t-image.c
 extern REBCNT *Find_Color(REBCNT *ip, REBCNT color, REBCNT len, REBOOL only); // src/core/t-image.c
 extern REBCNT *Find_Alpha(REBCNT *ip, REBCNT alpha, REBCNT len); // src/core/t-image.c
+extern REBYTE Luminosity(REBYTE r, REBYTE g, REBYTE b); // src/core/t-image.c
+extern REBCNT Grayscale(REBCNT r, REBCNT g, REBCNT b); // src/core/t-image.c
 extern void Color_To_Bin(REBYTE *bin, REBYTE *rgba, REBINT len, REBCNT format); // src/core/t-image.c
 extern void Bin_To_Color(REBYTE *trg, REBYTE *src, REBINT len, REBCNT format); // src/core/t-image.c
 extern void Bin_To_RGB(REBYTE *rgba, REBCNT size, REBYTE *bin, REBCNT len); // src/core/t-image.c
 extern void Bin_To_RGBA(REBYTE *rgba, REBCNT size, REBYTE *bin, REBINT len, REBOOL only); // src/core/t-image.c
-extern void Alpha_To_Bin(REBYTE *bin, REBYTE *rgba, REBINT len, REBCNT type); // src/core/t-image.c
-extern void Bin_To_Alpha(REBYTE *rgba, REBCNT size, REBYTE *bin, REBINT len, REBCNT type); // src/core/t-image.c
+extern void Channel_To_Bin(REBYTE* bin, REBYTE* rgba, REBINT len, REBCNT type); // src/core/t-image.c
+extern void Bin_To_Channel(REBYTE *rgba, REBCNT size, REBYTE *bin, REBINT len, REBCNT sym); // src/core/t-image.c
 extern REBFLG Valid_Tuples(REBVAL *blk); // src/core/t-image.c
 extern void Tuple_To_Color(REBCNT format, REBVAL *tuple, REBCNT *rgba); // src/core/t-image.c
 extern void Tuples_To_RGBA(REBYTE *rgba, REBCNT size, REBVAL *blk, REBCNT len); // src/core/t-image.c
@@ -670,8 +699,10 @@ extern REBFLG MT_Logic(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-lo
 extern REBINT PD_Logic(REBPVS *pvs); // src/core/t-logic.c
 extern REBTYPE(Logic); // src/core/t-logic.c
 extern REBINT CT_Map(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-map.c
-extern REBINT Find_Key(REBSER *series, REBSER *hser, REBVAL *key, REBINT wide, REBCNT cased, REBYTE mode); // src/core/t-map.c
-extern REBINT Length_Map(REBSER *series); // src/core/t-map.c
+extern REBINT Cmp_Map(REBVAL* sval, REBVAL* tval, REBFLG is_case); // src/core/t-map.c
+extern REBCNT Find_Key(REBSER *series, REBSER *hser, REBVAL *key, REBINT wide, REBCNT cased, REBYTE mode); // src/core/t-map.c
+extern REBCNT Find_Entry(REBSER *series, REBVAL *key, REBVAL *val, REBOOL cased); // src/core/t-map.c
+extern REBCNT Length_Map(REBSER *series); // src/core/t-map.c
 extern REBINT PD_Map(REBPVS *pvs); // src/core/t-map.c
 extern REBSER *Copy_Map(REBVAL *val, REBU64 types); // src/core/t-map.c
 extern REBFLG MT_Map(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-map.c
@@ -680,6 +711,7 @@ extern void Block_As_Map(REBSER *blk); // src/core/t-map.c
 extern REBSER *Map_To_Object(REBSER *mapser); // src/core/t-map.c
 extern REBTYPE(Map); // src/core/t-map.c
 extern REBINT CT_Money(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-money.c
+extern REBINT Cmp_Money(REBVAL* a, REBVAL* b); // src/core/t-money.c
 extern REBINT Emit_Money(REBVAL *value, REBYTE *buf, REBCNT opts); // src/core/t-money.c
 extern REBINT Bin_To_Money(REBVAL *result, REBVAL *val); // src/core/t-money.c
 extern REBTYPE(Money); // src/core/t-money.c
@@ -704,11 +736,13 @@ extern REBFLG MT_Port(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-por
 extern REBTYPE(Port); // src/core/t-port.c
 extern REBINT CT_String(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-string.c
 extern REBFLG MT_String(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-string.c
+extern REBLEN Skip_UTF8_String(REBVAL *str, REBINT chars); // src/core/t-string.c
 extern REBINT PD_String(REBPVS *pvs); // src/core/t-string.c
 extern REBINT PD_File(REBPVS *pvs); // src/core/t-string.c
 extern REBTYPE(String); // src/core/t-string.c
-extern REBSER *Struct_To_Block(REBSTU *stu); // src/core/t-struct.c
+extern void Get_Struct_Reflect(REBVAL *ret, REBSTU *stu, REBCNT type); // src/core/t-struct.c
 extern REBFLG MT_Struct(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-struct.c
+extern REBFLG Prepare_Struct(REBVAL *out, REBVAL *data); // src/core/t-struct.c
 extern REBINT PD_Struct(REBPVS *pvs); // src/core/t-struct.c
 extern REBINT Cmp_Struct(REBVAL *s, REBVAL *t); // src/core/t-struct.c
 extern REBINT CT_Struct(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-struct.c
@@ -739,26 +773,45 @@ extern REBTYPE(Typeset); // src/core/t-typeset.c
 extern REBINT CT_Utype(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-utype.c
 extern REBFLG MT_Utype(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-utype.c
 extern REBTYPE(Utype); // src/core/t-utype.c
+extern REBCNT Normalize_Vector_Type_Symbol(REBCNT sym); // src/core/t-vector.c
 extern REBSER *Make_Vector_Block(REBVAL *vect); // src/core/t-vector.c
-extern REBVAL* Math_Op_Vector(REBVAL *v1, REBVAL *v2, REBCNT action); // src/core/t-vector.c
-extern REBINT Compare_Vector(REBVAL *v1, REBVAL *v2); // src/core/t-vector.c
+extern void Math_Op_Vector(REBVAL *out, REBVAL *v1, REBVAL *v2, REBCNT action); // src/core/t-vector.c
+extern void Math_Op_Vector_Vector(REBVAL *out, REBVAL *v1, REBVAL *v2, REBCNT action); // src/core/t-vector.c
+extern REBINT Compare_Vector(REBVAL *a, REBVAL *b); // src/core/t-vector.c
 extern void Shuffle_Vector(REBVAL *vect, REBFLG secure); // src/core/t-vector.c
-extern void Set_Vector_Value(REBVAL *var, REBSER *series, REBCNT index); // src/core/t-vector.c
+extern void Sort_Vector(REBVAL *vect, REBLEN len, REBFLG reversed); // src/core/t-vector.c
+extern void Get_Vector_Value(REBVAL *var, REBSER *series, REBCNT index); // src/core/t-vector.c
 extern REBSER *Make_Vector(REBINT type, REBINT sign, REBINT dims, REBINT bits, REBINT size); // src/core/t-vector.c
-extern REBVAL *Make_Vector_Spec(REBVAL *bp, REBVAL *value); // src/core/t-vector.c
+extern REBSER *Make_Vector_From_Word(REBCNT sym, REBINT size); // src/core/t-vector.c
+extern REBVAL *Construct_Vector(REBVAL *bp, REBVAL *value); // src/core/t-vector.c
+extern REBVAL *Make_Vector_Spec(REBVAL *spec, REBVAL *value); // src/core/t-vector.c
 extern REBFLG MT_Vector(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-vector.c
 extern REBINT CT_Vector(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-vector.c
 extern REBINT PD_Vector(REBPVS *pvs); // src/core/t-vector.c
 extern REBTYPE(Vector); // src/core/t-vector.c
+extern REBCNT Modify_Vector(REBCNT action, REBSER *vect, REBCNT index, REBVAL *src_val, REBCNT flags, REBINT dst_len, REBINT dups); // src/core/t-vector.c
 extern void Mold_Vector(REBVAL *value, REB_MOLD *mold, REBFLG molded); // src/core/t-vector.c
 extern REBINT CT_Word(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-word.c
 extern REBTYPE(Word); // src/core/t-word.c
-extern REBSER *CompressZlib(REBSER *input, REBINT index, REBCNT in_len, REBINT level, REBINT windowBits); // src/core/u-compress.c
-extern REBSER *DecompressZlib(REBSER *input, REBCNT index, REBINT len, REBCNT limit, REBINT windowBits); // src/core/u-compress.c
-extern REBSER *CompressLzma(REBSER *input, REBINT index, REBCNT in_len, REBINT level); // src/core/u-compress.c
-extern REBSER *DecompressLzma(REBSER *input, REBCNT index, REBINT in_len, REBCNT limit); // src/core/u-compress.c
-extern REBSER *CompressBrotli(REBSER *input, REBINT index, REBLEN in_len, REBINT level); // src/core/u-compress.c
-extern REBSER *DecompressBrotli(REBSER *input, REBCNT index, REBINT in_len, REBCNT limit); // src/core/u-compress.c
+extern int CompressDeflate(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output, REBINT* error); // src/core/u-compress.c
+extern int CompressGzip(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output, REBINT* error); // src/core/u-compress.c
+extern int CompressZlib(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output, REBINT* error); // src/core/u-compress.c
+extern int DecompressDeflate(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output, REBINT* error); // src/core/u-compress.c
+extern int DecompressGzip(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output, REBINT* error); // src/core/u-compress.c
+extern int DecompressZlib(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output, REBINT* error); // src/core/u-compress.c
+extern REBSER *CompressZlibDeprecated(REBSER *input, REBINT index, REBCNT in_len, REBINT level, REBINT windowBits); // src/core/u-compress.c
+extern REBSER *DecompressZlibDeprecated(REBSER *input, REBCNT index, REBINT len, REBCNT limit, REBINT windowBits); // src/core/u-compress.c
+extern int CompressLzma(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output, int* error); // src/core/u-compress.c
+extern int DecompressLzma(const REBYTE* input, REBLEN len, REBLEN limit, REBSER** output, int* error); // src/core/u-compress.c
+extern int CompressBrotli(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output, int* error); // src/core/u-compress.c
+extern int DecompressBrotli(const REBYTE* input, REBLEN len, REBLEN limit, REBSER** output, int* error); // src/core/u-compress.c
+extern int CompressLz4(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output, int* error); // src/core/u-compress.c
+extern int DecompressLz4(const REBYTE* input, REBLEN len, REBLEN limit, REBSER** output, int* error); // src/core/u-compress.c
+extern int CompressLzav(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output, int* error); // src/core/u-compress.c
+extern int DecompressLzav(const REBYTE* input, REBLEN len, REBLEN limit, REBSER** output, int* error); // src/core/u-compress.c
+extern REBOOL Register_Compress_Method(REBINT sym, void* encode, void* decode); // src/core/u-compress.c
+extern void Init_Compression(void); // src/core/u-compress.c
+extern void Dispose_Compression(void); // src/core/u-compress.c
 extern REBSER *Parse_String(REBSER *series, REBCNT index, REBVAL *rules, REBCNT flags); // src/core/u-parse.c
 extern REBSER *Parse_Lines(REBSER *src); // src/core/u-parse.c
 extern REBYTE *MD4(REBYTE *d, REBCNT n, REBYTE *md); // src/core/u-mbedtls.c
@@ -774,5 +827,29 @@ extern REBYTE* SHA3_256(REBYTE* d, REBCNT n, REBYTE* md); // src/core/u-mbedtls.
 extern REBYTE* SHA3_384(REBYTE* d, REBCNT n, REBYTE* md); // src/core/u-mbedtls.c
 extern REBYTE* SHA3_512(REBYTE* d, REBCNT n, REBYTE* md); // src/core/u-mbedtls.c
 extern void Init_Crypt(void); // src/core/n-crypt.c
+extern void Dispose_Crypt(void); // src/core/n-crypt.c
 extern void crypt_context_free(void *ctx); // src/core/p-crypt.c
 extern void Init_Crypt_Scheme(void); // src/core/p-crypt.c
+extern int CompressLzw(const REBYTE* input, REBLEN size, REBCNT level, REBSER** output, int* error); // src/core/u-lzw.c
+extern int DecompressLzw(const REBYTE* input, REBLEN in_len, REBLEN limit, REBSER** output, int* error); // src/core/u-lzw.c
+extern int CompressCrush(const REBYTE* buf, REBLEN size, REBCNT level, REBSER** output, int* error); // src/core/u-crush.c
+extern int DecompressCrush(const REBYTE* input, REBLEN length, REBLEN limit, REBSER** output, int* error); // src/core/u-crush.c
+extern void Init_Serial_Scheme(void); // src/core/p-serial.c
+extern REBINT Codec_BMP_Image(REBCDI *codi); // src/core/u-bmp.c
+extern void Init_BMP_Codec(void); // src/core/u-bmp.c
+extern void Encode_PNG_Image(REBCDI *codi); // src/core/u-png.c
+extern void Decode_PNG_Image(REBCDI *codi); // src/core/u-png.c
+extern REBINT Codec_PNG_Image(REBCDI *codi); // src/core/u-png.c
+extern void Init_PNG_Codec(void); // src/core/u-png.c
+extern REBINT Codec_JPEG_Image(REBCDI *codi); // src/core/u-jpg.c
+extern void Init_JPEG_Codec(void); // src/core/u-jpg.c
+extern void Decode_LZW(REBCNT *data, REBYTE **cpp, REBYTE *colortab, REBINT w, REBINT h, REBOOL interlaced); // src/core/u-gif.c
+extern void Decode_GIF_Image(REBCDI *codi); // src/core/u-gif.c
+extern REBINT Codec_GIF_Image(REBCDI *codi); // src/core/u-gif.c
+extern void Init_GIF_Codec(void); // src/core/u-gif.c
+extern void Decode_QOI_Image(REBCDI *codi); // src/core/u-qoi.c
+extern void Identify_QOI_Image(REBCDI *codi); // src/core/u-qoi.c
+extern REBINT Codec_QOI_Image(REBCDI *codi); // src/core/u-qoi.c
+extern void Init_QOI_Codec(void); // src/core/u-qoi.c
+extern REBINT Do_Dialect(REBSER *dialect, REBSER *block, REBCNT *index, REBSER **out); // src/core/u-dialect.c
+extern void Trace_Delect(REBINT level); // src/core/u-dialect.c

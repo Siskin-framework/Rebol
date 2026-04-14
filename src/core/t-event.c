@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -311,9 +312,9 @@
 		if (VAL_EVENT_TYPE(value) != EVT_DROP_FILE) goto is_none;
 		if (!GET_FLAG(VAL_EVENT_FLAGS(value), EVF_COPIED)) {
 			void *str = VAL_EVENT_SER(value);
-			VAL_EVENT_SER(value) = Copy_Bytes(str, -1);
+			VAL_EVENT_SER(value) = Copy_Bytes(str, UNKNOWN);
 			SET_FLAG(VAL_EVENT_FLAGS(value), EVF_COPIED);
-			OS_FREE(str);
+			OS_Free(str);
 		}
 		Set_Series(REB_FILE, val, VAL_EVENT_SER(value));
 		break;

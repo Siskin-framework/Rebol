@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,7 @@
 		system/codecs/qoi/title: "Quite OK Image"
 		system/codecs/qoi/type: 'image
 		system/codecs/qoi/suffixes: [%.qoi]
-		append append system/options/file-types system/codecs/qoi/suffixes 'qoi
+		append append system/catalog/file-types system/codecs/qoi/suffixes 'qoi
 	]
 
 ***********************************************************************/
@@ -40,7 +40,6 @@
 #ifdef INCLUDE_QOI_CODEC
 
 #define QOI_MALLOC(sz) Make_Mem(sz)
-#define QOI_FREE(p)    free(p)
 
 #define QOI_IMPLEMENTATION
 #define QOI_NO_STDIO
@@ -62,8 +61,10 @@
 	desc.height   = codi->h;
 	desc.channels = 4;
 	desc.colorspace = QOI_SRGB;
+	int out_len = 0;
 
-	codi->data = qoi_encode(codi->bits, &desc, &codi->len);
+	codi->data = qoi_encode(codi->bits, &desc, &out_len);
+	codi->len = (out_len > 0) ? out_len : 0;
 	codi->error = codi->data == NULL ? -1 : 0;
 }
 

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **	Copyright 2021 Oldes
+**  Copyright 2021-2025 Rebol Open Source Contributors
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
@@ -34,7 +35,7 @@
 
 /***********************************************************************
 **
-*/	void OS_Load_Image(const char *uri, REBCNT frame, REBCDI *codi)
+*/	OS_API void OS_Load_Image(const char *uri, REBCNT frame, REBCDI *codi)
 /*
 **		Decodes image from specified file. If its multi-image type, it's possible
 **		to specify which frame to load.
@@ -46,7 +47,7 @@
 
 /***********************************************************************
 **
-*/	void OS_Save_Image(const char *uri, REBCDI *codi)
+*/	OS_API void OS_Save_Image(const char *uri, REBCDI *codi)
 /*
 **		Encodes image to specified file.
 **
@@ -57,7 +58,7 @@
 
 /***********************************************************************
 **
-*/	void OS_Release_Codecs(void)
+*/	OS_API void OS_Release_Codecs(void)
 /*
 **		Release resources.
 **

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +38,7 @@
 	if find system/codecs 'wav [
 		system/codecs/wav/suffixes: [%.wav %.wave]
 		system/codecs/wav/type: 'binary!
-		append append system/options/file-types system/codecs/wav/suffixes 'wav
+		append append system/catalog/file-types system/codecs/wav/suffixes 'wav
 	] 
 
 ***********************************************************************/

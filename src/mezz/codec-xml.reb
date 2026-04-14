@@ -7,12 +7,13 @@ REBOL [
 	Name:  xml
 	Type:  module
 	Options: [delay]
-	Version: 0.8.1
+	Version: 0.9.0
 	Title: "Codec: XML"
 	File:  https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-xml.reb
-	Date:  24-Apr-2020
+	Date:  22-Oct-2025
 	Author: ["Gavin F. McKenzie" "Oldes"]
 	Email:  %brianwisti--yahoo--com
+	Needs:  [html-entities]
 	Purpose: {
 		REBOL's built-in parse-xml function lacks a number of 
 		XML 1.0 compliant features, including:
@@ -196,6 +197,7 @@ register-codec [
 	verbose: 0 ;not used so far, but could be later
 	options: object [trim: false]
 
+	decode-entities: :system/codecs/html-entities/decode
 
 	;-- follows content of the original xml-parse object:
 
@@ -438,7 +440,7 @@ register-codec [
 			; Accumulate more character data
 			;
 			if not none? characters [
-				append xml-content characters
+				append xml-content decode-entities characters
 			]
 		]
 		end-element: func [
@@ -563,6 +565,8 @@ register-codec [
 		nsinfo-stack:       copy []
 		nsinfo:             copy []
 
+		s: e: none
+
 		; 
 		; Set a default xml-parse-handler
 		;
@@ -620,7 +624,7 @@ register-codec [
 								xmlEq
 								xmlAttValue
 								(append append 
-									attr-list attr-name attr-value
+									attr-list :attr-name decode-entities :attr-value
 								)
 							]
 		xmlAttribute:       xml10AttrStrict
@@ -842,61 +846,12 @@ register-codec [
 								"NMTOKEN" | "NMTOKENS"
 							]
 		xmlEnumeratedType:  [] ; fix this
-		xmlReference:       [xmlCharRef | xmlEntityRef]
-		xmlEntityRef:       [   ["&" copy entity-ref xmlNameProd ";"]
-								(   char-ref-value: 
-										convert-character-entity entity-ref
-									either none? char-ref-value [
-										;
-										; couldn't convert the
-										; chararacter-entity, so pass
-										; it through as character data,
-										; unconverted
-										;
-										handler/characters
-											rejoin ["&" entity-ref ";"]
-									][
-										;
-										; converted the chararacter-entity
-										; to a character
-										;
-										handler/characters char-ref-value
-									]
-								)
+		xmlReference:       [   ahead #"&"
+								copy characters [xmlCharRef | xmlEntityRef]
+								(handler/characters characters )
 							]
-		xmlCharRef:         [   [   [   "&" 
-										[copy entity-ref 
-											["#" some xmlDigit]
-										]
-										";"
-									] | 
-									[   "&"
-										[copy entity-ref
-											["#x" some xmlHexDigit]
-										]
-										";"
-									]
-								]  
-								(   char-ref-value:
-										convert-character-entity entity-ref
-									either none? char-ref-value [
-										;
-										; couldn't convert the
-										; chararacter-entity, so pass
-										; it through as character data,
-										; unconverted
-										;
-										handler/characters
-											rejoin ["&" entity-ref ";"]
-									][
-										;
-										; converted the chararacter-entity
-										; to a character
-										;
-										handler/characters char-ref-value
-									]
-								)
-							]
+		xmlEntityRef:       [   #"&" xmlNameProd #";"]
+		xmlCharRef:         [   #"&" [#"#" [#"x" some xmlHexDigit | some xmlDigit]] #";"]
 		xmlExternalID:      [   ["SYSTEM" xmlS xmlSystemLiteral] | 
 								["PUBLIC" xmlS xmlPubIDLiteral xmlS xmlSystemLiteral]
 							]
@@ -972,38 +927,6 @@ register-codec [
 								]
 							]       
 		xmlTrimSpace: none ;- no trim by default
-		;
-		;
-		; Private XML Parser Methods
-		;
-		convert-character-entity: func [{
-			Accepts the name reference portion of an entity
-			reference and attempts to return the actual character
-			referenced by the entity.
-			If the conversion is not successful, the value of 
-			none is returned.
-			For example, for the ampersand character this function
-			could accept a entity-ref parameter of either "amp",
-			"#38" or "#x26".
-		}
-			entity-ref [string!]
-		][
-			switch/default entity-ref [
-				"lt"        [ return #"<" ]
-				"gt"        [ return #">" ]
-				"amp"       [ return #"&" ]
-				"quot"      [ return #"^"" ]
-				"apos"      [ return #"'" ]
-			][
-				either (first entity-ref) = #"#" [
-					to char! to integer! either (second entity-ref) = #"x" [
-						to issue! skip entity-ref 2
-					][	skip entity-ref 1 ]
-				][
-					none
-				]
-			]
-		]
 		
 		;--
 		;-- Public XML Parser Methods

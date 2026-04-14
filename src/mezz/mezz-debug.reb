@@ -3,7 +3,7 @@ REBOL [
 	Title: "REBOL 3 Mezzanine: Debug"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2022 Rebol Open Source Contributors
+		Copyright 2012-2026 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -17,7 +17,7 @@ dt: delta-time: function [
 	block [block!]
 ][
 	; force GC, so there is less chance that it is fired in `do block`
-	recycle
+	recycle/pools
 	start: stats/timer
 	do block
 	stats/timer - start
@@ -26,10 +26,11 @@ dt: delta-time: function [
 dp: delta-profile: func [
 	{Delta-profile of running a specific block.}
 	block [block!]
+	/only "Don't call recycle"
 	/local start end adjust
 ][
 	; first force GC
-	recycle
+	unless only [recycle/pools]
 	; than count adjustments for empty code
 	adjust: copy end: stats/profile 
 	do [] 
@@ -92,7 +93,7 @@ speed?: function [
 			]
 		]
 	][
-		recycle
+		recycle/pools
 		secs: now/precise
 		calc: 0
 		do block
@@ -165,9 +166,7 @@ print-table: function [
 ]
 
 print-horizontal-line: does [
-	;@@ quering window-cols width in CI under Windows now throws error: `Access error: protocol error: 6`
-	;@@ it should return `none` like under Posix systems!
-	loop -1 + any [attempt [query/mode system/ports/output 'window-cols] 76][ prin #"-" ] prin lf
+	loop -1 + (query system/ports/output 'window-cols) [ prin #"-" ] prin lf
 ]
 
 ;@@ profile idea is based on code from https://gist.github.com/giesse/1232d7f71a15a3a8417ec6f091398811

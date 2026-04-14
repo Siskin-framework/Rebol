@@ -3,6 +3,7 @@ REBOL [
 	Title: "Port & console modes"
 	Rights: {
 		Copyright 2012 REBOL Technologies
+		Copyright 2012-2024 Rebol Open Source Developers
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -12,6 +13,9 @@ REBOL [
 ]
 
 *port-modes* [
+	created
+	accessed
+	modified
 	owner-read
 	owner-write
 	owner-execute

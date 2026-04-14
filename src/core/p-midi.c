@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -67,9 +67,7 @@
 
 	//printf("MIDI_Actor action: %i\n", action);
 
-	port = Validate_Port_Value(port_value);
-
-	req = Use_Port_State(port, RDI_MIDI, sizeof(REBREQ));
+	port = Validate_Port_With_Request(port_value, RDI_MIDI, &req);
 
 	switch (action) {
 
@@ -77,7 +75,7 @@
 		// This device is opened on the READ:
 		if (!IS_OPEN(req)) Trap_Port(RE_NOT_OPEN, port, -12);
 
-		result = OS_DO_DEVICE(req, RDC_READ);
+		result = OS_Do_Device(req, RDC_READ);
 		if (result < 0) Trap_Port(RE_READ_ERROR, port, req->error);
 
 		// Copy and set the string result:
@@ -95,7 +93,7 @@
 			req->data = VAL_BIN(arg);
 			req->length = VAL_LEN(arg);
 
-			result = OS_DO_DEVICE(req, RDC_WRITE);
+			result = OS_Do_Device(req, RDC_WRITE);
 			if (result < 0) Trap_Port(RE_WRITE_ERROR, port, req->error);
 		}
 		break;
@@ -122,19 +120,20 @@
 				SET_INTEGER(val2, req->midi.device_out);
 			}
 		}
-		if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
+		if (OS_Do_Device(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
 
 		break;
 
 	case A_CLOSE:
 		if (!IS_OPEN(req)) Trap_Port(RE_NOT_OPEN, port, -12);
-		OS_DO_DEVICE(req, RDC_CLOSE);
+		OS_Do_Device(req, RDC_CLOSE);
+		Release_Port_State(port);
 		break;
 
 	case A_QUERY:
 		spec = Get_System(SYS_STANDARD, STD_MIDI_INFO);
 		if (!IS_OBJECT(spec)) Trap_Arg(spec);
-		if (D_REF(2) && IS_NONE(D_ARG(3))) {
+		if (IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
 			// query/mode midi:// none ;<-- lists possible fields to request
 			Set_Block(D_RET, Get_Object_Words(spec));
 			return R_RET;
@@ -144,38 +143,36 @@
 		Set_Block(Get_Field(obj, STD_MIDI_INFO_DEVICES_IN), Make_Block(7));
 		Set_Block(Get_Field(obj, STD_MIDI_INFO_DEVICES_OUT), Make_Block(7));
 		req->data = (REBYTE*)obj;
-		OS_DO_DEVICE(req, RDC_QUERY);
+		OS_Do_Device(req, RDC_QUERY);
 
-		if (D_REF(2)) {
-			// query/mode used
-			REBVAL *field = D_ARG(3);
-			if (IS_WORD(field)) {
-				if (!Query_MIDI_Field(obj, VAL_WORD_SYM(field), D_RET))
-					Trap_Reflect(VAL_TYPE(D_ARG(1)), field); // better error?
-			}
-			else if (IS_BLOCK(field)) {
-				REBVAL *val;
-				REBSER *values = Make_Block(2 * BLK_LEN(VAL_SERIES(field)));
-				REBVAL *word = VAL_BLK_DATA(field);
-				for (; NOT_END(word); word++) {
-					if (ANY_WORD(word)) {
-						if (IS_SET_WORD(word)) {
-							// keep the set-word in result
-							val = Append_Value(values);
-							*val = *word;
-							VAL_SET_LINE(val);
-						}
-						val = Append_Value(values);
-						if (!Query_MIDI_Field(obj, VAL_WORD_SYM(word), val))
-							Trap1(RE_INVALID_ARG, word);
-					}
-					else  Trap1(RE_INVALID_ARG, word);
-				}
-				Set_Series(REB_BLOCK, D_RET, values);
-			}
-			return R_RET;
+		REBVAL *field = D_ARG(ARG_QUERY_FIELD);
+		if (IS_WORD(field)) {
+			if (!Query_MIDI_Field(obj, VAL_WORD_SYM(field), D_RET))
+				Trap_Reflect(VAL_TYPE(D_ARG(1)), field); // better error?
 		}
-		Set_Object(D_RET, obj);
+		else if (IS_BLOCK(field)) {
+			REBVAL *val;
+			REBSER *values = Make_Block(2 * BLK_LEN(VAL_SERIES(field)));
+			REBVAL *word = VAL_BLK_DATA(field);
+			for (; NOT_END(word); word++) {
+				if (ANY_WORD(word)) {
+					if (!IS_GET_WORD(word)) {
+						// keep the word as a key (converted to the set-word) in the result
+						val = Append_Value(values);
+						*val = *word;
+						VAL_TYPE(val) = REB_SET_WORD;
+						VAL_SET_LINE(val);
+					}
+					val = Append_Value(values);
+					if (!Query_MIDI_Field(obj, VAL_WORD_SYM(word), val))
+						Trap1(RE_INVALID_ARG, word);
+				}
+				else  Trap1(RE_INVALID_ARG, word);
+			}
+			Set_Series(REB_BLOCK, D_RET, values);
+		} else {
+			Set_Object(D_RET, obj);
+		}		
 		return R_RET;
 
 	case A_OPENQ:

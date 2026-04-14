@@ -1,8 +1,9 @@
 REBOL [
 	title: "Codec: TAR"
-	name: 'codec-tar
-	author: rights: "Oldes"
+	name: tar
+	type: module
 	version: 0.0.1
+	author: "Oldes"
 	specification: https://en.wikipedia.org/wiki/Tar_%28computing%29
 	history: [20-Mar-2019 "Oldes" {Initial version of the TAR decoder}]
 	todo: {
@@ -33,9 +34,8 @@ register-codec [
 		unless binary? tar-data [
 			tar-data: read tar-data
 		]
-		if verbose > 0 [
-			sys/log/info 'TAR ["^[[1;32mDecode TAR data^[[m (^[[1m" length? tar-data "^[[mbytes )"]
-		]
+		log-info 'TAR ["^[[1;32mDecode TAR data^[[m (^[[1m" length? tar-data "^[[mbytes )"]
+		
 		bin: binary tar-data
 
 		if only [
@@ -94,15 +94,13 @@ register-codec [
 				data: binary/read/with bin 'BYTES :size
 				append result name
 				repend/only result [data hdr1 hdr2]
-				if verbose > 0 [
-					sys/log/info 'TAR ["Extracting:^[[33m" name]
-				] 
+				log-info 'TAR ["Extracting:^[[33m" name] 
 				if only [
 					-- files-to-extract
 					if files-to-extract = 0 [break]
 				]
 			][
-				if verbose > 1 [sys/log/debug 'TAR "not extracting"]
+				log-debug 'TAR "not extracting"
 			]
 			if size > 0 [
 				; skip to end of the last data block
@@ -122,5 +120,5 @@ register-codec [
 		none
 	]
 	;validate-crc?: true
-	verbose: 1
+	system/options/log/tar: verbose: 1
 ]

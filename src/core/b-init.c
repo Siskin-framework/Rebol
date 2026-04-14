@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -123,7 +123,7 @@ extern const REBYTE Str_Banner[];
 	if (rargs->options & RO_VERS) {
 		Out_Str(cb_cast(REBOL_VERSION), 0, FALSE);
 		Out_Str(cb_cast("\n"), 0, FALSE);
-		OS_EXIT(0);
+		OS_Exit(0, 0);
 	}
 }
 
@@ -169,18 +169,21 @@ extern const REBYTE Str_Banner[];
 	// first four bytes of Native_Specs is a little-endian 32-bit
 	// length of the uncompressed spec data.
 	{
-		REBSER spec;
-		REBSER *text;
-		REBCNT textlen;
+		REBSER* text;
+		REBCNT textlen = Bytes_To_REBCNT(Native_Specs);
 
+#ifdef INCLUDE_DEPRECATED_ZLIB
+		REBSER spec;
 		// REVIEW: This is a nasty casting away of a const.  But there's
 		// nothing that can be done about it as long as Decompress takes
 		// a REBSER, as the data field is not const
 		spec.data = ((REBYTE*)Native_Specs) + 4;
 		spec.tail = NAT_SPEC_SIZE;
-
-		textlen = Bytes_To_REBCNT(Native_Specs);
-		text = DecompressZlib(&spec, 0, -1, textlen, 0);
+		text = DecompressZlibDeprecated(&spec, 0, -1, textlen, 0);
+#else
+		REBINT err = 0;
+		DecompressZlib(((REBYTE*)Native_Specs) + 4, NAT_SPEC_SIZE, textlen, &text, &err);
+#endif
 		if (!text || (STR_LEN(text) != textlen)) Crash(RP_BOOT_DATA);
 		boot = Scan_Source(STR_HEAD(text), textlen);
 		//Dump_Block_Raw(boot, 0, 2);
@@ -696,7 +699,7 @@ extern const REBYTE Str_Banner[];
 	}
 
 	if (codi->action == CODI_DECODE) {
-		codi->other = (void*)Decode_UTF_String(codi->data, codi->len, -1, TRUE, FALSE);
+		codi->other = (void*)Decode_UTF_String(codi->data, codi->len, -1, TRUE, &codi->error);
 		return CODI_STRING;
 	}
 
@@ -781,28 +784,24 @@ extern const REBYTE Str_Banner[];
 }
 
 
-static void Set_Option_String(REBCHR *str, REBCNT field)
+static void Set_Option_String(REBYTE *str, REBCNT field)
 {
 	REBVAL *val;
 	if (str) {
 		val = Get_System(SYS_OPTIONS, field);
-		Set_String(val, Copy_OS_Str(str, (REBINT)LEN_STR(str)));
+		// The string is UTF-8 encoded even on Windows!
+		Set_String(val, Copy_Str(str, LEN_BYTES(str)));
 	}
 }
 
-static REBCNT Set_Option_Word(REBCHR *str, REBCNT field)
+static REBCNT Set_Option_Word(REBYTE *str, REBCNT field)
 {
 	REBVAL *val;
-	REBYTE *bp;
-	REBYTE buf[40]; // option words always short ASCII strings
-	REBCNT n = 0;
-
+	REBLEN n = 0;
+	// The input string is already UTF8 encoded, so no need to clip Unicode
 	if (str) {
-		n = (REBCNT)LEN_STR(str); // WC correct
-		if (n > 38) return 0;
-		bp = &buf[0];
-		while ((*bp++ = (REBYTE)*str++)); // clips unicode
-		n = Make_Word(buf, n);
+		n = (REBLEN)LEN_BYTES(str);
+		n = Make_Word(str, n);
 		val = Get_System(SYS_OPTIONS, field);
 		Init_Word(val, n);
 	}
@@ -813,13 +812,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 {
 	REBSER *ser;
 	REBVAL *val;
-	if (OS_WIDE) {
-		ser = To_REBOL_Path(src, 0, OS_WIDE, dir);
-	}
-	else {
-		ser = Decode_UTF_String(src, LEN_BYTES(src), 8, FALSE, FALSE);
-		ser = To_REBOL_Path(BIN_DATA(ser), BIN_LEN(ser), (REBOOL)!BYTE_SIZE(ser), dir);
-	}
+	ser = To_REBOL_Path(src, UNKNOWN, 0, dir);
 	val = Get_System(SYS_OPTIONS, field);
 	Set_Series(REB_FILE, val, ser);
 }
@@ -864,7 +857,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	val = Get_System(SYS_CATALOG, CAT_BOOT_FLAGS);
 	for (val = VAL_BLK(val); NOT_END(val); val++) {
 		VAL_CLR_LINE(val);
-		if (rargs->options & n) Append_Val(ser, val); 
+		if (rargs->options & n) Append_Val(ser, val);
 		n <<= 1;
 	}
 	// last value is always TRUE, so it's possible to use just *path* instead of `find`
@@ -878,6 +871,10 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	// For compatibility:
 	if (rargs->options & RO_QUIET) {
 		val = Get_System(SYS_OPTIONS, OPTIONS_QUIET);
+		SET_TRUE(val);
+	}
+	if (rargs->options & RO_NO_COLOR) {
+		val = Get_System(SYS_OPTIONS, OPTIONS_NO_COLOR);
 		SET_TRUE(val);
 	}
 
@@ -895,13 +892,15 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	if (rargs->args) {
 		// if used --args, store this value as a first one
 		new = Append_Value(ser);
-		Set_String(new, Copy_OS_Str(rargs->args, (REBINT)LEN_STR(rargs->args)));
+		// the string is already UTF-8 encoded
+		Set_String(new, Copy_Str(rargs->args, (REBINT)LEN_BYTES(rargs->args)));
 	}
 	// the rest of args, if there are any...
 	for (n = 0; n < rargs->argc; n++) {
 		arg = rargs->argv[n];
 		if (arg == 0) continue; // shell bug
 		new = Append_Value(ser);
+		// these arguments still have the system width
 		Set_String(new, Copy_OS_Str(arg, (REBINT)LEN_STR(arg)));
 		//if(arg[0]=='-')	VAL_SET_LINE(new);
 	}
@@ -923,30 +922,30 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	// Print("home: %s", rargs->current_dir);
 	if (rargs->current_dir) {
 		Set_Option_File(OPTIONS_PATH, (REBYTE*)rargs->current_dir, TRUE);
-		OS_FREE(rargs->current_dir);
+		OS_Free(rargs->current_dir);
 	}
-	if (NZ(data = OS_GET_LOCALE(0))) {
+	if (NZ(data = OS_Get_Locale(0))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE);
 		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
-		OS_FREE(data);
+		OS_Free(data);
 	}
 
-	if (NZ(data = OS_GET_LOCALE(1))) {
+	if (NZ(data = OS_Get_Locale(1))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LANGUAGE_P);
 		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
-		OS_FREE(data);
+		OS_Free(data);
 	}
 
-	if (NZ(data = OS_GET_LOCALE(2))) {
+	if (NZ(data = OS_Get_Locale(2))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE);
 		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
-		OS_FREE(data);
+		OS_Free(data);
 	}
 
-	if (NZ(data = OS_GET_LOCALE(3))) {
+	if (NZ(data = OS_Get_Locale(3))) {
 		val = Get_System(SYS_LOCALE, LOCALE_LOCALE_P);
 		Set_String(val, Copy_OS_Str(data, (REBINT)LEN_STR(data)));
-		OS_FREE(data);
+		OS_Free(data);
 	}
 }
 
@@ -991,36 +990,9 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 {
 	REBOL_DAT dat;
 
-	OS_GET_TIME(&dat);
+	OS_Get_Time(&dat);
 	Current_Year = dat.year;
 }
-
-/***********************************************************************
-**
-*/	void Init_Compression(void)
-/*
-**		Fill system/catalog/compressions with optional compressions
-**
-***********************************************************************/
-{
-	REBVAL *blk;
-	REBVAL  tmp;
-	#define add_compression(sym) Init_Word(&tmp, sym); VAL_SET_LINE(&tmp); Append_Val(VAL_SERIES(blk), &tmp);
-	blk = Get_System(SYS_CATALOG, CAT_COMPRESSIONS);
-	if (blk && IS_BLOCK(blk)) {
-		#ifdef INCLUDE_BROTLI
-		add_compression(SYM_BROTLI);
-		#endif
-		#ifdef INCLUDE_CRUSH
-		add_compression(SYM_CRUSH);
-		#endif
-		#ifdef INCLUDE_LZMA
-		add_compression(SYM_LZMA);
-		#endif
-	}
-}
-	
-
 
 
 /***********************************************************************
@@ -1040,9 +1012,13 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	PG_Boot_Level = BOOT_LEVEL_FULL;
 	PG_Mem_Usage = 0;
 	PG_Mem_Limit = 0;
-	PG_Reb_Stats = Make_Mem(sizeof(*PG_Reb_Stats));
+#ifdef DEBUG
+	PG_Mem_Make = 0;
+	PG_Mem_Free = 0;
+#endif
+	PG_Reb_Stats = Make_CMem(sizeof(*PG_Reb_Stats));
 	Halt_State = 0;
-	Reb_Opts = Make_Mem(sizeof(*Reb_Opts));
+	Reb_Opts = Make_CMem(sizeof(*Reb_Opts));
 
 	// Thread locals:
 	Trace_Level = 0;
@@ -1055,7 +1031,7 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	Init_StdIO();
 
 	Assert_Basics();
-	PG_Boot_Time = OS_DELTA_TIME(0, 0);
+	PG_Boot_Time = OS_Delta_Time(0, 0);
 
 	DOUT("Level 0");
 	Init_Memory(0);			// Memory allocator
@@ -1146,6 +1122,11 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 	if(!Task_Series)
 		return; // can happen when close button, shutdown, etc.
 
+#ifdef DEBUG
+	// Turn off watching memory (not possible after releasing output buffers)
+	Reb_Opts->watch_alloc = 0;
+#endif
+
 	Free_Series(Task_Series);
 	if (PG_Boot_Phase > BOOT_START) {
 		Free_Series(Bind_Table);
@@ -1164,9 +1145,11 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 		Free_Series(VAL_SERIES(TASK_STACK));
 		Free_Series(VAL_SERIES(TASK_BUF_EMIT));
 		Free_Series(VAL_SERIES(TASK_BUF_WORDS));
-		Free_Series(VAL_SERIES(TASK_BUF_UTF8));
+		Free_Series(VAL_SERIES(TASK_BUF_SCAN));
+//		Free_Series(VAL_SERIES(TASK_BUF_UTF8));
+//		Free_Series(VAL_SERIES(TASK_BUF_UCS2));
 		Free_Series(VAL_SERIES(TASK_BUF_PRINT));
-		Free_Series(VAL_SERIES(TASK_BUF_FORM));
+//		Free_Series(VAL_SERIES(TASK_BUF_FORM));
 		Free_Series(VAL_SERIES(TASK_BUF_MOLD));
 		Free_Series(VAL_SERIES(TASK_MOLD_LOOP));
 	}
@@ -1176,9 +1159,20 @@ static void Set_Option_File(REBCNT field, REBYTE* src, REBOOL dir )
 		Dispose_Ports();
 		Dispose_Mold();
 		Dispose_CRC();
-		Free_Mem(PG_Boot_Strs, 0);
+#ifdef INCLUDE_CRYPTOGRAPHY
+		Dispose_Crypt();
+#endif
+		Dispose_Compression();
+		Dispose_Handles();
+		Free_Mem(PG_Boot_Strs, RS_MAX * sizeof(REBYTE*));
 	}
 	Dispose_StdIO();
-	Free_Mem(PG_Reb_Stats, 0);
-	Free_Mem(Reb_Opts, 0);
+	Dispose_Pools();
+	Free_Mem(PG_Reb_Stats, sizeof(*PG_Reb_Stats));
+	Free_Mem(Reb_Opts, sizeof(*Reb_Opts));
+#if defined(DEBUG) || defined(_DEBUG)
+//	if (PG_Mem_Make != PG_Mem_Free || PG_Mem_Usage > 0)
+//		printf("PG_Mem_Make: %llu free: %llu used: %llu\n", PG_Mem_Make, PG_Mem_Free, PG_Mem_Usage);
+#endif
+	ASSERT1(PG_Mem_Free == PG_Mem_Make, RP_MISC);
 }

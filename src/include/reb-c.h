@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2024 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -160,6 +160,29 @@ typedef struct sInt64 {
 } I64;
 #pragma pack()
 
+
+/* ---------------------------------------------------------------------
+	The following 4 definitions are compiler-specific.
+	The C standard does not guarantee that wchar_t has at least
+	16 bits, so wchar_t is no less portable than unsigned short!
+	All should be unsigned values to avoid sign extension during
+	bit mask & shift operations.
+------------------------------------------------------------------------ */
+
+typedef unsigned long	UTF32;	/* at least 32 bits */
+typedef unsigned short	UTF16;	/* at least 16 bits */
+typedef unsigned char	UTF8;	/* typically 8 bits */
+typedef unsigned char	Boolean; /* 0 or 1 */
+
+/* Some fundamental constants */
+#define UNI_ERROR (UTF32)0xFFFFFFFF
+#define UNI_REPLACEMENT_CHAR (UTF32)0x0000FFFD
+#define UNI_MAX_BMP (UTF32)0x0000FFFF
+#define UNI_MAX_UTF16 (UTF32)0x0010FFFF
+#define UNI_MAX_UTF32 (UTF32)0x7FFFFFFF
+#define UNI_MAX_LEGAL_UTF32 (UTF32)0x0010FFFF
+
+
 /***********************************************************************
 **
 **  REBOL Code Types
@@ -169,6 +192,7 @@ typedef struct sInt64 {
 typedef i32				REBINT;     // 32 bit (64 bit defined below)
 typedef u32				REBCNT;     // 32 bit (counting number)
 typedef u32             REBLEN;     // 32 bit series length/index - used instead of size_t
+typedef u32             REBU32;		// 32 bit Unicode
 typedef i64				REBI64;     // 64 bit integer
 typedef u64				REBU64;     // 64 bit unsigned integer
 typedef i8				REBOOL;     // 8  bit flag (for struct usage)
@@ -178,6 +202,8 @@ typedef double			REBDEC;     // 64 bit decimal
 
 typedef unsigned char	REBYTE;     // unsigned byte data
 typedef u16				REBUNI;     // unicode char
+typedef u16				REBU16;     // 16bit UCS2 codepoint
+typedef u32 REBUTF;
 
 // REBCHR - only to refer to OS char strings (not internal strings)
 #ifdef OS_WIDE_CHAR
@@ -186,10 +212,13 @@ typedef REBUNI          REBCHR;
 typedef REBYTE          REBCHR;
 #endif
 
-#define MAX_UNI ((1 << (8*sizeof(REBUNI))) - 1)
+#define AS_REBLEN(v)  (REBLEN)(v)  // used to silence conversion from size_t warnings
+#define AS_INT(v)        (int)(v)  // used to silence conversion from size_t warnings
 
 #define MIN_D64 ((double)-9.2233720368547758e18)
 #define MAX_D64 ((double) 9.2233720368547758e18)
+#define MAX_REBLEN 0xFFFFFFFF
+#define MAX_UNI 0x10FFFF
 
 // Useful char constants:
 enum {
@@ -249,6 +278,50 @@ typedef void(*CFUNC)(void *);
 **
 ***********************************************************************/
 
+#ifdef __has_builtin
+#  define HAS_BUILTIN(x) __has_builtin(x)
+#else
+#  define HAS_BUILTIN(x) 0
+#endif
+
+#if defined(_MSC_VER)
+# define FORCE_INLINE    __forceinline
+# include <stdlib.h>
+# define ROTL32(x,y) _rotl(x,y)
+# define ROTL64(x,y) _rotl64(x,y)
+# define BIG_CONSTANT(x) (x)
+// Other compilers..
+#else   // defined(_MSC_VER)
+# define FORCE_INLINE inline __attribute__((always_inline))
+# if HAS_BUILTIN(__builtin_rotateleft32) && HAS_BUILTIN(__builtin_rotateleft64)
+#  define ROTL32(x,y) __builtin_rotateleft32(x,y)
+#  define ROTL64(x,y) __builtin_rotateleft64(x,y)
+# else
+    FORCE_INLINE uint32_t rotl32(uint32_t x, int8_t r)
+    {
+        return (x << r) | (x >> (32 - r));
+    }
+    FORCE_INLINE uint64_t rotl64(uint64_t x, int8_t r)
+    {
+        return (x << r) | (x >> (64 - r));
+    }
+#  define ROTL32(x,y) rotl32(x,y)
+#  define ROTL64(x,y) rotl64(x,y)
+# endif
+# define BIG_CONSTANT(x) (x##LLU)
+#endif // !defined(_MSC_VER)
+
+
+#if defined(_MSC_VER)
+#define RESTRICT __restrict
+#elif defined(__clang__) || defined(__GNUC__)
+#define RESTRICT __restrict__
+#elif defined(__IAR_SYSTEMS_ICC__)
+#define RESTRICT __restrict
+#else
+#define RESTRICT
+#endif
+
 #define UNUSED(x) (void)x;
 
 // Check a condition e at compile time. If the condition is false, it will
@@ -262,6 +335,7 @@ typedef void(*CFUNC)(void *);
 #define SET_FLAG(v,f)       ((v) |= (1<<(f)))
 #define CLR_FLAG(v,f)       ((v) &= ~(1<<(f)))
 #define CLR_FLAGS(v,f,g)    ((v) &= ~((1<<(f)) | (1<<(g))))
+#define ASSIGN_FLAG(f, b, set) ((set) ? SET_FLAG(f, b) : CLR_FLAG(f, b))
 
 #ifndef MIN
 #ifdef min
@@ -275,6 +349,7 @@ typedef void(*CFUNC)(void *);
 
 // Memory related functions:
 #define MAKE_MEM(n)     malloc(n)
+#define MAKE_CLEAR_MEM(n)     calloc(n, 1)
 #define MAKE_NEW(s)     MAKE_MEM(sizeof(s))
 #define FREE_MEM(m)     free(m)
 #define CLEAR(m, s)     memset((void*)(m), 0, s);
@@ -418,14 +493,40 @@ typedef void(*CFUNC)(void *);
     (p)[7] = (u8)((v) >> 56) & 0xff;  \
   } while (0)
 
+#ifndef __has_builtin
+#define __has_builtin(x) 0
+#endif
+#if !defined(GCC_VERSION_AT_LEAST)
+# ifdef __GNUC__
+#  define GCC_VERSION_AT_LEAST(m, n) \
+                (__GNUC__ > (m) || (__GNUC__ == (m) && __GNUC_MINOR__ >= (n)))
+# else
+#  define GCC_VERSION_AT_LEAST(m, n) 0
+# endif
+#endif
 
 //! Function attribute used by functions that never return (that terminate the process).
-#if defined(__GNUC__)
-#define REB_NORETURN __attribute__((__noreturn__))
-#elif defined(_MSC_VER)
-#define REB_NORETURN __declspec(noreturn)
-#else
-#define REB_NORETURN
+#if !defined(REB_NORETURN)
+# if defined(__clang__) || GCC_VERSION_AT_LEAST(2, 5)
+#  define REB_NORETURN __attribute__ ((noreturn))
+# elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#  define REB_NORETURN _Noreturn
+# elif defined(__TINYC__)
+#  define REB_NORETURN  /* _Noreturn unreliable [1] */
+# elif defined(_MSC_VER)
+#  define REB_NORETURN __declspec(noreturn)
+# else
+#  define REB_NORETURN
+# endif
+#endif
+#if !defined(DEAD_END)
+# if __has_builtin(__builtin_unreachable) || GCC_VERSION_AT_LEAST(4, 5)
+#  define DEAD_END __builtin_unreachable()
+# elif defined(_MSC_VER)
+#  define DEAD_END __assume(0)
+# else
+#  define DEAD_END abort()
+# endif
 #endif
 
 /* These macros are easier-to-spot variants of the parentheses cast.

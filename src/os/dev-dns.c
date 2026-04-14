@@ -135,7 +135,7 @@ extern HWND Event_Handle;
 	if (GET_FLAG(sock->modes, RST_REVERSE)) {
 		he = gethostbyaddr((char*)&sock->net.remote_ip, 4, AF_INET);
 		if (he) {
-			sock->data = he->h_name;
+			sock->cdata = cb_cast(he->h_name);
 			SET_FLAG(sock->flags, RRF_DONE);
 			return DR_DONE;
 		}
@@ -149,7 +149,7 @@ extern HWND Event_Handle;
 		}
 	}
 	else {
-		he = gethostbyname(sock->data);
+		he = gethostbyname(cs_cast(sock->data));
 		if (he) {
 			COPY_MEM((char*)&(sock->net.remote_ip), (char *)(*he->h_addr_list), 4); //he->h_length);
 			SET_FLAG(sock->flags, RRF_DONE);

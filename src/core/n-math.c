@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2026 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +23,7 @@
 **  Module:  n-math.c
 **  Summary: native functions for math
 **  Section: natives
-**  Author:  Carl Sassenrath
+**  Author:  Carl Sassenrath, Oldes
 **  Notes:   See also: the numeric datatypes
 **
 ***********************************************************************/
@@ -325,7 +326,7 @@ enum {SINE, COSINE, TANGENT};
 /*
 //	number?: native [
 //		{Returns TRUE if the value is any type of number and not a NaN. }
-//		value
+//		value [any-type! unset!]
 //	]
 ***********************************************************************/
 {
@@ -887,10 +888,15 @@ compare:
 /*
 ***********************************************************************/
 {
-	REBVAL *val = &DS_Base[++DSP];
-	CLEARS(val);
-	VAL_SET(val, VAL_TYPE(D_ARG(1)));
-	if (Compare_Values(D_ARG(1), D_ARG(2), -1)) return R_FALSE;
+	REBVAL *arg = D_ARG(1);
+	REBVAL *zero;
+	if (IS_PAIR(arg)) {
+		return (VAL_PAIR_X(arg) < 0 && VAL_PAIR_Y(arg) < 0) ? R_TRUE : R_FALSE;
+	}
+	zero = &DS_Base[++DSP];
+	CLEARS(zero);
+	VAL_SET(zero, VAL_TYPE(arg));
+	if (Compare_Values(arg, zero, -1)) return R_FALSE;
 	return R_TRUE;
 }
 
@@ -900,10 +906,15 @@ compare:
 /*
 ***********************************************************************/
 {
-	REBVAL *val = &DS_Base[++DSP];
-	CLEARS(val);
-	VAL_SET(val, VAL_TYPE(D_ARG(1)));
-	if (Compare_Values(D_ARG(1), D_ARG(2), -2)) return R_TRUE;
+	REBVAL *arg = D_ARG(1);
+	REBVAL *zero;
+	if (IS_PAIR(arg)) {
+		return (VAL_PAIR_X(arg) >= 0 && VAL_PAIR_Y(arg) >= 0) ? R_TRUE : R_FALSE;
+	}
+	zero = &DS_Base[++DSP];
+	CLEARS(zero);
+	VAL_SET(zero, VAL_TYPE(arg));
+	if (Compare_Values(arg, zero, -2)) return R_TRUE;
 	return R_FALSE;
 }
 
@@ -958,3 +969,103 @@ compare:
 	return R_RET;
 }
 
+/***********************************************************************
+**
+*/	REBNATIVE(fraction)
+/*
+//	fraction: native [
+//		{Returns the fractional part of a decimal value}
+//		number [decimal!]
+//	]
+***********************************************************************/
+{
+	double intptr;
+	SET_DECIMAL(D_RET, modf(VAL_DECIMAL(D_ARG(1)), &intptr));
+	return R_RET;
+}
+
+
+int is_prime(REBI64 n) {
+	if (n < 2) return 0;
+	if (n == 2 || n == 3) return 1;
+	if (n % 2 == 0 || n % 3 == 0) return 0;
+	for (REBI64 d = 5; d * d <= n; d += 6) {
+		if (n % d == 0 || n % (d + 2) == 0) return 0;
+	}
+	return 1;
+}
+/***********************************************************************
+**
+*/	REBNATIVE(primeq)
+/*
+//	prime?: native [
+//		{Returns true if value is a prime number}
+//		number [integer!]
+//	]
+***********************************************************************/
+{
+	return (is_prime(VAL_INT64(D_ARG(1)))) ? R_TRUE : R_FALSE;
+}
+
+FORCE_INLINE
+static REBDEC lerp_decimal(REBDEC s, REBDEC e, REBDEC t) {
+	return s + (e - s) * t;
+}
+#define lerp_byte(s, e, t) (REBYTE)lerp_decimal((REBDEC)s, (REBDEC)e, t)
+
+/***********************************************************************
+**
+*/	REBNATIVE(lerp)
+/*
+//	lerp: native [
+//		{Linearly interpolates between start and end by factor}
+//		start  [number! tuple! pair!]
+//		end    [number! tuple! pair!]
+//		factor [number!] "Interpolation factor, clamped to 0.0-1.0"
+//	]
+***********************************************************************/
+{
+	REBVAL* v1 = D_ARG(1);
+	REBVAL* v2 = D_ARG(2);
+	REBDEC   t = Clip_Dec(Dec64(D_ARG(3)), 0, 1);
+	if (ANY_NUMBER(v1)) {
+		if (!ANY_NUMBER(v2)) Trap2(RE_TYPE_MISMATCH, v1, v2);
+		SET_DECIMAL(D_RET, lerp_decimal(Dec64(v1), Dec64(v2),t));
+	}
+	else if (IS_TUPLE(v1)) {
+		if (!IS_TUPLE(v2)) Trap2(RE_TYPE_MISMATCH, v1, v2);
+		REBLEN len = MAX(VAL_TUPLE_LEN(v1), VAL_TUPLE_LEN(v2));
+		REBYTE *b1 = VAL_TUPLE(v1);
+		REBYTE *b2 = VAL_TUPLE(v2);
+		VAL_SET(D_RET, REB_TUPLE);
+		VAL_TUPLE_LEN(D_RET) = len;
+		REBYTE *b3 = VAL_TUPLE(D_RET);
+		for (int i=0; i < len; i++) {
+			b3[i] = lerp_byte(b1[i], b2[i], t);
+		}
+	}
+	else if (IS_PAIR(v1)) {
+		if (!IS_PAIR(v2)) Trap2(RE_TYPE_MISMATCH, v1, v2);
+		VAL_SET(D_RET, REB_PAIR);
+		VAL_PAIR_X(D_RET) = lerp_decimal(VAL_PAIR_X(v1), VAL_PAIR_X(v2), t);
+		VAL_PAIR_Y(D_RET) = lerp_decimal(VAL_PAIR_Y(v1), VAL_PAIR_Y(v2), t);
+	}
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(idivide)
+/*
+//	idivide: native [
+//		{Returns the first integer divided by the second}
+//		value1  [integer!]
+//		value2  [integer!]
+//	]
+***********************************************************************/
+{
+	REBI64 n = VAL_INT64(D_ARG(2));
+	if (n == 0) Trap0(RE_ZERO_DIVIDE);
+	SET_INTEGER(D_RET, VAL_INT64(D_ARG(1)) / n);
+	return R_RET;
+}

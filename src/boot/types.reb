@@ -3,7 +3,7 @@ REBOL [
 	Title: "Datatype definitions"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2021 Rebol Open Source Contributors
+		Copyright 2012-2024 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -39,7 +39,7 @@ REBOL [
 	decimal     self        decimal     *        *       -      *   [number scalar]
 	percent     self        decimal     *        *       -      *   [number scalar]
 	money       self        money       *        *       -      -   scalar
-	char        self        char        *        f*      -      -   scalar
+	char        self        char        *        f*      *      -   scalar
 	pair        self        pair        *        *       *      *   scalar
 	tuple       self        tuple       *        *       *      *   scalar
 	time        self        time        *        *       *      *   scalar
@@ -66,6 +66,7 @@ REBOL [
 	get-path    path        block       *        *       *      *   [series block path]  
 	lit-path    lit-path    block       *        *       *      *   [series block path]  
 
+	hash        self        block       +        f*      *      *   [series block]
 	map         self        map         +        f*      *      *   -  
 
 	datatype    self        datatype    +        f*      -      *   -  

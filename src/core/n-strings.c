@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,9 +33,14 @@
 #include "sys-deci-funcs.h"
 #include "sys-checksum.h"
 
-REBCNT z_adler32_z(REBCNT adler, REBYTE *buf, REBCNT len);
+#ifdef INCLUDE_DEFLATE
+#define ADLER32_FUNC libdeflate_adler32
+#else
+#define ADLER32_FUNC z_adler32_z
+#endif
 
-
+REBCNT ADLER32_FUNC(REBCNT adler, REBYTE *buf, REBCNT len);
+REBSER *Make_Binary_BE64(REBVAL *arg);
 
 // Table of hash functions and parameters:
 static struct digest {
@@ -71,7 +76,7 @@ static struct digest {
 	{SHA3_384, SHA3_384_Starts,   SHA3_Update,   SHA3_384_Finish,   SHA3_CtxSize, SYM_SHA3_384, 48, 128},
 	{SHA3_512, SHA3_512_Starts,   SHA3_Update,   SHA3_512_Finish,   SHA3_CtxSize, SYM_SHA3_512, 64, 128},
 #endif
-#ifdef INCLUDE_MD4
+#ifdef INCLUDE_XXHASH
 	{HashXXH3,   XXH3_Starts,   XXH3_Update,   XXH3_Finish,   XXH3_CtxSize,   SYM_XXH3,    8, 64},
 	{HashXXH32,  XXH32_Starts,  XXH32_Update,  XXH32_Finish,  XXH32_CtxSize,  SYM_XXH32,   4, 64},
 	{HashXXH64,  XXH64_Starts,  XXH64_Update,  XXH64_Finish,  XXH64_CtxSize,  SYM_XXH64,   8, 64},
@@ -244,7 +249,7 @@ static struct digest {
 	REBINT sum;
 	REBINT i = 0;
 	REBCNT j;
-	REBSER *digest, *ser;
+	REBSER *digest;
 	REBCNT len, keylen;
 	REBYTE *bin;
 	REBYTE *keycp;
@@ -253,13 +258,8 @@ static struct digest {
 	len = Partial1(data, D_ARG(ARG_CHECKSUM_LENGTH));
 	sym = VAL_WORD_CANON(method);
 
-	if (IS_BINARY(data)) {
+	if (IS_BINARY(data) || IS_STRING(data)) {
 		bin = VAL_BIN_DATA(data);
-	}
-	else if (IS_STRING(data)) {
-		ser = Encode_UTF8_Value(data, len, 0);
-		bin = SERIES_DATA(ser);
-		len = SERIES_LEN(ser) - 1;
 	}
 	else {
 		// Dispatch file to file-checksum function...
@@ -299,19 +299,13 @@ static struct digest {
 					if (IS_INTEGER(spec))
 						Trap1(RE_BAD_REFINE, D_ARG(ARG_CHECKSUM_SPEC));
 
-					if (IS_BINARY(spec)) {
-						keycp = VAL_BIN_DATA(spec);
-						keylen = VAL_LEN(spec);
-					}
-					else {
-						// normalize to UTF8 first
-						ser = Encode_UTF8_Value(spec, VAL_LEN(spec), 0);
-						keycp = SERIES_DATA(ser);
-						keylen = SERIES_LEN(ser) - 1;
-					}
+					// UTF-8 encoded...
+					keycp = VAL_BIN_DATA(spec);
+					keylen = VAL_LEN(spec);
+
 					REBYTE tmpdigest[128];		// Size must be max of all digest[].len;
 					REBYTE ipad[128],opad[128];	// Size must be max of all digest[].hmacblock;
-					void *ctx = Make_Mem(digests[i].ctxsize());
+					void *ctx = Make_CMem(digests[i].ctxsize());
 
 					REBCNT blocklen = digests[i].hmacblock;
 
@@ -360,14 +354,14 @@ static struct digest {
 		Trap0(RE_BAD_REFINES);
 
 	if (sym == SYM_CRC32 || sym == SYM_ADLER32) {
-		i = (sym == SYM_CRC32) ? CRC32(bin, len) : z_adler32_z(0x00000001L, bin, len);
+		i = (sym == SYM_CRC32) ? CRC32(bin, len) : ADLER32_FUNC(0x00000001L, bin, len);
 	}
 	else if (sym == SYM_HASH) {  // /hash
 		if(!D_REF(ARG_CHECKSUM_WITH)) Trap0(RE_MISSING_ARG);
 		if (!IS_INTEGER(spec)) Trap1(RE_BAD_REFINE, D_ARG(ARG_CHECKSUM_SPEC));
 		sum = VAL_INT32(spec); // size of the hash table
 		if (sum <= 1) sum = 1;
-		i = Hash_String(bin, len) % sum;
+		i = Hash_Value(data) % sum;
 	}
 	else if (sym == SYM_CRC24) {
 		i = Compute_CRC24(bin, len);
@@ -386,166 +380,6 @@ static struct digest {
 
 /***********************************************************************
 **
-*/	REBNATIVE(compress)
-/*
-//	compress: native [
-//		{Compresses data.}
-//		data [binary! string!] {If string, it will be UTF8 encoded}
-//		method [word!] {One of `system/catalog/compressions`}
-//		/part length {Length of source data}
-//		/level lvl [integer!] {Compression level 0-9}
-//	]
-***********************************************************************/
-{
-	REBVAL *data     = D_ARG(1);
-	REBINT  method   = VAL_WORD_CANON(D_ARG(2));
-//	REBOOL ref_part  = D_REF(3);
-	REBVAL *length   = D_ARG(4);
-	REBOOL ref_level = D_REF(5);
-	REBVAL *level    = D_ARG(6);
-
-	REBSER *ser;
-	REBCNT index;
-	REBCNT len;
-	REBINT windowBits = MAX_WBITS;
-
-	len = Partial1(data, length);
-	ser = Prep_Bin_Str(data, &index, &len); // result may be a SHARED BUFFER!
-
-	switch (method) {
-	case SYM_ZLIB:
-	zlib_compress:
-		Set_Binary(D_RET, CompressZlib(ser, index, (REBINT)len, ref_level ? VAL_INT32(level) : -1, windowBits));
-		break;
-	
-	case SYM_DEFLATE:
-		windowBits = -windowBits;
-		goto zlib_compress;
-	
-	case SYM_GZIP:
-		windowBits |= 16;
-		goto zlib_compress;
-	
-	case SYM_BROTLI:
-#ifdef INCLUDE_BROTLI
-		Set_Binary(D_RET, CompressBrotli(ser, index, (REBINT)len, ref_level ? VAL_INT32(level) : -1));
-#else
-		Trap0(RE_FEATURE_NA);
-#endif
-		break;
-
-	case SYM_LZMA:
-#ifdef INCLUDE_LZMA
-		Set_Binary(D_RET, CompressLzma(ser, index, (REBINT)len, ref_level ? VAL_INT32(level) : -1));
-#else
-		Trap0(RE_FEATURE_NA);
-#endif
-		break;
-	case SYM_LZW:
-#ifdef INCLUDE_LZW
-		Set_Binary(D_RET, CompressLzw(ser, index, (REBINT)len, ref_level ? VAL_INT32(level) : -1));
-#else
-		Trap0(RE_FEATURE_NA);
-#endif
-		break;
-	case SYM_CRUSH:
-#ifdef INCLUDE_CRUSH
-		Set_Binary(D_RET, CompressCrush(ser, index, (REBINT)len, ref_level ? VAL_INT32(level) : 2));
-#else
-		Trap0(RE_FEATURE_NA);
-#endif
-		break;
-	default:
-		Trap1(RE_INVALID_ARG, D_ARG(2));
-	}
-
-	return R_RET;
-}
-
-
-/***********************************************************************
-**
-*/	REBNATIVE(decompress)
-/*
-//	decompress: native [
-//		{Decompresses data.}
-//		data [binary!] {Source data to decompress}
-//		method [word!] {One of `system/catalog/compressions`}
-//		/part "Limits source data to a given length or position"
-//			length [number! series!] {Length of compressed data (must match end marker)}
-//		/size
-//			bytes [integer!] {Number of uncompressed bytes.}
-]
-***********************************************************************/
-{
-	REBVAL *data    = D_ARG(1);
-	REBINT  method  = VAL_WORD_CANON(D_ARG(2));
-//	REBOOL ref_part = D_REF(3);
-	REBVAL *length  = D_ARG(4);
-	REBOOL ref_size = D_REF(5);
-	REBVAL *size    = D_ARG(6);
-
-	REBCNT limit = 0;
-	REBCNT len;
-	REBINT windowBits = MAX_WBITS;
-
-	len = Partial1(data, length);
-
-	if (ref_size) limit = (REBCNT)Int32s(size, 1); // /limit size
-
-	switch (method) {
-	case SYM_ZLIB:
-	zlib_decompress:
-		Set_Binary(D_RET, DecompressZlib(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit, windowBits));
-		break;
-
-	case SYM_DEFLATE:
-		windowBits = -windowBits;
-		goto zlib_decompress;
-
-	case SYM_GZIP:
-		windowBits |= 16;
-		goto zlib_decompress;
-
-	case SYM_BROTLI:
-#ifdef INCLUDE_BROTLI
-		Set_Binary(D_RET, DecompressBrotli(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit));
-#else
-		Trap0(RE_FEATURE_NA);
-#endif
-		break;
-
-	case SYM_LZMA:
-#ifdef INCLUDE_LZMA
-		Set_Binary(D_RET, DecompressLzma(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit));
-#else
-		Trap0(RE_FEATURE_NA);
-#endif
-		break;
-	case SYM_LZW:
-#ifdef INCLUDE_LZW
-		Set_Binary(D_RET, DecompressLzw(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit));
-#else
-		Trap0(RE_FEATURE_NA);
-#endif
-		break;
-	case SYM_CRUSH:
-#ifdef INCLUDE_CRUSH
-		Set_Binary(D_RET, DecompressCrush(VAL_SERIES(data), VAL_INDEX(data), (REBINT)len, limit));
-#else
-		Trap0(RE_FEATURE_NA);
-#endif
-		break;
-	default:
-		Trap1(RE_INVALID_ARG, D_ARG(2));
-	}
-
-	return R_RET;
-}
-
-
-/***********************************************************************
-**
 */	REBNATIVE(construct)
 /*
 ***********************************************************************/
@@ -555,17 +389,12 @@ static struct digest {
 	REBSER *frame;
 
 	if (IS_STRING(value) || IS_BINARY(value)) {
-		REBCNT index;
-
 		// Just a guess at size:
 		frame = Make_Block(10);		// Use a std BUF_?
 		Set_Block(D_RET, frame);	// Keep safe
 
-		// Convert string if necessary. Store back for safety.
-		VAL_SERIES(value) = Prep_Bin_Str(value, &index, 0);
-
 		// !issue! Is this what we really want here?
-		Scan_Net_Header(frame, VAL_BIN(value) + index);
+		Scan_Net_Header(frame, VAL_DATA(value));
 		value = D_RET;
 	}
 
@@ -591,8 +420,6 @@ static struct digest {
 	REBVAL *arg = D_ARG(1);
 	REBINT base = VAL_INT32(D_ARG(2));
 	REBVAL *part = D_ARG(5);
-	REBSER *ser;
-	REBCNT index;
 	REBCNT len = 0;
 
 	if (D_REF(4)) {
@@ -602,10 +429,10 @@ static struct digest {
 			return R_RET;
 		}
 	}
-
-	ser = Prep_Bin_Str(D_ARG(1), &index, &len); // result may be a SHARED BUFFER!
-
-	if (!Decode_Binary(D_RET, BIN_SKIP(ser, index), len, base, 0, D_REF(3)))
+	else {
+		len = VAL_LEN(arg);
+	}
+	if (!Decode_Binary(D_RET, VAL_DATA(arg), len, base, 0, D_REF(3)))
  		Trap1(RE_INVALID_DATA, D_ARG(1));
 
 	return R_RET;
@@ -622,13 +449,20 @@ static struct digest {
 ***********************************************************************/
 {
 	REBSER *ser = NULL;
-	REBCNT index;
 	REBVAL *arg = D_ARG(1);
 	REBINT base = VAL_INT32(D_ARG(2));
 	REBCNT limit = NO_LIMIT;
 	REBVAL *part = D_ARG(5);
 	REBOOL brk = !D_REF(6);
 
+	if (IS_INTEGER(arg)) {
+		// Convert integer to binary...
+		SET_BINARY(arg, Make_Binary_BE64(arg));
+		// ...and trim leading zeros...
+		REBCNT i = 0;
+		while (i <= 7 && VAL_BIN_HEAD(arg)[i]==0) { ++i; }
+		VAL_INDEX(arg) = i;
+	}
 	if (D_REF(4)) {
 		limit = Partial(arg, 0, part, 0); // Can modify value index.
 		if (limit == 0) {
@@ -636,9 +470,6 @@ static struct digest {
 			return R_RET;
 		}
 	}
-
-	Set_Binary(arg, Prep_Bin_Str(arg, &index, (limit == NO_LIMIT) ? 0 : &limit)); // may be SHARED buffer
-	VAL_INDEX(arg) = index;
 
 	switch (base) {
 	case 64:
@@ -727,27 +558,20 @@ static struct digest {
 //	REBVAL *val_escape = D_ARG(3);
 	REBOOL as_uri      = D_REF(4);
 	REBINT len = (REBINT)VAL_LEN(arg); // due to len -= 2 below
-	REBUNI n;
+	REBU32 n;
 	REBSER *ser;
 	REBYTE *bp, *dp;
 
 	const REBCHR escape_char = D_REF(2) ? VAL_CHAR(D_ARG(3)) : '%';
 	const REBCHR space_char = escape_char == '=' ? '_' : '+';
 
-	if (VAL_BYTE_SIZE(arg)) {
-		bp = VAL_BIN_DATA(arg);
-	}
-	else {
-		// if the input is an unicode string, convert it to UTF8
-		ser = Encode_UTF8_String(VAL_UNI_DATA(arg), len, TRUE, 0);
-		len = BIN_LEN(ser); // because the lengh may be changed!
-		bp = BIN_HEAD(ser);
-	}
+	ASSERT1(VAL_BYTE_SIZE(arg), RP_BAD_SIZE);
+	bp = VAL_BIN_DATA(arg);
 
-	dp = Reset_Buffer(BUF_FORM, len+1); // count also the terminating null byte
+	dp = Reset_Buffer(BUF_SCAN, len+1); // count also the terminating null byte
 
 	for (; len > 0; len--) {
-		if (*bp == escape_char && len > 2 && Scan_Hex2(bp+1, &n, FALSE)) {
+		if (*bp == escape_char && len > 2 && Scan_Hex2(bp+1, &n)) {
 			*dp++ = (REBYTE)n;
 			bp  += 3;
 			len -= 2;
@@ -762,11 +586,7 @@ static struct digest {
 	}
 
 	*dp = 0;
-	if (IS_BINARY(arg)) {
-		ser = Copy_String(BUF_FORM, 0, dp - BIN_HEAD(BUF_FORM));
-	} else {
-		ser = Decode_UTF_String(VAL_BIN_DATA(TASK_BUF_FORM), dp - BIN_HEAD(BUF_FORM), -1, FALSE, FALSE);
-	}
+	ser = Copy_String(BUF_SCAN, 0, AS_REBLEN(dp - BIN_HEAD(BUF_SCAN)));
 
 	Set_Series(VAL_TYPE(arg), D_RET, ser);
 
@@ -813,7 +633,7 @@ static struct digest {
 	// using FORM buffer for intermediate conversion;
 	// counting with the worst scenario, where each single codepoint
 	// might need 4 bytes of UTF-8 data (%XX%XX%XX%XX)
-	REBYTE *dp = Reset_Buffer(BUF_FORM, 12 * VAL_LEN(arg));
+	REBYTE *dp = Reset_Buffer(BUF_SCAN, 12 * VAL_LEN(arg));
 
 	if (VAL_BYTE_SIZE(arg)) {
 		// byte size is 1, so the series should not contain chars with value over 0x80
@@ -878,7 +698,7 @@ static struct digest {
 		}
 	}
 	*dp = 0;
-	ser = Copy_String(BUF_FORM, 0, dp - BIN_HEAD(BUF_FORM));
+	ser = Copy_String(BUF_SCAN, 0, AS_REBLEN(dp - BIN_HEAD(BUF_SCAN)));
 	Set_Series(VAL_TYPE(arg), D_RET, ser);
 
 	return R_RET;
@@ -954,11 +774,8 @@ static struct digest {
 	if (D_REF(2)) tabsize = Int32s(D_ARG(3), 1);
 
 	// Set up the copy buffer:
-	if (VAL_BYTE_SIZE(val))
-		ser = Entab_Bytes(VAL_BIN(val), VAL_INDEX(val), len, tabsize);
-	else
-		ser = Entab_Unicode(VAL_UNI(val), VAL_INDEX(val), len, tabsize);
-
+	ASSERT1(VAL_BYTE_SIZE(val), RP_BAD_SIZE);
+	ser = Entab_Bytes(VAL_BIN(val), VAL_INDEX(val), len, tabsize);
 	Set_Series(VAL_TYPE(val), D_RET, ser);
 	
 	return R_RET;
@@ -979,11 +796,8 @@ static struct digest {
 	if (D_REF(2)) tabsize = Int32s(D_ARG(3), 1);
 
 	// Set up the copy buffer:
-	if (VAL_BYTE_SIZE(val))
-		ser = Detab_Bytes(VAL_BIN(val), VAL_INDEX(val), len, tabsize);
-	else
-		ser = Detab_Unicode(VAL_UNI(val), VAL_INDEX(val), len, tabsize);
-
+	ASSERT1(VAL_BYTE_SIZE(val), RP_BAD_SIZE);
+	ser = Detab_Bytes(VAL_BIN(val), VAL_INDEX(val), len, tabsize);
 	Set_Series(VAL_TYPE(val), D_RET, ser);
 	
 	return R_RET;
@@ -1022,23 +836,7 @@ static struct digest {
 	REBCNT len;
 //	REBSER *series;
 	REBYTE buffer[MAX_TUPLE*2+4];  // largest value possible
-	REBYTE *buf;
-
-#ifdef removed
-	if (IS_INTEGER(arg)) len = MAX_HEX_LEN;
-	else if (IS_TUPLE(arg)) {
-		len = VAL_TUPLE_LEN(arg);
-		if (len < 3) len = 3;
-		len *= 2;
-	}
-	else Trap_Arg(arg);
-
-	else if (IS_DECIMAL(arg)) len = MAX_HEX_LEN;
-	else if (IS_MONEY(arg)) len = 24;
-	else if (IS_CHAR(arg)) len = (VAL_CHAR(arg) > 0x7f) ? 4 : 2;
-#endif
-
-	buf = &buffer[0];
+	REBYTE *buf = &buffer[0];
 
 	if (D_REF(2)) {	// /size
 		//@@ https://github.com/Oldes/Rebol-issues/issues/127
@@ -1046,10 +844,18 @@ static struct digest {
 			Trap_Arg(D_ARG(3));
 		len = VAL_UNT32(D_ARG(3));
 	}
+	else if (IS_CHAR(arg)) {
+		len = VAL_UNT32(arg);
+		if (len <= 0xFF) len = 2;
+		else if (len <= 0xFFFF) len = 4;
+		else if (len <= 0xFFFFFF) len = 6;
+		else len = 8;
+	}
 	else {
 		len = NO_LIMIT;
 	}
-	if (IS_INTEGER(arg)) { // || IS_DECIMAL(arg)) {
+
+	if (IS_INTEGER(arg) || IS_CHAR(arg)) {
 		if (len == NO_LIMIT || len > MAX_HEX_LEN) len = MAX_HEX_LEN;
 		Form_Hex_Pad(buf, VAL_INT64(arg), len);
 	}
@@ -1137,11 +943,12 @@ static struct digest {
 {
 	REBVAL *arg = D_ARG(1);
 	const REBYTE *bp;
+	REBFLG surrogates;
 
-	bp = Check_UTF8(VAL_BIN_DATA(arg), VAL_LEN(arg));
+	bp = UTF8_Check(VAL_BIN_DATA(arg), VAL_LEN(arg), &surrogates);
 	if (bp == 0) return R_NONE;
 
-	VAL_INDEX(arg) = bp - VAL_BIN_HEAD(arg);
+	VAL_INDEX(arg) = AS_REBLEN(bp - VAL_BIN_HEAD(arg));
 	return R_ARG1;
 }
 

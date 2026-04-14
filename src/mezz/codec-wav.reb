@@ -1,9 +1,11 @@
 REBOL [
 	title:  "Codec: WAV"
-	name:   'codec-WAV
-	author: "Oldes"
+	name:    wav
+	type:    module
+	options: [delay]
 	version: 0.2.0
 	date:    2-Mar-2020
+	author: "Oldes"
 	history: [
 		0.1.0 11-Oct-2018 "Oldes" {
 			Initial version with DECODE and IDENTIFY functions.

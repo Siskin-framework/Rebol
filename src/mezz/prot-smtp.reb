@@ -79,7 +79,7 @@ throw-smtp-error: func [
 	smtp-port  [port!]
 	error [error! string! block!]
 ][
-	sys/log/error 'SMTP error
+	log-error 'SMTP error
 	unless error? error [
 		error: make error! [
 			type: 'Access
@@ -102,26 +102,26 @@ net-log: func[data /C /S /E /local msg][
 	case [
 		C [append msg "Client: "]
 		S [append msg "Server: "]
-		E [sys/log/error 'SMTP :data return :data]
+		E [log-error 'SMTP :data return :data]
 	]
 	append msg data
-	sys/log/more 'SMTP trim/tail msg
+	log-debug 'SMTP trim/tail msg
 	data
 ]
 
 sync-smtp-handler: function [event][
-	sys/log/debug 'SMTP ["sync-smtp-handler event:" event/type event/port/spec/ref]
+	log-trace 'SMTP ["sync-smtp-handler event:" event/type event/port/spec/ref]
 	; client is the real port ie. port/state/connection
 	client:    event/port
 	smtp-port: client/parent
 	spec:      smtp-port/spec
 	state:     smtp-port/state
 	smtp-ctx:  smtp-port/extra
-	sys/log/debug 'SMTP ["State:" state]
+	log-trace 'SMTP ["State:" state]
 
 	switch event/type [
 		error [
-			sys/log/error 'SMTP "Network error"
+			log-error 'SMTP "Network error"
 			close client
 			return true
 		]
@@ -132,7 +132,7 @@ sync-smtp-handler: function [event][
 		connect [
 			smtp-port/state: 'EHLO
 			either state = 'STARTTLS [
-				sys/log/more 'SMTP "TLS connection established..."
+				log-debug 'SMTP "TLS connection established..."
 				write smtp-ctx/connection to binary! net-log/C ajoin ["EHLO " spec/ehlo CRLF]
 				smtp-port/state: 'AUTH
 			][
@@ -151,7 +151,7 @@ sync-smtp-handler: function [event][
 
 			if system/options/log/smtp > 1 [
 				foreach line split-lines trim/tail response [
-					sys/log/more 'SMTP ["Server:^[[32m" line]
+					log-debug 'SMTP ["Server:^[[32m" line]
 				]
 			]
 
@@ -198,13 +198,13 @@ sync-smtp-handler: function [event][
 											return false
 										]
 										'else [
-											sys/log/debug 'SMTP ["Unknown authentication method:" auth]
+											log-trace 'SMTP ["Unknown authentication method:" auth]
 										]
 									]
 								]
 							)
 						]
-						sys/log/debug 'SMTP ["Trying to send without authentication!"]
+						log-trace 'SMTP ["Trying to send without authentication!"]
 						smtp-port/state: 'FROM
 						write client to binary! net-log/C ajoin ["MAIL FROM: <" smtp-ctx/mail/from ">" CRLF]
 						return false
@@ -213,7 +213,7 @@ sync-smtp-handler: function [event][
 
 				STARTTLS [
 					if code = 220 [
-						sys/log/more 'SMTP "Upgrading client's connection to TLS port"
+						log-debug 'SMTP "Upgrading client's connection to TLS port"
 						;; tls-port will be a new layer between existing smtp and client (tcp) connections
 						tls-port: open [scheme: 'tls conn: client]
 						tls-port/parent: smtp-port
@@ -227,12 +227,12 @@ sync-smtp-handler: function [event][
 					case [
 						find/part response "334 VXNlcm5hbWU6" 16 [ ;enbased "Username:"
 							; username being requested
-							sys/log/more 'SMTP "Client: ***user-name***"
+							log-debug 'SMTP "Client: ***user-name***"
 							write client to binary! ajoin [enbase/flat spec/user 64 CRLF]
 						]
 						find/part response "334 UGFzc3dvcmQ6" 16 [ ;enbased "Password:"
 							; pass being requested
-							sys/log/more 'SMTP "Client: ***user-pass***"
+							log-debug 'SMTP "Client: ***user-pass***"
 							write client to binary! ajoin [enbase/flat spec/pass 64 CRLF]
 							smtp-port/state: 'PASSWORD
 						]
@@ -247,7 +247,7 @@ sync-smtp-handler: function [event][
 						auth-key: debase auth-key 64
 						; compute challenge response
 						auth-key: checksum/with auth-key 'md5 spec/pass
-						sys/log/more 'SMTP "Client: ***auth-key***"
+						log-debug 'SMTP "Client: ***auth-key***"
 						write client to binary! ajoin [enbase/flat ajoin [spec/user SP lowercase enbase auth-key 16] 64 CRLF]
 						smtp-port/state: 'PASSWORD
 						false
@@ -273,14 +273,14 @@ sync-smtp-handler: function [event][
 							throw-smtp-error smtp-port "FROM address rejected by server"
 							return true ; awake.. no more job to do.
 						][
-							sys/log/error 'SMTP ["Server rejects TO address:" as-red smtp-ctx/rcpt]
+							log-error 'SMTP ["Server rejects TO address:" as-red smtp-ctx/rcpt]
 							smtp-ctx/rcpt: none
 							smtp-ctx/recipients: smtp-ctx/recipients - 1
 						]
 					]
 					either empty? smtp-ctx/mail/to [
 						;; no more recipients, check if at least one was accepted...
-						;sys/log/debug 'SMTP ["Number of accepted recipients:" smtp-ctx/recipients]
+						;log-trace 'SMTP ["Number of accepted recipients:" smtp-ctx/recipients]
 						if smtp-ctx/recipients == 0 [
 							throw-smtp-error smtp-port "There were no accepted recipients!"
 							return true
@@ -301,7 +301,7 @@ sync-smtp-handler: function [event][
 					either code = 354 [
 						replace/all smtp-ctx/mail/message "^/." "^/.."
 						smtp-ctx/mail/message: ptr: rejoin [ enline smtp-ctx/mail/message ]
-						sys/log/more 'SMTP ["Sending"  min bufsize length? ptr "bytes of" length? ptr ]
+						log-debug 'SMTP ["Sending"  min bufsize length? ptr "bytes of" length? ptr ]
 						write client take/part ptr bufsize
 						smtp-port/state: 'SENDING
 						false
@@ -311,7 +311,7 @@ sync-smtp-handler: function [event][
 				]
 				END [
 					either code = 250 [
-						sys/log/info 'SMTP "Message successfully sent."
+						log-info 'SMTP "Message successfully sent."
 						smtp-port/state: 'QUIT
 						write client to binary!  net-log/C join "QUIT" crlf
 						true
@@ -330,10 +330,10 @@ sync-smtp-handler: function [event][
 			switch/default state [
 				SENDING [
 					either not empty? ptr: smtp-ctx/mail/message [
-						sys/log/more 'SMTP ["Sending"  min bufsize length? ptr "bytes of" length? ptr ]
+						log-debug 'SMTP ["Sending"  min bufsize length? ptr "bytes of" length? ptr ]
 						write client to binary! take/part ptr bufsize
 					][
-						sys/log/debug 'SMTP "Sending ends."
+						log-trace 'SMTP "Sending ends."
 						write client to binary! rejoin [ crlf "." crlf ]
 						smtp-port/state: 'END
 					]
@@ -359,7 +359,7 @@ sync-write: func [
 	body [block!]
 	/local ctx result rcpt error
 ][
-	sys/log/debug 'SMTP ["sync-write state:" port/state]
+	log-trace 'SMTP ["sync-write state:" port/state]
 
 	;; there may be multiple recipients...
 	;; do validation before actually opening the connection.
@@ -479,7 +479,7 @@ sys/make-scheme [
 		close: func [
 			port [port!]
 		][
-			sys/log/debug 'SMTP "Close"
+			log-trace 'SMTP "Close"
 			if open? port [
 				close port/extra/connection
 				port/extra/connection/awake: none
@@ -491,7 +491,7 @@ sys/make-scheme [
 		read: func [
 			port [port!]
 		][
-			sys/log/debug 'SMTP "Read"
+			log-trace 'SMTP "Read"
 		]
 
 		write: func [
@@ -504,7 +504,7 @@ sys/make-scheme [
 	awake: func[event /local port type][
 		port: event/port
 		type: event/type
-		sys/log/debug 'SMTP ["SMTP-Awake event:" type]
+		log-trace 'SMTP ["SMTP-Awake event:" type]
 		switch/default type [
 			error [
 				port/state: 'ERROR

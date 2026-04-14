@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,18 +26,16 @@
 **  Author:  Carl Sassenrath, Oldes
 **  Notes:
 **
+**		New functions must be added to end for backward compatibility
+**		with older extensions! Also existing functions should not
+**		be modified for the same reason!
+**
 ***********************************************************************/
 
 #include "sys-core.h"
 #include "reb-dialect.h"
 #include "reb-ext.h"
 #include "reb-evtypes.h"
-
-// Linkage back to HOST functions. Needed when we compile as a DLL
-// in order to use the OS_* macro functions.
-#ifdef REB_API  // Included by C command line
-REBOL_HOST_LIB *Host_Lib;
-#endif
 
 #include "reb-lib.h"
 
@@ -84,7 +82,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
-*/	RL_API int RL_Init(REBARGS *rargs, void *lib)
+*/	RL_API REBARGS* RL_Init(int argc, char **argv)
 /*
 **	Initialize the REBOL interpreter.
 **
@@ -105,13 +103,13 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 {
 	int marker;
 	REBUPT bounds;
+	if (Std_IO) return &Main_Args;
 
-	Host_Lib = lib;
+	OS_Parse_Args(argc, (REBCHR **)argv, &Main_Args);
 
-	if (Host_Lib->size < HOST_LIB_SIZE) return 1;
-	if (((HOST_LIB_VER << 16) + HOST_LIB_SUM) != Host_Lib->ver_sum) return 2;
+	Std_IO = OS_Open_StdIO(Main_Args.options & RO_CGI);  // also sets up interrupt handler
 
-	bounds = (REBUPT)OS_CONFIG(1, 0);
+	bounds = (REBUPT)OS_Config(1, 0);
 	if (bounds == 0) bounds = (REBUPT)STACK_BOUNDS;
 
 #ifdef OS_STACK_GROWS_UP
@@ -121,14 +119,13 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	else Stack_Limit = (REBUPT)&marker - bounds;
 #endif
 
-	Init_Core(rargs);
+	Init_Core(&Main_Args);
 	GC_Active = TRUE; // Turn on GC
-	if (rargs->options & RO_TRACE) {
+	if (Main_Args.options & RO_TRACE) {
 		Trace_Level = 9999;
 		Trace_Flags = 1;
 	}
-
-	return 0;
+	return &Main_Args;
 }
 
 
@@ -175,11 +172,16 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 	REBSER *ser;
 
 	if (bin) {
+#ifdef INCLUDE_DEPRECATED_ZLIB
 		spec.data = bin;
 		spec.tail = len;
-		ser = DecompressZlib(&spec, 0, -1, 0, 0);
+		ser = DecompressZlibDeprecated(&spec, 0, -1, 0, 0);
+#else
+		REBINT err = 0;
+		DecompressZlib(bin, len, -1, &ser, &err);
+		if (err) return 1;
+#endif
 		if (!ser) return 1;
-
 		val = BLK_SKIP(Sys_Context, SYS_CTX_BOOT_HOST);
 		Set_Binary(val, ser);
 	}
@@ -239,7 +241,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 		Set_Block(value, ser);
 	}
 	value = Append_Value(ser);
-	Set_Binary(value, Copy_Bytes(source, -1)); // UTF-8
+	Set_Binary(value, Copy_Bytes(source, UNKNOWN)); // UTF-8
 	value = Append_Value(ser);
 	SET_HANDLE(value, call, SYM_EXTENSION, HANDLE_FUNCTION);
 
@@ -325,11 +327,18 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 #endif
 
 	//Cloak(TRUE, code, NAT_SPEC_SIZE, &key[0], 20, TRUE);
+#ifdef INCLUDE_DEPRECATED_ZLIB
 	spec.data = bin;
 	spec.tail = length;
-	text = DecompressZlib(&spec, 0, -1, 0, 0);
+	text = DecompressZlibDeprecated(&spec, 0, -1, 0, 0);
+#else
+	REBINT err = 0;
+	DecompressZlib(bin, length, -1, &text, &err);
+	if (err) return FALSE;
+#endif
 	if (!text) return FALSE;
 	Append_Byte(text, 0);
+
 
 #ifdef DUMP_INIT_SCRIPT
 	f = _open("host-boot.reb", _O_CREAT | _O_RDWR, _S_IREAD | _S_IWRITE );
@@ -399,7 +408,7 @@ extern int Do_Callback(REBSER *obj, u32 name, RXIARG *args, RXIARG *result);
 
 /***********************************************************************
 **
-*/	RL_API void RL_Print(REBYTE *fmt, ...)
+*/	RL_API void RL_Print(const REBYTE *fmt, ...)
 /*
 **	Low level print of formatted data to the console.
 **
@@ -726,6 +735,8 @@ RL_API int RL_Get_UTF8_String(REBSER *series, u32 index, void **str)
 **	Notes:
 **		Strings are allowed to move in memory. Therefore, you will want
 **		to make a copy of the string if needed.
+**
+**	This function should be DEPRECATED! All strings should be UTF-8 encoded now.
 */
 {
 	int len = (index >= series->tail) ? 0 : series->tail - index;
@@ -778,7 +789,7 @@ RL_API u32 *RL_Map_Words(REBSER *series)
 	u32 *words;
 	REBVAL *val = BLK_HEAD(series);
 
-	words = OS_MAKE((series->tail+2) * sizeof(u32));
+	words = OS_Make((series->tail+2) * sizeof(u32));
 
 	for (; NOT_END(val); val++) {
 		if (ANY_WORD(val)) words[i++] = VAL_WORD_CANON(val);
@@ -808,7 +819,7 @@ RL_API REBYTE *RL_Word_String(u32 word)
 {
 	REBYTE *s1, *s2;
 	s1 = Get_Sym_Name(word);
-	s2 = OS_MAKE(strlen(cs_cast(s1)) + 1);
+	s2 = OS_Make(strlen(cs_cast(s1)) + 1);
 	strcpy(s_cast(s2), cs_cast(s1));
 	return s2;
 }
@@ -859,9 +870,9 @@ RL_API REBUPT RL_Series(REBSER *series, REBCNT what)
 	return 0;
 }
 
-RL_API int RL_Get_Char(REBSER *series, u32 index)
+RL_API REBU32 RL_Get_Char(REBSER *series, u32 index)
 /*
-**	Get a character from byte or unicode string.
+**	Get a character from UTF8 encoded string.
 **
 **	Returns:
 **		A Unicode character point from string. If index is
@@ -875,7 +886,7 @@ RL_API int RL_Get_Char(REBSER *series, u32 index)
 **		R3 build options. The default is 16 bits.
 */
 {
-	if (index >= series->tail) return -1;
+	if (index >= series->tail) return NOT_FOUND;
 	return GET_ANY_CHAR(series, index);
 }
 
@@ -992,7 +1003,7 @@ RL_API u32 *RL_Words_Of_Object(REBSER *obj)
 	REBVAL *syms;
 
 	syms = FRM_WORD(obj, 1);
-	words = OS_MAKE(obj->tail * sizeof(u32)); // One less, because SELF not included.
+	words = OS_Make(obj->tail * sizeof(u32)); // One less, because SELF not included.
 	for (index = 0; index < (obj->tail-1); syms++, index++) {
 		words[index] = VAL_BIND_CANON(syms);
 	}
@@ -1124,14 +1135,19 @@ RL_API REBSER* RL_Decode_UTF_String(REBYTE *src, REBCNT len, REBINT utf, REBFLG 
 **		utf  - is 0, 8, +/-16, +/-32.
 **		ccr  - Convert LF/CRLF
 **		uni  - keep uni version even for plain ascii
+**
+**  Note:
+**		uni is not used anymore! Instead there is REBCNT err,
+**		which is used to report error position. But not used here,
+**		because this function may be used by old extensions:/
 */
 {
-	return Decode_UTF_String(src, len, utf, ccr, uni);
+	return Decode_UTF_String(src, len, utf, ccr, NULL);
 }
 
 /***********************************************************************
 **
-*/	RL_API REBCNT RL_Register_Handle(REBYTE *name, REBCNT size, void* free_func)
+*/	RL_API REBCNT RL_Register_Handle(const REBYTE *name, REBCNT size, void* free_func)
 /*
 **	Stores handle's specification (required data size and optional free callback.
 **
@@ -1197,12 +1213,12 @@ RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
 **		len  - number of source bytes consumed.
 */
 {
-	return  Decode_UTF8_Char(&str, len);
+	return  UTF8_Decode_Codepoint(&str, len);
 }
 
 /***********************************************************************
 **
-*/	RL_API REBCNT RL_Register_Handle_Spec(REBYTE *name, REBHSP *spec)
+*/	RL_API REBCNT RL_Register_Handle_Spec(const REBYTE *name, REBHSP *spec)
 /*
 **	Stores handle's specification (required data size and optional callbacks).
 **  It's an extended version of old RL_Register_Handle function.
@@ -1253,12 +1269,12 @@ RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
 	REBLEN  index = file->index;
 
 	if (!ser || index > SERIES_TAIL(ser)) return 0;
-
-	ser = To_Local_Path(SERIES_SKIP(ser, index), SERIES_TAIL(ser)-index, !BYTE_SIZE(ser), full);
-	// To_Local_Path always returns REBUNI series
-	if (ser && utf8) {
-		ser = Encode_UTF8_String(SERIES_DATA(ser), SERIES_TAIL(ser), 1, 0);
+	if (!BYTE_SIZE(ser)) {
+	//	puts("RL_To_Local_Path expects UTF8 encode input!");
+		return NULL;
 	}
+
+	ser = To_Local_Path(SERIES_SKIP(ser, index), SERIES_TAIL(ser)-index, !utf8, full);
 	return ser;
 }
 
@@ -1279,6 +1295,95 @@ RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len)
 {
 	return To_REBOL_Path(src, len, uni, 0);
 }
+
+/***********************************************************************
+**
+*/	RL_API REBSER* RL_Struct_Spec(REBCNT id)
+/*
+**	Get struct specification.
+**
+**	Returns:
+**		Returns a struct specification data.
+**	Arguments:
+**		id - unique struct id (counted as a hash of the specification)
+*/
+{
+	REBVAL *struct_specs = Get_System(SYS_CATALOG, CAT_STRUCTS);
+	REBVAL key;
+	REBCNT n;
+	SET_INTEGER(&key, id);
+	n = Find_Entry(VAL_SERIES(struct_specs), &key, 0, TRUE);
+	if (n == NOT_FOUND) return 0;
+	return VAL_SERIES(VAL_BLK_SKIP(struct_specs, n));
+}
+
+/***********************************************************************
+**
+*/	RL_API REBCNT RL_Encode_UTF8_Char(REBYTE *dst, REBU32 chr)
+/*
+**	Converts a single char to UTF8 code-point.
+**
+**	Returns:
+**		Returns length of char stored in dst
+**	Arguments:
+**		dst  - UTF8 encoded data
+**		chr  - Unicode character.
+*/
+{
+	return  Encode_UTF8_Char(dst, chr);
+}
+
+/***********************************************************************
+**
+*/	RL_API void* RL_Mem_Alloc(void *opaque, size_t size)
+/*
+**	Allocates memory either using a memory pool or standard dynamic memory allocation.
+**	It keeps info about this memory and checks if memory use is not over policy.
+**	Such allocated memory must be freed using `RL_Mem_Free` function!
+**
+**	Returns:
+**		Pointer to the newly allocated memory
+**	Arguments:
+**		opaque  - unused
+**		size    - required memory size
+*/
+{
+	return Make_Managed_Mem(opaque, size);
+}
+
+/***********************************************************************
+**
+*/	RL_API void RL_Mem_Free(void* opaque, void* address)
+/*
+**	Frees memory allocated using the `RL_Mem_Alloc` function.
+**
+**	Returns:
+**		nothing
+**	Arguments:
+**		opaque  - unused
+**		address - memory address to be freed
+*/
+{
+	Free_Managed_Mem(opaque, address);
+}
+
+/***********************************************************************
+**
+*/	RL_API int RL_Register_Compress_Method(const REBYTE* name, COMPRESS_FUNC encoder, DECOMPRESS_FUNC decoder)
+/*
+**	Register external compression functions.
+**
+**	Returns:
+**		TRUE if succesfully registered.
+**	Arguments:
+**		name - null ternimanted name of the compression method
+**		encoder - external compress function
+*/
+{
+	REBCNT sym = Make_Word(cb_cast(name), 0);
+	return Register_Compress_Method(sym, encoder, decoder);
+}
+
 
 
 #include "reb-lib-lib.h"

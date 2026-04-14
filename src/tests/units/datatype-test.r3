@@ -58,6 +58,13 @@ Rebol [
 		--assert not none? find/only [#(datatype! string!) #(datatype! binary!)] #(datatype! binary!)
 		--assert not none? find/only [#(datatype! string!) #(datatype! binary!)] binary!
 
+	--test-- "number?"
+		--assert number? 1
+		--assert number? 1.0
+		--assert number? 1%
+		--assert not number? "1"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2672
+		--assert not number? ()
 ===end-group===
 
 ~~~end-file~~~

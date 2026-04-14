@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -121,10 +122,8 @@
 	*ser = *nser;
 	ser->sizes = oser.sizes;
 	ser->flags = oser.flags;
-	*nser = oser;
-
-	Clear_Series(ser);
 	ser->tail = pnum;
+	*nser = oser;
 
 	Free_Series(nser);
 }
@@ -142,10 +141,10 @@
 {
 	REBCNT *hashes;
 	REBVAL *word;
-	REBINT hash;
+	REBCNT key;
+	REBCNT hash=0;
 	REBCNT size;
-	REBINT skip;
-	REBCNT n;
+	REBCNT n, i;
 
 	// Allocate a new hash table:
 	Expand_Hash(PG_Word_Table.hashes);
@@ -156,13 +155,10 @@
 	hashes = (REBCNT *)PG_Word_Table.hashes->data;
 	size = PG_Word_Table.hashes->tail;
 	for (n = 1; n < PG_Word_Table.series->tail; n++, word++) {
-		hash = Hash_Word(VAL_SYM_NAME(word), -1);
-		skip  = (hash & 0x0000FFFF) % size;
-		if (skip == 0) skip = 1;
-		hash = (hash & 0x00FFFF00) % size;
-		while (hashes[hash]) {
-			hash += skip;
-			if (hash >= (REBINT)size) hash -= size;
+		key = CRC_Word(VAL_SYM_NAME(word), UNKNOWN);
+		for (i = 0; i < size; i++) {
+			hash = Hash_Probe(key, i, size);
+			if (!hashes[hash]) break;
 		}
 		hashes[hash] = n;
 	}
@@ -196,11 +192,11 @@
 **
 ***********************************************************************/
 {
-	REBINT	hash;
-	REBINT	size;
-	REBINT	skip;
+	REBCNT	key;
+	REBCNT  hash = 0;
+	REBLEN	size;
 	REBINT	n;
-	REBCNT	h;
+	REBCNT	h=0, i;
 	REBCNT	*hashes;
 	REBVAL  *words;
 	REBVAL  *w;
@@ -225,28 +221,22 @@
 		CLEAR_SERIES(Bind_Table);
 	}
 
-	size   = (REBINT)PG_Word_Table.hashes->tail;
+	size   = PG_Word_Table.hashes->tail;
 	words  = BLK_HEAD(PG_Word_Table.series);
 	hashes = (REBCNT *)PG_Word_Table.hashes->data;
 
 	// Hash the word, including a skip factor for lookup:
-	hash  = Hash_Word(str, len);
-	skip  = (hash & 0x0000FFFF) % size;
-	if (skip == 0) skip = 1;
-	hash = (hash & 0x00FFFF00) % size;
-	//Debug_Fmt("%s hash %d skip %d", str, hash, skip);
-
+	key  = CRC_Word(str, len);
 	// Search hash table for word match:
-	while (NZ(h = hashes[hash])) {
-		while ((n = Compare_UTF8(VAL_SYM_NAME(words+h), str, len)) >= 0) {
-			//if (Match_String("script", str, len))
-			//	Debug_Fmt("---- %s %d %d\n", VAL_SYM_NAME(&words[h]), n, h);
+	for (i = 0; i < size; i++) {
+		hash = Hash_Probe(key, i, size);
+		h = hashes[hash];
+		if (!h) break;
+		while ((n = Compare_UTF8(VAL_SYM_NAME(words + h), str, len)) >= 0) {
 			if (n == 0) return h; // direct hit
-			if (VAL_SYM_ALIAS(words+h)) h = VAL_SYM_ALIAS(words+h);
+			if (VAL_SYM_ALIAS(words + h)) h = VAL_SYM_ALIAS(words + h);
 			else goto make_sym; // Create new alias for word
 		}
-		hash += skip;
-		if (hash >= size) hash -= size;
 	}
 
 make_sym:
@@ -337,7 +327,8 @@ make_sym:
 /*
 ***********************************************************************/
 {
-	if (num == 0 || num >= PG_Word_Table.series->tail) return (REBYTE*)"???";
+	if (num == 0 || num >= PG_Word_Table.series->tail)
+		return (REBYTE*)"???";
 	return VAL_SYM_NAME(BLK_SKIP(PG_Word_Table.series, num));
 }
 
@@ -402,7 +393,6 @@ make_sym:
 		// Note that the TAIL is never changed for this series.
 		PG_Word_Table.hashes = Make_Series(n+1, sizeof(REBCNT), FALSE);
 		KEEP_SERIES(PG_Word_Table.hashes, "word hashes"); // pointer array
-		Clear_Series(PG_Word_Table.hashes);
 		PG_Word_Table.hashes->tail = n;
 
 		// The word (symbol) table itself:
@@ -420,6 +410,5 @@ make_sym:
 	// The bind table. Used to cache context indexes for given symbols.
 	Bind_Table = Make_Series(SERIES_REST(PG_Word_Table.series), 4, FALSE);
 	KEEP_SERIES(Bind_Table, "bind table"); // numeric table
-	CLEAR_SERIES(Bind_Table);
 	Bind_Table->tail = PG_Word_Table.series->tail;
 }

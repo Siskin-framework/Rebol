@@ -3,7 +3,7 @@ REBOL [
 	Title: "REBOL 3 Mezzanine: Startup Banner"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2023 Rebol Open Source Developers
+		Copyright 2012-2025 Rebol Open Source Developers
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -45,7 +45,10 @@ make-banner: func [
 	str
 ]
 
-if #"/" <> first system/options/home [
+if all [
+    system/options/home
+    #"/" <> first system/options/home
+][
 	;make sure that home directory is absolute on all platforms
 	system/options/home: clean-path join what-dir system/options/home
 ]
@@ -55,7 +58,7 @@ sys/boot-banner: make-banner [
 	["REBOL/" system/product #" " system/version " (Oldes branch)"]
 	-
 	= Copyright: "2012 REBOL Technologies"
-	= "" "2012-2024 Rebol Open Source Contributors"
+	= "" "2012-2025 Rebol Open Source Contributors"
 	= "" "Apache 2.0 License, see LICENSE."
 	= Website:  "https://github.com/Oldes/Rebol3"
 	-
@@ -67,14 +70,15 @@ sys/boot-banner: make-banner [
 	]
 	= Build:    system/build/date
 	-
-	= Home:     [to-local-file system/options/home]
+	= Home: [to-local-file any [system/options/home %"_"]]
+	= Data: [to-local-file any [system/options/data %"_"]]
 	-
 ]
 
 system/license: make-banner [
 	-
 	= Copyright: "2012 REBOL Technologies"
-	= "" "2012-2022 Rebol Open Source Contributors"
+	= "" "2012-2025 Rebol Open Source Contributors"
 	= "" "Licensed under the Apache License, Version 2.0."
 	= "" "https://www.apache.org/licenses/LICENSE-2.0"
 	-
@@ -82,6 +86,8 @@ system/license: make-banner [
 	-
 ]
 
+;sys/boot-banner: ajoin ["REBOL/" system/product #" " system/version " (Oldes branch)"]
+;system/license: "Licensed under the Apache License, Version 2.0."
 
 append sys/boot-banner
 {^/^[[1;33mImportant notes^[[0m:
@@ -97,6 +103,11 @@ append sys/boot-banner
 
   ^[[1;32mHelp^[[0m  - show built-in help information
 }
+
+if system/options/no-color [
+	sys/remove-ansi sys/boot-banner
+	sys/remove-ansi system/license
+]
 
 ;print make-banner boot-banner halt
 ;print boot-help

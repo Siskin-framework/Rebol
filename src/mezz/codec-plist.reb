@@ -1,9 +1,9 @@
 REBOL [
+	title:   "Codec: PLIST"
 	name:    plist
 	type:    module
 	options: [delay]
 	version: 1.0.0
-	title:   "Codec: PLIST"
 	file:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-plist.reb
 	author:  "Oldes"
 	history: [
@@ -93,7 +93,7 @@ register-codec [
 		verbose: system/options/log/plist
 		unless binary? data [ data: read data ]
 		if verbose > 0 [
-			sys/log/info 'PLIST ["^[[1;32mDecode PLIST data^[[m (^[[1m" length? data "^[[mbytes )"]
+			log-info 'PLIST ["^[[1;32mDecode PLIST data^[[m (^[[1m" length? data "^[[mbytes )"]
 		]
 		unless parse to string! data [
 			thru "<plist " thru #">"
@@ -120,11 +120,11 @@ register-codec [
 						]
 					]
 					DER-Encoded-Profile [
-						sys/log/more 'PLIST ajoin [as-green k ": " mold v]
+						log-debug 'PLIST ajoin [as-green k ": " mold v]
 						continue
 					]
 				]
-				sys/log 'PLIST ajoin [as-green k ": " mold v]
+				log-warn 'PLIST ajoin [as-green k ": " mold v]
 			]		
 		]
 

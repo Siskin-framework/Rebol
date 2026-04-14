@@ -291,8 +291,8 @@ again:
 		break;
 
 	case 4:	// refinement:
-		dia->fargi = fargs - BLK_HEAD(dia->fargs) + 1;
-		dia->outi = outp - BLK_HEAD(dia->out) + 1;
+		dia->fargi = AS_REBLEN(fargs - BLK_HEAD(dia->fargs) + 1);
+		dia->outi = AS_REBLEN(outp - BLK_HEAD(dia->out) + 1);
 		*outp = *value;
 		return 1;
 

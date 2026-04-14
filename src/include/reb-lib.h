@@ -2,7 +2,7 @@
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **  Licensed under the Apache License, Version 2.0
 **  This is a code-generated file.
@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: REBOL Host and Extension API
-**  Build: 3.16.0
-**  Date:  4-Apr-2024
+**  Build: 3.21.15
+**  Date:  14-Apr-2026
 **  File:  reb-lib.reb
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-reb-lib.reb)
@@ -22,22 +22,22 @@
 // These constants are created by the release system and can be used to check
 // for compatiblity with the reb-lib DLL (using RL_Version.)
 #define RL_VER 3
-#define RL_REV 16
-#define RL_UPD 0
+#define RL_REV 21
+#define RL_UPD 15
 
 // Compatiblity with the lib requires that structs are aligned using the same
 // method. This is concrete, not abstract. The macro below uses struct
 // sizes to inform the developer that something is wrong.
 #if defined(__LP64__) || defined(__LLP64__)
-#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 100 && sizeof(REBEVT) == 16)
+#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 116 && sizeof(REBEVT) == 16)
 #else
-#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 80 && sizeof(REBEVT) == 12)
+#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 96 && sizeof(REBEVT) == 12)
 #endif
 
 // Function entry points for reb-lib (used for MACROS below):
 typedef struct rebol_ext_api {
 	void (*version)(REBYTE vers[]);
-	int (*init)(REBARGS *rargs, void *lib);
+	REBARGS* (*init)(int argc, char **argv);
 	void (*dispose)(void);
 	int (*start)(REBYTE *bin, REBINT len, REBCNT flags);
 	void (*reset)(void);
@@ -47,7 +47,7 @@ typedef struct rebol_ext_api {
 	int (*do_binary)(REBYTE *bin, REBINT length, REBCNT flags, REBCNT key, RXIARG *result);
 	int (*do_block)(REBSER *blk, REBCNT flags, RXIARG *result);
 	void (*do_commands)(REBSER *blk, REBCNT flags, REBCEC *context);
-	void (*print)(REBYTE *fmt, ...);
+	void (*print)(const REBYTE *fmt, ...);
 	void (*print_tos)(REBCNT flags, REBYTE *marker);
 	int (*event)(REBEVT *evt);
 	int (*update_event)(REBEVT *evt);
@@ -64,7 +64,7 @@ typedef struct rebol_ext_api {
 	REBYTE *(*word_string)(u32 word);
 	u32 (*find_word)(u32 *words, u32 word);
 	REBUPT (*series)(REBSER *series, REBCNT what);
-	int (*get_char)(REBSER *series, u32 index);
+	REBU32 (*get_char)(REBSER *series, u32 index);
 	u32 (*set_char)(REBSER *series, u32 index, u32 chr);
 	int (*get_value_resolved)(REBSER *series, u32 index, RXIARG *result);
 	int (*get_value)(REBSER *series, u32 index, RXIARG *result);
@@ -76,13 +76,18 @@ typedef struct rebol_ext_api {
 	REBCNT (*encode_utf8)(REBYTE *dst, REBINT max, void *src, REBCNT *len, REBFLG uni, REBFLG opts);
 	REBSER* (*encode_utf8_string)(void *src, REBCNT len, REBFLG uni, REBFLG opts);
 	REBSER* (*decode_utf_string)(REBYTE *src, REBCNT len, REBINT utf, REBFLG ccr, REBFLG uni);
-	REBCNT (*register_handle)(REBYTE *name, REBCNT size, void* free_func);
+	REBCNT (*register_handle)(const REBYTE *name, REBCNT size, void* free_func);
 	REBHOB* (*make_handle_context)(REBCNT sym);
 	void (*free_handle_context)(REBHOB *hob);
 	REBCNT (*decode_utf8_char)(const REBYTE *str, REBCNT *len);
-	REBCNT (*register_handle_spec)(REBYTE *name, REBHSP *spec);
+	REBCNT (*register_handle_spec)(const REBYTE *name, REBHSP *spec);
 	REBSER* (*to_local_path)(RXIARG *file, REBFLG full, REBFLG utf8);
 	REBSER* (*to_rebol_path)(void *src, REBCNT len, REBINT uni);
+	REBSER* (*struct_spec)(REBCNT id);
+	REBCNT (*encode_utf8_char)(REBYTE *dst, REBU32 chr);
+	void* (*mem_alloc)(void *opaque, size_t size);
+	void (*mem_free)(void* opaque, void* address);
+	int (*register_compress_method)(const REBYTE* name, COMPRESS_FUNC encoder, DECOMPRESS_FUNC decoder);
 } RL_LIB;
 
 // Extension entry point functions:
@@ -124,7 +129,7 @@ extern RL_LIB *RL;  // is passed to the RX_Init() function
 
 #define RL_INIT(a,b)                RL->init(a,b)
 /*
-**	int RL_Init(REBARGS *rargs, void *lib)
+**	REBARGS* RL_Init(int argc, char **argv)
 **
 **	Initialize the REBOL interpreter.
 **
@@ -308,7 +313,7 @@ extern RL_LIB *RL;  // is passed to the RX_Init() function
 
 #define RL_PRINT(a,...)             RL->print(a,__VA_ARGS__)
 /*
-**	void RL_Print(REBYTE *fmt, ...)
+**	void RL_Print(const REBYTE *fmt, ...)
 **
 **	Low level print of formatted data to the console.
 **
@@ -532,6 +537,8 @@ extern RL_LIB *RL;  // is passed to the RX_Init() function
 **	Notes:
 **		Strings are allowed to move in memory. Therefore, you will want
 **		to make a copy of the string if needed.
+**
+**	This function should be DEPRECATED! All strings should be UTF-8 encoded now.
 */
 
 #define RL_MAP_WORD(a)              RL->map_word(a)
@@ -617,9 +624,9 @@ extern RL_LIB *RL;  // is passed to the RX_Init() function
 
 #define RL_GET_CHAR(a,b)            RL->get_char(a,b)
 /*
-**	int RL_Get_Char(REBSER *series, u32 index)
+**	REBU32 RL_Get_Char(REBSER *series, u32 index)
 **
-**	Get a character from byte or unicode string.
+**	Get a character from UTF8 encoded string.
 **
 **	Returns:
 **		A Unicode character point from string. If index is
@@ -806,11 +813,16 @@ extern RL_LIB *RL;  // is passed to the RX_Init() function
 **		utf  - is 0, 8, +/-16, +/-32.
 **		ccr  - Convert LF/CRLF
 **		uni  - keep uni version even for plain ascii
+**
+**  Note:
+**		uni is not used anymore! Instead there is REBCNT err,
+**		which is used to report error position. But not used here,
+**		because this function may be used by old extensions:/
 */
 
 #define RL_REGISTER_HANDLE(a,b,c)   RL->register_handle(a,b,c)
 /*
-**	REBCNT RL_Register_Handle(REBYTE *name, REBCNT size, void* free_func)
+**	REBCNT RL_Register_Handle(const REBYTE *name, REBCNT size, void* free_func)
 **
 **	Stores handle's specification (required data size and optional free callback.
 **
@@ -865,7 +877,7 @@ extern RL_LIB *RL;  // is passed to the RX_Init() function
 
 #define RL_REGISTER_HANDLE_SPEC(a,b) RL->register_handle_spec(a,b)
 /*
-**	REBCNT RL_Register_Handle_Spec(REBYTE *name, REBHSP *spec)
+**	REBCNT RL_Register_Handle_Spec(const REBYTE *name, REBHSP *spec)
 **
 **	Stores handle's specification (required data size and optional callbacks).
 **  It's an extended version of old RL_Register_Handle function.
@@ -914,6 +926,72 @@ extern RL_LIB *RL;  // is passed to the RX_Init() function
 **
 */
 
+#define RL_STRUCT_SPEC(a)           RL->struct_spec(a)
+/*
+**	REBSER* RL_Struct_Spec(REBCNT id)
+**
+**	Get struct specification.
+**
+**	Returns:
+**		Returns a struct specification data.
+**	Arguments:
+**		id - unique struct id (counted as a hash of the specification)
+*/
+
+#define RL_ENCODE_UTF8_CHAR(a,b)    RL->encode_utf8_char(a,b)
+/*
+**	REBCNT RL_Encode_UTF8_Char(REBYTE *dst, REBU32 chr)
+**
+**	Converts a single char to UTF8 code-point.
+**
+**	Returns:
+**		Returns length of char stored in dst
+**	Arguments:
+**		dst  - UTF8 encoded data
+**		chr  - Unicode character.
+*/
+
+#define RL_MEM_ALLOC(a,b)           RL->mem_alloc(a,b)
+/*
+**	void* RL_Mem_Alloc(void *opaque, size_t size)
+**
+**	Allocates memory either using a memory pool or standard dynamic memory allocation.
+**	It keeps info about this memory and checks if memory use is not over policy.
+**	Such allocated memory must be freed using `RL_Mem_Free` function!
+**
+**	Returns:
+**		Pointer to the newly allocated memory
+**	Arguments:
+**		opaque  - unused
+**		size    - required memory size
+*/
+
+#define RL_MEM_FREE(a,b)            RL->mem_free(a,b)
+/*
+**	void RL_Mem_Free(void* opaque, void* address)
+**
+**	Frees memory allocated using the `RL_Mem_Alloc` function.
+**
+**	Returns:
+**		nothing
+**	Arguments:
+**		opaque  - unused
+**		address - memory address to be freed
+*/
+
+#define RL_REGISTER_COMPRESS_METHOD(a,b,c) RL->register_compress_method(a,b,c)
+/*
+**	int RL_Register_Compress_Method(const REBYTE* name, COMPRESS_FUNC encoder, DECOMPRESS_FUNC decoder)
+**
+**	Register external compression functions.
+**
+**	Returns:
+**		TRUE if succesfully registered.
+**	Arguments:
+**		name - null ternimanted name of the compression method
+**		encoder - external compress function
+*/
+
 
 
 #define RL_MAKE_BINARY(s) RL_MAKE_STRING(s, FALSE)
@@ -921,7 +999,7 @@ extern RL_LIB *RL;  // is passed to the RX_Init() function
 #ifndef REB_EXT // not extension lib, use direct calls to r3lib
 
 RL_API void RL_Version(REBYTE vers[]);
-RL_API int RL_Init(REBARGS *rargs, void *lib);
+RL_API REBARGS* RL_Init(int argc, char **argv);
 RL_API void RL_Dispose(void);
 RL_API int RL_Start(REBYTE *bin, REBINT len, REBCNT flags);
 RL_API void RL_Reset(void);
@@ -931,7 +1009,7 @@ RL_API int RL_Do_String(REBYTE *text, REBCNT flags, RXIARG *result);
 RL_API int RL_Do_Binary(REBYTE *bin, REBINT length, REBCNT flags, REBCNT key, RXIARG *result);
 RL_API int RL_Do_Block(REBSER *blk, REBCNT flags, RXIARG *result);
 RL_API void RL_Do_Commands(REBSER *blk, REBCNT flags, REBCEC *context);
-RL_API void RL_Print(REBYTE *fmt, ...);
+RL_API void RL_Print(const REBYTE *fmt, ...);
 RL_API void RL_Print_TOS(REBCNT flags, REBYTE *marker);
 RL_API int RL_Event(REBEVT *evt);
 RL_API int RL_Update_Event(REBEVT *evt);
@@ -948,7 +1026,7 @@ RL_API u32 *RL_Map_Words(REBSER *series);
 RL_API REBYTE *RL_Word_String(u32 word);
 RL_API u32 RL_Find_Word(u32 *words, u32 word);
 RL_API REBUPT RL_Series(REBSER *series, REBCNT what);
-RL_API int RL_Get_Char(REBSER *series, u32 index);
+RL_API REBU32 RL_Get_Char(REBSER *series, u32 index);
 RL_API u32 RL_Set_Char(REBSER *series, u32 index, u32 chr);
 RL_API int RL_Get_Value_Resolved(REBSER *series, u32 index, RXIARG *result);
 RL_API int RL_Get_Value(REBSER *series, u32 index, RXIARG *result);
@@ -960,12 +1038,17 @@ RL_API int RL_Callback(RXICBI *cbi);
 RL_API REBCNT RL_Encode_UTF8(REBYTE *dst, REBINT max, void *src, REBCNT *len, REBFLG uni, REBFLG opts);
 RL_API REBSER* RL_Encode_UTF8_String(void *src, REBCNT len, REBFLG uni, REBFLG opts);
 RL_API REBSER* RL_Decode_UTF_String(REBYTE *src, REBCNT len, REBINT utf, REBFLG ccr, REBFLG uni);
-RL_API REBCNT RL_Register_Handle(REBYTE *name, REBCNT size, void* free_func);
+RL_API REBCNT RL_Register_Handle(const REBYTE *name, REBCNT size, void* free_func);
 RL_API REBHOB* RL_Make_Handle_Context(REBCNT sym);
 RL_API void RL_Free_Handle_Context(REBHOB *hob);
 RL_API REBCNT RL_Decode_UTF8_Char(const REBYTE *str, REBCNT *len);
-RL_API REBCNT RL_Register_Handle_Spec(REBYTE *name, REBHSP *spec);
+RL_API REBCNT RL_Register_Handle_Spec(const REBYTE *name, REBHSP *spec);
 RL_API REBSER* RL_To_Local_Path(RXIARG *file, REBFLG full, REBFLG utf8);
 RL_API REBSER* RL_To_Rebol_Path(void *src, REBCNT len, REBINT uni);
+RL_API REBSER* RL_Struct_Spec(REBCNT id);
+RL_API REBCNT RL_Encode_UTF8_Char(REBYTE *dst, REBU32 chr);
+RL_API void* RL_Mem_Alloc(void *opaque, size_t size);
+RL_API void RL_Mem_Free(void* opaque, void* address);
+RL_API int RL_Register_Compress_Method(const REBYTE* name, COMPRESS_FUNC encoder, DECOMPRESS_FUNC decoder);
 
 #endif

@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,17 +30,6 @@
 ***********************************************************************/
 
 #include "sys-core.h"
-
-
-// Local flags used for Protect functions below:
-enum {
-	PROT_SET,
-	PROT_DEEP,
-	PROT_HIDE,
-	PROT_WORD,
-	PROT_WORDS,
-	PROT_LOCK
-};
 
 
 /***********************************************************************
@@ -224,7 +214,7 @@ enum {
 
 	if (D_REF(6)) SET_FLAG(flags, PROT_LOCK);
 
-	if (IS_WORD(val) || IS_PATH(val)) {
+	if (IS_WORD(val) || (ANY_PATH(val) && !D_REF(4))) {
 		Protect_Word_Value(val, flags); // will unmark if deep
 		return R_ARG1;
 	}
@@ -395,7 +385,7 @@ enum {
 		ds = DS_POP;  // volatile stack reference
 		if (IS_FALSE(ds)) index++;
 		else {
-			if (IS_UNSET(ds)) Trap0(RE_NO_RETURN);
+			//if (IS_UNSET(ds)) Trap0(RE_NO_RETURN);
 			if (THROWN(ds)) return R_TOS1;
 			if (index >= SERIES_TAIL(block)) return R_TRUE;
 			index = Do_Next(block, index, 0);
@@ -430,11 +420,15 @@ enum {
 		ret = DS_NEXT;
 		if (quit) {
 			// We are here because of a QUIT or HALT condition.
-			if (VAL_ERR_NUM(ret) == RE_QUIT)
+			if (VAL_ERR_NUM(ret) == RE_QUIT) {
+				// Notify the user that the exit is from the quit function.
+				SET_LOGIC(Get_System(SYS_STATE, STATE_QUITQ), TRUE);
 				*DS_RETURN = *(VAL_ERR_VALUE(ret));
-			else if (VAL_ERR_NUM(ret) == RE_HALT)
+			}
+			else if (VAL_ERR_NUM(ret) == RE_HALT) {
 				VAL_SET(DS_RETURN, REB_UNSET);
 				//Halt_Code(RE_HALT, 0); // Don't use this if we want to be able catch all!
+			}
 			else
 				Crash(RP_NO_CATCH);
 
@@ -478,28 +472,41 @@ caught:     // Thrown is being caught.
 			*DS_RETURN = *(VAL_ERR_VALUE(ret));
 callback:	// ...and the last result.
 			*last_result = *DS_RETURN;
-			// If there is a callback code, then evaluate it.
-			if (IS_FUNCTION(&callback)) {
-				// catch [throw 1] func[value name][value]
-				// Return result of the callback function
-				REBVAL name = *DS_NEXT;
-				if(sym) {
-					Set_Word(&name, sym, 0, 0);
-					VAL_SET(&name, REB_WORD);
-				} else {
-					SET_NONE(&name);
-				}
-				Apply_Func(0, &callback, last_result, &name, 0);
+			
+			if (IS_NONE(&callback)) {
+				// (catch [throw 1]) == 1
+				// Return the thrown value.
+				return R_RET;
 			}
-			else if (IS_BLOCK(&callback)) {
+			// If there is a callback code, then evaluate it.
+			if (IS_BLOCK(&callback)) {
 				// (catch/with [throw 1][2]) == 2
 				// Return result of the callback block evaluation.
 				*last_result = *DO_BLK(&callback);
 			}
 			else {
-				// (catch [throw 1]) == 1
-				// Return the thrown value.
-				return R_RET; 
+				// catch/with [throw 1] func[value name][value]
+				// Return result of the callback function
+				REBVAL name = *DS_NEXT;
+				if (sym) {
+					Set_Word(&name, sym, 0, 0);
+					VAL_SET(&name, REB_WORD);
+				} else {
+					SET_NONE(&name);
+				}
+				// Validate function argument types
+				REBVAL* args = BLK_SKIP(VAL_FUNC_ARGS(&callback), 1);
+				if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(last_result))) {
+					Trap3(RE_EXPECT_ARG, Of_Type(&callback), args, Of_Type(last_result));
+				}
+				if (NOT_END(args)) {
+					args++;
+					if (NOT_END(args) && !TYPE_CHECK(args, VAL_TYPE(&name))) {
+						Trap3(RE_EXPECT_ARG, Of_Type(&callback), args, Of_Type(&name));
+					}
+				}
+				// Call the function
+				Apply_Func(0, &callback, last_result, &name, 0);
 			}
 			// Return the result of the callback code evaluation.
 			return R_TOS1;
@@ -561,7 +568,7 @@ callback:	// ...and the last result.
 	REBVAL *value = D_ARG(1);
 	REBVAL *into = D_REF(4) ? D_ARG(5) : 0;
 
-	if (IS_BLOCK(value)) {
+	if (IS_BLOCK(value) || IS_MAP(value)) {
 		Compose_Block(value, D_REF(2), D_REF(3), into);
 		return R_TOS;
 	}
@@ -954,4 +961,18 @@ callback:	// ...and the last result.
 		}
 	}
 	return R_NONE;
+}
+
+
+/***********************************************************************
+**
+*/	REBNATIVE(did)
+/*
+//  did: native [
+//		"Returns TRUE if the given value is truthy (not NONE or FALSE)."
+//		value [any-type!] "Value to test"
+//  ]
+***********************************************************************/
+{
+	return IS_FALSE(D_ARG(1)) ? R_FALSE : R_TRUE;
 }

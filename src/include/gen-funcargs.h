@@ -2,7 +2,7 @@
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **  Licensed under the Apache License, Version 2.0
 **  This is a code-generated file.
@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Function Argument Enums
-**  Build: 3.16.0
-**  Date:  4-Apr-2024
+**  Build: 3.21.15
+**  Date:  14-Apr-2026
 **  File:  func-args.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: pre-make)
@@ -110,6 +110,8 @@ enum act_put_arg {
 	ARG_PUT_KEY,
 	ARG_PUT_VALUE,
 	ARG_PUT_CASE,
+	ARG_PUT_SKIP,
+	ARG_PUT_SIZE,
 };
 
 enum act_put_mask {
@@ -117,9 +119,11 @@ enum act_put_mask {
 	AM_PUT_KEY = 1 << 1,
 	AM_PUT_VALUE = 1 << 2,
 	AM_PUT_CASE = 1 << 3,
+	AM_PUT_SKIP = 1 << 4,
+	AM_PUT_SIZE = 1 << 5,
 };
 
-#define ALL_PUT_REFS (AM_PUT_CASE)
+#define ALL_PUT_REFS (AM_PUT_CASE|AM_PUT_SKIP)
 
 enum act_select_arg {
 	ARG_SELECT_0,
@@ -292,14 +296,14 @@ enum act_write_mask {
 enum act_query_arg {
 	ARG_QUERY_0,
 	ARG_QUERY_TARGET,
-	ARG_QUERY_MODE,
 	ARG_QUERY_FIELD,
+	ARG_QUERY_MODE,
 };
 
 enum act_query_mask {
 	AM_QUERY_TARGET = 1 << 0,
-	AM_QUERY_MODE = 1 << 1,
-	AM_QUERY_FIELD = 1 << 2,
+	AM_QUERY_FIELD = 1 << 1,
+	AM_QUERY_MODE = 1 << 2,
 };
 
 #define ALL_QUERY_REFS (AM_QUERY_MODE)
@@ -311,6 +315,7 @@ enum act_take_arg {
 	ARG_TAKE_RANGE,
 	ARG_TAKE_DEEP,
 	ARG_TAKE_LAST,
+	ARG_TAKE_ALL,
 };
 
 enum act_take_mask {
@@ -319,9 +324,10 @@ enum act_take_mask {
 	AM_TAKE_RANGE = 1 << 2,
 	AM_TAKE_DEEP = 1 << 3,
 	AM_TAKE_LAST = 1 << 4,
+	AM_TAKE_ALL = 1 << 5,
 };
 
-#define ALL_TAKE_REFS (AM_TAKE_PART|AM_TAKE_DEEP|AM_TAKE_LAST)
+#define ALL_TAKE_REFS (AM_TAKE_PART|AM_TAKE_DEEP|AM_TAKE_LAST|AM_TAKE_ALL)
 
 enum act_remove_arg {
 	ARG_REMOVE_0,

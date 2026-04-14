@@ -37,11 +37,11 @@ append/only system/schemes [
 			;; Lookup device IDs using full names (or wildcards)
 			all [
 				any-string? inp: select spec 'device-in
-				spec/device-in: find inp query/mode midi:// 'devices-in
+				spec/device-in: find inp query midi:// 'devices-in
 			]
 			all [
 				any-string? out: select spec 'device-out
-				spec/device-out: find out query/mode midi:// 'devices-out
+				spec/device-out: find out query midi:// 'devices-out
 			]
 		]
 		; make port/spec to be only with midi related keys

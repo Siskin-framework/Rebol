@@ -148,11 +148,14 @@
 			if (!return_defined && VAL_WORD_SYM(blk) == SYM_RETURN && IS_BLOCK(blk+1)) {
 				return_defined = TRUE;
 				blk++; // skips the return's specification
-				continue;
+				Remove_Series(words, n+1, 1);
+				break;
 			}
 			// fall thru...
 		default:
-			Trap1(RE_BAD_FUNC_DEF, blk);
+			// Report full invalid function spec block in the error.
+			Set_Block(DS_RETURN, block);
+			Trap1(RE_BAD_FUNC_DEF, DS_RETURN);
 		}
 	}
 

@@ -14,7 +14,7 @@ text: {Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempo
 ===start-group=== "ZLIB compression / decompression"
 
 	--test-- "basic compress/decompress"
-		--assert  #{789C030000000001} = compress "" 'zlib
+		--assert    "" = to string! decompress compress ""   'zlib 'zlib
 		--assert  data = to string! decompress compress data 'zlib 'zlib
 
 	--test-- "basic compress/decompress while specifing level of compression"
@@ -32,8 +32,15 @@ text: {Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempo
 		--assert  text = to string! decompress compress/level text 'zlib 9 'zlib
 
 	--test-- "basic decompression with specified uncompressed size"
-		bin: compress data 'zlib
-		--assert  #{74657374} = decompress/size bin 'zlib 4
+;;	Since version 3.20.7, the size must be the real size of the original data,
+;;	so the following test is no longer possible.
+;;		bin: compress data 'zlib
+;;		--assert  #{74657374} = decompress/size bin 'zlib
+;;	Instead using the real size:
+		len: 4 ;; the original size
+		bin: compress copy/part data len 'zlib
+		--assert  #{74657374} = decompress/size bin 'zlib len
+
 
 	--test-- "compression when input is limited"
 		--assert  #{74657374} = decompress compress/part      data   'zlib  4 'zlib
@@ -48,7 +55,7 @@ text: {Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempo
 ===start-group=== "DEFLATE compression / decompression"
 
 	--test-- "basic compress/decompress"
-		--assert  #{0300} = compress "" 'deflate
+		--assert    "" = to string! decompress compress  ""  'deflate 'deflate
 		--assert  data = to string! decompress compress data 'deflate 'deflate
 
 	--test-- "basic compress/decompress while specifing level of compression"
@@ -66,8 +73,14 @@ text: {Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempo
 		--assert  text = to string! decompress compress/level text 'deflate 9 'deflate
 
 	--test-- "basic decompression with specified uncompressed size"
-		bin: compress data 'deflate
-		--assert  #{74657374} = decompress/size bin 'deflate 4
+;;	Since version 3.20.7, the size must be the real size of the original data,
+;;	so the following test is no longer possible.
+;;		bin: compress data 'deflate
+;;		--assert  #{74657374} = decompress/size bin 'deflate 4
+;;	Instead using the real size:
+		len: 4 ;; the original size
+		bin: compress copy/part data len 'deflate
+		--assert  #{74657374} = decompress/size bin 'deflate len
 
 	--test-- "compression when input is limited"
 		--assert  #{74657374} = decompress compress/part      data   'deflate  4 'deflate
@@ -104,7 +117,12 @@ text: {Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempo
 		--assert  text = to string! decompress compress/level text 'gzip 9 'gzip
 
 	--test-- "GZIP decompression with specified uncompressed size"
-		bin: compress data 'gzip
+;;	Since version 3.20.7, the size must be the real size of the original data,
+;;	so the following test is no longer possible.
+;;		bin: compress data 'deflate
+;;		--assert  #{74657374} = decompress/size bin 'deflate 4
+;;	Instead using the real size:
+		bin: compress copy/part data 4 'gzip
 		--assert  #{74657374} = decompress/size bin 'gzip 4
 
 	--test-- "GZIP compression when input is limited"
@@ -124,41 +142,41 @@ text: {Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempo
 
 ===start-group=== "Brotli compression / decompression"
 	--test-- "Brotli compress/decompress"
-	either error? e: try [compress "test" 'brotli][
+	either error? e: try [compress "test" 'br][
 		;-- Brotli compression is not available in current build
 		--assert  'feature-na = e/id
 	][	
-		--assert  data = to string! decompress compress data 'brotli 'brotli
+		--assert  data = to string! decompress compress data 'br 'br
 
 		--test-- "Brotli compress/decompress while specifing level of compression"
-			--assert (compress/level "" 'brotli 0) =
+			--assert (compress/level "" 'br 0) =
 			#{3B}
-			--assert (compress/level data 'brotli 0) =
+			--assert (compress/level data 'br 0) =
 			#{8B0680746573742074657374207465737403}
-			--assert  text = to string! decompress compress/level text 'brotli 0 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 1 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 2 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 3 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 4 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 5 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 6 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 7 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 8 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 9 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 10 'brotli
-			--assert  text = to string! decompress compress/level text 'brotli 11 'brotli
+			--assert  text = to string! decompress compress/level text 'br 0 'br
+			--assert  text = to string! decompress compress/level text 'br 1 'br
+			--assert  text = to string! decompress compress/level text 'br 2 'br
+			--assert  text = to string! decompress compress/level text 'br 3 'br
+			--assert  text = to string! decompress compress/level text 'br 4 'br
+			--assert  text = to string! decompress compress/level text 'br 5 'br
+			--assert  text = to string! decompress compress/level text 'br 6 'br
+			--assert  text = to string! decompress compress/level text 'br 7 'br
+			--assert  text = to string! decompress compress/level text 'br 8 'br
+			--assert  text = to string! decompress compress/level text 'br 9 'br
+			--assert  text = to string! decompress compress/level text 'br 10 'br
+			--assert  text = to string! decompress compress/level text 'br 11 'br
 
 		--test-- "Brotli decompression with specified uncompressed size"
-			bin: compress data 'brotli
-			--assert  #{74657374} = decompress/size bin 'brotli 4
+			bin: compress data 'br
+			--assert  #{74657374} = decompress/size bin 'br 4
 
 		--test-- "Brotli compression when input is limited"
-			--assert  #{74657374} = decompress compress/part      data   'brotli  4 'brotli
-			--assert  #{74657374} = decompress compress/part skip data 5 'brotli  4 'brotli
-			--assert  #{74657374} = decompress compress/part tail data   'brotli -4 'brotli
+			--assert  #{74657374} = decompress compress/part      data   'br  4 'br
+			--assert  #{74657374} = decompress compress/part skip data 5 'br  4 'br
+			--assert  #{74657374} = decompress compress/part tail data   'br -4 'br
 
 		--test-- "Brotli decompress when not at head"
-			--assert data = to string! decompress next join #{00} compress data 'brotli 'brotli
+			--assert data = to string! decompress next join #{00} compress data 'br 'br
 	]
 ===end-group===
 
@@ -279,7 +297,7 @@ text: {Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempo
 ===start-group=== "ENCLOAK/DECLOAK"
 	--test-- "issue-48"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/48
-	--assert (a: compress  "a" 'zlib) = #{789C4B040000620062}
+	          a: #{789C4B040000620062}
 	--assert (b: encloak a "a")       = #{2CD6F679DCDC44E141}
 	--assert (c: decloak b "a")       = #{789C4B040000620062}
 	--assert (d: decompress c 'zlib)  = #{61}

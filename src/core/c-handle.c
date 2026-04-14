@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Contributors
+**  Copyright 2012-2024 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -85,7 +85,7 @@
 
 	if (!sym) return NOT_FOUND;
 
-	//printf("Register_Handle: %s with size %u\n", SYMBOL_TO_NAME(sym),  size);
+	//printf("Register_Handle: %s with size %u\n", SYMBOL_TO_NAME(sym),  spec->size);
 
 	idx = Find_Handle_Index(sym);
 	if (idx != NOT_FOUND) {
@@ -133,11 +133,14 @@
 
 	//printf("Requested HOB for %s (%u) of size %u\n", SYMBOL_TO_NAME(sym), sym, size);
 	hob = (REBHOB*)Make_Node(HOB_POOL);
-	hob->data  = MAKE_MEM(size);
+	// Allocate new memory only if the requested size is greater than the pointer size.
+	//if (size > sizeof(void *)) {
+		hob->data = Make_Managed_CMem(1, size);
+		if (!hob->data) Trap0(RE_NO_MEMORY);
+	//}
 	hob->index = idx;
 	hob->flags = HANDLE_CONTEXT;
 	hob->sym   = sym;
-	CLEAR(hob->data, size);
 	USE_HOB(hob);
 	//printf("HOB %p made mem: %p\n", hob, hob->data);
 	return hob;
@@ -175,8 +178,7 @@
 	REBSER *handle_names = Make_Block(MAX_HANDLE_TYPES);
 	handles = Get_System(SYS_CATALOG, CAT_HANDLES);
 	Set_Block(handles, handle_names);
-	PG_Handles = (REBHSP*)MAKE_MEM(MAX_HANDLE_TYPES * sizeof(REBHSP));
-	CLEAR(PG_Handles, MAX_HANDLE_TYPES * sizeof(REBHSP));
+	PG_Handles = (REBHSP*)Make_Clear_Mem(sizeof(REBHSP), MAX_HANDLE_TYPES);
 
 #ifdef INCLUDE_MBEDTLS
 	//Init_MbedTLS(); // not yet public!
@@ -184,4 +186,16 @@
 #ifdef INCLUDE_CRYPTOGRAPHY
 	Init_Crypt(); // old crypt code handles
 #endif
+}
+
+
+/***********************************************************************
+**
+*/	void Dispose_Handles(void)
+/*
+**		Free handles table
+**
+***********************************************************************/
+{
+	Free_Mem(PG_Handles, sizeof(REBHSP) * MAX_HANDLE_TYPES);
 }

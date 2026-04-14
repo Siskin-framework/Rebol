@@ -1,9 +1,9 @@
 Rebol [
+	Title:   "Codec: JSON"
 	Name:    json
 	Type:    module
-	Exports: [to-json load-json]
 	Version: 0.1.2
-	Title:   "Codec: JSON"
+	Exports: [to-json load-json]
 	Purpose: "Convert Rebol value into JSON format and back."
 	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-json.reb
 	Author: [
@@ -120,7 +120,7 @@ ws+: [some ws]
 sep: [ws* #"," ws*]							   ; JSON value separator
 non-zero-digit: #(bitset! #{0000000000007FC0}) ;= charset "123456789"
 ; Unescaped chars (NOT creates a virtual bitset)
-chars: #(bitset! [not bits #{FFFFFFFF2000000000000008}]) ;=charset [not {\"} #"^@"-#"^_"]
+chars: to bitset! [not #{FFFFFFFF2000000000000008}] ;=charset [not {\"} #"^@"-#"^_"]
 
 ; chars allowed in Rebol word! values - note that we don't allow < and > at all even though they are somewhat valid in word!
 not-word-char: #(bitset! #{00640000BCC9003A8000001E000000140000000080}) ;=charset {/\^^,[](){}"#%$@:;^/^(00A0) ^-^M<>}
@@ -171,6 +171,7 @@ replace-unicode-escapes: func [
 	parse s [
 		any [
 			some chars								; Pass over unescaped chars
+			| dbl-quote								; Quotes are not part of chars but are valid
 			| json-escaped							; Pass over simple backslash escapes
 			| change ["\u" copy c 4 hex-char] (decode-unicode-char c) ()
 			;| "\u" followed by anything else is an invalid \uXXXX escape
@@ -306,11 +307,11 @@ init-state: func [ind ascii?][
 	indent-level: 0
 	; 34 is double quote "
 	; 92 is backslash \
-	normal-chars: either ascii? [
-		#(bitset! #{00000000DFFFFFFFFFFFFFF7FFFFFFFF})
+	normal-chars: to bitset! either ascii? [
+		#{00000000DFFFFFFFFFFFFFF7FFFFFFFF}
 		;= charset [32 33 35 - 91 93 - 127]
 	][
-		#(bitset! [not bits #{FFFFFFFF2000000000000008}])
+		[not #{FFFFFFFF2000000000000008}]
 		;= complement charset [0 - 31 34 92]
 	]
 ]

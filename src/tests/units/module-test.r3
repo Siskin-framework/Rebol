@@ -5,13 +5,13 @@ Rebol [
 	Tabs:	 4
 	Needs:   quick-test
 ]
+system/options/quiet: false
+system/options/log/rebol: 4
 
 ~~~start-file~~~ "module!"
 
-; extend module-paths with units/files/ directory
-; so modules there can be located
-orig-modules-dir: system/options/modules
-system/options/modules: join what-dir %units/files/
+modules-dir: system/options/modules
+? modules-dir
 
 
 ===start-group=== "module keywords"
@@ -112,22 +112,22 @@ system/options/modules: join what-dir %units/files/
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1628
 		unset 'z1 z2: 2
 		--assert all [
-			error? e: try [do "rebol [type: module] attempt [z1: 12345] z1"]
+			error? e: try [import "rebol [type: module] attempt [z1: 12345] z1"]
 			e/id = 'not-defined
 			e/arg1 = 'z1
 		]
 		--assert all [
-			error? e: try [do "rebol [type: module] attempt [z2: 12345] z2"]
+			error? e: try [import "rebol [type: module] attempt [z2: 12345] z2"]
 			e/id = 'not-defined
 			e/arg1 = 'z2
 		]
 		--assert all [
-			error? e: try [do "rebol [] module [] [attempt [z1: 12345] z1]"]
+			error? e: try [import "rebol [] module [] [attempt [z1: 12345] z1]"]
 			e/id = 'not-defined
 			e/arg1 = 'z1
 		]
 		--assert all [
-			error? e: try [do "rebol [] module [] [attempt [z2: 12345] z2]"]
+			error? e: try [import "rebol [] module [] [attempt [z2: 12345] z2]"]
 			e/id = 'not-defined
 			e/arg1 = 'z2
 		]
@@ -182,10 +182,10 @@ system/options/modules: join what-dir %units/files/
 ===start-group=== "module import"
 	--test-- "import"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/923
-	write system/options/modules/mymodule.reb {
+	write modules-dir/mymodule.reb {
 Rebol [
-    type: 'module
-    name: 'mymodule
+    type: module
+    name: mymodule
     exports: [myfunc]
 ]
 print "mymodule imported"
@@ -195,15 +195,15 @@ myfunc: func [arg [string!]][reverse arg]
 	--assert "cba" = myfunc "abc"
 	import 'mymodule     ;-- this works... the file isn't reloaded... and indeed the console doesn't print another "mymodule imported"
 	--assert "cba" = myfunc "abc"
-	import (system/options/modules/mymodule.reb) ;-- no crash (but must be in parens, because it is expression!)
+	import (modules-dir/mymodule.reb) ;-- no crash (but must be in parens, because it is expression!)
 	--assert "cba" = myfunc "abc"
-	delete system/options/modules/mymodule.reb
+	delete modules-dir/mymodule.reb
 
 ;;; This test would fail as the module needs itself! It should be detected, but it isn't yet.
 ;;	write %mymodule2.reb {
 ;; Rebol [
-;;     type: 'module
-;;     name: 'mymodule2
+;;     type: module
+;;     name: mymodule2
 ;;     exports: [myfunc2]
 ;;     needs: [%mymodule2.reb]
 ;; ]
@@ -240,7 +240,7 @@ probe all [unset? :a unset? :b unset? :c]
 }
 	o: copy ""
 	call/wait/shell/output reform [to-local-file system/options/boot %issue-1680.reb] o
-	--assert "true^/true^/true^/true^/" = o
+	--assert "#(true)^/#(true)^/#(true)^/#(true)^/" = o
 	delete %issue-1680.reb
 
 	--test-- "import/no-lib"
@@ -275,13 +275,13 @@ probe all [
 ]}
 	o: copy ""
 	call/wait/shell/output reform [to-local-file system/options/boot %no-lib-import.reb] o
-	--assert "true^/true^/true^/true^/" = o
+	--assert "#(true)^/#(true)^/#(true)^/#(true)^/" = o
 	delete %no-lib-import.reb
 
 	--test-- "import block"
 	;- using external script again!
-	write %m1.reb {Rebol [name: m1 type: module] export m1a: 1}
-	write %m2.reb {Rebol [name: m2 type: module] export m2b: 2}
+	write modules-dir/m1.reb {Rebol [name: m1 type: module] export m1a: 1}
+	write modules-dir/m2.reb {Rebol [name: m2 type: module] export m2b: 2}
 	write %block-import-1.reb {
 Rebol []
 probe all [
@@ -293,7 +293,7 @@ probe all [
 ]}
 	o: copy ""
 	call/wait/shell/output reform [to-local-file system/options/boot %block-import-1.reb] o
-	--assert "true^/" = o
+	--assert "#(true)^/" = o
 	--test-- "import/no-lib block"
 	write %block-import-2.reb {
 Rebol []
@@ -308,15 +308,15 @@ probe all [
 ]}
 	o: copy ""
 	call/wait/shell/output reform [to-local-file system/options/boot %block-import-2.reb] o
-	--assert "true^/" = o
+	--assert "#(true)^/" = o
 	delete %block-import-1.reb
 	delete %block-import-2.reb
-	delete %m1.reb
-	delete %m2.reb
+	delete modules-dir/m1.reb
+	delete modules-dir/m2.reb
 
 	--test-- "import/version"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1687
-		m-1687: module [version: 1.0.0 name: 'm-1687][a: 1]
+		m-1687: module [version: 1.0.0 name: m-1687][a: 1]
 		--assert all [
 			error? e: try [import/version (m-1687) 2.2.2]
 			e/id = 'needs
@@ -350,10 +350,11 @@ probe all [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1721
 		unset in system/contexts/user 'issue-1721-a
 		unset in system/contexts/user 'issue-1721-b
-		import {rebol [type: 'module] issue-1721-a: 1 export issue-1721-b: 2}
+		import {rebol [type: module] issue-1721-a: 1 export issue-1721-b: 2}
 		--assert unset? :system/contexts/user/issue-1721-a
 		--assert system/contexts/user/issue-1721-b = 2
 
+system/options/modules: %units/files/
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1694
 	--test-- "import needs word!"
 		import 'test-needs-name
@@ -374,6 +375,7 @@ probe all [
 			import https://github.com/Oldes/Rebol3/raw/master/src/tests/units/files/test-needs-url.reb
 			--assert true? test-needs-url-result
 		]
+system/options/modules: modules-dir
 
 	--test-- "lib-local"
 	;@@ https://github.com/Oldes/Rebol-wishes/issues/13
@@ -409,7 +411,4 @@ probe all [
 ===end-group===
 
 ~~~end-file~~~
-
-;restore the original path
-system/options/modules: orig-modules-dir
 

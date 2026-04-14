@@ -12,6 +12,16 @@ Rebol [
 	--test-- "basic TRY"
 	--assert 2 = try [1 + 1]
 	--assert 2 = try first [(1 + 1)]
+	--assert error? try [1 / 0]
+	--assert error? try first [(1 / 0)]
+===end-group===
+
+===start-group=== "ATTEMPT"
+	--test-- "basic ATTEMPT"
+	--assert 2 = attempt [1 + 1]
+	--assert 2 = attempt first [(1 + 1)]
+	--assert none? attempt [1 / 0]
+	--assert none? attempt first [(1 / 0)]
 ===end-group===
 
 

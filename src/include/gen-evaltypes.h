@@ -2,7 +2,7 @@
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **  Licensed under the Apache License, Version 2.0
 **  This is a code-generated file.
@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Evaluation Maps
-**  Build: 3.16.0
-**  Date:  4-Apr-2024
+**  Build: 3.21.15
+**  Date:  14-Apr-2026
 **  File:  evaltypes.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -56,6 +56,7 @@
 	ET_PATH,                      // set-path
 	ET_PATH,                      // get-path
 	ET_LIT_PATH,                  // lit-path
+	ET_SELF,                      // hash
 	ET_SELF,                      // map
 	ET_SELF,                      // datatype
 	ET_SELF,                      // typeset
@@ -140,6 +141,7 @@
 	T_Block,                      // set-path
 	T_Block,                      // get-path
 	T_Block,                      // lit-path
+	T_Block,                      // hash
 	T_Map,                        // map
 	T_Datatype,                   // datatype
 	T_Typeset,                    // typeset
@@ -186,7 +188,7 @@
 	0,                            // decimal
 	0,                            // percent
 	0,                            // money
-	0,                            // char
+	PD_Char,                      // char
 	PD_Pair,                      // pair
 	PD_Tuple,                     // tuple
 	PD_Time,                      // time
@@ -207,6 +209,7 @@
 	PD_Block,                     // set-path
 	PD_Block,                     // get-path
 	PD_Block,                     // lit-path
+	PD_Block,                     // hash
 	PD_Map,                       // map
 	0,                            // datatype
 	0,                            // typeset

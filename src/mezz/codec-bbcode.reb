@@ -1,12 +1,12 @@
 REBOL [
+	Title:   "Codec: BBcode"
 	Name:    bbcode
 	Type:    module
-	Options: [delay]
 	Version: 0.3.4
-	Title:   "Codec: BBcode"
+	Date:    13-Dec-2023
+	Options: [delay]	
 	Purpose: {Basic BBCode implementation. For more info about BBCode check http://en.wikipedia.org/wiki/BBCode}
 	File:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-bbcode.reb
-	Date:    13-Dec-2023
 	Author:  "Oldes"
 	History: [
 		0.1.0  5-Jan-2009 "initial version"
@@ -30,13 +30,13 @@ tmp: pos: none
 ;--------------------
 ;- charsets & rules -
 ;--------------------
-
-ch_space:      #(bitset! #{7FFFFFFF800000000000000000000001})    ; charset [#"^A" - #" " #"^(7F)"]
-ch_normal:     #(bitset! [not bits #{002400000000000800000010}]) ; complement charset "[<^M^/"
-ch_attribute:  #(bitset! [not bits #{000000002100000A00000004}]) ; complement charset {"'<>]}
-ch_attribute1: #(bitset! [not bits #{000000000100000A00000004}]) ; complement charset {'<>]}
-ch_attribute2: #(bitset! [not bits #{000000002000000A00000004}]) ; complement charset {"<>]}
-ch_attribute3: #(bitset! [not bits #{000000008000000A00000004}]) ; complement charset { <>]}
+;; not using construction syntax for bitsets for higher backwards compatibility
+ch_space:      to bitset! #{7FFFFFFF800000000000000000000001} ; charset [#"^A" - #" " #"^(7F)"]
+ch_normal:     to bitset! [not #{002400000000000800000010}]   ; complement charset "[<^M^/"
+ch_attribute:  to bitset! [not #{000000002100000A00000004}]   ; complement charset {"'<>]}
+ch_attribute1: to bitset! [not #{000000000100000A00000004}]   ; complement charset {'<>]}
+ch_attribute2: to bitset! [not #{000000002000000A00000004}]   ; complement charset {"<>]}
+ch_attribute3: to bitset! [not #{000000008000000A00000004}]   ; complement charset { <>]}
 ch_digits: charset [#"0" - #"9"]
 ch_hexa:   charset [#"a" - #"f" #"A" - #"F" #"0" - #"9"]
 ch_name:   charset [#"a" - #"z" #"A" - #"Z" #"*" #"0" - #"9"]

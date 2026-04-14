@@ -15,11 +15,12 @@ rebol-cmd: func[cmd][
 	clear out-buffer
 	clear err-buffer
 	insert cmd join to-local-file system/options/boot #" "
-	call/shell/wait/output/error cmd out-buffer err-buffer
-] 
+	call/shell/output/error cmd out-buffer err-buffer
+]
 
 ===start-group=== "Command-Line Interface (/shell)"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2228
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2519
 	--test-- "--do"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2467
 		--assert 0 = rebol-cmd {--do "print 1 + 2"}
@@ -54,6 +55,10 @@ rebol-cmd: func[cmd][
 		--assert out-buffer = {["-v" "--" "-x"]^/["-v" "--" "-x"]^/}
 		--assert 0 = rebol-cmd {--args "a b" units/files/print-args.r3 -v}
 		--assert out-buffer = {["a b" "-v"]^/["a b"]^/}
+
+		--assert 0 = rebol-cmd {--args "á b" units/files/print-args.r3 -v}
+		--assert out-buffer = {["á b" "-v"]^/["á b"]^/}
+
 		; providing script using --script option
 		;@@ https://github.com/Oldes/Rebol-issues/issues/2469
 		--assert 0 = rebol-cmd {--script units/files/print-args.r3 --args "a b" -- -v}
@@ -72,6 +77,9 @@ rebol-cmd: func[cmd][
 			--assert 0 = rebol-cmd {--do "print system/options/args quit" `seq 1 1000`}
 			--assert #{17900469C3C78A614B60FEE4E3851EF6BAF9D876} =  checksum out-buffer 'sha1
 		]
+	--test-- "--secure"
+		--assert 0 = rebol-cmd {--secure none --do "probe system/options/secure"}
+		--assert out-buffer == {none^/}
 ===end-group===
 
 
@@ -111,8 +119,6 @@ rebol-cmd: func[cmd][
 		--assert 1 = rebol-cmd {--do "prin 2 1 / 0"}
 		--assert "2" = out-buffer
 		--assert not none? find err-buffer "Math error"
-
-
 ===end-group===
 
 
@@ -137,6 +143,84 @@ rebol-cmd: func[cmd][
 		delete %args.r3
 
 	try [delete %units/files/launched.txt]
+===end-group===
+
+
+===start-group=== "Raw input"
+	--test-- "Pipe input"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2613
+		--assert all [
+			0 = rebol-cmd rejoin [
+				{--do "print 123 flush system/ports/output" | }
+				to-local-file system/options/boot 
+				{ --cgi --do "probe read/binary system/ports/input"} 
+			]
+			out-buffer == "#{3132330A}^/"
+			err-buffer == ""
+		]
+		? out-buffer
+		--assert all [
+			0 = rebol-cmd rejoin [
+				{--do "prin 123 flush system/ports/output" | }
+				to-local-file system/options/boot 
+				{ --cgi --do "probe read/binary system/ports/input"} 
+			]
+			out-buffer == "#{313233}^/"
+			err-buffer == ""
+		]
+		--assert all [
+			0 = rebol-cmd rejoin [
+				{--do "prin {} flush system/ports/output" | }
+				to-local-file system/options/boot 
+				{ --cgi --do "probe read/binary system/ports/input"} 
+			]
+			out-buffer == "#{}^/"
+			err-buffer == ""
+		]
+		? out-buffer
+		? err-buffer
+	--test-- "Resolve length of bytes available on stdin"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2614
+		--assert all [
+			0 = rebol-cmd rejoin [
+				{ --cgi --do "prin {}" | }
+				to-local-file system/options/boot 
+				{ --cgi --do "prin query system/ports/input 'length"} 
+			]
+			out-buffer == "0"
+			err-buffer == ""
+		]
+		--assert all [
+			0 = rebol-cmd rejoin [
+				{ --cgi --do "prin {1}" | }
+				to-local-file system/options/boot 
+				{ --cgi --do "prin query system/ports/input 'length"} 
+			]
+			out-buffer == "1"
+			err-buffer == ""
+		]
+		? out-buffer
+		? err-buffer
+	--test-- "Input with null byte"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2668
+		clear out-buffer
+		--assert all [
+			0 = call/shell/output/input rejoin [
+				to-local-file system/options/boot
+				{ --cgi --do "prin length? read system/ports/input"}
+			] out-buffer #{cafe001e} 
+			out-buffer == "4"
+		]
+		? out-buffer
+		clear out-buffer
+		--assert all [
+			0 = call/shell/output/input rejoin [
+				to-local-file system/options/boot
+				{ --cgi --do "prin length? read system/ports/input"}
+			] out-buffer "one^@two"
+			out-buffer == "7"
+		]
+		? out-buffer
 ===end-group===
 
 ~~~end-file~~~

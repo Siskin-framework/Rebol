@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -82,21 +82,22 @@ enum Transport_Types {
 	}
 	else if (IS_BLOCK(info)) {
 		// example:
-		//	query/mode port [remote-ip remote-port] ;== [127.0.0.1 1234]
+		//	query port [:remote-ip :remote-port] ;== [127.0.0.1 1234]
 		// or:
-		//	 query/mode port [remote-ip: remote-port:] ;== [remote-ip: 127.0.0.1 remote-port: 1234]
+		//	 query port [remote-ip remote-port] ;== [remote-ip: 127.0.0.1 remote-port: 1234]
 		// or combined:
-		//	 query/mode file [remote-ip: remote-port] ;== [remote-ip: 127.0.0.1 1234]
+		//	 query file [remote-ip: :remote-port] ;== [remote-ip: 127.0.0.1 1234]
 		// When not supported word is used, if will throw an error
 
 		REBSER *values = Make_Block(2 * BLK_LEN(VAL_SERIES(info)));
 		REBVAL *word = VAL_BLK_DATA(info);
 		for (; NOT_END(word); word++) {
 			if (ANY_WORD(word)) {
-				if (IS_SET_WORD(word)) {
-					// keep the set-word in result
+				if (!IS_GET_WORD(word)) {
+					// keep the word as a key (converted to the set-word) in the result
 					val = Append_Value(values);
 					*val = *word;
+					VAL_TYPE(val) = REB_SET_WORD;
 					VAL_SET_LINE(val);
 				}
 				val = Append_Value(values);
@@ -113,7 +114,7 @@ enum Transport_Types {
 
 		if (!info || !IS_OBJECT(info)) {
 			Trap_Port(RE_INVALID_SPEC, port, -10);
-			return; // prevents compiler's warning
+			DEAD_END;
 		}
 
 		obj = CLONE_OBJECT(VAL_OBJ_FRAME(info));
@@ -147,6 +148,7 @@ enum Transport_Types {
 ***********************************************************************/
 {
 	REBREQ *nsock;
+	REBVAL *state;
 
 	// Get temp sock struct created by the device:
 	nsock = sock->sock;
@@ -162,11 +164,12 @@ enum Transport_Types {
 	SET_NONE(OFV(port, STD_PORT_STATE)); // just to be sure.
 
 	// Copy over the new sock data:
-	sock = Use_Port_State(port, RDI_NET, sizeof(*sock));
+	state = Use_Port_State_Handle(port, RDI_NET);
+	sock = (REBREQ *)VAL_HANDLE_CONTEXT_DATA(state);
 	*sock = *nsock;
-	sock->clen = sizeof(*sock);
+	//sock->clen = sizeof(*sock);
 	sock->port = port;
-	OS_FREE(nsock); // allocated by dev_net.c (MT issues?)
+	OS_Free(nsock); // allocated by dev_net.c (MT issues?)
 }
 
 /***********************************************************************
@@ -185,13 +188,11 @@ enum Transport_Types {
 	REBCNT len;		// generic length
 	REBSER *ser;	// simplifier
 
-	port = Validate_Port_Value(port_value);
+	port = Validate_Port_With_Request(port_value, RDI_NET, &sock);
 
 	*D_RET = *D_ARG(1);
 	arg = D_ARG(2);
-	//refs = 0;
 
-	sock = Use_Port_State(port, RDI_NET, sizeof(*sock));
 	if (proto == TRANSPORT_UDP) {
 		SET_FLAG(sock->modes, RST_UDP);
 	}
@@ -214,14 +215,14 @@ enum Transport_Types {
 			arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
 			val = Obj_Value(spec, STD_PORT_SPEC_NET_PORT);
 
-			if (OS_DO_DEVICE(sock, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, -12);
+			if (OS_Do_Device(sock, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, -12);
 			SET_OPEN(sock);
 
 			// Lookup host name (an extra TCP device step):
 			if (IS_STRING(arg)) {
 				sock->data = VAL_BIN(arg);
 				sock->net.remote_port = IS_INTEGER(val) ? VAL_INT32(val) : 80;
-				result = OS_DO_DEVICE(sock, RDC_LOOKUP);  // sets remote_ip field
+				result = OS_Do_Device(sock, RDC_LOOKUP);  // sets remote_ip field
 				if (result < 0) Trap_Port(RE_NO_CONNECT, port, sock->error);
 				return R_RET;
 			}
@@ -293,7 +294,7 @@ enum Transport_Types {
 		sock->actual = 0;  // Actual for THIS read, not for total.
 
 		//Print("(max read length %d)", sock->length);
-		result = OS_DO_DEVICE(sock, RDC_READ); // recv can happen immediately
+		result = OS_Do_Device(sock, RDC_READ); // recv can happen immediately
 		if (GET_FLAG(sock->modes, RST_UDP && result == 0))
 			VAL_TAIL(arg) += sock->actual;
 		if (result < 0)
@@ -325,7 +326,7 @@ enum Transport_Types {
 		sock->actual = 0;
 
 		//Print("(write length %d)", len);
-		result = OS_DO_DEVICE(sock, RDC_WRITE); // send can happen immediately
+		result = OS_Do_Device(sock, RDC_WRITE); // send can happen immediately
 		if (result < 0) Trap_Port(RE_WRITE_ERROR, port, sock->error);
 		if (result == DR_DONE) SET_NONE(OFV(port, STD_PORT_DATA));
 		break;
@@ -342,8 +343,7 @@ enum Transport_Types {
 	case A_QUERY:
 		// Get specific information - the scheme's info object.
 		// Special notation allows just getting part of the info.
-		refs = Find_Refines(ds, ALL_QUERY_REFS);
-		if ((refs & AM_QUERY_MODE) && IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
+		if (IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
 			Ret_Net_Modes(port, D_RET);
 			return R_RET;
 		}
@@ -357,10 +357,12 @@ enum Transport_Types {
 
 	case A_CLOSE:
 		if (IS_OPEN(sock)) {
-            if (OS_DO_DEVICE(sock, RDC_CLOSE) < 0) {
+            if (OS_Do_Device(sock, RDC_CLOSE) < 0) {
                 Trap_Port(RE_CANNOT_CLOSE, port, sock->error);
             }
 			SET_CLOSED(sock);
+			// Don't release the state as there may be pending events (sock being signaled)!
+			//Release_Port_State(port); // Crashes on POSIX with the unit test for issue-2445!
 		}
 		break;
 
@@ -371,7 +373,7 @@ enum Transport_Types {
 		break;
 
 	case A_OPEN:
-		result = OS_DO_DEVICE(sock, RDC_CONNECT);
+		result = OS_Do_Device(sock, RDC_CONNECT);
 		if (result < 0) Trap_Port(RE_NO_CONNECT, port, sock->error);
 		break;
 		//Trap_Port(RE_ALREADY_OPEN, port);

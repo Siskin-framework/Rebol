@@ -339,9 +339,31 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2551
 	--test-- "Julian accessor"
 		date: 10-Jun-2023/20:47:53+2:00
-		--assert date/julian = (2400000.5 + to decimal! date) ;; conversion using TO counts with Modified Julian Date
+;; `to decimal! date` now returns unix timestamp with a precision instead of MJD 
+;;		--assert date/julian = (2400000.5 + to decimal! date) ;; conversion using TO counts with Modified Julian Date
 		--assert 2460106.28325231 = date/julian
 		--assert 2460106.28325231 = pick date 'julian
+
+		--assert (pick 17-Nov-1858/00:00:00 'julian) == 2400000.5
+		--assert (pick 17-Nov-1858/00:00:00 'julian) == 2400000.5
+		--assert (pick 01-Jan-1900/00:00:00 'julian) == 2415020.5
+		--assert (pick 01-Jan-1900/00:00:00 'julian) == 2415020.5
+		--assert (pick 02-May-2003/12:00:00 'julian) == 2452762.0
+		--assert (pick 02-May-2003/12:00:00 'julian) == 2452762.0
+		--assert (pick 10-Jun-2023/01:30:00 'julian) == 2460105.5625
+		--assert (pick 10-Jun-2023/01:30:00 'julian) == 2460105.5625
+		--assert (pick 10-Jun-2023/19:30:00 'julian) == 2460106.3125
+		--assert (pick 10-Jun-2023/19:30:00 'julian) == 2460106.3125
+		--assert (pick 01-Jan-2023/12:00:00 'julian) == 2459946.0
+		--assert (pick 01-Jan-2023/12:00:00 'julian) == 2459946.0
+		--assert (pick 01-Jan-2023/19:30:00 'julian) == 2459946.3125
+		--assert (pick 01-Jan-2023/19:30:00 'julian) == 2459946.3125
+		--assert (pick 01-Jan-2023/01:30:00 'julian) == 2459945.5625
+		--assert (pick 01-Jan-2023/01:30:00 'julian) == 2459945.5625
+		--assert (pick 31-Aug-2132/00:00:00 'julian) == 2499999.5
+		--assert (pick 31-Aug-2132/00:00:00 'julian) == 2499999.5
+		--assert (pick 01-Sep-2132/00:00:00 'julian) == 2500000.5
+		--assert (pick 01-Sep-2132/00:00:00 'julian) == 2500000.5
 	--test-- "Julian date setter"
 		--assert 2415020.5 = date/julian: 2415020.5
 		--assert date = 1-Jan-1900/0:00
@@ -350,21 +372,51 @@ Rebol [
 
 ===start-group=== "QUERY date"
 	date: 8-Apr-2020/12:04:32+2:00
-	--test-- "query date"
-		--assert object? o: query date
+	--test-- "query as object"
+		--assert object? o: query date object!
 		--assert o/date = 8-Apr-2020
 
-	--test-- "query/mode datetime"
+	--test-- "query datetime"
 		all-date-words: words-of system/standard/date-info
-		--assert all-date-words = query/mode date none
-		--assert date/time = query/mode date 'time
-		--assert [2020 4] = query/mode date [year month]
-		--assert [month: 4 year: 2020] = query/mode date [month: year:]
-		--assert equal? query/mode date all-date-words [2020 4 8 12:04:32 8-Apr-2020 2:00 12 4 32 3 99 2:00 8-Apr-2020/10:04:32 2458947.91981481]
+		--assert all-date-words = query date none
+		--assert date/time = query date 'time
+		--assert [2020 4] = query date [:year :month]
+		--assert [month: 4 year: 2020] = query date [month year]
+		--assert equal? query date all-date-words [
+		    year: 2020
+		    month: 4
+		    day: 8
+		    time: 12:04:32
+		    date: 8-Apr-2020
+		    zone: 2:00
+		    hour: 12
+		    minute: 4
+		    second: 32
+		    weekday: 3
+		    yearday: 99
+		    timezone: 2:00
+		    utc: 8-Apr-2020/10:04:32
+		    julian: 2458947.91981481
+		]
 	
-	--test-- "query/mode date"
+	--test-- "query date"
 		date: 8-Apr-2020 ; no time!
-		--assert equal? query/mode date all-date-words [2020 4 8 #(none) 2020-04-08 #(none) #(none) #(none) #(none) 3 99 #(none) 2020-04-08 2458948.0]
+		--assert equal? query date all-date-words [
+		    year: 2020
+		    month: 4
+		    day: 8
+		    time: #(none)
+		    date: 8-Apr-2020
+		    zone: #(none)
+		    hour: #(none)
+		    minute: #(none)
+		    second: #(none)
+		    weekday: 3
+		    yearday: 99
+		    timezone: #(none)
+		    utc: 8-Apr-2020
+		    julian: 2458948.0
+		]
 
 ===end-group===
 

@@ -105,7 +105,8 @@
 				bp = Qualify_String(arg, 255, &len, TRUE);
 				if (type == REB_ISSUE) sym = Scan_Issue(bp, len);
 				else sym = Scan_Word(bp, len);
-				if (!sym) Trap0(RE_INVALID_CHARS);
+				if (!sym) 
+					Trap0(RE_INVALID_CHARS);
 			}
 			else if (IS_CHAR(arg)) {
 				REBYTE buf[8] = {0};
@@ -124,6 +125,14 @@
 			VAL_SET(D_RET, type);
 		}
 		break;
+
+	case A_OPEN:
+	case A_READ:
+	case A_WRITE:
+	case A_QUERY:
+		// Support for port: OPEN 'console, READ 'clipboard etc..
+		// The word is used as a name of the scheme
+		return T_Port(ds, action);
 
 	default:
 		Trap_Action(type, action);

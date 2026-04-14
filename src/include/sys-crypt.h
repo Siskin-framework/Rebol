@@ -70,6 +70,10 @@ typedef mbedtls_chachapoly_context CHACHAPOLY_CTX;
 #include "mbedtls/gcm.h"
 #endif
 
+#ifdef MBEDTLS_DES_C
+#include "mbedtls/des.h"
+#endif
+
 
 typedef mbedtls_rsa_context   RSA_CTX;
 typedef mbedtls_dhm_context   DHM_CTX;

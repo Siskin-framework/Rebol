@@ -36,13 +36,10 @@
 /*
 ***********************************************************************/
 {
-	if (mode >= 0) return Cmp_Pair(a, b) == 0; // works for INTEGER=0 too (spans x y)
-	if (IS_PAIR(b) && 0 == VAL_INT64(b)) { // for negative? and positive?
-		if (mode == -1)
-			return (VAL_PAIR_X(a) >= 0 || VAL_PAIR_Y(a) >= 0); // not LT
-		return (VAL_PAIR_X(a) > 0 && VAL_PAIR_Y(a) > 0); // NOT LTE
-	}
-	return -1;
+	REBINT diff = Cmp_Pair(a, b);
+	if (mode >= 0) return diff == 0;
+	if (mode == -1) return diff >= 0;
+	return diff > 0;
 }
 
 
@@ -90,8 +87,8 @@
 {
 	REBD32	diff;
 
-	if ((diff = VAL_PAIR_Y(t1) - VAL_PAIR_Y(t2)) == 0)
-		diff = VAL_PAIR_X(t1) - VAL_PAIR_X(t2);
+	if ((diff = VAL_PAIR_X(t1) - VAL_PAIR_X(t2)) == 0)
+		diff = VAL_PAIR_Y(t1) - VAL_PAIR_Y(t2);
 	return (diff > 0.0) ? 1 : ((diff < 0.0) ? -1 : 0);
 }
 
@@ -238,6 +235,19 @@
 				y1 = (REBD32)fmod(y1, y2);
 			}
 			goto setPair;
+
+		case A_OR:
+			x1 = ROUND_TO_INT(x1) | ROUND_TO_INT(x2);
+			y1 = ROUND_TO_INT(y1) | ROUND_TO_INT(y2);
+			goto setPair;
+		case A_XOR:
+			x1 = ROUND_TO_INT(x1) ^ ROUND_TO_INT(x2);
+			y1 = ROUND_TO_INT(y1) ^ ROUND_TO_INT(y2);
+			goto setPair;
+		case A_AND:
+			x1 = ROUND_TO_INT(x1) & ROUND_TO_INT(x2);
+			y1 = ROUND_TO_INT(y1) & ROUND_TO_INT(y2);
+			goto setPair;
 		}
 		Trap_Math_Args(REB_PAIR, action);
 	}
@@ -282,7 +292,10 @@
 			goto setPair;
 
 		case A_RANDOM:
-			if (D_REF(2)) Trap0(RE_BAD_REFINES); // seed
+			if (D_REF(2)) { // seed
+				Set_Random(VAL_INT64(val));
+				return R_UNSET;
+			}
 			x1 = (REBD32)Random_Range((REBINT)x1, (REBOOL)D_REF(3));
 			y1 = (REBD32)Random_Range((REBINT)y1, (REBOOL)D_REF(3));
 			goto setPair;

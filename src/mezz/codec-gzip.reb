@@ -1,9 +1,10 @@
 REBOL [
 	title: "Codec: Gzip"
-	purpose: "Lossless compressed data format compatible with GZIP utility"
-	name: 'codec-gzip
-	author: rights: "Oldes"
+	name:  gzip
+	type:  module
 	version: 0.0.2
+	purpose: "Lossless compressed data format compatible with GZIP utility"
+	author:  "Oldes"
 	specification: https://tools.ietf.org/html/rfc1952
 ]
 

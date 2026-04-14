@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Contributors
+**  Copyright 2012-2024 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -277,17 +277,14 @@
 	REBVAL *data;
 	REBVAL *ctx;
 
-	port = Validate_Port_Value(port_value);
+	port = Validate_Port_With_Request(port_value, RDI_CHECKSUM, &req);
 
 	spec = BLK_SKIP(port, STD_PORT_SPEC);
 	if (!IS_OBJECT(spec)) Trap1(RE_INVALID_SPEC, spec);
 	method = Obj_Value(spec, STD_PORT_SPEC_CHECKSUM_METHOD);
     if (!method || !IS_WORD(method)) {
         Trap1(RE_INVALID_SPEC, spec);
-        return 0; //just to make xcode analyze happy
     }
-
-	req = Use_Port_State(port, RDI_CHECKSUM, sizeof(REBREQ));
 
 	data = BLK_SKIP(port, STD_PORT_DATA); //will hold result
 	ctx  = BLK_SKIP(port, STD_PORT_EXTRA);
@@ -351,7 +348,7 @@
 			case SYM_SHA3_256:
 			case SYM_SHA3_384:
 			case SYM_SHA3_512:
-				SHA3_Update((mbedtls_sha3_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				SHA3_Update((mbedtls_sha3_context*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), AS_REBLEN(part));
 				break;
 #endif
 #ifdef INCLUDE_RIPEMD160
@@ -383,16 +380,16 @@
 #endif
 #ifdef INCLUDE_XXHASH
 			case SYM_XXH3:
-				XXH3_Update((XXH3_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				XXH3_Update((XXH3_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), AS_REBLEN(part));
 				break;
 			case SYM_XXH32:
-				XXH32_Update((XXH32_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				XXH32_Update((XXH32_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), AS_REBLEN(part));
 				break;
 			case SYM_XXH64:
-				XXH64_Update((XXH64_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				XXH64_Update((XXH64_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), AS_REBLEN(part));
 				break;
 			case SYM_XXH128:
-				XXH128_Update((XXH128_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), part);
+				XXH128_Update((XXH128_CTX*)VAL_BIN(ctx), VAL_BIN_SKIP(arg, pos), AS_REBLEN(part));
 				break;
 #endif
 			}
@@ -512,7 +509,7 @@
 				VAL_TAIL(ctx) = 0;
 			}
 			SET_NONE(data);
-			SET_CLOSED(req);
+			Release_Port_State(port);
 		}
 		break;
 

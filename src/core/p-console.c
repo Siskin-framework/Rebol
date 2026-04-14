@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,10 @@
 
 #define OUT_BUF_SIZE 32*1024
 
+#ifndef DEFAULT_WINDOW_COLS
+#define DEFAULT_WINDOW_COLS 80 // used when reported console width is zero (not available)
+#endif
+
 // Does OS use wide chars or byte chars (UTF-8):
 #ifdef OS_WIDE_CHAR
 #define MAKE_OS_BUFFER Make_Unicode
@@ -59,7 +63,7 @@
 	arg = D_ARG(2);
 
 	//O: known limitation: works only with default system's imput port (not for custom console ports) 
-	req = Host_Lib->std_io;
+	req = Std_IO;
 	req->port = port;
 
 	switch (action) {
@@ -67,7 +71,7 @@
 	case A_READ:
 		// If not open, open it:
 		if (!IS_OPEN(req)) {
-			if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
+			if (OS_Do_Device(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
 		}
 
 		// If no buffer, create a buffer:
@@ -81,23 +85,24 @@
 		req->data = BIN_HEAD(ser);
 		req->length = SERIES_AVAIL(ser);
 
-		result = OS_DO_DEVICE(req, RDC_READ);
+		result = OS_Do_Device(req, RDC_READ);
 		if (result < 0) Trap_Port(RE_READ_ERROR, port, req->error);
 
 		if (req->actual == 1 && req->data[0] == '\x1B') return R_NONE; // CTRL-C
 
-		if (GET_FLAG(req->modes, RDM_READ_LINE)) {
+		if (GET_FLAG(req->modes, RDM_READ_LINE) && req->actual > 0 && req->data[req->actual - 1] == '\n') {
 #ifdef TO_WINDOWS
-			if (req->actual > 1) req->actual -= 2; // remove CRLF from tail
+			if (req->actual > 1 && req->data[req->actual-2]== '\r') req->actual -= 2; // remove CRLF from tail
 #else
-			if (req->actual > 0) req->actual -= 1; // remove LF from tail
+			req->actual -= 1; // remove LF from tail
 #endif
 		}
 
 		// Convert to string or block of strings.
 		args = Find_Refines(ds, ALL_READ_REFS);
 		if (args & (AM_READ_STRING | AM_READ_LINES)) {
-			ser = Decode_UTF_String(req->data, req->actual, -1, TRUE, FALSE);
+			ser = Decode_UTF_String(req->data, req->actual, -1, TRUE, &req->error);
+			if (!ser) return R_NONE;
 			Set_String(ds, ser);
 			if (args & AM_READ_LINES) Set_Block(ds, Split_Lines(ds));
 		} else {
@@ -116,13 +121,13 @@
 
 	case A_OPEN:
 		// ?? why???
-		if (OS_DO_DEVICE(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
+		if (OS_Do_Device(req, RDC_OPEN)) Trap_Port(RE_CANNOT_OPEN, port, req->error);
 		SET_OPEN(req);
 		break;
 
 	case A_CLOSE:
 		SET_CLOSED(req);
-		//OS_DO_DEVICE(req, RDC_CLOSE);
+		//OS_Do_Device(req, RDC_CLOSE);
 		break;
 
 	case A_OPENQ:
@@ -140,19 +145,18 @@
 			spec = D_ARG(3);
 			if (!IS_LOGIC(spec)) Trap2(RE_INVALID_VALUE_FOR, spec, arg);
 			req->modify.value = VAL_LOGIC(spec);
-			OS_DO_DEVICE(req, RDC_MODIFY);
+			OS_Do_Device(req, RDC_MODIFY);
 		} else Trap1(RE_BAD_FILE_MODE, arg);
 		return R_ARG3;
 
 	case A_QUERY:
 		spec = Get_System(SYS_STANDARD, STD_CONSOLE_INFO);
 		if (!IS_OBJECT(spec)) Trap_Arg(spec);
-		args = Find_Refines(ds, ALL_QUERY_REFS);
-		if ((args & AM_QUERY_MODE) && IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
+		if (IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
 			Set_Block(D_RET, Get_Object_Words(spec));
 			return R_RET;
 		}
-		if (OS_DO_DEVICE(req, RDC_QUERY) < 0) {
+		if (OS_Do_Device(req, RDC_QUERY) < 0) {
 			if(req->error == 25) return R_NONE; //Inappropriate ioctl for device (not running in terminal) 
 			SET_INTEGER(arg, req->error);
 			Trap1(RE_PROTOCOL, arg);
@@ -163,7 +167,7 @@
 		return R_RET;
 
 	case A_FLUSH:
-		OS_DO_DEVICE(req, RDC_FLUSH);
+		OS_Do_Device(req, RDC_FLUSH);
 		break;
 
 	default:
@@ -189,10 +193,15 @@
 		SET_INTEGER(ret, req->console.buffer_rows);
 		break;
 	case SYM_WINDOW_COLS:
+		if (req->console.window_cols == 0)
+			req->console.window_cols = DEFAULT_WINDOW_COLS;
 		SET_INTEGER(ret, req->console.window_cols);
 		break;
 	case SYM_WINDOW_ROWS:
 		SET_INTEGER(ret, req->console.window_rows);
+		break;
+	case SYM_LENGTH:
+		SET_INTEGER(ret, req->console.length);
 		break;
 	default:
 		return FALSE;
@@ -218,10 +227,11 @@
 		REBVAL *word = VAL_BLK_DATA(info);
 		for (; NOT_END(word); word++) {
 			if (ANY_WORD(word)) {
-				if (IS_SET_WORD(word)) {
-					// keep the set-word in result
+				if (!IS_GET_WORD(word)) {
+					// keep the word as a key (converted to the set-word) in the result
 					val = Append_Value(values);
 					*val = *word;
+					VAL_TYPE(val) = REB_SET_WORD;
 					VAL_SET_LINE(val);
 				}
 				val = Append_Value(values);
@@ -238,6 +248,7 @@
 		SET_INTEGER(OFV(obj, STD_CONSOLE_INFO_BUFFER_ROWS), req->console.buffer_rows);
 		SET_INTEGER(OFV(obj, STD_CONSOLE_INFO_WINDOW_COLS), req->console.window_cols);
 		SET_INTEGER(OFV(obj, STD_CONSOLE_INFO_WINDOW_ROWS), req->console.window_rows);
+		SET_INTEGER(OFV(obj, STD_CONSOLE_INFO_LENGTH), req->console.length);
 		SET_OBJECT(ret, obj);
 	}
 }

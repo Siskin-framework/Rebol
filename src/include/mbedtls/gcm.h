@@ -24,6 +24,10 @@
 
 #include "mbedtls/cipher.h"
 
+#if defined(MBEDTLS_BLOCK_CIPHER_C)
+#include "mbedtls/block_cipher.h"
+#endif
+
 #include <stdint.h>
 
 #define MBEDTLS_GCM_ENCRYPT     1
@@ -42,21 +46,31 @@ extern "C" {
 
 #if !defined(MBEDTLS_GCM_ALT)
 
+#if defined(MBEDTLS_GCM_LARGE_TABLE)
+#define MBEDTLS_GCM_HTABLE_SIZE 256
+#else
+#define MBEDTLS_GCM_HTABLE_SIZE 16
+#endif
+
 /**
  * \brief          The GCM context structure.
  */
 typedef struct mbedtls_gcm_context {
-    mbedtls_cipher_context_t MBEDTLS_PRIVATE(cipher_ctx);  /*!< The cipher context used. */
-    uint64_t MBEDTLS_PRIVATE(HL)[16];                      /*!< Precalculated HTable low. */
-    uint64_t MBEDTLS_PRIVATE(HH)[16];                      /*!< Precalculated HTable high. */
-    uint64_t MBEDTLS_PRIVATE(len);                         /*!< The total length of the encrypted data. */
-    uint64_t MBEDTLS_PRIVATE(add_len);                     /*!< The total length of the additional data. */
-    unsigned char MBEDTLS_PRIVATE(base_ectr)[16];          /*!< The first ECTR for tag. */
-    unsigned char MBEDTLS_PRIVATE(y)[16];                  /*!< The Y working value. */
-    unsigned char MBEDTLS_PRIVATE(buf)[16];                /*!< The buf working value. */
-    int MBEDTLS_PRIVATE(mode);                             /*!< The operation to perform:
-                                                            #MBEDTLS_GCM_ENCRYPT or
-                                                            #MBEDTLS_GCM_DECRYPT. */
+#if defined(MBEDTLS_BLOCK_CIPHER_C)
+    mbedtls_block_cipher_context_t MBEDTLS_PRIVATE(block_cipher_ctx);  /*!< The cipher context used. */
+#else
+    mbedtls_cipher_context_t MBEDTLS_PRIVATE(cipher_ctx);    /*!< The cipher context used. */
+#endif
+    uint64_t MBEDTLS_PRIVATE(H)[MBEDTLS_GCM_HTABLE_SIZE][2]; /*!< Precalculated HTable. */
+    uint64_t MBEDTLS_PRIVATE(len);                           /*!< The total length of the encrypted data. */
+    uint64_t MBEDTLS_PRIVATE(add_len);                       /*!< The total length of the additional data. */
+    unsigned char MBEDTLS_PRIVATE(base_ectr)[16];            /*!< The first ECTR for tag. */
+    unsigned char MBEDTLS_PRIVATE(y)[16];                    /*!< The Y working value. */
+    unsigned char MBEDTLS_PRIVATE(buf)[16];                  /*!< The buf working value. */
+    unsigned char MBEDTLS_PRIVATE(mode);                     /*!< The operation to perform:
+                                                              #MBEDTLS_GCM_ENCRYPT or
+                                                              #MBEDTLS_GCM_DECRYPT. */
+    unsigned char MBEDTLS_PRIVATE(acceleration);             /*!< The acceleration to use. */
 }
 mbedtls_gcm_context;
 
@@ -101,10 +115,9 @@ int mbedtls_gcm_setkey(mbedtls_gcm_context *ctx,
 /**
  * \brief           This function performs GCM encryption or decryption of a buffer.
  *
- * \note            For encryption, the output buffer can be the same as the
- *                  input buffer. For decryption, the output buffer cannot be
- *                  the same as input buffer. If the buffers overlap, the output
- *                  buffer must trail at least 8 Bytes behind the input buffer.
+ * \note            The output buffer \p output can be the same as the input
+ *                  buffer \p input. If \p output is greater than \p input, they
+ *                  cannot overlap.
  *
  * \warning         When this function performs a decryption, it outputs the
  *                  authentication tag and does not verify that the data is
@@ -165,9 +178,11 @@ int mbedtls_gcm_crypt_and_tag(mbedtls_gcm_context *ctx,
  * \brief           This function performs a GCM authenticated decryption of a
  *                  buffer.
  *
- * \note            For decryption, the output buffer cannot be the same as
- *                  input buffer. If the buffers overlap, the output buffer
- *                  must trail at least 8 Bytes behind the input buffer.
+ * \note            The output buffer \p output can be the same as the input
+ *                  buffer \p input. If \p output is greater than \p input, they
+ *                  cannot overlap. Implementations which require
+ *                  MBEDTLS_GCM_ALT to be enabled may not provide support for
+ *                  overlapping buffers.
  *
  * \param ctx       The GCM context. This must be initialized.
  * \param length    The length of the ciphertext to decrypt, which is also
@@ -273,9 +288,11 @@ int mbedtls_gcm_update_ad(mbedtls_gcm_context *ctx,
  *                    to this function during an operation, then it is
  *                    correct to use \p output_size = \p input_length.
  *
- * \note            For decryption, the output buffer cannot be the same as
- *                  input buffer. If the buffers overlap, the output buffer
- *                  must trail at least 8 Bytes behind the input buffer.
+ * \note            The output buffer \p output can be the same as the input
+ *                  buffer \p input. If \p output is greater than \p input, they
+ *                  cannot overlap. Implementations which require
+ *                  MBEDTLS_GCM_ALT to be enabled may not provide support for
+ *                  overlapping buffers.
  *
  * \param ctx           The GCM context. This must be initialized.
  * \param input         The buffer holding the input data. If \p input_length

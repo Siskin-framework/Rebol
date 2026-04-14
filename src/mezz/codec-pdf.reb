@@ -1,9 +1,9 @@
 REBOL [
+	title:  "Codec: PDF"
 	name:    pdf
 	type:    module
 	options: [delay]
 	version: 0.1.0
-	title:  "Codec: PDF"
 	file:    https://raw.githubusercontent.com/Oldes/Rebol3/master/src/mezz/codec-pdf.reb
 	author: "Oldes"
 	history: [16-Sep-2021 "Oldes" {Initial version - raw PDF data de/encode}]
@@ -31,21 +31,22 @@ bytes: end: len: year: month: day: hour: minute: second: z: none
 sec-pad: #{28BF4E5E4E758A4164004E56FFFA01082E2E00B6D0683E802F0CA9FE6453697A}
 
 ;- Rules
+;; not using construction syntax for bitsets for higher backwards compatibility
 rl_newline: [CRLF | LF | CR]
-ch_number:        #(bitset! #{000000000000FFC0})                    ;charset "0123456789"
-ch_delimiter:     #(bitset! #{0000000004C1000A0000001400000014})    ;charset "()<>[]{}/%"
-ch_str-valid:     #(bitset! [not bits #{00EC000000C0000000000008}]) ;complement charset "^/^M^-^H^L()\"
-ch_sp:            #(bitset! #{0040000080})                          ;charset " ^-"
-ch_newline:       #(bitset! #{0024})                                ;charset CRLF
-ch_spnl:          #(bitset! #{0064000080})                          ;charset " ^-^/^L^M"
-ch_hex:           #(bitset! #{000000000000FFC07FFFFFE07FFFFFE0})    ;charset [#"0" - #"9" #"a" - #"z" #"A" - #"Z"]
-ch_hex-str:       #(bitset! #{006400008000FFC07FFFFFE07FFFFFE0})    ;union union ch_hex sp ch_newline
-ch_str:           #(bitset! [not bits #{0000000000C0000000000008}]) ;complement charset "\()"
-ch_str-esc:       #(bitset! #{0000000000C0000000000008220228})      ;charset "nrtbf()\"
-ch_not-hash:      #(bitset! [not bits #{0000000010}])               ;complement charset "#"
-ch_not-newline:   #(bitset! [not bits #{0024}])                     ;complement ch_newline
-ch_not-delimiter: #(bitset! [not bits #{0000000004C1000A0000001400000014}]) ;complement ch_delimiter
-ch_name:          #(bitset! [not bits #{0064000084C1000A0000001400000014}]) ;complement union ch_delimiter ch_spnl
+ch_number:        to bitset! #{000000000000FFC0}                    ;charset "0123456789"
+ch_delimiter:     to bitset! #{0000000004C1000A0000001400000014}    ;charset "()<>[]{}/%"
+ch_str-valid:     to bitset! [not #{00EC000000C0000000000008}]      ;complement charset "^/^M^-^H^L()\"
+ch_sp:            to bitset! #{0040000080}                          ;charset " ^-"
+ch_newline:       to bitset! #{0024}                                ;charset CRLF
+ch_spnl:          to bitset! #{0064000080}                          ;charset " ^-^/^L^M"
+ch_hex:           to bitset! #{000000000000FFC07FFFFFE07FFFFFE0}    ;charset [#"0" - #"9" #"a" - #"z" #"A" - #"Z"]
+ch_hex-str:       to bitset! #{006400008000FFC07FFFFFE07FFFFFE0}    ;union union ch_hex sp ch_newline
+ch_str:           to bitset! [not #{0000000000C0000000000008}]      ;complement charset "\()"
+ch_str-esc:       to bitset! #{0000000000C0000000000008220228}      ;charset "nrtbf()\"
+ch_not-hash:      to bitset! [not #{0000000010}]                    ;complement charset "#"
+ch_not-newline:   to bitset! [not #{0024}]                          ;complement ch_newline
+ch_not-delimiter: to bitset! [not #{0000000004C1000A0000001400000014}] ;complement ch_delimiter
+ch_name:          to bitset! [not #{0064000084C1000A0000001400000014}] ;complement union ch_delimiter ch_spnl
 
 rl_comment: [#"%" not #"%" copy value some ch_not-newline rl_newline]
 rl_boolean: ["true" (value: true) | "false" (value: false)]
@@ -176,7 +177,7 @@ rl_dict: [
 			"endstream"
 			|
 			copy bytes to "^/endstream" 10 skip (
-				sys/log/more 'PDF ["Length of the object" obj-id "stream is incorrect!" len "<>" length? bytes]
+				log-warn 'PDF ["Length of the object" obj-id "stream is incorrect!" len "<>" length? bytes]
 			)
 		]
 		rl_newline
@@ -220,7 +221,7 @@ rl_xref: [
 	some [
 		rl_ref-id
 		rl_newline
-		(sys/log/debug 'PDF ["XREF" ref-id])
+		(log-trace 'PDF ["XREF" ref-id])
 		n2 [
 			copy o 10 ch_number #" "
 			copy g  5 ch_number #" "
@@ -292,7 +293,7 @@ rl_pdf_body: [
 	any rl_xref
 	any ch_spnl
 	opt rl_startxref (
-		sys/log/debug 'PDF ["startxref offset:" value]
+		log-trace 'PDF ["startxref offset:" value]
 	)
 	any ch_spnl
 ]
@@ -335,8 +336,8 @@ import-objstm: function[obj [object!]][
 			]
 		]
 	][
-		sys/log/error 'PDF "Failed to unpack ObjStm"
-		sys/log/error 'PDF system/state/last-error
+		log-error 'PDF "Failed to unpack ObjStm"
+		log-error 'PDF system/state/last-error
 	]
 ]
 
@@ -566,7 +567,7 @@ register-codec [
 				any ch_spnl
 				rl_obj 
 				(
-					;sys/log/debug 'PDF  ["=> obj " obj-id "==> " mold value]
+					;log-trace 'PDF  ["=> obj " obj-id "==> " mold value]
 					pdf/trailer: value
 					;?? value
 					decode-xref value
@@ -593,7 +594,7 @@ register-codec [
 			enc: pdf/trailer/Encrypt
 			enc: pdf/objects/:enc
 		][
-			sys/log/info 'PDF ["Encrypted using: ^[[m" enc/Filter "v:" enc/V "r:" enc/R]
+			log-info 'PDF ["Encrypted using: ^[[m" enc/Filter "v:" enc/V "r:" enc/R]
 			;@@ TODO...
 			;? enc
 			;if all [enc/Filter = 'Standard enc/V = 1][
@@ -617,12 +618,12 @@ register-codec [
 			system/options/log/pdf > 0
 			map? info: try [pdf/objects/(pdf/trailer/info)]
 		][
-			if info/Author       [sys/log/info 'PDF ["Author:  ^[[m" info/Author]]
-			if info/Title        [sys/log/info 'PDF ["Title:   ^[[m" info/Title]]
-			if info/CreationDate [sys/log/info 'PDF ["Created: ^[[m" info/CreationDate]]
-			if info/ModDate      [sys/log/info 'PDF ["Modified:^[[m" info/ModDate]]
-			if info/Producer     [sys/log/info 'PDF ["Producer:^[[m" info/Producer]]
-			if info/Creator      [sys/log/info 'PDF ["Creator: ^[[m" info/Creator]]
+			if info/Author       [log-info 'PDF ["Author:  ^[[m" info/Author]]
+			if info/Title        [log-info 'PDF ["Title:   ^[[m" info/Title]]
+			if info/CreationDate [log-info 'PDF ["Created: ^[[m" info/CreationDate]]
+			if info/ModDate      [log-info 'PDF ["Modified:^[[m" info/ModDate]]
+			if info/Producer     [log-info 'PDF ["Producer:^[[m" info/Producer]]
+			if info/Creator      [log-info 'PDF ["Creator: ^[[m" info/Creator]]
 		]
 		also pdf pdf: none ; return result and release the internal value
 	]
@@ -638,7 +639,7 @@ register-codec [
 		;- validate minimal requirements...
 		objects: select pdf 'objects
 		unless any [map? objects block? objects][
-			sys/log/error 'PDF "Missing valid objects list!"
+			log-error 'PDF "Missing valid objects list!"
 			return none
 		]
 		trailer: select pdf 'trailer
@@ -646,7 +647,7 @@ register-codec [
 			put pdf 'trailer trailer: #[Info: #(none) Root: #(none)]
 		]
 		unless root: trailer/Root [
-			sys/log/debug 'PDF "Trying to locate `Catalog` in PDF objects."
+			log-trace 'PDF "Trying to locate `Catalog` in PDF objects."
 			foreach [ref obj] pdf/objects [
 				if all [map? obj obj/Type = 'Catalog][
 					trailer/Root: ref
@@ -655,7 +656,7 @@ register-codec [
 			]
 		]
 		unless root: trailer/Root [
-			sys/log/error 'PDF "Missing required `Catalog` object!"
+			log-error 'PDF "Missing required `Catalog` object!"
 			return none
 		]
 		if info: pick pdf/objects trailer/Info [
@@ -670,7 +671,7 @@ register-codec [
 		unless version: select pdf 'version [ version: @1.3	]
 		if decimal?  version [version: form version]
 		unless parse version [some ch_number #"." some ch_number end][
-			sys/log/error 'PDF ["Invalid PDF version:" mold version]
+			log-error 'PDF ["Invalid PDF version:" mold version]
 			return none
 		]
 

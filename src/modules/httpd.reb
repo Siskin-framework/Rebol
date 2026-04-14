@@ -2,8 +2,8 @@ Rebol [
 	Title:  "HTTPd Scheme"
 	Type:    module
 	Name:    httpd
-	Date:    10-Jan-2024
-	Version: 0.9.1
+	Date:    22-Jul-2024
+	Version: 0.9.4
 	Author: ["Andreas Bolka" "Christopher Ross-Gill" "Oldes"]
 	Exports: [serve-http http-server decode-target to-CLF-idate]
 	Home:    https://github.com/Oldes/Rebol-HTTPd
@@ -37,7 +37,7 @@ Rebol [
 		09-May-2023 "Oldes" {Root-less configuration possibility (default)}
 		14-Dec-2023 "Oldes" {Deprecated the `http-server` function in favor of `serve-http` with a different configuration input}
 	]
-	Needs: [3.16.0 mime-types] ;; new construction syntax since 3.16.0
+	Needs: [3.11.0 mime-types]
 ]
 
 append system/options/log [httpd: 1]
@@ -216,12 +216,13 @@ sys/make-scheme [
 					clients: make block! 16
 				]
 				subport/extra/config:
-				config: make map! [
-					root:       #(none)
+				config: make map! reduce/no-set [
+					root:        none
 					index:       [%index.html %index.htm]
-					keep-alive: #(true)
-					list-dir?:  #(true)
+					keep-alive:  true
+					list-dir?:   true
 					server-name: "Rebol3-HTTPd"
+					trust-ips:   [127.0.0.1]
 				]
 			]
 			port/state: port/extra/subport/extra/clients
@@ -263,7 +264,7 @@ sys/make-scheme [
 						return Actor/On-List-Dir ctx target
 					]
 				]
-				info: query path
+				info: query/mode path [date: size:]
 				; prepare modified date of the target
 				modified: info/date
 				modified/timezone: 0 ; converted to UTC
@@ -417,7 +418,7 @@ sys/make-scheme [
 				append files dirs
 
 				foreach file files [
-					set [size date] query/mode dir/:file [size date]
+					set [size date] query/mode dir/:file [:size :date]
 					append out ajoin [
 						{<a href="} file {">} file {</a> }
 						pad copy "" 50 - length? file
@@ -432,6 +433,7 @@ sys/make-scheme [
 				ctx/out/content: out
 				return true
 			][
+				print system/state/last-error
 				ctx/out/status: 404 ; using not-found response!
 				return false
 			]
@@ -591,8 +593,17 @@ sys/make-scheme [
 
 	Write-log: function [ctx][
 		try/with [
+			remote-ip: ctx/remote-ip
+			if all [
+				;; Resolve real IP from the header...
+				ip: attempt [to tuple! ctx/inp/header/X-Real-IP]
+				4 = length? ip
+				;; ...but only if we trust the real IP used to connect
+				any [none? ips: ctx/config/trust-ips find ips remote-ip]
+				remote-ip: :ip
+			]
 			msg: ajoin [
-				ctx/remote-ip
+				remote-ip
 				{ - - [} to-CLF-idate now {] "}
 				ctx/inp/method #" "
 				to string! ctx/inp/target/original
@@ -618,7 +629,7 @@ sys/make-scheme [
 	]
 
 	Awake-Client: wrap [
-		chars-method: #(bitset! #{00000000000000007FFFFFE0}) ; #"A" - #"Z"
+		chars-method: charset [#"A" - #"Z"]
 		;from-method: ["GET" | "POST" | "HEAD" | "PUT" | "DELETE" | "TRACE" | "CONNECT" | "OPTIONS"]
 		chars: complement union space: charset " " charset [#"^@" - #"^_"]
 		CRLF2BIN: #{0D0A0D0A}
@@ -846,14 +857,7 @@ sys/make-scheme [
 
 	New-Client: func[port [port!] /local client info err][
 		client: first port
-		info: query client
-		unless Actor/On-Accept info [
-			; connection not allowed
-			log-more ["Client not accepted:^[[22m" info/remote-ip]
-			close client
-			return false
-		]
-		client/awake: :Awake-Client
+		info: query/mode client [remote-ip: remote-port: local-ip: local-port:]
 		client/extra: make object! [
 			state: none
 			parent: port
@@ -880,6 +884,14 @@ sys/make-scheme [
 		]
 		;? port
 		client/extra/config: port/extra/config
+		
+		unless Actor/On-Accept client/extra [
+			; connection not allowed
+			log-more ["Client not accepted:^[[22m" info/remote-ip]
+			close client
+			return false
+		]
+		client/awake: :Awake-Client
 		append port/extra/clients client
 
 		log-more ["New client:^[[1;31m" client/extra/remote]
@@ -917,7 +929,7 @@ sys/make-scheme [
 			;try [remove find clients port]
 		]
 		log-debug ["Ports open:" length? clients]
-		if ctx/done? [
+		if all [ctx/done? zero? length? clients][
 			log-more "Server's job done, closing initiated"
 			ctx/parent/data: ctx/done?
 			Awake-Server make event! [type: 'CLOSE port: ctx/parent]
@@ -988,11 +1000,11 @@ http-server: function [
 	actions [block! object!] "Functions like: On-Get On-Post On-Post-Received On-Read On-List-Dir On-Not-Found"
 	/no-wait "Will not enter wait loop"
 ][
-	sys/log/error 'HTTPD "`http-server` function is deprecated, use `start-http` instead!"
+	sys/log/error 'HTTPD "`http-server` function is deprecated, use `serve-http` instead!"
 	spec: either config [[]][to block! spec]
 	if actor [extend spec 'actor actions]
 	extend spec 'port port
-	start-http/:no-wait spec
+	serve-http/:no-wait spec
 ]
 
 serve-http: function [

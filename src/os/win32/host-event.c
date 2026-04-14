@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Additional code modifications and improvements Copyright 2012 Saphirion AG
@@ -64,8 +64,8 @@
 #include "reb-host.h"
 #include "host-lib.h"
 
-extern HINSTANCE App_Instance;		// Set by winmain function
-extern HWND      Focused_Window;
+extern HINSTANCE App_Instance;	// Set by winmain function
+HWND      Focused_Window = 0;
 
 #define IS_LAYERED(hwnd) ((WS_EX_LAYERED & GetWindowLongPtr(hwnd, GWL_EXSTYLE)) > 0)
 #define GOB_FROM_HWND(hwnd) (REBGOB *)GetWindowLongPtr(hwnd, GWLP_USERDATA)
@@ -284,9 +284,8 @@ static void onModalBlock(
 			break;
 
 		case WM_SIZE:
-		
 		//case WM_SIZING:
-			RL_Print("SIZE %d\n", mode);
+			RL_Print(cb_cast("SIZE %d\n"), mode);
 			if (wParam == SIZE_MINIMIZED) {
 				//Invalidate the size but not win buffer
 				gob->old_size.x = 0;
@@ -607,7 +606,7 @@ static void onModalBlock(
 		};
 		int pf = ChoosePixelFormat(hdc, &pfd);
 		if (!pf) {
-			RL_Print("Could not find a pixel format.. OpenGL cannot create its context.\n");
+			RL_Print(cb_cast("Could not find a pixel format.. OpenGL cannot create its context.\n"));
 			return FALSE;
 		}
 		SetPixelFormat(hdc, pf, &pfd);
@@ -616,11 +615,11 @@ static void onModalBlock(
 			wglMakeCurrent(hdc, hglrc);
 		}
 		else {
-			RL_Print("Failed to create OpenGL context!\n");
+			RL_Print(cb_cast("Failed to create OpenGL context!\n"));
 			return FALSE;
 		}
-		RL_Print("OPENGL CONTEXT CREATED!\n");
-		RL_Print("Version %s\n", glGetString(GL_VERSION));
+		RL_Print(cb_cast("OPENGL CONTEXT CREATED!\n"));
+		RL_Print(cb_cast("Version %s\n"), glGetString(GL_VERSION));
 		return FALSE;
 
 	case WM_DESTROY:

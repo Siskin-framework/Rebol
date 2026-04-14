@@ -13,3 +13,68 @@ system/standard/bincode: make object! [
 	r-mask:
 	w-mask: 0
 ]
+
+;- code from: %/mnt/c/Dev/Builder/tree/rebol/Rebol/src/core/u-image-resize.c
+
+
+	append system/catalog [
+		filters [
+		  Point
+		  Box
+		  Triangle
+		  Hermite
+		  Hanning
+		  Hamming
+		  Blackman
+		  Gaussian
+		  Quadratic
+		  Cubic
+		  Catrom
+		  Mitchell
+		  Lanczos
+		  Bessel
+		  Sinc
+		]
+	]
+
+;- code from: %/mnt/c/Dev/Builder/tree/rebol/Rebol/src/core/u-bmp.c
+
+
+	if find system/codecs 'bmp [
+		system/codecs/bmp/suffixes: [%.bmp]
+		append append system/catalog/file-types system/codecs/bmp/suffixes 'bmp
+	]
+
+;- code from: %/mnt/c/Dev/Builder/tree/rebol/Rebol/src/core/u-png.c
+
+
+	if find system/codecs 'png [
+		system/codecs/png/suffixes: [%.png]
+		append append system/catalog/file-types system/codecs/png/suffixes 'png
+	]
+
+;- code from: %/mnt/c/Dev/Builder/tree/rebol/Rebol/src/core/u-jpg.c
+
+
+  if find system/codecs 'jpeg [
+    system/codecs/jpeg/suffixes: [%.jpg %.jpeg]
+    append append system/catalog/file-types system/codecs/jpeg/suffixes 'jpeg
+  ]
+
+;- code from: %/mnt/c/Dev/Builder/tree/rebol/Rebol/src/core/u-gif.c
+
+
+	if find system/codecs 'gif [
+		system/codecs/gif/suffixes: [%.gif]
+		append append system/catalog/file-types system/codecs/gif/suffixes 'gif
+	]
+
+;- code from: %/mnt/c/Dev/Builder/tree/rebol/Rebol/src/core/u-qoi.c
+
+
+	if find system/codecs 'qoi [
+		system/codecs/qoi/title: "Quite OK Image"
+		system/codecs/qoi/type: 'image
+		system/codecs/qoi/suffixes: [%.qoi]
+		append append system/catalog/file-types system/codecs/qoi/suffixes 'qoi
+	]

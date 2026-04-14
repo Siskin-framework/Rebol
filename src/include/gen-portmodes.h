@@ -2,7 +2,7 @@
 **
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2021 Rebol Open Source Contributors
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **  Licensed under the Apache License, Version 2.0
 **  This is a code-generated file.
@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Port Modes
-**  Build: 3.16.0
-**  Date:  4-Apr-2024
+**  Build: 3.21.15
+**  Date:  14-Apr-2026
 **  File:  port-modes.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -20,6 +20,9 @@
 
 
 enum reb_port_modes {
+	MODE_PORT_CREATED,
+	MODE_PORT_ACCESSED,
+	MODE_PORT_MODIFIED,
 	MODE_PORT_OWNER_READ,
 	MODE_PORT_OWNER_WRITE,
 	MODE_PORT_OWNER_EXECUTE,

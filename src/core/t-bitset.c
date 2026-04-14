@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2022 Rebol Open Source Developers
+**  Copyright 2021-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,7 +53,7 @@
 
 /***********************************************************************
 **
-*/	REBSER *Make_Bitset(REBCNT len)
+*/	REBSER *Make_Bitset(REBLEN len)
 /*
 **		Return a bitset series (binary.
 **
@@ -65,7 +65,8 @@
 
 	len = (len + 7) / 8;
 	ser = Make_Binary(len);
-	Clear_Series(ser);
+	//No need to clear the series, because Make_Binary guarantees completely cleared memory.
+	//Clear_Series(ser);
 	SERIES_TAIL(ser) = len;
 	BITS_NOT(ser) = 0;
 
@@ -81,9 +82,8 @@
 {
 	REBSER *ser = VAL_SERIES(value);
 
-	if (BITS_NOT(ser)) Append_Bytes(mold->series, "[not bits ");
+	if (BITS_NOT(ser)) Append_Bytes(mold->series, "not ");
 	Mold_Binary(value, mold);
-	if (BITS_NOT(ser)) Append_Byte(mold->series, ']');
 }
 
 
@@ -91,38 +91,36 @@
 **
 */	REBFLG MT_Bitset(REBVAL *out, REBVAL *data, REBCNT type)
 /*
+**	Construct a bitset, e.g.: #(bitset! #{FF}) or #(bitset! not #{FF})
+**
+**	NOTE: data are on stack, it is not a BLOCK value,
+**        so it is not possible to use macros like VAL_TAIL
+**
 ***********************************************************************/
 {
-	//REBFLG is_not = 0;
-	
-	if (IS_BLOCK(data)) {
-		REBINT len = Find_Max_Bit(data);
-		REBSER *ser;
-		if (len < 0 || len > 0xFFFFFF) Trap_Arg(data);
-		ser = Make_Bitset(len);
-		Set_Bits(ser, data, TRUE);
-		Set_Series(REB_BITSET, out, ser);
-		return TRUE;
+	REBFLG is_not = 0;
+	if (IS_WORD(data)) {
+		if (VAL_WORD_CANON(data++) == SYM_NOT) is_not = 1;
+		else return FALSE;
 	}
-
 	if (!IS_BINARY(data)) return FALSE;
-	Set_Series(REB_BITSET, out, Copy_Series_Value(data));
-	BITS_NOT(VAL_SERIES(out)) = 0;
-	return TRUE;
+	Set_Series(REB_BITSET, out, VAL_SERIES(data));
+	BITS_NOT(VAL_SERIES(out)) = is_not;
+	return IS_END(++data);
 }
 
 
 /***********************************************************************
 **
-*/	REBINT Find_Max_Bit(REBVAL *val)
+*/	REBCNT Find_Max_Bit(REBVAL *val)
 /*
 **		Return integer number for the maximum bit number defined by
 **		the value. Used to determine how much space to allocate.
 **
 ***********************************************************************/
 {
-	REBINT maxi = 0;
-	REBINT n;
+	REBCNT maxi = 0;
+	REBCNT n;
 
 	switch (VAL_TYPE(val)) {
 
@@ -131,7 +129,7 @@
 		break;
 
 	case REB_INTEGER:
-		maxi = Int32s(val, 0);
+		maxi = (REBCNT)Int32s(val, 0);
 		break;
 
 	case REB_STRING:
@@ -140,29 +138,33 @@
 	case REB_URL:
 	case REB_TAG:
 //	case REB_ISSUE:
-		n = VAL_INDEX(val);
-		if (VAL_BYTE_SIZE(val)) {
-			REBYTE *bp = VAL_BIN(val);
-			for (; n < (REBINT)VAL_TAIL(val); n++)
-				if (bp[n] > maxi) maxi = bp[n];
+		if (IS_UTF8_STRING(val)) {
+			REBU32 chr;
+			REBCNT sz = VAL_LEN(val);
+			const REBYTE *bp = VAL_BIN_DATA(val);
+			while (sz > 0) {
+				chr = UTF8_Decode_Codepoint(&bp, &sz);
+				if (chr > maxi) maxi = chr;
+			}
 		}
 		else {
-			REBUNI *up = VAL_UNI(val);
-			for (; n < (REBINT)VAL_TAIL(val); n++)
-				if (up[n] > maxi) maxi = up[n];
+			//ASCII...
+			REBYTE *bp = VAL_BIN(val);
+			for (n = VAL_INDEX(val); n < VAL_TAIL(val); n++)
+				if (bp[n] > maxi) maxi = bp[n];
 		}
 		//maxi++; //@@ https://github.com/Oldes/Rebol-issues/issues/2415
 		break;
 
 	case REB_BINARY:
-		maxi = VAL_LEN(val) * 8 - 1;
-		if (maxi < 0) maxi = 0;
+		maxi = VAL_LEN(val) * 8;
+		if (maxi > 0) maxi--;
 		break;
 
 	case REB_BLOCK:
 		for (val = VAL_BLK_DATA(val); NOT_END(val); val++) {
 			n = Find_Max_Bit(val);
-			if (n > maxi) maxi = n;
+			if (n != NOT_FOUND && n > maxi) maxi = n;
 		}
 		//maxi++;
 		break;
@@ -181,7 +183,7 @@
 
 /***********************************************************************
 **
-*/	REBFLG Check_Bit(REBSER *bset, REBCNT c, REBFLG uncased)
+*/	REBFLG Check_Bit(const REBSER *bset, REBCNT c, REBFLG uncased)
 /*
 **		Check bit indicated. Returns TRUE if set.
 **		If uncased is TRUE, try to match either upper or lower case.
@@ -317,19 +319,23 @@ retry:
 /*
 ***********************************************************************/
 {
-	REBCNT n = VAL_INDEX(val);
+	REBCNT index = VAL_INDEX(val);
+	REBCNT sz=VAL_LEN(val);
+	REBU32 chr;
 
 	if(IS_PROTECT_SERIES(bset)) Trap0(RE_PROTECTED);
 
-	if (VAL_BYTE_SIZE(val)) {
-		REBYTE *bp = VAL_BIN(val);
-		for (; n < VAL_TAIL(val); n++)
-			Set_Bit(bset, bp[n], set);
+	if (IS_UTF8_STRING(val)) {
+		const REBYTE *bp = VAL_BIN_DATA(val);
+		while (sz > 0) {
+			chr = UTF8_Decode_Codepoint(&bp, &sz);
+			Set_Bit(bset, chr, set);
+		}
 	}
 	else {
-		REBUNI *up = VAL_UNI(val);
-		for (; n < VAL_TAIL(val); n++)
-			Set_Bit(bset, up[n], set);
+		REBYTE *bp = VAL_BIN(val);
+		for (; index < VAL_TAIL(val); index++)
+			Set_Bit(bset, bp[index], set);
 	}
 }
 
@@ -405,12 +411,12 @@ span_bits:
 			else Set_Bit(bset, n, set);
 			break;
 
-		case REB_BINARY:
 		case REB_STRING:
 		case REB_FILE:
 		case REB_EMAIL:
 		case REB_URL:
 		case REB_TAG:
+		case REB_REF:
 //		case REB_ISSUE:
 			Set_Bit_Str(bset, val, set);
 			break;
@@ -420,13 +426,19 @@ span_bits:
 			if (!IS_SAME_WORD(val, SYM_BITS)) return 0;
 			val++;
 			if (!IS_BINARY(val)) return 0;
+			// fall thru...
+		case REB_BINARY:
 			n = VAL_LEN(val);
 			c = bset->tail;
 			if (n >= c) {
 				Expand_Series(bset, c, (n - c));
 				CLEAR(BIN_SKIP(bset, c), (n - c));
 			}
-			memcpy(BIN_HEAD(bset), VAL_BIN_DATA(val), n);
+			REBYTE *b = BIN_HEAD(bset);
+			REBYTE *s = VAL_BIN_DATA(val);
+			for (REBCNT i = 0; i < n; i++) {
+				b[i] = b[i] | s[i];
+			}
 			break;
 
 		default:
@@ -634,7 +646,7 @@ scan_bits:
 	REBVAL *value = D_ARG(1);
 	REBVAL *arg = D_ARG(2);
 	REBSER *ser;
-	REBINT len;
+	REBLEN len;
 	REBINT diff;
 
 	//if (action != A_MAKE && action != A_TO)
@@ -674,7 +686,7 @@ scan_bits:
 		}
 		// Determine size of bitset. Returns -1 for errors.
 		len = Find_Max_Bit(arg);
-		if (len < 0 || len > 0x0FFFFFFF) Trap_Arg(arg);
+		if (len == UNKNOWN || len > 0x0FFFFFFF) Trap_Arg(arg);
 
 		ser = Make_Bitset(len);
 		Set_Series(REB_BITSET, value, ser);

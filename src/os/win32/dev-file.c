@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,7 +61,7 @@ static BOOL Seek_File_64(REBREQ *file)
 	// On error, returns FALSE and sets file->error field.
 	HANDLE h = (HANDLE)file->handle;
 	DWORD result;
-	DWORD highint;
+	LONG highint;
 
 	if (file->file.index == -1) {
 		// Append:
@@ -69,7 +70,7 @@ static BOOL Seek_File_64(REBREQ *file)
 	}
 	else {
 		// Line below updates indexh if it is affected:
-		highint = (long)(file->file.index >> 32);
+		highint = file->file.index >> 32;
 		result = SetFilePointer(h, (long)(file->file.index), &highint, FILE_BEGIN);
 	}
 
@@ -180,10 +181,11 @@ static BOOL Seek_File_64(REBREQ *file)
 {
 	HANDLE h= (HANDLE)(dir->handle);
 	REBCHR *cp = 0;
-	REBCNT len;
+	REBLEN len;
 	if (!h) {
-		len = (1 + GetLogicalDriveStrings(0, NULL)) << 1;
-		h = MAKE_MEM(len);
+		len = (1 + GetLogicalDriveStrings(0, NULL));
+		h = MAKE_MEM(len << 1);
+		if (!h) return DR_ERROR;
 		GetLogicalDriveStrings(len, h);
 		dir->length = len;
 		dir->actual = 0;
@@ -268,6 +270,7 @@ static BOOL Seek_File_64(REBREQ *file)
 	h = CreateFile(file->file.path, access, FILE_SHARE_READ|FILE_SHARE_WRITE, 0, create, attrib, 0);
 	if (h == INVALID_HANDLE_VALUE) {
 		file->error = -RFE_OPEN_FAIL;
+		//wprintf(L"failed to open: %s\n", file->file.path);
 		goto fail;
 	}
 
@@ -284,8 +287,8 @@ static BOOL Seek_File_64(REBREQ *file)
 	// Fetch file size (if fails, then size is assumed zero):
 	if (GetFileInformationByHandle(h, &info)) {
 		file->file.size = ((i64)(info.nFileSizeHigh) << 32) + info.nFileSizeLow;
-		file->file.time.l = info.ftLastWriteTime.dwLowDateTime;
-		file->file.time.h = info.ftLastWriteTime.dwHighDateTime;
+		file->file.modified_time.l = info.ftLastWriteTime.dwLowDateTime;
+		file->file.modified_time.h = info.ftLastWriteTime.dwHighDateTime;
 	}
 
 	file->handle = (void *)h;
@@ -306,7 +309,12 @@ fail:
 ***********************************************************************/
 {
 	if (file->handle) {
-		CloseHandle((HANDLE)(file->handle));
+		if (GET_FLAG(file->modes, RFM_DIR)) {
+			FindClose((HANDLE)(file->handle));
+		}
+		else {
+			CloseHandle((HANDLE)(file->handle));
+		}
 		file->handle = 0;
 	}
 	return DR_DONE;
@@ -419,8 +427,12 @@ fail:
 			SET_FLAG(file->modes, RFM_DIR);
 			// but without size and date
 			file->file.size = MIN_I64;
-			file->file.time.l = 0;
-			file->file.time.h = 0;
+			file->file.modified_time.l = 0;
+			file->file.modified_time.h = 0;
+			file->file.accessed_time.l = 0;
+			file->file.accessed_time.h = 0;
+			file->file.created_time.l = 0;
+			file->file.created_time.h = 0;
 			// put back removed slash
 			file->file.path[0] = '/';
 			file->file.path[1] = 0;
@@ -438,8 +450,12 @@ fail:
 		CLR_FLAG(file->modes, RFM_DIR);
 		file->file.size = ((i64)info.nFileSizeHigh << 32) + (i64)info.nFileSizeLow;
 	}
-	file->file.time.l = info.ftLastWriteTime.dwLowDateTime;
-	file->file.time.h = info.ftLastWriteTime.dwHighDateTime;
+	file->file.modified_time.l = info.ftLastWriteTime.dwLowDateTime;
+	file->file.modified_time.h = info.ftLastWriteTime.dwHighDateTime;
+	file->file.accessed_time.l = info.ftLastAccessTime.dwLowDateTime;
+	file->file.accessed_time.h = info.ftLastAccessTime.dwHighDateTime;
+	file->file.created_time.l = info.ftCreationTime.dwLowDateTime;
+	file->file.created_time.h = info.ftCreationTime.dwHighDateTime;
 	return DR_DONE;
 }
 

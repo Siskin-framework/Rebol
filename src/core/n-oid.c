@@ -52,7 +52,7 @@
 	oid = VAL_BIN_AT(val_oid);
 	len = VAL_LEN(val_oid);
 	out = Make_Binary(3 * len); // len * 3 should be enough to hold the result
-	p = SERIES_DATA(out);
+	p = (char*)SERIES_DATA(out);
 	n = SERIES_AVAIL(out);
 
 	if (len > 0) {
@@ -85,7 +85,7 @@
 			if (ret < 0) return R_ARG1; // error!
 			if ((size_t)ret >= n) {
 				Extend_Series(out, (REBLEN)(ret - n + 1)); // may reallocate p!
-				p = SERIES_DATA(out) + SERIES_TAIL(out);
+				p = (char*)(SERIES_DATA(out) + SERIES_TAIL(out));
 				n = SERIES_AVAIL(out);
 				ret = snprintf(p, n, ".%u", value);
 				if (ret < 0) return R_ARG1; // error!

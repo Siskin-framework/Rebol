@@ -66,6 +66,10 @@ Rebol [
 	--assert 1.2.3 = to-tuple [1 2 3]
 	--assert "1.2.3.4.5.6.7.8.9.10.11.12" = mold to tuple! [1 2 3 4 5 6 7 8 9 10 11 12]
 	--assert error? try [to tuple! [1 2 3 4 5 6 7 8 9 10 11 12 13]] ; too long
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2673
+	--assert 1.25.200 == to tuple! [0.5 25.4 200.01]
+	--assert error? try [to tuple! [0.5 25.4 300.01]] ; out of range value
+	--assert error? try [to tuple! [0.5 25.4 -10.01]] ; out of range value
 
 	--test-- "reverse tuple"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/211
@@ -140,9 +144,26 @@ Rebol [
 		--assert not strict-equal? 1.2.3 1.2.3.0
 		--assert not same? 1.2.3 1.2.3.0
 		--assert not same? reverse 1.2.3 reverse 1.2.3.0
-
-	
 ===end-group===
+
+
+===start-group=== "lerp tuple"
+	--test-- "lerp tuple with decimal"
+		--assert (lerp 10.100.255 255.128.64  0.0) == 10.100.255
+		--assert (lerp 10.100.255 255.128.64  0.3) == 83.108.197
+		--assert (lerp 10.100.255 255.128.64  1.0) == 255.128.64
+		--assert (lerp 10.100.255 255.128.64  2.0) == 255.128.64
+		--assert (lerp 10.100.255 255.128.64 -2.0) == 10.100.255
+	--test-- "lerp tuple with percents"
+		--assert (lerp 10.100.255 255.128.64  0%)   == 10.100.255
+		--assert (lerp 10.100.255 255.128.64  30%)  == 83.108.197
+		--assert (lerp 10.100.255 255.128.64  100%) == 255.128.64
+		--assert (lerp 10.100.255 255.128.64  200%) == 255.128.64
+		--assert (lerp 10.100.255 255.128.64 -200%) == 10.100.255
+	--test-- "lerp tuple with not compatible types"
+		--assert all [error? e: try [lerp 0.0.0 10x10 0] e/id = 'type-mismatch]
+===end-group===
+
 
 ===start-group=== "Other tuple"
 	--test-- "no power on tuple"

@@ -57,7 +57,7 @@ assert: native [
 
 attempt: native [
 	"Tries to evaluate a block and returns result or NONE on error."
-	block [block!]
+	block [block! paren!]
 	/safer "Capture all possible errors and exceptions"
 ]
 
@@ -250,6 +250,7 @@ recycle: native [
 	/ballast {Trigger for auto-recycle (memory used)}
 	size [integer!]
 	/torture {Constant recycle (for internal debugging)}
+	/pools {Release empty memory pool segments}
 ]
 
 release: native [
@@ -409,8 +410,8 @@ debase: native [
 ]
 
 enbase: native [
-	{Encodes a string into a binary-coded string.}
-	value [binary! any-string!] {If string, will be UTF8 encoded}
+	{Encodes data into a textual representation using a specified binary base.}
+	value [binary! any-string! integer!] {Non-binary values are first converted to binary}
 	base  [integer!] {Binary base to use: 85, 64, 36, 16, or 2}
 	/url  {Base 64 Encoding with URL and Filename Safe Alphabet}
 	/part {Limit the length of the input}
@@ -445,14 +446,14 @@ enline: native [
 
 detab: native [
 	"Converts tabs to spaces (default tab size is 4)."
-	string [any-string!] {(modified)}
+	string [any-string! binary!] {(modified)}
 	/size  "Specifies the number of spaces per tab"
 	number [integer!]
 ]
 
 entab: native [
 	"Converts spaces to tabs (default tab size is 4)."
-	string [any-string!] {(modified)}
+	string [any-string! binary!] {(modified)}
 	/size "Specifies the number of spaces per tab"
 	number [integer!]
 ]
@@ -565,7 +566,7 @@ set: native [
 
 to-hex: native [
 	{Converts numeric value to a hex issue! datatype (with leading # and 0's).}
-	value [integer! tuple!] {Value to be converted}
+	value [integer! char! tuple!] {Value to be converted}
 	/size {Specify number of hex digits in result}
 	len [integer!]
 ]
@@ -669,6 +670,8 @@ transcode: native [
 	/error "Do not cause errors - return error object as value in place"
 	/line  "Return also information about number of lines scaned"
 	 count [integer!] "Initial line number"
+	/part  "Translates only part of the input buffer"
+	 length [integer!] "Length of source to decode"
 ]
 
 echo: native [
@@ -907,12 +910,12 @@ list-env: native [
 ]
 
 call: native [
-	{Run another program; return immediately.}
+	{Run another program; return immediately with the process ID.}
 	command [any-string! block! file!] "An OS-local command line (quoted as necessary), a block with arguments, or an executable file"
-	/wait "Wait for command to terminate before returning"
+	/wait "Wait for command to terminate and then return the exit code"
 	/console "Runs command with I/O redirected to console"
 	/shell "Forces command to be run from shell"
-	/info "Returns process information object"
+	/info {Returns process information object containing the ID of the process (or 0 if failed to run), includes the exit code when used with /wait}
 	/input in [string! binary! file! none!] "Redirects stdin to in"
 	/output out [string! binary! file! none!] "Redirects stdout to out"
 	/error err [string! binary! file! none!] "Redirects stderr to err"

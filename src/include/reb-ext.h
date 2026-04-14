@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@
 #include "reb-defs.h"
 #include "ext-types.h"
 #include "sys-value.h"
+#include "reb-ext-handler.h"
 
 #ifndef API_EXPORT
 # define RL_API API_EXPORT
@@ -102,8 +103,9 @@ typedef union rxi_arg_val {
 		REBYTE tuple_bytes[MAX_TUPLE];
 	};
 	struct {
-		REBSER *data;
-		REBSER *fields;
+		REBSER *series; // Rebol series where struct's data are stored
+		REBCNT offset;  // like series' index (used with nested structs)
+		REBCNT id;      // unique struct id counted as a hash of its specification
 	} structure;
 
 } RXIARG;
@@ -158,6 +160,11 @@ typedef int (*RXICAL)(int cmd, RXIFRM *args, REBCEC *ctx);
 #define RXA_IMAGE_BITS(f,n)     ((REBYTE *)RL_SERIES((RXA_ARG(f,n).image), RXI_SER_DATA))
 #define RXA_IMAGE_WIDTH(f,n)    (RXA_ARG(f,n).width)
 #define RXA_IMAGE_HEIGHT(f,n)   (RXA_ARG(f,n).height)
+#define RXA_STRUCT_SER(f,n)		((RXA_ARG(f,n).structure.series))
+#define RXA_STRUCT_BIN(f,n)     ((REBYTE *)(SERIES_DATA(RXA_STRUCT_SER(f,n))) + RXA_INDEX(f,n))
+#define RXA_STRUCT_LEN(f,n)     (SERIES_TAIL(RXA_STRUCT_SER(f,n)) - RXA_INDEX(f,n)) // length in bytes
+#define RXA_STRUCT_ID(f,n)      (RXA_ARG(f,n).structure.id)
+#define RXA_STRUCT_SPEC(f,n)	(RL_STRUCT_SPEC(RXA_STRUCT_ID(f,n)))
 
 // Command function return values:
 enum rxi_return {
@@ -206,6 +213,7 @@ enum {
 	RXC_ASYNC,		// async callback
 	RXC_QUEUED,		// pending in event queue
 	RXC_DONE,		// call completed, structs can be freed
+	RXC_ALLOC,		// callback was allocated and must be freed on done
 };
 
 

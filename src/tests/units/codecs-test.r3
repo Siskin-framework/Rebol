@@ -437,7 +437,7 @@ if find codecs 'JSON [
 		--assert ["+1" 1] = to block! decode 'JSON {{"+1": 1}}
 	--test-- "Decode unicode escaped char"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2546
-		--assert [test: "a"] = to block! decode 'json {{"test": "\u0061"}}
+		--assert [test: {"<}] = to block! decode 'json {{"test": "\"\u003c"}}
 
 	===end-group===
 ]
@@ -648,6 +648,10 @@ if find codecs 'XML [
 		--assert data/3/1/1 = "HTML"
 		--assert 5 = length? data/3/1/3
 
+	--test-- "XML decode test3"
+		--assert [document #[] [["a" ["name" "Émily"] ["Émily ♠"]]]]
+				== decode 'xml {<a name="&#x00C9;mily">&#xC9;mily &spades;</a>}
+
 
 	===end-group===
 ]
@@ -659,6 +663,10 @@ if find codecs 'html-entities [
 		test: {Test: &spades; & &#162; &lt;a&gt;&#32;and &Delta;&delta; &frac34;}
 		--assert "Test: ♠ & ¢ <a> and Δδ ¾" = decode 'html-entities test
 		--assert "Test: ♠ & ¢ <a> and Δδ ¾" = decode 'html-entities to binary! test
+		--assert "Émily" == decode 'html-entities "&#x00C9;mily"
+		--assert "Émily" == decode 'html-entities "&#x0C9;mily"
+		--assert "Émily" == decode 'html-entities "&#xC9;mily"
+		--assert "&#xFFFFFF; & &#1114112;" == decode 'html-entities {&#xFFFFFF; & &#1114112;}
 
 	===end-group===
 ]
@@ -706,9 +714,9 @@ s te fabriquent pour te la vendre une =C3=A2me vulgaire.^M
 
 	--test-- "quoted-encode with spaces"
 		--assert "a b" = qp-encode "a b"
-		--assert "a_b" = qp-encode/no-space "a b"
+		--assert "a_b" = qp-encode/uri "a b"
 		--assert "a_b" = qp-decode "a_b"
-		--assert "a b" = qp-decode/space "a_b"
+		--assert "a b" = qp-decode/uri "a_b"
 
 	===end-group===
 	codecs/quoted-printable/max-line-length: :was-length

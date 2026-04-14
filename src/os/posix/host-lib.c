@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,6 +58,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <string.h>
 #include <errno.h>
@@ -146,7 +147,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBINT OS_Get_PID(void)
+*/	OS_API REBINT OS_Get_PID(void)
 /*
 **		Return the current process ID
 **
@@ -157,7 +158,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBINT OS_Get_UID(void)
+*/	OS_API REBINT OS_Get_UID(void)
 /*
 **		Return the real user ID
 **
@@ -168,7 +169,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBINT OS_Set_UID(REBINT uid)
+*/	OS_API REBINT OS_Set_UID(REBINT uid)
 /*
 **		Set the user ID, see setuid manual for its semantics
 **
@@ -190,7 +191,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBINT OS_Get_GID(void)
+*/	OS_API REBINT OS_Get_GID(void)
 /*
 **		Return the real group ID
 **
@@ -201,7 +202,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBINT OS_Set_GID(REBINT gid)
+*/	OS_API REBINT OS_Set_GID(REBINT gid)
 /*
 **		Set the group ID, see setgid manual for its semantics
 **
@@ -223,7 +224,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBINT OS_Get_EUID(void)
+*/	OS_API REBINT OS_Get_EUID(void)
 /*
 **		Return the effective user ID
 **
@@ -234,7 +235,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBINT OS_Set_EUID(REBINT uid)
+*/	OS_API REBINT OS_Set_EUID(REBINT uid)
 /*
 **		Set the effective user ID
 **
@@ -256,7 +257,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBINT OS_Get_EGID(void)
+*/	OS_API REBINT OS_Get_EGID(void)
 /*
 **		Return the effective group ID
 **
@@ -267,7 +268,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBINT OS_Set_EGID(REBINT gid)
+*/	OS_API REBINT OS_Set_EGID(REBINT gid)
 /*
 **		Set the effective group ID
 **
@@ -289,7 +290,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBINT OS_Send_Signal(REBINT pid, REBINT signal)
+*/	OS_API REBINT OS_Send_Signal(REBINT pid, REBINT signal)
 /*
 **		Send signal to a process
 **
@@ -313,7 +314,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBINT OS_Kill(REBINT pid)
+*/	OS_API REBINT OS_Kill(REBINT pid)
 /*
 **		Try to kill the process
 **
@@ -324,7 +325,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBINT OS_Config(int id, REBYTE *result)
+*/	OS_API REBINT OS_Config(int id, REBYTE *result)
 /*
 **		Return a specific runtime configuration parameter.
 **
@@ -343,7 +344,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	void *OS_Make(size_t size)
+*/	RL_API void *OS_Make(size_t size)
 /*
 **		Allocate memory of given size.
 **
@@ -358,7 +359,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	void OS_Free(void *mem)
+*/	RL_API void OS_Free(void *mem)
 /*
 **		Free memory allocated in this OS environment. (See OS_Make)
 **
@@ -370,25 +371,27 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REB_NORETURN void OS_Exit(int code)
+*/	RL_API REB_NORETURN void OS_Exit(int code, int flags)
 /*
 **		Called in all cases when REBOL quits
 **
-**		If there would be case when freeing resources is not wanted,
-**		it should be signalised by a new argument.
+**		At this time, the `flags` argument is used only to indicate
+**		whether the core should be released gracefully.
 **
 ***********************************************************************/
 {
 	//OS_Call_Device(RDI_STDIO, RDC_CLOSE); // close echo
 	OS_Quit_Devices(0);
-	RL_Dispose();
+#ifdef DEBUG
+	if (flags) RL_Dispose();
+#endif
 	exit(code);
 }
 
 
 /***********************************************************************
 **
-*/	REB_NORETURN void OS_Crash(const REBYTE *title, const REBYTE *content)
+*/	RL_API REB_NORETURN void OS_Crash(const REBYTE *title, const REBYTE *content)
 /*
 **		Tell user that REBOL has crashed. This function must use
 **		the most obvious and reliable method of displaying the
@@ -419,14 +422,14 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBCHR *OS_Form_Error(int errnum, REBCHR *str, int len)
+*/	OS_API REBCHR *OS_Form_Error(int errnum, REBCHR *str, int len)
 /*
 **		Translate OS error into a string. The str is the string
 **		buffer and the len is the length of the buffer.
 **
 ***********************************************************************/
 {
-    if (!errnum) errnum = errno;
+	if (!errnum) errnum = errno;
 	strerror_r(errnum, s_cast(str), len);
 	return str;
 }
@@ -434,7 +437,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBOOL OS_Get_Boot_Path(REBCHR **path)
+*/	RL_API REBOOL OS_Get_Boot_Path(REBCHR **path)
 /*
 **		Used to determine the program file path for REBOL.
 **		This is the path stored in system->options->boot and
@@ -444,7 +447,6 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 {
 #ifdef TO_MACOS
 	REBCNT size = 0;
-	REBINT rv;
 	REBCHR *buf;
 	*path = NULL;
 	_NSGetExecutablePath(NULL, &size); // get size of the result
@@ -452,7 +454,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 	if (!buf) return FALSE;
 	if (0 == _NSGetExecutablePath(buf, &size)) {
 		// result from above still may be a relative path!
-		*path = realpath(buf, NULL); // needs FREE once not used!!
+		*path = (REBCHR*)realpath(cs_cast(buf), NULL); // needs FREE once not used!!
 	}
 	FREE_MEM(buf);
 #else
@@ -469,7 +471,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBCHR *OS_Get_Locale(int what)
+*/	OS_API REBCHR *OS_Get_Locale(int what)
 /*
 **		Used to obtain locale information from the system.
 **		The returned value must be freed with OS_FREE_MEM.
@@ -482,7 +484,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBINT OS_Get_Env(REBCHR *envname, REBCHR* envval, REBINT valsize)
+*/	OS_API REBINT OS_Get_Env(REBCHR *envname, REBCHR* envval, REBINT valsize)
 /*
 **		Get a value from the environment.
 **		Returns size of retrieved value for success or zero if missing.
@@ -511,7 +513,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBOOL OS_Set_Env(REBCHR *envname, REBCHR *envval)
+*/	OS_API REBOOL OS_Set_Env(REBCHR *envname, REBCHR *envval)
 /*
 **		Set a value from the environment.
 **		Returns >0 for success and 0 for errors.
@@ -577,7 +579,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBCHR *OS_List_Env(void)
+*/	OS_API REBCHR *OS_List_Env(void)
 /*
 **		Returns NULL on error.
 **
@@ -609,7 +611,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	void OS_Get_Time(REBOL_DAT *dat)
+*/	OS_API void OS_Get_Time(REBOL_DAT *dat)
 /*
 **		Get the current system date/time in UTC plus zone offset (mins).
 **
@@ -627,7 +629,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	i64 OS_Delta_Time(i64 base, int flags)
+*/	OS_API i64 OS_Delta_Time(i64 base, int flags)
 /*
 **		Return time difference in microseconds. If base = 0, then
 **		return the counter. If base != 0, compute the time difference.
@@ -653,7 +655,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	int OS_Get_Current_Dir(REBCHR **path)
+*/	OS_API int OS_Get_Current_Dir(REBCHR **path)
 /*
 **		Return the current directory path as a string and
 **		its length in chars (not bytes).
@@ -670,7 +672,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	int OS_Set_Current_Dir(REBCHR *path)
+*/	OS_API int OS_Set_Current_Dir(REBCHR *path)
 /*
 **		Set the current directory to local path.
 **		Return 0 on success else error number.
@@ -689,37 +691,49 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	char* OS_Real_Path(const char *path)
+*/	OS_API char* OS_Real_Path(const char *path)
 /*
 **		Returns a null-terminated string containing the canonicalized
 **		absolute pathname corresponding to path. In the returned string,
 **		symbolic links are resolved, as are . and .. pathname components.
 **		Consecutive slash (/) characters are replaced by a single slash.
 **
-**		The result should be freed after copy/conversion.
-**
 ***********************************************************************/
 {
-	return realpath(path, NULL); // Be sure to call free() after usage
+	static char result[PATH_MAX+2];
+	struct stat path_stat;
+	if (realpath(path, result) == NULL) return NULL;
+	if (stat(result, &path_stat) != 0) return NULL;
+
+	size_t len = strlen(result);
+	// Append the trailing slash if it is a directory
+	if (S_ISDIR(path_stat.st_mode)) {
+		result[len++] = '/';
+	}
+	result[len] = 0;
+	return (char*)result; // Be sure to copy or process the result soon!
 }
 
 
 /***********************************************************************
 **
-*/	void OS_File_Time(REBREQ *file, REBOL_DAT *dat)
+*/	OS_API void OS_File_Time(I64 *time, REBOL_DAT *dat)
 /*
-**		Convert file.time to REBOL date/time format.
+**		Convert file time to REBOL date/time format.
 **		Time zone is UTC.
 **
 ***********************************************************************/
 {
-	Convert_Date((time_t *)&(file->file.time.l), dat, 0);
+	time_t stime;
+	stime = time->l;
+	Convert_Date(&stime, dat, 0);
+	dat->nano  = time->h;
 }
 
 
 /***********************************************************************
 **
-*/	void *OS_Open_Library(REBCHR *path, REBCNT *error)
+*/	OS_API void *OS_Open_Library(REBCHR *path, REBCNT *error)
 /*
 **		Load a DLL library and return the handle to it.
 **		If zero is returned, error indicates the reason.
@@ -728,7 +742,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 {
 #ifndef NO_DL_LIB
 	void *dll = dlopen(path, RTLD_LAZY/*|RTLD_GLOBAL*/);
-	// if(!dll) printf("dlerror: %s\n", dlerror());
+	if (!dll) fprintf(stderr, "dlerror: %s\n", dlerror());
 	*error = 0; // dlerror() returns a char* error message, so there's
 				// no immediate way to return an "error code" in *error
 	return dll;
@@ -740,7 +754,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	void OS_Close_Library(void *dll)
+*/	OS_API void OS_Close_Library(void *dll)
 /*
 **		Free a DLL library opened earlier.
 **
@@ -754,7 +768,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	void *OS_Find_Function(void *dll, const char *funcname)
+*/	OS_API void *OS_Find_Function(void *dll, const char *funcname)
 /*
 **		Get a DLL function address from its string name.
 **
@@ -771,7 +785,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	REBINT OS_Create_Thread(CFUNC init, void *arg, REBCNT stack_size)
+*/	OS_API REBINT OS_Create_Thread(CFUNC init, void *arg, REBCNT stack_size)
 /*
 **		Creates a new thread for a REBOL task datatype.
 **
@@ -800,7 +814,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	void OS_Delete_Thread(void)
+*/	OS_API void OS_Delete_Thread(void)
 /*
 **		Can be called by a REBOL task to terminate its thread.
 **
@@ -812,7 +826,7 @@ RL_LIB *RL; // Link back to reb-lib from embedded extensions (like for now: host
 
 /***********************************************************************
 **
-*/	void OS_Task_Ready(REBINT tid)
+*/	OS_API void OS_Task_Ready(REBINT tid)
 /*
 **		Used for new task startup to resume the thread that
 **		launched the new task.
@@ -861,7 +875,7 @@ static inline REBOOL Open_Pipe_Fails(int pipefd[2]) {
 
 /***********************************************************************
 **
-*/	int OS_Create_Process(REBCHR *call, int argc, REBCHR* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
+*/	OS_API int OS_Create_Process(REBCHR *call, int argc, REBCHR* argv[], u32 flags, u64 *pid, int *exit_code, u32 input_type, void *input, u32 input_len, u32 output_type, void **output, u32 *output_len, u32 err_type, void **err, u32 *err_len)
 /*
 ** flags:
 ** 		1: wait, is implied when I/O redirection is enabled
@@ -1078,7 +1092,7 @@ child_error:
 
 		if (stdin_pipe[W] > 0) {
 			//printf("stdin_pipe[W]: %d\n", stdin_pipe[W]);
-			input_size = strlen((char*)input); /* the passed in input_len is in character, not in bytes */
+			input_size = input_len;
 			input_len = 0;
 			pfds[nfds++] = (struct pollfd){.fd = stdin_pipe[W], .events = POLLOUT};
 			close(stdin_pipe[R]);
@@ -1302,7 +1316,7 @@ stdin_pipe_err:
 
 /***********************************************************************
 **
-*/	int OS_Reap_Process(int pid, int *status, int flags)
+*/	OS_API int OS_Reap_Process(int pid, int *status, int flags)
 /*
  * pid: 
  * 		> 0, a signle process
@@ -1330,14 +1344,14 @@ static int Try_Browser(char *browser, REBCHR *url)
 			exit(1);
 			break;
 		default:
-            sleep(1); // needed else WEXITSTATUS sometimes reports value 127
-            if (0 > waitpid(pid, &status, WUNTRACED)) {
-                result = FALSE;
-            } else {
-                //printf("status: %i WIFEXITED: %i WEXITSTATUS: %i\n", status, WIFEXITED(status), WEXITSTATUS(status) );
-                result = WIFEXITED(status)
+			sleep(1); // needed else WEXITSTATUS sometimes reports value 127
+			if (0 > waitpid(pid, &status, WUNTRACED)) {
+				result = FALSE;
+			} else {
+				//printf("status: %i WIFEXITED: %i WEXITSTATUS: %i\n", status, WIFEXITED(status), WEXITSTATUS(status) );
+				result = WIFEXITED(status)
 					&& (WEXITSTATUS(status) == 0);
-            }
+			}
 	}
 
 	return result;
@@ -1345,7 +1359,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 
 /***********************************************************************
 **
-*/	int OS_Browse(REBCHR *url, int reserved)
+*/	OS_API int OS_Browse(REBCHR *url, int reserved)
 /*
 ***********************************************************************/
 {
@@ -1363,7 +1377,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 
 /***********************************************************************
 **
-*/	REBOOL OS_Request_File(REBRFR *fr)
+*/	OS_API REBOOL OS_Request_File(REBRFR *fr)
 /*
 ***********************************************************************/
 {
@@ -1372,7 +1386,7 @@ static int Try_Browser(char *browser, REBCHR *url)
 
 /***********************************************************************
 **
-*/	void OS_Request_Password(REBREQ *req)
+*/	OS_API void OS_Request_Password(REBREQ *req)
 /*
 ***********************************************************************/
 {
@@ -1405,3 +1419,79 @@ static int Try_Browser(char *browser, REBCHR *url)
 }
 
 
+/***********************************************************************
+**
+*/	REBLEN OS_Wide_To_Multibyte(const REBU16 *wide, REBYTE **utf8, REBLEN len)
+/*
+**		Return new utf-8 encoded string.
+**
+***********************************************************************/
+{
+#ifdef not_used
+	//if (len == (REBLEN)-1) len = wcslen(wide);
+	// Get the required buffer size
+	size_t needed = wcstombs(NULL, wide, 0);
+	if (needed == (size_t)-1) goto error;
+
+	REBYTE *out = (REBYTE *)malloc(needed + 1);
+	if (!out) goto error;
+
+	size_t written = wcstombs((char *)out, wide, needed + 1);
+	if (written == (size_t)-1) {
+		free(out);
+		goto error;
+	}
+
+	out[needed] = 0;
+	*utf8 = out;
+	return (REBLEN)needed;
+error:
+	*utf8 = NULL;
+#endif
+	return 0;
+}
+
+/***********************************************************************
+**
+*/	REBLEN OS_Multibyte_To_Wide(const REBYTE *utf8, REBYTE **wide)
+/*
+**		Return new wide encoded string.
+**
+***********************************************************************/
+{
+#ifdef not_used
+    size_t len = LEN_BYTES(utf8);
+
+    // mbstowcs requires a NUL-terminated string, so we ensure it
+    // Get the number of wide characters needed (excluding NUL)
+    size_t needed = mbstowcs(NULL, (const char*)utf8, 0);
+    if (needed == (size_t)-1) return 0;
+
+    // Allocate output buffer (+1 for NUL terminator)
+    REBU16 *out = (REBU16 *)malloc((needed + 1) * sizeof(REBU16));
+    if (out == NULL) return 0;
+
+    // Perform the conversion
+    size_t written = mbstowcs(out, (const char*)utf8, needed + 1);
+    if (written == (size_t)-1) {
+        free(out);
+        return 0;
+    }
+
+    out[needed] = 0; // NUL-terminate
+    *wide = (REBYTE*)out;
+    return (REBLEN)needed;
+#endif
+    return 0;
+}
+
+/***********************************************************************
+**
+*/	REBINT OS_Is_TTY(void)
+/*
+**		Checks whether the standard input is connected to a terminal
+**
+***********************************************************************/
+{
+	return isatty(STDIN_FILENO);
+}

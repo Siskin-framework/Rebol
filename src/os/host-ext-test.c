@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2023 Rebol Open Source Developers
+**  Copyright 2012-2025 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,6 +48,7 @@
 #include "reb-host.h"
 #include "host-lib.h"
 #include "sys-value.h"
+#include "reb-struct.h"
 
 extern RL_LIB *RL; // Link back to reb-lib from embedded extensions
 
@@ -87,6 +88,8 @@ enum test_cmd_words {
 	CMD_hob2,
 	CMD_str0,
 	CMD_echo,
+	CMD_path,
+	CMD_stru,
 };
 char *RX_Spec =
 	"REBOL [\n"
@@ -117,12 +120,13 @@ char *RX_Spec =
 	"hob2:   command [{prints XTEST handle's data} hndl [handle!]]\n"
 	"str0:   command [{return a constructed string}]\n"
 	"echo:   command [{return the input value} value]\n"
-	"ref1:   command [/a [integer!]]\n"
+	"path:   command [{converts Rebol file to OS file as string or binary} f [file!] /full {full path} /utf8]\n"
+	"stru:   command [{test struct passing} val [struct!]]\n"
 
 	"init-words [id data length] protect/hide 'init-words\n"
 	"a: b: c: h: x: y: none\n"
 	"i: make image! 2x2\n"
-	"s: #[struct! [r [uint8!]]]\n"
+	"s: #(struct! [a [uint8!]])\n"
 	"xtest: does [\n"
 		"foreach blk [\n"
 			"[x: hob1 #{0102}]"
@@ -170,6 +174,11 @@ char *RX_Spec =
 			
 			// https://github.com/Oldes/Rebol-issues/issues/2536
 			"[same? s probe echo s]\n"
+
+			"[{foo} == path %foo]\n"
+			"[#{66C3AD6B} == path/utf8 to file! #{66C3AD6B}]\n"
+
+			"[probe s stru s]\n"
 		"][\n"
 			"print [{^/^[[7mtest:^[[0m^[[1;32m} mold blk {^[[0m}]\n"
 			//"replace {x} {x} {y}\n"
@@ -221,15 +230,16 @@ REBCNT Test_Async_Callback(REBSER *obj, REBCNT word)
 
 	// These cannot be on the stack, because they are used
 	// when the callback happens later.
-	cbi = MAKE_NEW(*cbi);
-	args = MAKE_MEM(sizeof(RXIARG) * 4);
+	cbi  = MAKE_CLEAR_MEM(sizeof(RXICBI));
+	args = MAKE_CLEAR_MEM(sizeof(RXIARG) * 4);
+	// It's freed in do_callback function (f-extension.c) when RXC_ALLOC flag is set.
+
 	if (!cbi || !args) return 0; // silent compiler's warnings
-	CLEAR(cbi, sizeof(cbi));
-	CLEAR(args, sizeof(RXIARG) * 4);
 	cbi->obj = obj;
 	cbi->word = word;
 	cbi->args = args;
 	SET_FLAG(cbi->flags, RXC_ASYNC);
+	SET_FLAG(cbi->flags, RXC_ALLOC);
 
 	// Pass a single integer arg to the callback function:
 	RXI_COUNT(args) = 1;
@@ -425,7 +435,7 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 			REBSER* str = RL_MAKE_STRING(32, FALSE); // 32 bytes, latin1 (must be large enough!)
 			REBYTE ver[8];
 			RL_VERSION(ver);
-			snprintf(SERIES_DATA(str), SERIES_REST(str), "Version: %i.%i.%i", ver[1], ver[2], ver[3]);
+			snprintf(s_cast(SERIES_DATA(str)), SERIES_REST(str), "Version: %i.%i.%i", ver[1], ver[2], ver[3]);
 			SERIES_TAIL(str) = LEN_BYTES(SERIES_DATA(str));
 			RXA_SERIES(frm, 1) = str;
 			RXA_TYPE  (frm, 1) = RXT_STRING;
@@ -435,6 +445,37 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 	case CMD_echo: //command [{return the input value} value]
 		return RXR_VALUE;
 
+	case CMD_path: //command [f [file!] /full /utf8]
+		// to test file argument input used in native calls
+		// if used /utf8, the output path is utf8 encoded and is returned as a binary value
+	{
+		REBSER* ser = RL_TO_LOCAL_PATH(&RXA_ARG(frm, 1), RXA_REF(frm, 2), RXA_REF(frm, 3));
+		RXA_SERIES(frm, 1) = ser;
+		RXA_TYPE(frm, 1) = RXA_REF(frm, 3) ? RXT_BINARY : RXT_STRING;
+		RXA_INDEX(frm, 1) = 0;
+		break;
+	}
+
+	case CMD_stru: //command [{test struct passing} val [struct!]]
+	{
+		REBYTE *bin = RXA_STRUCT_BIN(frm,1);
+		// Using any struct... just must have at least 1 byte
+		if (RXA_STRUCT_LEN(frm, 1) > 0) {
+			bin[0] = bin[0] + 1;
+		}
+		// Testing access to struct's specification...
+		REBSER *spec = RXA_STRUCT_SPEC(frm, 1);
+		if (spec && spec->series) {
+			REBSTI *info = (REBSTI *)BIN_HEAD(spec->series);
+			REBSTF *field = (REBSTF *)info + 1;
+			printf("struct id: %u fields: %u\n", info->id, info->count);
+			for (REBCNT i = 0; i < info->count; ++i, ++field) {
+				printf(" field name: %s\n", RL_WORD_STRING(field->sym));
+				printf("       type: %u size: %u\n", field->type, field->size);
+			}
+		}
+		return RXR_VALUE;
+	}
 	case CMD_init: // init words
 		x_arg_words = RL_MAP_WORDS(RXA_SERIES(frm,1));
 		return RXR_TRUE;
@@ -507,9 +548,9 @@ int XTestContext_mold(REBHOB *hob, REBSER *str) {
 	if (!str || !xtest) return 0;
 
 	len = snprintf(
-		SERIES_DATA(str),
+		s_cast(SERIES_DATA(str)),
 		SERIES_REST(str),
-		"0#%lx id: %u", (unsigned long)hob->data, xtest->id
+		"0#%lx id: %u", (unsigned long)(uintptr_t)hob->data, xtest->id
 	);
 	if (len > 0) SERIES_TAIL(str) += len;
 	return len;
@@ -517,7 +558,13 @@ int XTestContext_mold(REBHOB *hob, REBSER *str) {
 
 
 
-void Init_Ext_Test(void)
+/***********************************************************************
+**
+*/	RL_API void OS_Init_Ext_Test(void)
+/*
+**	Initialize embedded extension test module
+**
+***********************************************************************/
 {
 	REBHSP spec;
 	RL = RL_Extend(b_cast(&RX_Spec[0]), (RXICAL)&RX_Call);
@@ -527,6 +574,6 @@ void Init_Ext_Test(void)
 	spec.get_path  = XTestContext_get_path;
 	spec.set_path  = XTestContext_set_path;
 	spec.mold      = XTestContext_mold;
-	Handle_XTest = RL_REGISTER_HANDLE_SPEC("XTEST", &spec);
+	Handle_XTest = RL_REGISTER_HANDLE_SPEC((cb_cast("XTEST")), &spec);
 }
 #endif //TEST_EXTENSIONS
