@@ -19,8 +19,8 @@
 ***********************************************************************/
 
 
-#define MAX_NATS      233
-#define NAT_SPEC_SIZE 154623
+#define MAX_NATS      217
+#define NAT_SPEC_SIZE 113738
 #define CHECK_TITLE   16298111
 
 extern const REBYTE Native_Specs[];

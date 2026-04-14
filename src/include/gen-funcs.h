@@ -830,26 +830,3 @@ extern void Init_Crypt(void); // src/core/n-crypt.c
 extern void Dispose_Crypt(void); // src/core/n-crypt.c
 extern void crypt_context_free(void *ctx); // src/core/p-crypt.c
 extern void Init_Crypt_Scheme(void); // src/core/p-crypt.c
-extern int CompressLzw(const REBYTE* input, REBLEN size, REBCNT level, REBSER** output, int* error); // src/core/u-lzw.c
-extern int DecompressLzw(const REBYTE* input, REBLEN in_len, REBLEN limit, REBSER** output, int* error); // src/core/u-lzw.c
-extern int CompressCrush(const REBYTE* buf, REBLEN size, REBCNT level, REBSER** output, int* error); // src/core/u-crush.c
-extern int DecompressCrush(const REBYTE* input, REBLEN length, REBLEN limit, REBSER** output, int* error); // src/core/u-crush.c
-extern void Init_Serial_Scheme(void); // src/core/p-serial.c
-extern REBINT Codec_BMP_Image(REBCDI *codi); // src/core/u-bmp.c
-extern void Init_BMP_Codec(void); // src/core/u-bmp.c
-extern void Encode_PNG_Image(REBCDI *codi); // src/core/u-png.c
-extern void Decode_PNG_Image(REBCDI *codi); // src/core/u-png.c
-extern REBINT Codec_PNG_Image(REBCDI *codi); // src/core/u-png.c
-extern void Init_PNG_Codec(void); // src/core/u-png.c
-extern REBINT Codec_JPEG_Image(REBCDI *codi); // src/core/u-jpg.c
-extern void Init_JPEG_Codec(void); // src/core/u-jpg.c
-extern void Decode_LZW(REBCNT *data, REBYTE **cpp, REBYTE *colortab, REBINT w, REBINT h, REBOOL interlaced); // src/core/u-gif.c
-extern void Decode_GIF_Image(REBCDI *codi); // src/core/u-gif.c
-extern REBINT Codec_GIF_Image(REBCDI *codi); // src/core/u-gif.c
-extern void Init_GIF_Codec(void); // src/core/u-gif.c
-extern void Decode_QOI_Image(REBCDI *codi); // src/core/u-qoi.c
-extern void Identify_QOI_Image(REBCDI *codi); // src/core/u-qoi.c
-extern REBINT Codec_QOI_Image(REBCDI *codi); // src/core/u-qoi.c
-extern void Init_QOI_Codec(void); // src/core/u-qoi.c
-extern REBINT Do_Dialect(REBSER *dialect, REBSER *block, REBCNT *index, REBSER **out); // src/core/u-dialect.c
-extern void Trace_Delect(REBINT level); // src/core/u-dialect.c

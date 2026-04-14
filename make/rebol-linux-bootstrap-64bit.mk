@@ -4,9 +4,9 @@
 PRODUCT= rebol-linux-bootstrap-64bit
 
 # For the build toolchain:
-#CC=	   $(TOOLS)gcc
-NM=	   $(TOOLS)nm
-STRIP= $(TOOLS)strip
+CC?=    $(TOOLS)gcc
+NM?=    $(TOOLS)nm
+STRIP?= $(TOOLS)strip
 
 # CP allows different copy progs:
 CP= cp
@@ -21,7 +21,7 @@ CD= ./
 
 # Paths used by make:
 R= $(UP)
-O= $(CD)/tmp/cc-64bit/rebol-linux-bootstrap-64bit
+O= $(CD)tmp/cc-64bit/rebol-linux-bootstrap-64bit
 S= $(R)/src
 
 USE_FLAGS=
@@ -30,48 +30,12 @@ INCLUDES= \
 	-I$(S)/include/
 
 DEFINES= \
-	-D_FILE_OFFSET_BITS=64 \
-	-D_LARGEFILE64_SOURCE \
-	-DTO_LINUX_X64 \
-	-D__LP64__ \
-	-DMBEDTLS_ASN1_PARSE_C \
-	-DMBEDTLS_ASN1_WRITE_C \
-	-DMBEDTLS_CTR_DRBG_C \
-	-DMBEDTLS_AES_C \
-	-DMBEDTLS_DHM_C \
-	-DMBEDTLS_ECDSA_C \
-	-DMBEDTLS_ECP_C \
-	-DMBEDTLS_ECDH_C \
-	-DMBEDTLS_BIGNUM_C \
-	-DMBEDTLS_ENTROPY_C \
-	-DMBEDTLS_OID_C \
-	-DMBEDTLS_PKCS1_V15 \
-	-DMBEDTLS_ASN1_PARSE_C \
-	-DMBEDTLS_ASN1_WRITE_C \
-	-DMBEDTLS_CTR_DRBG_C \
-	-DMBEDTLS_AES_C \
-	-DMBEDTLS_DHM_C \
-	-DMBEDTLS_ECDSA_C \
-	-DMBEDTLS_ECP_C \
-	-DMBEDTLS_ECDH_C \
-	-DMBEDTLS_BIGNUM_C \
-	-DMBEDTLS_ENTROPY_C \
-	-DMBEDTLS_OID_C \
-	-DMBEDTLS_PKCS1_V15 \
-	-DMBEDTLS_ASN1_PARSE_C \
-	-DMBEDTLS_ASN1_WRITE_C \
-	-DMBEDTLS_CTR_DRBG_C \
-	-DMBEDTLS_AES_C \
-	-DMBEDTLS_DHM_C \
-	-DMBEDTLS_ECDSA_C \
-	-DMBEDTLS_ECP_C \
-	-DMBEDTLS_ECDH_C \
-	-DMBEDTLS_BIGNUM_C \
-	-DMBEDTLS_ENTROPY_C \
-	-DMBEDTLS_OID_C \
-	-DMBEDTLS_PKCS1_V15 \
-	-DREBOL_OPTIONS_FILE=\"gen-config.h\" \
+	-DTO_LINUX \
 	-DENDIAN_LITTLE \
+	-D_FILE_OFFSET_BITS=64 \
+	-D__LP64__ \
+	-DREBOL_OPTIONS_FILE=\"gen-config.h\" \
+	-DUNICODE \
 	-DREB_EXE
 
 FRAMEWORKS=
@@ -91,6 +55,9 @@ default: $(PRODUCT);
 
 clean: 
 	$(RM) $O/src/core/*.o
+	$(RM) $O/src/core/deflate/lib/*.o
+	$(RM) $O/src/core/deflate/lib/arm/*.o
+	$(RM) $O/src/core/deflate/lib/x86/*.o
 	$(RM) $O/src/core/mbedtls/*.o
 	$(RM) $O/src/os/*.o
 	$(RM) $O/src/os/posix/*.o
@@ -100,6 +67,9 @@ all:
 
 prep: 
 	mkdir -p $O/src/core/
+	mkdir -p $O/src/core/deflate/lib/
+	mkdir -p $O/src/core/deflate/lib/arm/
+	mkdir -p $O/src/core/deflate/lib/x86/
 	mkdir -p $O/src/core/mbedtls/
 	mkdir -p $O/src/os/
 	mkdir -p $O/src/os/posix/
@@ -127,6 +97,18 @@ OBJS = \
 	$O/src/core/d-crash.o \
 	$O/src/core/d-dump.o \
 	$O/src/core/d-print.o \
+	$O/src/core/deflate/lib/adler32.o \
+	$O/src/core/deflate/lib/arm/cpu_features_arm.o \
+	$O/src/core/deflate/lib/crc32.o \
+	$O/src/core/deflate/lib/deflate_compress.o \
+	$O/src/core/deflate/lib/deflate_decompress.o \
+	$O/src/core/deflate/lib/gzip_compress.o \
+	$O/src/core/deflate/lib/gzip_decompress.o \
+	$O/src/core/deflate/lib/utils.o \
+	$O/src/core/deflate/lib/x86/cpu_features.o \
+	$O/src/core/deflate/lib/zlib_compress.o \
+	$O/src/core/deflate/lib/zlib_decompress.o \
+	$O/src/core/f-adp-symmetry-psort.o \
 	$O/src/core/f-blocks.o \
 	$O/src/core/f-deci.o \
 	$O/src/core/f-dtoa.o \
@@ -135,10 +117,10 @@ OBJS = \
 	$O/src/core/f-int.o \
 	$O/src/core/f-math.o \
 	$O/src/core/f-modify.o \
-	$O/src/core/f-qsort.o \
 	$O/src/core/f-random.o \
 	$O/src/core/f-round.o \
 	$O/src/core/f-series.o \
+	$O/src/core/f-stablemerge-sort.o \
 	$O/src/core/f-stubs.o \
 	$O/src/core/l-scan.o \
 	$O/src/core/l-types.o \
@@ -146,6 +128,7 @@ OBJS = \
 	$O/src/core/m-pools.o \
 	$O/src/core/m-series.o \
 	$O/src/core/mbedtls/aes.o \
+	$O/src/core/mbedtls/aesni.o \
 	$O/src/core/mbedtls/asn1parse.o \
 	$O/src/core/mbedtls/asn1write.o \
 	$O/src/core/mbedtls/bignum.o \
@@ -162,7 +145,6 @@ OBJS = \
 	$O/src/core/mbedtls/entropy.o \
 	$O/src/core/mbedtls/entropy_poll.o \
 	$O/src/core/mbedtls/gcm.o \
-	$O/src/core/mbedtls/hash_info.o \
 	$O/src/core/mbedtls/md.o \
 	$O/src/core/mbedtls/md5.o \
 	$O/src/core/mbedtls/oid.o \
@@ -176,6 +158,7 @@ OBJS = \
 	$O/src/core/n-control.o \
 	$O/src/core/n-crypt.o \
 	$O/src/core/n-data.o \
+	$O/src/core/n-hash.o \
 	$O/src/core/n-io.o \
 	$O/src/core/n-loop.o \
 	$O/src/core/n-math.o \
@@ -232,7 +215,6 @@ OBJS = \
 	$O/src/core/u-mbedtls.o \
 	$O/src/core/u-parse.o \
 	$O/src/core/u-xxhash.o \
-	$O/src/core/u-zlib.o \
 	$O/src/os/dev-dns.o \
 	$O/src/os/dev-net.o \
 	$O/src/os/host-args.o \
@@ -300,6 +282,42 @@ $O/src/core/d-dump.o: $R/src/core/d-dump.c
 $O/src/core/d-print.o: $R/src/core/d-print.c
 	$(CC) $R/src/core/d-print.c $(CFLAGS) -o $O/src/core/d-print.o
 
+$O/src/core/deflate/lib/adler32.o: $R/src/core/deflate/lib/adler32.c
+	$(CC) $R/src/core/deflate/lib/adler32.c $(CFLAGS) -o $O/src/core/deflate/lib/adler32.o
+
+$O/src/core/deflate/lib/arm/cpu_features_arm.o: $R/src/core/deflate/lib/arm/cpu_features_arm.c
+	$(CC) $R/src/core/deflate/lib/arm/cpu_features_arm.c $(CFLAGS) -o $O/src/core/deflate/lib/arm/cpu_features_arm.o
+
+$O/src/core/deflate/lib/crc32.o: $R/src/core/deflate/lib/crc32.c
+	$(CC) $R/src/core/deflate/lib/crc32.c $(CFLAGS) -o $O/src/core/deflate/lib/crc32.o
+
+$O/src/core/deflate/lib/deflate_compress.o: $R/src/core/deflate/lib/deflate_compress.c
+	$(CC) $R/src/core/deflate/lib/deflate_compress.c $(CFLAGS) -o $O/src/core/deflate/lib/deflate_compress.o
+
+$O/src/core/deflate/lib/deflate_decompress.o: $R/src/core/deflate/lib/deflate_decompress.c
+	$(CC) $R/src/core/deflate/lib/deflate_decompress.c $(CFLAGS) -o $O/src/core/deflate/lib/deflate_decompress.o
+
+$O/src/core/deflate/lib/gzip_compress.o: $R/src/core/deflate/lib/gzip_compress.c
+	$(CC) $R/src/core/deflate/lib/gzip_compress.c $(CFLAGS) -o $O/src/core/deflate/lib/gzip_compress.o
+
+$O/src/core/deflate/lib/gzip_decompress.o: $R/src/core/deflate/lib/gzip_decompress.c
+	$(CC) $R/src/core/deflate/lib/gzip_decompress.c $(CFLAGS) -o $O/src/core/deflate/lib/gzip_decompress.o
+
+$O/src/core/deflate/lib/utils.o: $R/src/core/deflate/lib/utils.c
+	$(CC) $R/src/core/deflate/lib/utils.c $(CFLAGS) -o $O/src/core/deflate/lib/utils.o
+
+$O/src/core/deflate/lib/x86/cpu_features.o: $R/src/core/deflate/lib/x86/cpu_features.c
+	$(CC) $R/src/core/deflate/lib/x86/cpu_features.c $(CFLAGS) -o $O/src/core/deflate/lib/x86/cpu_features.o
+
+$O/src/core/deflate/lib/zlib_compress.o: $R/src/core/deflate/lib/zlib_compress.c
+	$(CC) $R/src/core/deflate/lib/zlib_compress.c $(CFLAGS) -o $O/src/core/deflate/lib/zlib_compress.o
+
+$O/src/core/deflate/lib/zlib_decompress.o: $R/src/core/deflate/lib/zlib_decompress.c
+	$(CC) $R/src/core/deflate/lib/zlib_decompress.c $(CFLAGS) -o $O/src/core/deflate/lib/zlib_decompress.o
+
+$O/src/core/f-adp-symmetry-psort.o: $R/src/core/f-adp-symmetry-psort.c
+	$(CC) $R/src/core/f-adp-symmetry-psort.c $(CFLAGS) -o $O/src/core/f-adp-symmetry-psort.o
+
 $O/src/core/f-blocks.o: $R/src/core/f-blocks.c
 	$(CC) $R/src/core/f-blocks.c $(CFLAGS) -o $O/src/core/f-blocks.o
 
@@ -324,9 +342,6 @@ $O/src/core/f-math.o: $R/src/core/f-math.c
 $O/src/core/f-modify.o: $R/src/core/f-modify.c
 	$(CC) $R/src/core/f-modify.c $(CFLAGS) -o $O/src/core/f-modify.o
 
-$O/src/core/f-qsort.o: $R/src/core/f-qsort.c
-	$(CC) $R/src/core/f-qsort.c $(CFLAGS) -o $O/src/core/f-qsort.o
-
 $O/src/core/f-random.o: $R/src/core/f-random.c
 	$(CC) $R/src/core/f-random.c $(CFLAGS) -o $O/src/core/f-random.o
 
@@ -335,6 +350,9 @@ $O/src/core/f-round.o: $R/src/core/f-round.c
 
 $O/src/core/f-series.o: $R/src/core/f-series.c
 	$(CC) $R/src/core/f-series.c $(CFLAGS) -o $O/src/core/f-series.o
+
+$O/src/core/f-stablemerge-sort.o: $R/src/core/f-stablemerge-sort.c
+	$(CC) $R/src/core/f-stablemerge-sort.c $(CFLAGS) -o $O/src/core/f-stablemerge-sort.o
 
 $O/src/core/f-stubs.o: $R/src/core/f-stubs.c
 	$(CC) $R/src/core/f-stubs.c $(CFLAGS) -o $O/src/core/f-stubs.o
@@ -356,6 +374,9 @@ $O/src/core/m-series.o: $R/src/core/m-series.c
 
 $O/src/core/mbedtls/aes.o: $R/src/core/mbedtls/aes.c
 	$(CC) $R/src/core/mbedtls/aes.c $(CFLAGS) -o $O/src/core/mbedtls/aes.o
+
+$O/src/core/mbedtls/aesni.o: $R/src/core/mbedtls/aesni.c
+	$(CC) $R/src/core/mbedtls/aesni.c $(CFLAGS) -o $O/src/core/mbedtls/aesni.o
 
 $O/src/core/mbedtls/asn1parse.o: $R/src/core/mbedtls/asn1parse.c
 	$(CC) $R/src/core/mbedtls/asn1parse.c $(CFLAGS) -o $O/src/core/mbedtls/asn1parse.o
@@ -405,9 +426,6 @@ $O/src/core/mbedtls/entropy_poll.o: $R/src/core/mbedtls/entropy_poll.c
 $O/src/core/mbedtls/gcm.o: $R/src/core/mbedtls/gcm.c
 	$(CC) $R/src/core/mbedtls/gcm.c $(CFLAGS) -o $O/src/core/mbedtls/gcm.o
 
-$O/src/core/mbedtls/hash_info.o: $R/src/core/mbedtls/hash_info.c
-	$(CC) $R/src/core/mbedtls/hash_info.c $(CFLAGS) -o $O/src/core/mbedtls/hash_info.o
-
 $O/src/core/mbedtls/md.o: $R/src/core/mbedtls/md.c
 	$(CC) $R/src/core/mbedtls/md.c $(CFLAGS) -o $O/src/core/mbedtls/md.o
 
@@ -446,6 +464,9 @@ $O/src/core/n-crypt.o: $R/src/core/n-crypt.c
 
 $O/src/core/n-data.o: $R/src/core/n-data.c
 	$(CC) $R/src/core/n-data.c $(CFLAGS) -o $O/src/core/n-data.o
+
+$O/src/core/n-hash.o: $R/src/core/n-hash.c
+	$(CC) $R/src/core/n-hash.c $(CFLAGS) -o $O/src/core/n-hash.o
 
 $O/src/core/n-io.o: $R/src/core/n-io.c
 	$(CC) $R/src/core/n-io.c $(CFLAGS) -o $O/src/core/n-io.o
@@ -614,9 +635,6 @@ $O/src/core/u-parse.o: $R/src/core/u-parse.c
 
 $O/src/core/u-xxhash.o: $R/src/core/u-xxhash.c
 	$(CC) $R/src/core/u-xxhash.c $(CFLAGS) -o $O/src/core/u-xxhash.o
-
-$O/src/core/u-zlib.o: $R/src/core/u-zlib.c
-	$(CC) $R/src/core/u-zlib.c $(CFLAGS) -o $O/src/core/u-zlib.o
 
 $O/src/os/dev-dns.o: $R/src/os/dev-dns.c
 	$(CC) $R/src/os/dev-dns.c $(CFLAGS) -o $O/src/os/dev-dns.o

@@ -75,4 +75,3 @@ OS_API void OS_Request_Password(REBREQ *req);    // src/os/posix/host-lib.c
 REBLEN OS_Wide_To_Multibyte(const REBU16 *wide, REBYTE **utf8, REBLEN len);    // src/os/posix/host-lib.c
 REBLEN OS_Multibyte_To_Wide(const REBYTE *utf8, REBYTE **wide);    // src/os/posix/host-lib.c
 REBINT OS_Is_TTY(void);    // src/os/posix/host-lib.c
-RL_API void OS_Init_Ext_Test(void);    // src/os/host-ext-test.c
