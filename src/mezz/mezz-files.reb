@@ -105,11 +105,11 @@ ask: func [
 	"Ask the user for input."
 	question [series!] "Prompt to user"
 	/hide "Turns off echoing inputs"
-	/char "Waits only on single key press and returns char as a result"
-	 limit [bitset! string! block! char! none!] "Limit input to specified chars or control words"
+	/only "Waits only on single key press and returns char as a result"
+	 limit [bitset! string! block! char! word!] "Limit input to specified chars or control words"
 ][
 	prin question
-	either char [wait-for-key/only limit][input/:hide]
+	either only [wait-key/only limit][input/:hide]
 ]
 
 confirm: func [
