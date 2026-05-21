@@ -2748,6 +2748,44 @@ try/with [
 
 ===end-group===
 
+===start-group=== "EMAIL"
+--test-- "email getters"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1489
+	e: someone@rebol.tech
+	--assert e/user = "someone"
+	--assert e/host = "rebol.tech"
+	;; when not at head...
+	e: find e ".tech"
+	--assert e/user = "someone"
+	--assert e/host = "rebol.tech"
+	;; when @ is missing
+	e: as email! "foo"
+	--assert e/user = "foo"
+	--assert e/host = none
+	;; with multiple @
+	e: as email! "aaa@bbb@ccc"
+	--assert e/user = "aaa"
+	--assert e/host = "bbb@ccc"
+--test-- "email setters"
+	e: someone@rebol.tech
+	e/host: "gmail.com"
+	--assert e = someone@gmail.com
+	e/user: "foo"
+	--assert e = foo@gmail.com
+	;; when @ is missing
+	clear e
+	e/user: "bob"
+	--assert e = #(email! "bob")
+	clear e
+	e/host: %rebol.tech
+	--assert e = #(email! "@rebol.tech")
+	;; unicode...
+	e/user: "šiška"
+	--assert e = šiška@rebol.tech
+
+===end-group===
+
+
 
 ===start-group=== "BINARY"
 

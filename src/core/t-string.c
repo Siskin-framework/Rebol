@@ -739,17 +739,42 @@ FORCE_INLINE
 		}
 	}
 	else if (IS_WORD(pvs->select)) {
-		if (pvs->setval) return PE_BAD_SET;
-
 		REBU32  len;
 		REBSER* ser  = VAL_SERIES(pvs->value);
 		REBCNT  idx  = VAL_INDEX(pvs->value);
 		REBCNT  tail = VAL_TAIL(pvs->value);
 		REBYTE* data = VAL_BIN_DATA(pvs->value);
-
+		REBCNT  word = VAL_WORD_CANON(pvs->select);
 		if (idx > tail) idx = tail;
 
-		switch (VAL_WORD_CANON(pvs->select)) {
+		if (pvs->setval) {
+			switch (word) {
+			case SYM_USER:
+			case SYM_HOST:
+				if (!IS_EMAIL(pvs->value)) return PE_BAD_SET;
+				else {
+					REBLEN idx = Find_Str_Char(ser, 0, 0, tail, 1, '@', 0);
+					if (word == SYM_HOST) {
+						if (idx == NOT_FOUND) {
+							Append_Byte(ser, '@');
+							Modify_String(A_APPEND, ser, tail + 1, pvs->setval, 0, 0, 1);
+						}
+						else {
+							Modify_String(A_CHANGE, ser, idx + 1, pvs->setval, FLAGIT(AN_PART), tail - idx - 1, 1);
+						}
+					}
+					else {// user
+						Modify_String(A_CHANGE, ser, 0, pvs->setval, FLAGIT(AN_PART), idx == NOT_FOUND ? tail : idx, 1);
+					}
+					return PE_OK;
+				}
+				break;
+			default:
+				return PE_BAD_SET;
+			}
+
+		}
+		switch (word) {
 		case SYM_LENGTH:
 			len = IS_UTF8_SERIES(ser)
 				? Length_As_UTF8_Code_Points(data)
@@ -760,6 +785,23 @@ FORCE_INLINE
 			break;
 		case SYM_SIZE:
 			len = tail - idx;
+			break;
+		case SYM_USER:
+		case SYM_HOST:
+			if (!IS_EMAIL(pvs->value)) return PE_BAD_SELECT;
+			else {
+				REBLEN idx = Find_Str_Char(ser, 0, 0, tail, 1, '@', 0);
+				if (word == SYM_HOST) {
+					if (idx == NOT_FOUND) return PE_NONE;
+					ser = Copy_String(ser, 1 + idx, tail - idx - 1);
+				}
+				else {// user
+					if (idx == NOT_FOUND) idx = tail;
+					ser = Copy_String(ser, 0, idx);
+				}
+				Set_String(pvs->store, ser);
+				return PE_USE;
+			}
 			break;
 		default:
 			return PE_BAD_SELECT;
