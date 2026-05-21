@@ -176,7 +176,7 @@ static REBCNT find_string(REBVAL *value, REBCNT index, REBCNT end, REBVAL *targe
 	return NOT_FOUND;
 }
 
-static REBSER *make_string(REBVAL *arg, REBOOL make)
+static REBSER *make_string(REBVAL *arg, REBOOL make, REBCNT type)
 {
 	REBSER *ser = 0;
 
@@ -211,6 +211,17 @@ static REBSER *make_string(REBVAL *arg, REBOOL make)
 //	else if (IS_NONE(arg)) {
 //		ser = Make_Binary(0);
 //	}
+	else if (type == REB_EMAIL && IS_BLOCK(arg)) {
+		if (VAL_LEN(arg) == 0) Trap_Make(REB_EMAIL, arg);
+		REBVAL* val = VAL_BLK_DATA(arg);
+		REBCNT sep = '@';
+		ser = Form_Value(val, FLAGIT(MOPT_TIGHT), TRUE);
+		while (!IS_END(++val)) {
+			ser = Append_Byte(ser, sep);
+			sep = '.';
+			Modify_String(A_APPEND, ser, SERIES_TAIL(ser), val, 0, 0, 1);
+		}
+	}
 	else
 		ser = Form_Value(arg, 1<<MOPT_TIGHT, TRUE);
 
@@ -1138,7 +1149,7 @@ zero_str:
 		if (IS_NONE(arg)) Trap_Make(type, arg);
 
 		ser = (type != REB_BINARY) 
-			? make_string(arg, (REBOOL)(action == A_MAKE))
+			? make_string(arg, (REBOOL)(action == A_MAKE), type)
 			: make_binary(arg, (REBOOL)(action == A_MAKE));
 
 		if (ser) goto str_exit;

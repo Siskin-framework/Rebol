@@ -2783,6 +2783,14 @@ try/with [
 	e/user: "šiška"
 	--assert e = šiška@rebol.tech
 
+--test-- "make email! block!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2708
+	--assert (make email! [aaa]) = #(email! "aaa")
+	--assert (make email! [aaa bbb]) = aaa@bbb
+	--assert (make email! [aaa bbb cc]) = aaa@bbb.cc
+	--assert (make email! [aaa bbb cc dd]) = aaa@bbb.cc.dd
+	--assert all [error? e: try [make email! []] e/id = 'bad-make-arg]
+
 ===end-group===
 
 
