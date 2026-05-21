@@ -2793,6 +2793,15 @@ try/with [
 
 ===end-group===
 
+===start-group=== "URL"
+--test-- "make url! block!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2709
+	--assert (make url! [http]) = http://
+	--assert (make url! [http www.rebol.com %reboldoc.html]) = http://www.rebol.com/reboldoc.html
+	--assert all [error? e: try [make email! []] e/id = 'bad-make-arg]
+
+===end-group===
+
 
 
 ===start-group=== "BINARY"

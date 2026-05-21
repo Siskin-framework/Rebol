@@ -211,16 +211,28 @@ static REBSER *make_string(REBVAL *arg, REBOOL make, REBCNT type)
 //	else if (IS_NONE(arg)) {
 //		ser = Make_Binary(0);
 //	}
-	else if (type == REB_EMAIL && IS_BLOCK(arg)) {
+	else if (IS_BLOCK(arg) && (type == REB_EMAIL || type == REB_URL)) {
 		if (VAL_LEN(arg) == 0) Trap_Make(REB_EMAIL, arg);
 		REBVAL* val = VAL_BLK_DATA(arg);
-		REBCNT sep = '@';
-		ser = Form_Value(val, FLAGIT(MOPT_TIGHT), TRUE);
-		while (!IS_END(++val)) {
-			ser = Append_Byte(ser, sep);
-			sep = '.';
-			Modify_String(A_APPEND, ser, SERIES_TAIL(ser), val, 0, 0, 1);
+		if (type == REB_EMAIL) {
+			REBCNT sep = '@';
+			ser = Form_Value(val, FLAGIT(MOPT_TIGHT), TRUE);
+			while (!IS_END(++val)) {
+				Append_Byte(ser, sep);
+				sep = '.';
+				Modify_String(A_APPEND, ser, SERIES_TAIL(ser), val, 0, 0, 1);
+			}
 		}
+		else {// url
+			ser = Form_Value(val, FLAGIT(MOPT_TIGHT), TRUE);
+			Append_Bytes(ser, "://");
+			REBFLG first = TRUE;
+			while (!IS_END(++val)) {
+				if (first) first = FALSE;
+				else Append_Byte(ser, '/');
+				Modify_String(A_APPEND, ser, SERIES_TAIL(ser), val, 0, 0, 1);
+			}
+		}	
 	}
 	else
 		ser = Form_Value(arg, 1<<MOPT_TIGHT, TRUE);
