@@ -560,7 +560,7 @@ mold_constr:
 	// 2. contains a delimiter or invalid required chars
 	for (n = idx; n < VAL_TAIL(value); n++) {
 		c = bp[n];
-		if (c < 0x7F && IS_LEX_DELIMIT(c)) {
+		if (IS_LEX_DELIMIT(c)) {
 			// allow / inside urls...
 			if (c == '/' && required == ':') continue;
 			goto mold_constr;
@@ -1205,7 +1205,13 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 		// Forming a string:
 		if (!molded) {
-			Insert_String(ser, NO_LIMIT, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
+			if (IS_URL(value)) {
+				REBSER* tmp = Dehex_String(VAL_BIN_DATA(value), VAL_LEN(value), '%', FALSE);
+				Append_Bytes(ser, SERIES_DATA(tmp));
+			}
+			else {
+				Insert_String(ser, NO_LIMIT, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
+			}
 			return;
 		}
 
