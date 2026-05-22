@@ -1137,13 +1137,22 @@ bad_target:
 					if (!ANY_SERIES(item)) Trap1(RE_PARSE_SERIES, rules-1);
 reset_input:
 					index = Set_Parse_Series(parse, item);
-					series = parse->series;
-					begin = index;
+					series = parse->series;				
 
-					if (GET_FLAG(flags, PF_CHANGE)) goto do_modify;
-					// #2269 - reset the position if we are not in the middle of any rule
+					if (GET_FLAG(flags, PF_CHANGE)) {
+						if (begin > index) {
+							REBLEN tmp = index;
+							index = begin;
+							begin = tmp;
+						}
+						count = index - begin;
+						goto do_modify;
+					}
+					
 					// don't allow code like: [copy x :pos integer!]
-					if (flags != 0) Trap1(RE_PARSE_RULE, rules-1); 
+					if (flags != 0) Trap1(RE_PARSE_RULE, rules-1);
+					// #2269 - reset the position if we are not in the middle of any rule
+					begin = index;
 					
 					SET_FLAG(parse->flags, PF_ADVANCE);
 					continue;
