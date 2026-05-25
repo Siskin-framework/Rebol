@@ -92,8 +92,6 @@ system/license: make-banner [
 append sys/boot-banner format [
 	LF /bright-yellow "Important notes" /reset {:
 
-  * Sandbox and security are not fully available.
-  * Direct access to TCP HTTP required (no proxies).
   * Use at your own risk.
   * } /bright-green "//" /reset { is now used as } /bright-red "integer-divide" /reset {, for } /bright-red "remainder" /reset { use } /bright-green "%" /reset { or } /bright-green "%%" /reset { (Euclidean division)!
   * For Python compatible } /bright-red "modulo" /reset " use " /bright-green "modulo/floor" /reset {.
