@@ -1205,13 +1205,15 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 		// Forming a string:
 		if (!molded) {
-			if (IS_URL(value)) {
-				REBSER* tmp = Dehex_String(VAL_BIN_DATA(value), VAL_LEN(value), '%', FALSE);
-				Append_Bytes(ser, SERIES_DATA(tmp));
-			}
-			else {
+			//@@ `form` does not perform implicit dehexing like Rebol 2!
+			//@@ https://github.com/Oldes/Rebol-issues/issues/2710
+			//if (IS_URL(value)) {
+			//	REBSER* tmp = Dehex_String(VAL_BIN_DATA(value), VAL_LEN(value), '%', FALSE);
+			//	Append_Bytes(ser, SERIES_DATA(tmp));
+			//}
+			//else {
 				Insert_String(ser, NO_LIMIT, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
-			}
+			//}
 			return;
 		}
 

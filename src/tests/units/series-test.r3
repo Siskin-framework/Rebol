@@ -2801,7 +2801,8 @@ try/with [
 	--assert all [error? e: try [make email! []] e/id = 'bad-make-arg]
 --test-- "form url!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2710
-	--assert "http://www.somesite.dom/odd(dir)/odd{file +}.txt" = form http://www.somesite.dom/odd%28dir%29/odd%7Bfile%20+%7D.txt
+	;; `form` does not perform implicit dehexing like Rebol 2!
+	--assert {http://www.somesite.dom/odd%28dir%29/odd%7Bfile%20+%7D.txt} = form http://www.somesite.dom/odd%28dir%29/odd%7Bfile%20+%7D.txt
 	--assert "http://www.somesite.dom/odd%28dir%29/odd%7Bfile%7D.txt" = mold http://www.somesite.dom/odd%28dir%29/odd%7Bfile%7D.txt
 	--assert "odd(dir)/odd{file}.txt" = form %odd%28dir%29/odd%7Bfile%7D.txt
 ===end-group===
