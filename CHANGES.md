@@ -6,12 +6,19 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Features:
 
+* [`e1e45d`](https://github.com/Oldes/Rebol3/commit/e1e45d776df334d9269b7fc060372ae7762e7c2e) Allow `url!` construction from `block!`
+* [`c0fc06`](https://github.com/Oldes/Rebol3/commit/c0fc06b30f06a4566801a4215f31b0e672f7b49f) Allow `email!` construction from `block!`
+* [`1459f6`](https://github.com/Oldes/Rebol3/commit/1459f6332cbf5f9920b766a8c587dc54a238ac66) Implement `user` and `host` getters/setters for email
 * [`78dc62`](https://github.com/Oldes/Rebol3/commit/78dc624cd3060d44a46ec7b1b31bc3d758d8ac07) Add a build option to strip all docstrings from embedded Rebol code
 * [`65b232`](https://github.com/Oldes/Rebol3/commit/65b232ed4602c19b890c2966b84c3a0f000c7a91) Implement security confirmation
 * [`5420c6`](https://github.com/Oldes/Rebol3/commit/5420c666130a26f199cfb07493bc7b8a46263f79) Save history on exit; set `system/console/current` with actual console instance
 
 ### Changes:
 
+* [`f0a2f9`](https://github.com/Oldes/Rebol3/commit/f0a2f923784e1d36258332d81544b454d7dfae89) `form` does not perform implicit dehexing like Rebol 2
+* [`22e083`](https://github.com/Oldes/Rebol3/commit/22e083e47a6635bc845aca66a33a98e8341e01e1) Decode percent-encoded output when forming a URL to string
+* [`a86cfb`](https://github.com/Oldes/Rebol3/commit/a86cfb6f5dfa4d13d5b28085802a243b4b39eddf) Allow construction of a vector from an empty block: `make vector! []`
+* [`298649`](https://github.com/Oldes/Rebol3/commit/298649622c7464b1c8f902f2cbdeab57f2a6e299) Rename `wait-for-key` to `wait-key`; `aks/char` to `ask/only`
 * [`a3ad37`](https://github.com/Oldes/Rebol3/commit/a3ad37e3f8aaa5d41bf9745276604f1735714e5b) Use the BT.709 luminance formula by default; BT.601 when used `luminosity/luma`
 * [`5cccb8`](https://github.com/Oldes/Rebol3/commit/5cccb8ddc44fa8734969f6dd73ef883b26102b4e) Remove access to the internal `limit-usage` function
 * [`47b547`](https://github.com/Oldes/Rebol3/commit/47b5478b2b3d2ee63a07c1aa08f7d11661f120a0) Remove outer brackets from `profile` code block output
@@ -28,6 +35,9 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`23ca61`](https://github.com/Oldes/Rebol3/commit/23ca61c5b3deb5fe2e3bee0ed3136f506d917666) Make the CHANGE parse rule compatible with Red
+* [`9790a4`](https://github.com/Oldes/Rebol3/commit/9790a4ef12cfdd2bd01cf0d5d89fc8eb965aea0b) Make the CHANGE parse rule compatible with Red
+* [`be42e1`](https://github.com/Oldes/Rebol3/commit/be42e119e539a3ab0989c833482b455fc02487bc) Regression in HTTP protocol
 * [`479c49`](https://github.com/Oldes/Rebol3/commit/479c496b0c980af5079206d6bfebc00d1295642a) Show correct `help` output for unset values from paths
 * [`92afc4`](https://github.com/Oldes/Rebol3/commit/92afc41113ca33d8b5ac1bc7b2033c22de4098fe) Incorrect order in stable merge sort for blocks over 32 values
 * [`d48602`](https://github.com/Oldes/Rebol3/commit/d4860218f018d85bc4b2dc921e2d5d9ab9505f47) Crash when using the startup option without a value
