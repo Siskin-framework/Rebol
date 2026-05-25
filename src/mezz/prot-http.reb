@@ -5,16 +5,16 @@ REBOL [
 	Type: module
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2025 Rebol Open Source Contributors
+		Copyright 2012-2026 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
 		Licensed under the Apache License, Version 2.0
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-	Version: 0.7.5
+	Version: 0.8.3
 	Needs: 3.18.5 ;; because using the new log-* functions
-	Date: 21-Oct-2025
+	Date: 15-May-2026
 	File: %prot-http.r3
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -46,6 +46,8 @@ REBOL [
 	;;	0.5.5 19-Jul-2024 "Oldes" "CHANGE: updated for use with Rebol 3.17.2 and newer (query changes)"
 	;;	0.6.0 15-Mar-2025 "Oldes" "FIX: Use 'identity' encoding in HEAD request"
 	;;	0.7.0 18-Mar-2025 "Oldes" "FEAT: automatic cookies support"
+	;;	0.8.0 19-Apr-2026 "Oldes" "CHANGE: Control the maximum number of HTTP redirects via `system/options/http-redirects`"
+	;;  0.8.2 19-Apr-2026 "Oldes" "CHANGE: Allow disabling redirects per connection via `port/spec/redirect?`"
 	;;]
 	exports: [set-cookies get-cookies]
 ]
@@ -97,9 +99,11 @@ sync-op: func [port body /local header state][
 				read state/connection
 			]
 			redirect [
-				do-redirect port port/state/info/headers/location
-				state: port/state
-				state/awake: :read-sync-awake
+				either port/spec/redirect? [
+					do-redirect port port/state/info/headers/location
+					state: port/state
+					state/awake: :read-sync-awake
+				][	state/state: 'ready ]
 			]
 		]
 	]
@@ -553,7 +557,7 @@ do-redirect: func [port [port!] new-uri [url! string! file!] /local spec state h
 	log-info 'HTTP ["Redirect to:^[[m" mold new-uri]
 
 	state/redirects: state/redirects + 1
-	if state/redirects > 10 [
+	if state/redirects > system/options/http-redirects [
 		res: throw-http-error port {Too many redirections}
 	]
 
@@ -780,6 +784,7 @@ sys/make-scheme [
 		headers: []
 		content: none
 		timeout: 15
+		redirect?: on
 	]
 	info: make system/standard/file-info [
 		response-line:
@@ -854,6 +859,7 @@ sys/make-scheme [
 			/all    {Response may include additional information (source relative)}
 			/local result
 		][
+			;@@ NOTE: `all` is redefined!
 			log-trace 'HTTP "WRITE"
 			;?? port
 			case [
@@ -876,7 +882,10 @@ sys/make-scheme [
 				do-request port
 			][
 				result: sync-op port [parse-write-dialect port value]
-				unless binary [decode-result result]
+				if lib/all [
+					not binary
+					find [GET POST PATCH] port/spec/method
+				] [decode-result result]
 				check-result result :all
 			]
 		]
@@ -895,6 +904,7 @@ sys/make-scheme [
 			log-trace 'HTTP ["OPEN, state:" port/state]
 			if port/state [return port]
 			if none? port/spec/host [throw-http-error port "Missing host address"]
+			unless integer? system/options/http-redirects [system/options/http-redirects: 0]
 			port/state: object [
 				state: 'inited
 				connection:
@@ -1134,7 +1144,7 @@ with cookies-rules: context [
 		"Retrieves and formats valid cookies for HTTP requests."
 		host [string!] "The host for which cookies are being retrieved."
 		path [string! file!] "The path for which cookies are being retrieved."
-		return: [string!] "Formats cookies into a single string suitable for HTTP requests."
+		return: [string! "Cookies formated into a single string suitable for HTTP requests."]
 	][
 		clear values
 		timestamp: to integer! now/utc

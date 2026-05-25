@@ -24,7 +24,7 @@ do %tools/utils.reb
 
 args: system/script/args
 
-spec-file: try/except [
+spec-file: try/with [
 	to-rebol-file either block? args [first args][args]
 ][ clean-path %spec-core.reb ]
 
@@ -97,7 +97,7 @@ if file? src-dir [
 c-core-files: unique c-core-files
 c-host-files: unique c-host-files
 
-mezz-files: reduce [
+mezz-files: unique reduce [
 	;Boot Mezzanine Functions
 	unique mezz-base-files
 	unique mezz-sys-files
@@ -216,7 +216,7 @@ build-date/time: build-time
 
 
 ;- resolving current git commit
-try/except [
+try/with [
 	parse read/string %../.git/HEAD [thru "ref: " copy git-header to lf]
 	git-commit: mold debase read/string join %../.git/ git-header 16
 ][	git-commit: none]
@@ -244,8 +244,9 @@ str-version: reform [
 	select os-info 'VERSION_ID
 ]
 
-;;format-date-time may not be available in older Builder tools!
-;;format-date-time now/utc "(yyyy-MM-dd hh:mm:ss UTC)"
+;;format-datetime may not be available in older Builder tools!
+if function? :format-date-time [format-datetime: :format-date-time]
+try [build-date: format-datetime build-date "yyyy-MM-dd hh:mm:ss"]
 
 short-str-version: next ajoin [{
 Rebol/} product SP version " (" build-date { UTC)
