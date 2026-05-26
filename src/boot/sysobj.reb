@@ -96,7 +96,7 @@ options: object [  ; Options supplied to REBOL during startup
 		bright-yellow:     "^[[93m"
 		bright-blue:       "^[[94m"
 		bright-magenta:    "^[[95m"
-		bright-cyan:       "^[[96m"	
+		bright-cyan:       "^[[96m"
 		bright-white:      "^[[97m"
 		;; Basic background terminal palette
 		black-bg:          "^[[40m"
@@ -112,7 +112,7 @@ options: object [  ; Options supplied to REBOL during startup
 		bright-yellow-bg:  "^[[103m"
 		bright-blue-bg:    "^[[104m"
 		bright-magenta-bg: "^[[105m"
-		bright-cyan-bg:    "^[[106m"	
+		bright-cyan-bg:    "^[[106m"
 		bright-white-bg:   "^[[107m"
 		;; Some common color combinations
 		error:    "^[[38;5;201m"
@@ -299,7 +299,7 @@ state: object [
 			0.0.0  ;= ALLOW
 		
 	]
-	confirm-policy: _ ; used to hold secure's confirmation function (used from C side, hidden to user)
+	confirm-policy: none ; used to hold secure's confirmation function (used from C side, hidden to user)
 	last-error:  none ; used by WHY?
 	last-result: none ; used to store last console result
 	;; The following 3 flags are updated by the `read-key` call
@@ -656,7 +656,7 @@ view: object [
 
 console: construct [
 	history: []
-	current: _
+	current: none
 ]
 
 license: none
