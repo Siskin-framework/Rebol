@@ -1,8 +1,8 @@
 Rebol [
 	Title:   "Rebol Console"
 	Purpose: {Rebol Console with multiline input and TAB completion}
-	Version: 0.3.0
-	Date:    6-May-2026
+	Version: 0.4.0
+	Date:    27-May-2026
 	Needs:   3.21.18
 	type:    module
 	name:    rebol-console
@@ -141,7 +141,7 @@ default-spec: [
 			]
 		]
 	]
-	on-line: does [
+	on-line: func[/local index] [
 		completion/accept
 		if status? [hide-status]
 		either multiline [
@@ -167,9 +167,11 @@ default-spec: [
 		][
 			prin next-line
 			if multiline [ reset-multiline ]
-			code: bind result system/contexts/lib  ;; core values
-			code: bind code system/contexts/user   ;; e.g. values from startup scripts
-			code: bind/set code console-ctx        ;; per console session values
+			index: 1 + length? console-ctx        ;; optimization (only new words)
+			code: bind/new result console-ctx     ;; extend current console's context with new words
+			resolve/only console-ctx system/contexts/user index  ;; e.g. values from startup scripts
+			resolve/only console-ctx lib index    ;; copy only the new values into the console's context
+
 			;; Evaluate code with protection from all errors and quit.
 			set/any 'result try/all [ catch/quit code ]
 			if system/state/quit? [
