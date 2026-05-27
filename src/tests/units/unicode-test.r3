@@ -334,6 +334,43 @@ Rebol [
 		--assert (unique/skip "baaččbač" 2) == "baaččb"
 		--assert (unique/skip "b🙂aččb🙂č" 2) == "b🙂aččb🙂č"
 
+	--test-- "mold/part"
+		str: "═════"
+		--assert {"}   == mold/part str 1
+		--assert {"═}  == mold/part str 2
+		--assert {"══} == mold/part str 3
+		--assert {"══} == copy/part mold str 3
+	--test-- "mold/part with LF"
+		str: "^/═════"
+		--assert {"}     == mold/part str 1
+		--assert {"^^}   == mold/part str 2
+		--assert {"^^/}  == mold/part str 3
+		--assert {"^^/═} == mold/part str 4
+		--assert {"^^/═} == copy/part mold str 4
+	--test-- "mold/part with {"
+		str: "{═════"
+		--assert {"}     == mold/part str 1
+		--assert {"^{}   == mold/part str 2
+		--assert {"^{═}  == mold/part str 3
+		--assert {"^{══} == mold/part str 4
+		--assert {"^{══} == copy/part mold str 4
+	--test-- "mold/part long"
+		str: "{═════{═════{═════{═════{═════{═════{═════^""
+		--assert {"}     == mold/part str 1
+		--assert {"^{}   == mold/part str 2
+		--assert {"^{═}  == mold/part str 3
+		--assert {"^{══} == mold/part str 4
+		--assert "{^^{═" == copy/part mold str 4
+	--test-- "copy/part mold/part"
+		str: "═════"
+		--assert {"═} == copy/part mold/part str 4 2
+		--assert {"══} == copy/part mold/part str 4 3
+		--assert {"═══} == copy/part mold/part str 4 4
+		--assert {"═══} == copy/part mold/part str 4 5
+		--assert {"════} == copy/part mold/part str 6 5
+		--assert {"═════"} == copy/part mold/part str 8 8
+
+
 ===end-group===
 
 

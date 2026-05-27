@@ -159,8 +159,8 @@ static REBSER *Read_All_File(char *fname)
 	if (D_REF(2) && IS_BLOCK(val)) SET_FLAG(mo.opts, MOPT_ONLY);
 
 	Mold_Value(&mo, val, TRUE);
-	if (len > mo.series->tail) len = mo.series->tail;
-	Set_String(D_RET, Copy_String(mo.series, 0, len));
+	if (mo.limit > mo.series->tail) mo.limit = mo.series->tail;
+	Set_String(D_RET, Copy_String(mo.series, 0, mo.limit));
 
 	return R_RET;
 }
