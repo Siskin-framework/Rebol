@@ -2568,7 +2568,7 @@ try/with [
 	--assert "%C5%A1ik" = enhex "šik"
 	--assert "%D1%88%D0%B5%D0%BB%D0%BB%D1%8B" = enhex "шеллы"
 	--assert "%22%23%24%25%26%2B%2C%2F%3A%3B%3D%3F%40%5B%5D%5C" = enhex {"#$%&+,/:;=?@[]\}
-	--assert {"#$%&+,/:;=?@[]\} = form enhex as url! {"#$%&+,/:;=?@[]\}
+	--assert "%22#$%25&+,/:;=?@%5B%5D%5C" = form enhex as url! {"#$%&+,/:;=?@[]\}
 	--assert ";,/?:@&=+$#" = form enhex as url! {;,/?:@&=+$#}
 	--assert "%3B%2C%2F%3F%3A%40%26%3D%2B%24%23" = enhex {;,/?:@&=+$#}
 	--assert "!'()*_.-~" = enhex {!'()*_.-~}

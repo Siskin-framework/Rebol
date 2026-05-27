@@ -12,9 +12,9 @@ REBOL [
 		Licensed under the Apache License, Version 2.0
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
-	Version: 0.8.3
+	Version: 0.8.4
 	Needs: 3.18.5 ;; because using the new log-* functions
-	Date: 15-May-2026
+	Date: 27-May-2026
 	File: %prot-http.r3
 	Purpose: {
 		This program defines the HTTP protocol scheme for REBOL 3.
@@ -23,31 +23,8 @@ REBOL [
 	;;History: [
 	;;	0.1.1 22-Jun-2007 "Gabriele Santilli" "Version used in R3-Alpha"
 	;;	0.1.4 26-Nov-2012 "Richard Smolak"    "Version from Atronix's fork"
-	;;	0.1.5 10-May-2018 "Oldes" "FIX: Query on URL was returning just none"
-	;;	0.1.6 21-May-2018 "Oldes" "FEAT: Added support for basic redirection"
-	;;	0.1.7 03-Dec-2018 "Oldes" "FEAT: Added support for QUERY/MODE action"
-	;;	0.1.8 21-Mar-2019 "Oldes" "FEAT: Using system trace outputs"
-	;;	0.1.9 21-Mar-2019 "Oldes" "FEAT: Added support for transfer compression"
-	;;	0.2.0 28-Mar-2019 "Oldes" "FIX: close connection in case of errors"
-	;;	0.2.1 02-Apr-2019 "Oldes" "FEAT: Reusing connection in redirect when possible"
-	;;	0.3.0 06-Jul-2019 "Oldes" "FIX: Error handling revisited and improved dealing with chunked data"
-	;;	0.3.1 13-Feb-2020 "Oldes" "FEAT: Possible auto conversion to text if found charset specification in content-type"
-	;;	0.3.2 25-Feb-2020 "Oldes" "FIX: Properly handling chunked data"
-	;;	0.3.3 25-Feb-2020 "Oldes" "FEAT: support for read/binary and write/binary to force raw data result"
-	;;	0.3.4 26-Feb-2020 "Oldes" "FIX: limit input data according Content-Length (#issues/2386)"
-	;;	0.3.5 26-Oct-2020 "Oldes" "FEAT: support for read/part (using Range request with read/part/binary)"
-	;;	0.4.0 04-Feb-2022 "Oldes" "FIX: situation when server does not provide Content-Length and just closes connection"
-	;;	0.4.1 13-Jun-2022 "Oldes" "FIX: Using `query` on URL sometimes reports `date: none`"
-	;;	0.5.0 18-Jul-2022 "Oldes" "FEAT: `read/seek` and `read/all` implementation"
-	;;	0.5.1 12-Jun-2023 "Oldes" "FEAT: anonymize authentication tokens in log"
-	;;	0.5.2 22-Jul-2023 "Oldes" "FEAT: support for optional Brotli encoding"
-	;;	0.5.3 11-Jul-2024 "Oldes" "FIX: redirection with a missing slash in the location field"
-	;;	0.5.4 15-Jul-2024 "Oldes" "FIX: HTTP query validated when building a request"
-	;;	0.5.5 19-Jul-2024 "Oldes" "CHANGE: updated for use with Rebol 3.17.2 and newer (query changes)"
-	;;	0.6.0 15-Mar-2025 "Oldes" "FIX: Use 'identity' encoding in HEAD request"
-	;;	0.7.0 18-Mar-2025 "Oldes" "FEAT: automatic cookies support"
-	;;	0.8.0 19-Apr-2026 "Oldes" "CHANGE: Control the maximum number of HTTP redirects via `system/options/http-redirects`"
-	;;  0.8.2 19-Apr-2026 "Oldes" "CHANGE: Allow disabling redirects per connection via `port/spec/redirect?`"
+	;;  ...
+	;;  https://github.com/Oldes/Rebol3/commits/master/src/mezz/prot-http.reb
 	;;]
 	exports: [set-cookies get-cookies]
 ]
@@ -338,11 +315,10 @@ do-request: func [
 ][
 	spec: port/spec
 	info: port/state/info
-
 	spec/headers: make system/schemes/http/headers to block! spec/headers
 
 	;; Use 'identity' encoding in HEAD request (otherwise, the content-length may be none).
-	if spec/method == 'HEAD [spec/headers/Accept-Encoding: 'identity]
+	if spec/method == 'HEAD [spec/headers/Accept-Encoding: "identity"]
 
 	unless spec/headers/host [
 		spec/headers/host: either find [80 443] spec/port [
@@ -971,11 +947,12 @@ sys/make-scheme [
 			if none? field [ return words-of system/schemes/http/info]
 			if none? state: port/state [
 				open port ;there is port opening in sync-op, but it would also close the port later and so clear the state
-				attempt [sync-op port [parse-write-dialect port [HEAD]]]
+				try/with [sync-op port [parse-write-dialect port [HEAD]]][
+					log-error 'HTTP system/state/last-error
+				]
 				state: port/state
 				close port
 			]
-			;?? state
 			either all [
 				state
 				state/info/status-code
