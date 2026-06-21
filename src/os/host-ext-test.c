@@ -468,10 +468,13 @@ RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *ctx) {
 		if (spec && spec->series) {
 			REBSTI *info = (REBSTI *)BIN_HEAD(spec->series);
 			REBSTF *field = (REBSTF *)info + 1;
+			REBYTE *word;
 			printf("struct id: %u fields: %u\n", info->id, info->count);
 			for (REBCNT i = 0; i < info->count; ++i, ++field) {
-				printf(" field name: %s\n", RL_WORD_STRING(field->sym));
+				word = RL_WORD_STRING(field->sym); // allocates a new string!
+				printf(" field name: %s\n", word);
 				printf("       type: %u size: %u\n", field->type, field->size);
+				OS_Free(word); // release the string
 			}
 		}
 		return RXR_VALUE;
