@@ -994,7 +994,7 @@ RL_API u32 *RL_Words_Of_Object(REBSER *obj)
 **	Arguments:
 **		obj  - object pointer (e.g. from RXA_OBJECT)
 **	Notes:
-**		Returns a word array similar to MAP_WORDS (first value is count).
+**		Returns a word array similar to MAP_WORDS (first element is size).
 **		The array is allocated with OS_MAKE. You can OS_FREE it any time.
 */
 {
