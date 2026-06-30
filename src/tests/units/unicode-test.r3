@@ -707,6 +707,12 @@ Rebol [
 		comp: func [a b] [a <= b]
 		--assert "Aa aá aa ab ba " == sort/compare/skip     "ab aa Aa aá ba " :comp 3 ;; compares only the first char
 		--assert "Aa aa ab aá ba " == sort/compare/skip/all "ab aa Aa aá ba " :comp 3
+	--test-- "sort block of strings"
+		;@@ https://github.com/Oldes/Rebol-issues/issues/2716
+		--assert ["abå" "cd" "ef"] == sort ["ef" "cd" "abå"]
+		--assert ["abå" "cd" "ef"] == ssort/unstable ["ef" "cd" "abå"]
+		--assert ["ef" "cd" "abå"] == sort/reverse ["ef" "cd" "abå"]
+		--assert ["ef" "cd" "abå"] == sort/reverse/unstable ["ef" "cd" "abå"]
 
 ===end-group===
 
