@@ -37,13 +37,17 @@ Rebol [
 
 ===start-group=== "enbase integer"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2667
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2718
 	--test-- "enbase-2"
+		--assert "00000000" == enbase 0 2
 		--assert "00010111" == enbase 2#00010111 2
 		--assert "0000000100000000" == enbase 256 2
 	--test-- "enbase-16"
+		--assert   "00" == enbase 0 16
 		--assert   "17" == enbase 0#17 16
 		--assert "01FF" == enbase 0#01FF 16
 	--test-- "enbase-64"
+		--assert "AA==" == enbase 0 64
 		--assert "AQA=" == enbase 256 64
 ===end-group===
 

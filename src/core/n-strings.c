@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -456,12 +456,19 @@ static struct digest {
 	REBOOL brk = !D_REF(6);
 
 	if (IS_INTEGER(arg)) {
-		// Convert integer to binary...
-		SET_BINARY(arg, Make_Binary_BE64(arg));
-		// ...and trim leading zeros...
-		REBCNT i = 0;
-		while (i <= 7 && VAL_BIN_HEAD(arg)[i]==0) { ++i; }
-		VAL_INDEX(arg) = i;
+		if (VAL_INT64(arg) != 0) {
+			// Convert integer to binary...
+			SET_BINARY(arg, Make_Binary_BE64(arg));
+			// ...and trim leading zeros...
+			REBCNT i = 0;
+			while (i <= 7 && VAL_BIN_HEAD(arg)[i] == 0) { ++i; }
+			VAL_INDEX(arg) = i;
+		}
+		else {
+			// Special case for e.g.: enbase 0 16 ;== "00"
+			SET_BINARY(arg, Make_Binary(1));
+			VAL_TAIL(arg) = 1;
+		}
 	}
 	if (D_REF(4)) {
 		limit = Partial(arg, 0, part, 0); // Can modify value index.
