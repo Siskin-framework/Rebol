@@ -1054,6 +1054,13 @@ as-pair: native [
 	y [number!]
 ]
 
+as-color: native [
+	"Combine R, G and B values into a tuple."
+	r [integer! decimal! percent!]
+	g [integer! decimal! percent!]
+	b [integer! decimal! percent!]
+]
+
 ;read-file: native [f [file!]]
 
 equal?: native [

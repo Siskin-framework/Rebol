@@ -35,6 +35,9 @@ This is just generated output from commits in [this repository](https://github.c
 
 ### Fixes:
 
+* [`87bd59`](https://github.com/Oldes/Rebol3/commit/87bd59a55e8cfd34fe88dfb7bdd03dc81539b1ae) `query` on URLs does not handle redirects
+* [`53d06c`](https://github.com/Oldes/Rebol3/commit/53d06cce8c7e2f31c2b39ceaf13e45d04a2eb627) Bind new words from the console command line to the console context
+* [`6fa4cb`](https://github.com/Oldes/Rebol3/commit/6fa4cb5458e55fb890006c3083ea178f1ff7ae96) `mold` and `mold/part` with Unicode input
 * [`23ca61`](https://github.com/Oldes/Rebol3/commit/23ca61c5b3deb5fe2e3bee0ed3136f506d917666) Make the CHANGE parse rule compatible with Red
 * [`9790a4`](https://github.com/Oldes/Rebol3/commit/9790a4ef12cfdd2bd01cf0d5d89fc8eb965aea0b) Make the CHANGE parse rule compatible with Red
 * [`be42e1`](https://github.com/Oldes/Rebol3/commit/be42e119e539a3ab0989c833482b455fc02487bc) Regression in HTTP protocol

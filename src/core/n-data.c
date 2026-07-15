@@ -265,6 +265,31 @@ static int Check_Char_Range(REBVAL *val, REBCNT limit)
 	return R_RET;
 }
 
+static REBYTE arg_to_byte(REBVAL* val) {
+	REBI64 num;
+	if (IS_DECIMAL(val))
+		num = (REBI64)(VAL_DECIMAL(val) + 0.5);
+	else if (IS_INTEGER(val))
+		num = (REBI64)VAL_INT64(val);
+	else //IS_PERCENT
+		num = (REBI64)(VAL_DECIMAL(val) * 255.0 + 0.5);
+	return (REBYTE)MAX(0, MIN(255, num));
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(as_color)
+/*
+***********************************************************************/
+{
+	VAL_SET(D_RET, REB_TUPLE);
+	VAL_TUPLE_LEN(D_RET) = 3;
+	REBYTE* t = VAL_TUPLE(D_RET);
+	t[0] = arg_to_byte(D_ARG(1));
+	t[1] = arg_to_byte(D_ARG(2));
+	t[2] = arg_to_byte(D_ARG(3));
+	return R_RET;
+}
 
 /***********************************************************************
 **

@@ -165,6 +165,19 @@ Rebol [
 ===end-group===
 
 
+===start-group=== "as-color"
+	--test-- "as-color with integers"
+		--assert 1.2.3   == as-color  1 2 3
+		--assert 0.2.255 == as-color -1 2 300
+	--test-- "as-color with decimals"
+		--assert 1.2.3   == as-color  1.0 2.4 2.7
+		--assert 0.3.255 == as-color -1.0 2.5 300.0
+	--test-- "as-color with percents"
+		--assert 0.128.255 == as-color 0 50% 100%
+
+===end-group===
+
+
 ===start-group=== "Other tuple"
 	--test-- "no power on tuple"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1214
