@@ -198,7 +198,7 @@ Rebol [
 	--assert o/minimum = 0
 	--assert o/maximum = 0
 --test-- "QUERY on vector"
-	--assert [signed type size length minimum maximum range sum mean median variance population-deviation sample-deviation] = query v none
+	--assert [signed type size length minimum maximum range sum mean median variance sample-variance population-deviation sample-deviation] = query v none
 	--assert [16 integer!] = query v [:size :type]
 	--assert block? b: query v [signed length]
 	--assert all [not b/signed b/length = 2]
@@ -717,8 +717,8 @@ Rebol [
 
 ===start-group=== "VECTOR statictics"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/2648
-	all-modes: [minimum maximum range sum mean median variance population-deviation sample-deviation]
-	all-get-modes: [:minimum :maximum :range :sum :mean :median :variance :population-deviation :sample-deviation]
+	all-modes: [minimum maximum range sum mean median variance sample-variance population-deviation sample-deviation]
+	all-get-modes: [:minimum :maximum :range :sum :mean :median :variance :sample-variance :population-deviation :sample-deviation]
 	--test-- "int8! vector statictics"
 	v: #(int8! [-2 -1 1 2 4])
 	--assert (query v all-modes) == [
@@ -728,7 +728,8 @@ Rebol [
 	    sum: 4
 	    mean: 0.8
 	    median: 1.0
-	    variance: 22.8
+	    variance: 4.56
+	    sample-variance: 5.7
 	    population-deviation: 2.13541565040626
 	    sample-deviation: 2.38746727726266
 	]
@@ -740,7 +741,8 @@ Rebol [
 	    4
 	    0.8
 	    1.0
-	    22.8
+	    4.56
+	    5.7
 	    2.13541565040626
 	    2.38746727726266
 	]
@@ -754,7 +756,8 @@ Rebol [
 	    sum: 53
 	    mean: 10.6
 	    median: 11.0
-	    variance: 89.2
+	    variance: 17.84
+	    sample-variance: 22.3
 	    population-deviation: 4.22374241638857
 	    sample-deviation: 4.72228758124704
 	]
@@ -766,7 +769,8 @@ Rebol [
 	    53
 	    10.6
 	    11.0
-	    89.2
+	    17.84
+	    22.3
 	    4.22374241638857
 	    4.72228758124704
 	]
@@ -780,7 +784,8 @@ Rebol [
 	    sum: 16.79
 	    mean: 1.679
 	    median: 1.655
-	    variance: 0.02529
+	    variance: 0.002529
+	    sample-variance: 0.00281
 	    population-deviation: 0.0502891638427207
 	    sample-deviation: 0.0530094331227943
 	]
@@ -792,11 +797,29 @@ Rebol [
 	    16.79
 	    1.679
 	    1.655
-	    0.02529
+	    0.002529
+	    0.00281
 	    0.0502891638427207
 	    0.0530094331227943
 	]
 
+	--test-- "QUERY on empty vector"
+	--assert (query #(u8! []) all-get-modes) == [_ _ _ _ _ _ _ _ _ _]
+
+	--test-- "QUERY on single value vector"
+	--assert (query #(u8! [1])  all-modes) == [
+	    minimum: 1
+	    maximum: 1
+	    range: 0
+	    sum: 1
+	    mean: 1.0
+	    median: 1.0
+	    variance: 0.0
+	    sample-variance: _
+	    population-deviation: 0.0
+	    sample-deviation: _
+	]
+	--assert (query #(u8! [1]) all-get-modes) == [1 1 0 1 1.0 1.0 0.0 _ 0.0 _]
 
 ===end-group===
 
@@ -811,6 +834,49 @@ Rebol [
 	--assert #(u16! [1 2]) < #(u16! [1 2 1])
 	--assert #(u16! [1 2]) < #(u16! [2 2])
 	--assert #(u16! [2 2]) > #(u16! [1 2])
+
+	--test-- "compare vectors - i64"
+		vi1: #(int64! [-1 2]) vi2: #(int64! [1 2])
+		--assert vi1 < vi2
+		--assert not (vi1 > vi2)
+		--assert vi1 = vi1
+		--assert #(i64! [9223372036854775807]) > #(i64! [9223372036854775806]) 
+
+	--test-- "compare vectors - u64"
+		vi1: #(uint64! [1 2]) vi2: #(uint64! [1 3])
+		--assert vi1 < vi2
+		--assert not (vi1 > vi2)
+		--assert #(u64! [0#FFFFFFFFFFFFFFFF]) > #(u64! [0#FEFFFFFFFFFFFFFF])
+
+	--test-- "compare vectors - f32"
+		vf1: #(f32! [-1 2]) vf2: #(f32! [1 2])
+		--assert vf1 < vf2
+		--assert not (vf1 > vf2)
+		--assert vf1 = vf1
+
+	--test-- "compare vectors - f64 - negative zero"
+		vz1: #(float64! [-0.0])
+		vz2: #(float64! [ 0.0])
+		--assert vz1 = vz2
+		--assert not vz1 < vz2
+		--assert not vz1 > vz2
+
+	--test-- "compare vectors - cross-signedness at 64-bit width"
+		vs: #(i64! [-1])
+		vu: #(u64! [0#FFFFFFFFFFFFFFFF])  ;; UINT64_MAX — same bit pattern as -1 in two's complement
+		--assert not vs = vu   ;; must NOT silently treat as equal
+		--assert     vs < vu   ;; -1 is numerically far less than UINT64_MAX
+
+		--assert #(u64! [1 2])  = #(u32! [1 2])
+		--assert #(i64! [1 2])  = #(i32! [1 2])
+		--assert #(i64! [1 2]) != #(i32! [1 3])
+		--assert #(i64! [-1])   = #(i32! [-1])
+		--assert #(i64! [-1])   < #(i32! [0])
+		--assert #(i64! [-1])  != #(u32! [-1])
+
+	--test-- "compare vectors - incompatible categories should error"
+		--assert error? try [#(i64! [1 2]) = #(f64! [1.0 2.0])]
+
 
 ===end-group===
 
@@ -837,6 +903,71 @@ Rebol [
 	--assert #{01000200} = to-binary copy/part v 2
 	--assert #{03000400} = to-binary copy/part skip v 2 2
 
+===end-group===
+
+
+===start-group=== "TAKE"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2714
+	--test-- "take of vector!"
+		v: #(i32! [10 20 30 40 50])
+		--assert (take v) == 10
+		--assert (take/last v) == 50
+		--assert (take/part v 2) == #(i32! [20 30])
+		--assert (take/part/last v 1) == #(i32! [40])
+		--assert empty? v
+		--assert none? take v
+		--assert none? take/last v
+
+	--test-- "take/part with count exceeding remaining length should clamp, not error"
+		v: #(i32! [1 2 3])
+		--assert (take/part v 100) == #(i32! [1 2 3])
+
+	--test-- "take of vector! not at head"
+		v: #(i32! [10 20 30 40 50])
+		v2: skip v 2                    ; v2 view starts at "30" (index 2)
+		--assert (take v2) == 30        ; default take is relative to current position, not absolute head
+		--assert v2 == #(i32! [40 50])
+		--assert  v == #(i32! [10 20 40 50]) ; same underlying series -- shrinks for both refs
+
+	--test-- "take/last of vector! not at head"
+		v: #(i32! [10 20 30 40 50])
+		v2: skip v 3                    ; view = [40 50]
+		--assert (take/last v2) == 50
+		--assert v2 == #(i32! [40])
+		--assert v == #(i32! [10 20 30 40])
+
+	--test-- "take/part of vector! not at head - v1"
+		v: skip #(i32! [10 20 30 40 50]) 2
+		--assert (take/part v 2) == #(i32! [30 40])
+		--assert v == #(i32! [50])
+		--assert (head v) == #(i32! [10 20 50])
+
+	--test-- "take/part of vector! not at head - v2"
+		v: #(i32! [10 20 30 40 50])
+		v2: skip v 1                    ; view = [20 30 40 50]
+		--assert (take/part v2 2) == #(i32! [20 30])
+		--assert v2 == #(i32! [40 50])
+		--assert v == #(i32! [10 40 50])
+
+	--test-- "take/part/last of vector! not at head"
+		v: skip #(i32! [10 20 30 40 50]) 2
+		--assert (take/part/last v 4) == #(i32! [30 40 50])
+		--assert empty? v
+		--assert (head v) == #(i32! [10 20])
+
+	--test-- "take/part/last must not reach before the current index"
+		v: #(i32! [10 20 30 40 50])
+		v2: skip v 3                    ; view = [40 50], only 2 elements visible
+		--assert (take/part/last v2 5) == #(i32! [40 50])   ; clamp to what's visible, not the full tail
+		--assert empty? v2
+		--assert v == #(i32! [10 20 30])   ; the hidden prefix [10 20 30] must survive untouched
+
+	--test-- "take/last exactly at the visible boundary"
+		v: #(i32! [10 20 30 40 50])
+		v2: skip v 2                    ; view = [30 40 50], visible = 3
+		--assert (take/part/last v2 3) == #(i32! [30 40 50])   ; exactly all visible elements
+		--assert empty? v2
+		--assert v == #(i32! [10 20])
 ===end-group===
 
 

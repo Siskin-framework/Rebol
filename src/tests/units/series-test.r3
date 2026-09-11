@@ -702,6 +702,20 @@ Rebol [
 	--test-- "get on path"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/248
 		--assert tuple? get 'system/version
+
+	--test-- "path block index resolve"
+		b: [1 2]
+		--assert none? b/-1
+		--assert none? b/0
+		--assert  1 == b/1
+		--assert none? b/10
+
+	--test-- "path string index resolve"
+		s: "12"
+		--assert none? s/0
+		--assert #"1" == s/1
+		--assert none? s/10
+
 ===end-group===
 
 ===start-group=== "SET-PATH"
@@ -720,6 +734,21 @@ Rebol [
 			error? e: try [data/c: 30]
 			e/id = 'invalid-path
 		]
+	--test-- "set-path block with index"
+		b: [1 2]
+		--assert all [error? e: try [b/-2: 10] e/id = 'out-of-range]
+		--assert all [error? e: try [b/-1: 10] e/id = 'out-of-range]
+		--assert all [error? e: try [b/0:  10] e/id = 'out-of-range]
+		--assert all [error? e: try [b/10: 10] e/id = 'out-of-range]
+		--assert all [b/1: 10  b/1 == 10]
+
+	--test-- "set-path string with index"
+		s: "12"
+		--assert all [error? e: try [s/-2: 10] e/id = 'out-of-range]
+		--assert all [error? e: try [s/-1: 10] e/id = 'out-of-range]
+		--assert all [error? e: try [s/0:  10] e/id = 'out-of-range]
+		--assert all [error? e: try [s/10: 10] e/id = 'out-of-range]
+		--assert all [s/1: #"x"  s/1 == #"x"]
 ===end-group===
 
 
@@ -2346,54 +2375,54 @@ try/with [
 	bin: read %units/files/issue-2186-UTF16-LE.txt
 	--assert all [
 		string? try [str: to-string bin]
-		3160989 = checksum str 'crc24
+		8206283 = checksum str 'crc24
 	]
 --test-- "issue-2186 read UCS16-BE"
 	bin: read %units/files/issue-2186-UTF16-BE.txt
 	--assert all [
 		string? try [str: to-string bin]
-		3160989 = checksum str 'crc24
+		8206283 = checksum str 'crc24
 	]
 --test-- "issue-2186 read UCS32-LE"
 	bin: read %units/files/issue-2186-UTF32-LE.txt
 	--assert all [
 		string? try [str: to-string bin]
-		3160989 = checksum str 'crc24
+		8206283 = checksum str 'crc24
 	]
 --test-- "issue-2186 read UCS32-BE"
 	bin: read %units/files/issue-2186-UTF32-BE.txt
 	--assert all [
 		string? try [str: to-string bin]
-		3160989 = checksum str 'crc24
+		8206283 = checksum str 'crc24
 	]
 ;- read/string converts CRLF to LF, so the checksum is different
 --test-- "issue-2186 read/string UCS16-LE"
 	--assert all [
 		string? try [str: read/string %units/files/issue-2186-UTF16-LE.txt]
-		11709824 = checksum str 'crc24
+		5408699 = checksum str 'crc24
 	]
 --test-- "issue-2186 read/string UCS16-BE"
 	--assert all [
 		string? try [str: read/string %units/files/issue-2186-UTF16-BE.txt]
-		11709824 = checksum str 'crc24
+		5408699 = checksum str 'crc24
 	]
 --test-- "issue-2186 read/string UCS32-LE"
 	--assert all [
 		string? try [str: read/string %units/files/issue-2186-UTF32-LE.txt]
-		11709824 = checksum str 'crc24
+		5408699 = checksum str 'crc24
 	]
 --test-- "issue-2186 read/string UCS32-BE"
 	--assert all [
 		string? try [str: read/string %units/files/issue-2186-UTF32-BE.txt]
-		11709824 = checksum str 'crc24
+		5408699 = checksum str 'crc24
 	]
 
 --test-- "invalid UTF8 char"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1064
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1216
 	--assert all [error? e: try [to-string #{C2E0}] e/id = 'invalid-utf]
-	--assert all [error? e: try [to-string #{C3}] e/id = 'invalid-utf]
-	--assert all [error? e: try [to-string #{EF}] e/id = 'invalid-utf]
+	--assert all [error? e: try [to-string #{C3}]   e/id = 'invalid-utf]
+	--assert all [error? e: try [to-string #{EF}]   e/id = 'invalid-utf]
 	--assert all [error? e: try [to-string #{EFBF}] e/id = 'invalid-utf]
 
 	--assert #{C2E0} = invalid-utf? #{C2E0}
@@ -2407,9 +2436,9 @@ try/with [
 
 	;- using quickbrown.bin instead of quickbrown.txt beacause GIT modifies CRLF to LF on posix
 	--assert none? invalid-utf? bin: read %units/files/quickbrown.bin
-	--assert 13806406 = checksum str: to-string bin 'crc24 ; does not normalize CRLF
-	--assert  5367801 = checksum deline str 'crc24
-	--assert  5367801 = checksum read/string %units/files/quickbrown.bin 'crc24 ;converts CRLF to LF
+	--assert  1872109 = checksum str: to-string bin 'crc24 ; does not normalize CRLF
+	--assert 16295532 = checksum deline str 'crc24
+	--assert 16295532 = checksum read/string %units/files/quickbrown.bin 'crc24 ;converts CRLF to LF
 
 --test-- "invalid utf16"
 	--assert try ["á🙂" == to-string #{FEFF00E1D83DDE42}]

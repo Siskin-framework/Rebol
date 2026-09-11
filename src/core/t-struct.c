@@ -31,10 +31,6 @@
 #include "sys-core.h"
 #include "sys-hash.h"
 
-#define IS_INTEGER_TYPE(t) ((t) < STRUCT_TYPE_INTEGER)
-#define IS_DECIMAL_TYPE(t) ((t) > STRUCT_TYPE_INTEGER && (t) < STRUCT_TYPE_DECIMAL)
-#define IS_NUMERIC_TYPE(t) (IS_INTEGER_TYPE(t) || IS_DECIMAL_TYPE(t))
-
 REBFLG MT_Struct(REBVAL *out, REBVAL *data, REBCNT type);
 static void init_fields(REBVAL *ret, REBVAL *spec);
 
@@ -60,6 +56,38 @@ static const REBCNT type_to_sym [STRUCT_TYPE_MAX] = {
 	SYM_REBVALX
 };
 
+// Vector encoding for field types which have a vector equivalent (-1 = none)
+static const REBINT type_to_vect [STRUCT_TYPE_MAX] = {
+	VTUI08,
+	VTSI08,
+	VTUI16,
+	VTSI16,
+	VTUI32,
+	VTSI32,
+	VTUI64,
+	VTSI64,
+	-1, //STRUCT_TYPE_INTEGER
+
+	VTSF32,
+	VTSF64,
+	-1, //STRUCT_TYPE_DECIMAL
+
+	-1, //STRUCT_TYPE_POINTER
+	-1, //STRUCT_TYPE_STRUCT
+	-1, //STRUCT_TYPE_WORD
+	-1  //STRUCT_TYPE_REBVAL
+};
+
+// Array fields of these types are exposed as a block of values, not as a vector!
+#define IS_BLOCK_BACKED_FIELD(f) \
+	((f)->type > STRUCT_TYPE_DOUBLE || type_to_sym[(f)->type] == NOT_FOUND)
+
+// The struct's data are packed, so its fields may be misaligned! Accessing
+// them using a typed pointer is an undefined behavior, so the value must be
+// copied in and out instead.
+#define GET_FIELD_VALUE(type, set) { type n; COPY_MEM(&n, data, sizeof(n)); set(val, n); break; }
+#define SET_FIELD_VALUE(type, num) { type n = (type)(num); COPY_MEM(data, &n, sizeof(n)); break; }
+
 static REBFLG get_scalar(REBSTU *stu,
 				  REBSTF *field,
 				  REBCNT n, /* element index, starting from 0 */
@@ -67,39 +95,17 @@ static REBFLG get_scalar(REBSTU *stu,
 {
 	REBYTE *data = STRUCT_DATA_BIN(stu) + field->offset + n * field->size;
 	switch (field->type) {
-		case STRUCT_TYPE_UINT8:
-			SET_INTEGER(val, *(u8*)data);
-			break;
-		case STRUCT_TYPE_INT8:
-			SET_INTEGER(val, *(i8*)data);
-			break;
-		case STRUCT_TYPE_UINT16:
-			SET_INTEGER(val, *(u16*)data);
-			break;
-		case STRUCT_TYPE_INT16:
-			SET_INTEGER(val, *(i16*)data);
-			break;
-		case STRUCT_TYPE_UINT32:
-			SET_INTEGER(val, *(u32*)data);
-			break;
-		case STRUCT_TYPE_INT32:
-			SET_INTEGER(val, *(i32*)data);
-			break;
-		case STRUCT_TYPE_UINT64:
-			SET_INTEGER(val, *(u64*)data);
-			break;
-		case STRUCT_TYPE_INT64:
-			SET_INTEGER(val, *(i64*)data);
-			break;
-		case STRUCT_TYPE_FLOAT:
-			SET_DECIMAL(val, *(float*)data);
-			break;
-		case STRUCT_TYPE_DOUBLE:
-			SET_DECIMAL(val, *(double*)data);
-			break;
-		case STRUCT_TYPE_POINTER:
-			SET_INTEGER(val, (u64)*(void**)data);
-			break;
+		case STRUCT_TYPE_UINT8:   GET_FIELD_VALUE(u8,  SET_INTEGER)
+		case STRUCT_TYPE_INT8:    GET_FIELD_VALUE(i8,  SET_INTEGER)
+		case STRUCT_TYPE_UINT16:  GET_FIELD_VALUE(u16, SET_INTEGER)
+		case STRUCT_TYPE_INT16:   GET_FIELD_VALUE(i16, SET_INTEGER)
+		case STRUCT_TYPE_UINT32:  GET_FIELD_VALUE(u32, SET_INTEGER)
+		case STRUCT_TYPE_INT32:   GET_FIELD_VALUE(i32, SET_INTEGER)
+		case STRUCT_TYPE_UINT64:  GET_FIELD_VALUE(u64, SET_INTEGER)
+		case STRUCT_TYPE_INT64:   GET_FIELD_VALUE(i64, SET_INTEGER)
+		case STRUCT_TYPE_FLOAT:   GET_FIELD_VALUE(float,  SET_DECIMAL)
+		case STRUCT_TYPE_DOUBLE:  GET_FIELD_VALUE(double, SET_DECIMAL)
+		case STRUCT_TYPE_POINTER: GET_FIELD_VALUE(REBUPT, SET_INTEGER)
 		case STRUCT_TYPE_STRUCT:
 			{
 				SET_TYPE(val, REB_STRUCT);
@@ -110,20 +116,20 @@ static REBFLG get_scalar(REBSTU *stu,
 			}
 			break;
 
-		case STRUCT_TYPE_WORD:
-			if (*(REBINT *)data == 0)
-				SET_NONE(val);
-			else 
-				Set_Word(val, *(REBINT *)data, NULL, 0);
+		case STRUCT_TYPE_WORD: {
+				REBCNT sym;
+				COPY_MEM(&sym, data, sizeof(sym));
+				if (sym == 0) SET_NONE(val);
+				else Set_Word(val, sym, NULL, 0);
+			}
 			break;
 		case STRUCT_TYPE_REBVAL:
-			if (*(REBINT *)data == 0)
-				SET_NONE(val);
-			else
-				COPY_MEM(val, data, sizeof(REBVAL));
+			COPY_MEM(val, data, sizeof(REBVAL));
+			if (IS_END(val)) SET_NONE(val); // the field was never set
 			break;
 		default:
 			/* should never be here */
+			SET_NONE(val);
 			return FALSE;
 	}
 	return TRUE;
@@ -136,27 +142,24 @@ void Get_Struct_Field_Value(REBSTU* stu, REBSTF* field, REBVAL* val)
 {
 	if (field->array) {
 		REBSER* ser;
-		REBINT type = field->type;
-
-		// Look up the vector-compatible symbol for this field type
-		REBCNT sym = (REBCNT)type_to_sym[type];
-
-		if (type > STRUCT_TYPE_DOUBLE || sym == NOT_FOUND) {
-			// Type has no vector equivalent — fall back to a block of scalars
+		if (IS_BLOCK_BACKED_FIELD(field)) {
+			// Type has no vector equivalent - fall back to a block of scalars
+			REBCNT n;
 			ser = Make_Block(field->dimension);
-			REBCNT n = 0;
-			SET_TYPE(val, REB_BLOCK);
+			// The value must reference the series BEFORE anything else can be
+			// allocated! `val` is usually pvs->store, which lives on the data
+			// stack, so the GC would else mark a block with a stale series.
+			Set_Block(val, ser);
 
-			// Iterate over each element, extract it as a scalar, and append to the block
+			// Iterate over each element and extract it as a scalar
 			for (n = 0; n < field->dimension; n++) {
-				REBVAL elem;
-				get_scalar(stu, field, n, &elem);
-				Append_Val(ser, &elem);
+				get_scalar(stu, field, n, Append_Value(ser));
 			}
 		}
 		else {
-			// Type maps to a known vector word — use a vector for efficiency
-			ser = Make_Vector_From_Word(sym, field->dimension);
+			// Type maps to a known vector word - use a vector for efficiency
+			ser = Make_Vector_From_Word((REBCNT)type_to_sym[field->type], field->dimension);
+			SET_VECTOR(val, ser);
 
 			// Bulk-copy the raw field bytes directly into the vector's data buffer
 			COPY_MEM(
@@ -164,12 +167,7 @@ void Get_Struct_Field_Value(REBSTU* stu, REBSTF* field, REBVAL* val)
 				STRUCT_DATA_BIN(stu) + field->offset,
 				field->dimension * field->size
 			);
-			SET_TYPE(val, REB_VECTOR);
 		}
-
-		// Point val at the newly created series, starting at index 0
-		VAL_SERIES(val) = ser;
-		VAL_INDEX(val) = 0;
 	}
 	else {
 		// Non-array field - retrieve a single scalar value directly
@@ -243,10 +241,9 @@ REBFLG Get_Struct_Var(REBSTU *stu, REBVAL *word, REBVAL *val)
 		}
 		if (type != SYM_WORDS) {
 			val = Append_Value(out);
-			if (field->dimension > 1) {
+			if (field->array) {
 				dim = Make_Block(field->dimension);
-				SET_TYPE(val, REB_BLOCK);
-				VAL_SERIES(val) = dim;
+				Set_Block(val, dim);
 				for (n = 0; n < field->dimension; n++) {
 					REBVAL* dv = Append_Value(dim);
 					get_scalar(stu, field, n, dv);
@@ -285,19 +282,27 @@ static REBOOL assign_scalar(REBSTU *stu,
 
 	switch (VAL_TYPE(val)) {
 		case REB_DECIMAL:
-			if (!IS_NUMERIC_TYPE(field->type)) {
+			if (!IS_STRUCT_NUMERIC_TYPE(field->type)) {
 				Trap_Type(val);
 			}
 			d = VAL_DECIMAL(val);
-			i = (u64) d;
+			if (IS_STRUCT_INTEGER_TYPE(field->type)) {
+				// Casting a value which does not fit into a 64bit integer
+				// (or a NaN) is an undefined behavior in C!
+				if (!(d >= -9223372036854775808.0 && d < 9223372036854775808.0))
+					Trap0(RE_OVERFLOW);
+				// Signed conversion! Truncates towards zero also for negatives.
+				i = (u64)(i64)d;
+			}
 			break;
 		case REB_INTEGER:
-			if (!IS_NUMERIC_TYPE(field->type)
+			if (!IS_STRUCT_NUMERIC_TYPE(field->type)
 				&& field->type != STRUCT_TYPE_POINTER) {
 				Trap_Type(val);
 			}
 			i = (u64) VAL_INT64(val);
-			d = (double)i;
+			// Must not be converted from the unsigned value, else the sign is lost!
+			d = (double)VAL_INT64(val);
 			break;
 		case REB_STRUCT:
 			if (STRUCT_TYPE_STRUCT != field->type) {
@@ -316,7 +321,9 @@ static REBOOL assign_scalar(REBSTU *stu,
 				SET_TYPE(DS_TOP, REB_STRUCT);
 				VAL_STRUCT_SPEC(DS_TOP) = field->spec;
 				VAL_STRUCT_DATA(DS_TOP) = stu->data;
-				VAL_STRUCT_OFFSET(DS_TOP) = field->offset + n * field->size;
+				// The offset must be relative to the data series, so it has to
+				// include the offset of the (possibly nested) parent struct!
+				VAL_STRUCT_OFFSET(DS_TOP) = stu->offset + field->offset + n * field->size;
 				VAL_STRUCT_SIZE(DS_TOP) = field->size;
 				init_fields(DS_TOP, val);
 				DS_POP;
@@ -328,40 +335,18 @@ static REBOOL assign_scalar(REBSTU *stu,
 	}
 
 	switch (field->type) {
-		case STRUCT_TYPE_INT8:
-			*(i8*)data = (i8)i;
-			break;
-		case STRUCT_TYPE_UINT8:
-			*(u8*)data = (u8)i;
-			break;
-		case STRUCT_TYPE_INT16:
-			*(i16*)data = (i16)i;
-			break;
-		case STRUCT_TYPE_UINT16:
-			*(u16*)data = (u16)i;
-			break;
-		case STRUCT_TYPE_INT32:
-			*(i32*)data = (i32)i;
-			break;
+		case STRUCT_TYPE_INT8:    SET_FIELD_VALUE(i8,  i)
+		case STRUCT_TYPE_UINT8:   SET_FIELD_VALUE(u8,  i)
+		case STRUCT_TYPE_INT16:   SET_FIELD_VALUE(i16, i)
+		case STRUCT_TYPE_UINT16:  SET_FIELD_VALUE(u16, i)
+		case STRUCT_TYPE_INT32:   SET_FIELD_VALUE(i32, i)
 		case STRUCT_TYPE_UINT32:
-		case STRUCT_TYPE_WORD:
-			*(u32*)data = (u32)i;
-			break;
-		case STRUCT_TYPE_INT64:
-			*(i64*)data = (i64)i;
-			break;
-		case STRUCT_TYPE_UINT64:
-			*(u64*)data = (u64)i;
-			break;
-		case STRUCT_TYPE_POINTER:
-			*(void**)data = (void*)i;
-			break;
-		case STRUCT_TYPE_FLOAT:
-			*(float*)data = (float)d;
-			break;
-		case STRUCT_TYPE_DOUBLE:
-			*(double*)data = (double)d;
-			break;
+		case STRUCT_TYPE_WORD:    SET_FIELD_VALUE(u32, i)
+		case STRUCT_TYPE_INT64:   SET_FIELD_VALUE(i64, i)
+		case STRUCT_TYPE_UINT64:  SET_FIELD_VALUE(u64, i)
+		case STRUCT_TYPE_POINTER: SET_FIELD_VALUE(REBUPT, i)
+		case STRUCT_TYPE_FLOAT:   SET_FIELD_VALUE(float,  d)
+		case STRUCT_TYPE_DOUBLE:  SET_FIELD_VALUE(double, d)
 		case STRUCT_TYPE_STRUCT:
 			if (field->size != VAL_STRUCT_SIZE(val)) {
 				Trap_Arg(val);
@@ -397,10 +382,16 @@ static REBOOL assign_scalar(REBSTU *stu,
 						return FALSE;
 					}
 					if (IS_VECTOR(val)) {
-						if (field->size != VAL_VEC_WIDTH(val)) {
+						// The vector's element type must match the field's type!
+						// Else raw bytes of a foreign type would be stored, which
+						// is fatal for a word! field (an invalid symbol id).
+						REBINT vect = type_to_vect[field->type];
+						if (vect < 0 || VECT_TYPE(VAL_SERIES(val)) != (REBCNT)vect) {
 							return FALSE;
 						}
-						COPY_MEM(STRUCT_DATA_BIN(stu) + field->offset, VAL_BIN_DATA(val), field->dimension * field->size);
+						// NOTE: VAL_DATA (not VAL_BIN_DATA) - the vector's index
+						// counts elements, not bytes!
+						COPY_MEM(STRUCT_DATA_BIN(stu) + field->offset, VAL_DATA(val), field->dimension * field->size);
 					}
 					else {
 						// data in a block
@@ -597,14 +588,13 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 					DS_PUSH_END;
 					REBVAL *inner = DS_TOP;
 					res = Prepare_Struct(inner, val);
-					if (!res) {
-						//RL_Print("Failed to make nested struct!\n");
-						return FALSE;
+					if (res) {
+						field->size = VAL_STRUCT_SIZE(inner);
+						field->spec = VAL_STRUCT_SPEC(inner);
+						STRUCT_FLAGS(stu) |= VAL_STRUCT_FLAGS(inner);
 					}
-					field->size = VAL_STRUCT_SIZE(inner);
-					field->spec = VAL_STRUCT_SPEC(inner);
-					STRUCT_FLAGS(stu) |= VAL_STRUCT_FLAGS(inner);
 					DS_POP;
+					if (!res) return FALSE; //RL_Print("Failed to make nested struct!\n");
 				}
 				else {
 					return FALSE;
@@ -634,11 +624,16 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 	++ val;
 
 	if (IS_BLOCK(val)) {// make struct [a [int32! [2]]]
-		// Multi-dimensional field
-		if (!IS_INTEGER(VAL_BLK_DATA(val))) {
+		// Array field - the block must hold exactly one positive integer
+		// which fits into the field's dimension (32 bits)!
+		REBVAL *dim = VAL_BLK_DATA(val);
+		if (!IS_INTEGER(dim) || NOT_END(dim + 1)) {
 			return FALSE;
 		}
-		field->dimension = (REBCNT)VAL_INT64(VAL_BLK_DATA(val));
+		if (VAL_INT64(dim) < 1 || VAL_INT64(dim) > (REBI64)VAL_STRUCT_LIMIT) {
+			return FALSE;
+		}
+		field->dimension = (REBCNT)VAL_INT64(dim);
 		field->array = TRUE;
 		++ val;
 	} else {
@@ -666,22 +661,25 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 	// At this point, the struct specification should be ready.
 	REBSTU *stu = &VAL_STRUCT(out);
 
-	if (IS_BINARY(values)) {
-		if (VAL_BIN_LEN(values) < STRUCT_SIZE(stu)) Trap_Arg(values);
-		if (STRUCT_DATA(stu)) {
-			COPY_MEM(STRUCT_DATA_BIN(stu), VAL_BIN_DATA(values), STRUCT_SIZE(stu));
-		}
-		else {
-			STRUCT_DATA(stu) = VAL_SERIES(values);
-		}
-		return TRUE;
-	}
-
+	// The struct always owns its data!
 	STRUCT_DATA(stu) = Make_Binary(STRUCT_SIZE(stu));
-	LABEL_SERIES(VAL_STRUCT_FIELDS(out), "struct_data");
+	// Rebol values which may be stored in the data are marked by Mark_Struct!
+	BARE_SERIES(STRUCT_DATA(stu));
+	LABEL_SERIES(STRUCT_DATA(stu), "struct_data");
 	SERIES_TAIL(STRUCT_DATA(stu)) = STRUCT_SIZE(stu);
+	// Remember the root field list in the (otherwise unused) series link, so
+	// that the GC can always mark ALL values in the data, even when the data
+	// are reached only from a value which is a view into a nested part!
+	STRUCT_DATA_ROOT(stu) = STRUCT_FIELDS_SER(stu);
 
-	if (IS_BLOCK(values)) {
+	if (IS_BINARY(values)) {
+		// Raw data must not be used to initialize a struct holding Rebol
+		// values, because the GC would try to mark random bytes as values!
+		if (STRUCT_PROTECTED(stu)) Trap0(RE_PROTECTED);
+		if (VAL_BIN_LEN(values) < STRUCT_SIZE(stu)) Trap_Arg(values);
+		COPY_MEM(STRUCT_DATA_BIN(stu), VAL_BIN_DATA(values), STRUCT_SIZE(stu));
+	}
+	else if (IS_BLOCK(values)) {
 		init_fields(out, values);
 	}
 	return TRUE;
@@ -716,10 +714,14 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 		n = Find_Entry(VAL_SERIES(struct_specs), data, 0, TRUE);
 	}
 	else if (!IS_BLOCK(data)) return FALSE; // validate early!
-	else hash = Hash_Block_Value(data);
+	else {
+		hash = Hash_Block_Value(data);
+		// The zero hash means "no key to look for", so a spec must never use it!
+		if (hash == 0) hash = 1;
+	}
 
+	SET_INTEGER(&key, hash);
 	if (hash) {
-		SET_INTEGER(&key, hash);
 		n = Find_Entry(VAL_SERIES(struct_specs), &key, 0, TRUE);
 	}
 	if (n == NOT_FOUND) {
@@ -799,13 +801,19 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 
 			field = (REBSTF *)SERIES_SKIP(VAL_STRUCT_FIELDS(out), field_num);
 			field->offset = (REBCNT)offset;
-			field->sym = VAL_WORD_SYM(blk);
+			field->sym = VAL_WORD_CANON(blk);
 			VAL_SET_LINE(blk);
 			++blk;
 
 			if (!parse_field_type(stu, field, blk)) {
 				error = FIELD_ERROR_INVALID_SPEC;
 				break;
+			}
+			// Fields holding Rebol values must be aligned for the GC!
+			if (field->type == STRUCT_TYPE_REBVAL
+				|| (field->type == STRUCT_TYPE_STRUCT && FIELD_SPEC_HAS_VALUES(field))) {
+				offset = ALIGN(offset, STRUCT_VALUE_ALIGN);
+				field->offset = (REBCNT)offset;
 			}
 			// Compute a hash of the field's type and dimensions (used for fast struct comparison).
 			k1 = field->type;
@@ -851,8 +859,8 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 				break;
 			}
 			
-			if (field->type == STRUCT_TYPE_REBVAL) VAL_STRUCT_FLAGS(out) |= 3; // readonly, needs GC mark
-			else if (field->type == STRUCT_TYPE_STRUCT) VAL_STRUCT_FLAGS(out) |= 1; // needs GC mark
+			if (field->type == STRUCT_TYPE_REBVAL)
+				VAL_STRUCT_FLAGS(out) |= STRUCT_FLAG_MARK | STRUCT_FLAG_PROTECTED;
 		
 			field->done = TRUE;
 			++SERIES_TAIL(VAL_STRUCT_FIELDS(out));
@@ -861,9 +869,10 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 
 		if (error) {
 			Free_Series(VAL_STRUCT_FIELDS(out));
+			VAL_STRUCT_FIELDS(out) = NULL; // don't keep a freed series in the spec!
 			SET_UNSET(out);
 			switch (error) {
-			case FIELD_ERROR_SIZE_LIMIT:   Trap1(RE_SIZE_LIMIT, out);
+			case FIELD_ERROR_SIZE_LIMIT:   Trap1(RE_SIZE_LIMIT, data);
 			case FIELD_ERROR_INVALID_SPEC: Trap_Arg(blk);
 			}
 		}
@@ -871,6 +880,8 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 		//Dump_Series(VAL_STRUCT_FIELDS(out), "struct_fields");
 
 		// Store complete length of the struct
+		// (rounded up, so that an array of these structs keeps its values aligned)
+		if (VAL_STRUCT_FLAGS(out) & 1) offset = ALIGN(offset, STRUCT_VALUE_ALIGN);
 		STRUCT_SIZE(stu) = (REBCNT)offset;
 
 		// Finalize and store the fields hash
@@ -914,12 +925,13 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 
 		//Debug_Fmt("?? store: %r value: %r", pvs->store, pvs->value);
 
-		// Simple get-path — just return the stored value.
+		// Simple get-path - just return the stored value.
 		if (!pvs->setval) return PE_USE;
 
 		// Deep set-path: save the field selector, then advance pvs->value
 		// to pvs->store so Next_Path operates on the field's current value.
 		REBVAL* sel = pvs->select;
+		REBVAL* prev_path = pvs->path;
 		pvs->value = pvs->store;
 
 		// Walk the remainder of the path, resolving the final value to set.
@@ -928,22 +940,39 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 		//Debug_Fmt("<- value: %r select: %r prev: %r", pvs->value, pvs->select, sel);
 		//Debug_Fmt("== store: %r value : %r", pvs->store, pvs->value);
 
-		switch (field->type) {
-		case STRUCT_TYPE_STRUCT:
-			if (IS_INTEGER(pvs->select) && IS_BLOCK(pvs->store) && IS_STRUCT(pvs->value)) {
-				// Setting one struct element inside an array of structs by index,
-				// e.g.: st/arr/2: st/arr/1
-				// Copy the source struct's raw bytes into the correct slot.
-				REBCNT idx = VAL_INT64(pvs->select);
-				if (idx > field->dimension) return PE_BAD_SET; // index out of range
-				void* data = STRUCT_DATA_BIN(stu) + field->offset + (idx - 1) * field->size;
-				COPY_MEM(data, VAL_STRUCT_DATA_BIN(pvs->value), field->size);
+		// NOTE: don't test pvs->store here! It may be already modified
+		// by Next_Path above (it is used as a scratch value).
+		if (field->array && IS_INTEGER(pvs->select)) {
+			// Setting one element of an array field by index,
+			// e.g.: st/arr/2: st/arr/1
+			// NOTE: the index is validated when the temporary series with the
+			// array's values is accessed, but don't rely on it here!
+			REBI64 idx = VAL_INT64(pvs->select);
+			if (idx < 1 || idx > (REBI64)field->dimension)
+				return PE_BAD_SET; // index out of range
+			if (IS_BLOCK_BACKED_FIELD(field)) {
+				// Next_Path modified only the temporary block, so the new
+				// value must still be stored into the struct's data.
+				// assign_scalar validates that the value may be assigned!
+				res = assign_scalar(stu, field, (REBCNT)(idx - 1), pvs->value);
+			} else {
+				// Numeric arrays are exposed as a vector which Next_Path
+				// modified in place - store the whole vector back.
+				res = Set_Struct_Var(stu, sel, NULL, pvs->value);
 			}
+		}
+		else switch (field->type) {
+		case STRUCT_TYPE_STRUCT:
+			// A nested struct shares the data series, so the inner set-path
+			// has already written through it - nothing to do here.
 			break;
 		case STRUCT_TYPE_REBVAL:
-			// For REBVAL fields, a numeric sub-select means Next_Path already
-			// resolved the target; otherwise set via the original field name.
-			if (!IS_INTEGER(pvs->select))
+			// An immediate value (like date!) is modified only in the scratch
+			// value, so it must be stored back into the field. That is valid
+			// just for a single path step - a deeper path uses pvs->store for
+			// its own results and modifies the real value in place anyway!
+			// A numeric sub-select means Next_Path already resolved the target.
+			if (!IS_INTEGER(pvs->select) && pvs->path == prev_path + 1)
 				res = Set_Struct_Var(stu, sel, NULL, pvs->store);
 			break;
 		default:
@@ -952,7 +981,7 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 		}
 	}
 	else {
-		// Simple set-path (e.g. struct/field: 123) — set the field directly.
+		// Simple set-path (e.g. struct/field: 123) - set the field directly.
 		res = Set_Struct_Var(stu, pvs->select, NULL, pvs->setval);
 	}
 	return res ? PE_OK : PE_BAD_SET;
@@ -962,14 +991,29 @@ static REBOOL parse_field_type(REBSTU *stu, REBSTF *field, REBVAL *spec)
 **
 */	REBINT Cmp_Struct(REBVAL *s, REBVAL *t)
 /*
+**		Compares identity only: the same fields (spec), the same data
+**		series and the same position in it. Never compares content!
+**
 ***********************************************************************/
 {
-	REBINT n = AS_INT(VAL_STRUCT_FIELDS(s) - VAL_STRUCT_FIELDS(t));
-	if (n != 0) {
-		return n;
-	}
-	n = AS_INT(VAL_STRUCT_DATA(s) - VAL_STRUCT_DATA(t));
-	return n;
+    REBUPT a, b;
+
+    a = (REBUPT)VAL_STRUCT_FIELDS(s);
+    b = (REBUPT)VAL_STRUCT_FIELDS(t);
+    if (a < b) return -1;
+    if (a > b) return 1;
+
+    a = (REBUPT)VAL_STRUCT_DATA(s);
+    b = (REBUPT)VAL_STRUCT_DATA(t);
+    if (a < b) return -1;
+    if (a > b) return 1;
+
+    a = VAL_STRUCT_OFFSET(s);
+    b = VAL_STRUCT_OFFSET(t);
+    if (a < b) return -1;
+    if (a > b) return 1;
+
+    return 0;
 }
 
 /***********************************************************************
@@ -1007,6 +1051,7 @@ static void Copy_Struct(REBSTU *src, REBSTU *dst)
 	STRUCT_DATA(dst) = Make_Binary(STRUCT_SIZE(src));
 	BARE_SERIES(STRUCT_DATA(dst));
 	SERIES_TAIL(STRUCT_DATA(dst)) = STRUCT_SIZE(src);
+	STRUCT_DATA_ROOT(dst) = STRUCT_FIELDS_SER(dst); // the root field list
 	COPY_MEM(STRUCT_DATA_BIN(dst), STRUCT_DATA_BIN(src), STRUCT_SIZE(src));
 }
 
@@ -1017,7 +1062,7 @@ static void Copy_Struct_Val(REBVAL *src, REBVAL *dst)
 }
 
 static void init_field(REBVAL *ret, REBSTF *fld, REBVAL *value) {
-	if (fld->dimension > 1) {
+	if (fld->array) {
 		if (IS_BLOCK(value)) {
 			if (VAL_LEN(value) != fld->dimension) {
 				Trap_Arg(value);
@@ -1056,10 +1101,10 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 			REBCNT i = 0;
 			word = blk;
 			fld_val = blk + 1;
-
-			if (IS_END(fld_val)) {
+			if (!IS_SET_WORD(word))
+				Trap_Arg(word);
+			if (IS_END(fld_val))
 				Trap1(RE_NEED_VALUE, word);
-			}
 			// Iterate all fields (first value is used for info)
 			for (i = 1; i < SERIES_TAIL(fields); i++) {
 				fld = (REBSTF *)SERIES_SKIP(fields, i);
@@ -1107,11 +1152,16 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 		case A_TO:
 			// Clone an existing STRUCT:
 			if (IS_STRUCT(val)) {
+				// Raw data must never be used with a struct holding Rebol values,
+				// no matter how long the data are!
+				if (IS_BINARY(arg) && VAL_STRUCT_PROTECTED(val)) Trap0(RE_PROTECTED);
 				Copy_Struct_Val(val, ret);
 				/* only accept value initialization */
 				if (IS_BLOCK(arg)) {
-					Reduce_Block_No_Set(VAL_SERIES(arg), VAL_INDEX(arg), NULL);
-					init_fields(ret, DS_TOP);
+					// The values are used as they are, like in the construction
+					// syntax. Use `compose` when evaluation is needed, e.g.:
+					//     make proto compose [a: (1 + 2)]
+					init_fields(ret, arg);
 				}
 				else if (IS_BINARY(arg) && VAL_BIN_LEN(arg) >= VAL_STRUCT_SIZE(val)) {
 					//TODO: special error when data are not large enough?
@@ -1126,8 +1176,15 @@ static void init_fields(REBVAL *ret, REBVAL *spec)
 				// Initialize STRUCT from block:
 				// make struct! [a [uint16!]]
 				if (IS_BLOCK(arg)) {
-					DS_PUSH_END;
-					if (!MT_Struct(ret, arg, REB_STRUCT)) {
+					// MT_Struct expects the spec to be followed by an optional
+					// initial value (block or binary), like in the construction
+					// syntax: #(struct! [a [uint16!]] [1]). There is none here,
+					// so pass a terminated pair instead of relying on the value
+					// which happens to follow the argument on the stack!
+					REBVAL data[2];
+					data[0] = *arg;
+					SET_END(&data[1]);
+					if (!MT_Struct(ret, data, REB_STRUCT)) {
 						goto is_arg_error;
 					}
 				} else {

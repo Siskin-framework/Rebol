@@ -222,39 +222,41 @@ typedef struct Vector_Query_Values {
 	REBDEC maximum;
 	REBDEC sum;
 	REBDEC mean;
-	REBDEC variance;
+	REBDEC sum_of_squares;  // M2 accumulator, not yet normalized
+	REBDEC variance;        // population variance, sum_of_squares / length
 	REBDEC median;
 } REBVQV;
 
-static void Query_Vector_Statictics(REBSER *vect, REBVQV *out) {
+static void Query_Vector_Statictics(REBSER* vect, REBVQV* out) {
 	REBLEN len = SERIES_TAIL(vect);
 	REBCNT type = VECT_TYPE(vect);
-	REBCNT n = 0;
-	REBYTE *data = SERIES_DATA(vect);
-	REBDEC num, diff;
+	REBYTE* data = SERIES_DATA(vect);
+	REBDEC num, delta, delta2;
+	REBLEN n;
 
 	CLEARS(out);
 	if (len == 0) return;
 	out->length = len;
-	out->minimum = get_vect_decimal(type, data, 0);
-	out->maximum = out->minimum;
-	for (; n < len; n++) {
+
+	// Seed all running stats from the first element
+	num = get_vect_decimal(type, data, 0);
+	out->minimum = out->maximum = out->sum = out->mean = num;
+
+	for (n = 1; n < len; n++) {
 		num = get_vect_decimal(type, data, n);
-		// Min/Max
 		if (num < out->minimum) out->minimum = num;
 		else if (num > out->maximum) out->maximum = num;
-		// Sum
 		out->sum += num;
+
+		// Welford's online mean/variance update (single pass, numerically stable)
+		delta = num - out->mean;        // deviation from mean *before* update
+		out->mean += delta / (n + 1);   // incremental mean update
+		delta2 = num - out->mean;       // deviation from mean *after* update
+		out->sum_of_squares += delta * delta2;  // accumulate M2 (sum of squared deviations)
 	}
-	// Mean
-	out->mean = out->sum / len;
-	// Calculate squared differences and variance
-	for (n = 0; n < len; n++) {
-		num = get_vect_decimal(type, data, n);
-		diff = num - out->mean;
-		out->variance += diff * diff;  // More efficient than pow()
-	}
+	out->variance = out->sum_of_squares / len;  // normalize M2 -> population variance
 }
+
 static REBDEC Query_Vector_Median(REBSER *vect) {
 	REBLEN len = SERIES_TAIL(vect);
 	REBCNT type = VECT_TYPE(vect);
@@ -410,6 +412,7 @@ void Find_Maximum_Of_Vector(REBSER *vect, REBVAL *ret) {
 **
 ***********************************************************************/
 {
+#define RETURN_NONE()     {SET_NONE(ret); return TRUE;}
 #define RETURN_DECIMAL(v) {SET_DECIMAL(ret, v); return TRUE;}
 #define RETURN_NUMBER(v)  {SET_DECIMAL(ret, v); goto return_number;}
 
@@ -428,11 +431,13 @@ void Find_Maximum_Of_Vector(REBSER *vect, REBVAL *ret) {
 		break;
 	case SYM_MIN:
 	case SYM_MINIMUM:
+		if (SERIES_TAIL(vect) == 0) RETURN_NONE();
 		if (vqv) RETURN_NUMBER(vqv->minimum);
 		Find_Minimum_Of_Vector(vect, ret);
 		break;
 	case SYM_MAX:
 	case SYM_MAXIMUM:
+		if (SERIES_TAIL(vect) == 0) RETURN_NONE();
 		if (vqv) RETURN_NUMBER(vqv->maximum);
 		Find_Maximum_Of_Vector(vect, ret);
 		break;
@@ -442,13 +447,18 @@ void Find_Maximum_Of_Vector(REBSER *vect, REBVAL *ret) {
 			Query_Vector_Statictics(vect, &out);
 			vqv = &out;
 		}
-		if (field == SYM_RANGE) RETURN_NUMBER((vqv->maximum - vqv->minimum));
+		if (vqv->length == 0) RETURN_NONE();
 		if (field == SYM_SUM) RETURN_NUMBER(vqv->sum);
+		if (field == SYM_RANGE) RETURN_NUMBER((vqv->maximum - vqv->minimum));
 		if (field == SYM_MEAN || field == SYM_AVERAGE) RETURN_DECIMAL(vqv->mean);
 		if (field == SYM_MEDIAN) RETURN_DECIMAL(Query_Vector_Median(vect));
 		if (field == SYM_VARIANCE) RETURN_DECIMAL(vqv->variance);
-		if (field == SYM_POPULATION_DEVIATION) RETURN_DECIMAL(sqrt(vqv->variance / SERIES_TAIL(vect)));
-		if (field == SYM_SAMPLE_DEVIATION) RETURN_DECIMAL(sqrt(vqv->variance / (SERIES_TAIL(vect) - 1)));
+		if (field == SYM_POPULATION_DEVIATION) RETURN_DECIMAL(sqrt(vqv->variance));
+		if (field == SYM_SAMPLE_VARIANCE || field == SYM_SAMPLE_DEVIATION) {
+			if (vqv->length <= 1) RETURN_NONE();  // undefined: needs at least 2 points
+			REBDEC sample_var = vqv->sum_of_squares / (vqv->length - 1);
+			RETURN_DECIMAL(field == SYM_SAMPLE_VARIANCE ? sample_var : sqrt(sample_var));
+		}
 		return FALSE;
 	}
 	return TRUE;
@@ -457,6 +467,7 @@ return_number:
 	if (VECT_TYPE(vect) < VTSF08) SET_INTEGER(ret, (REBI64)VAL_DECIMAL(ret));
 	return TRUE;
 
+#undef RETURN_NONE
 #undef RETURN_DECIMAL
 #undef RETURN_NUMBER
 }
@@ -843,29 +854,55 @@ return_number:
 	REBCNT l2 = VAL_LEN(b);
 	REBCNT len = MIN(l1, l2);
 	REBCNT n;
-	REBVAL v1;
-	REBVAL v2;
-	REBYTE *d1 = VAL_SERIES(a)->data;
-	REBYTE *d2 = VAL_SERIES(b)->data;
 	REBCNT b1 = VECT_TYPE(VAL_SERIES(a));
 	REBCNT b2 = VECT_TYPE(VAL_SERIES(b));
+	REBYTE* d1 = VAL_SERIES(a)->data;
+	REBYTE* d2 = VAL_SERIES(b)->data;
+	REBVAL v1, v2;
+	REBINT cmp = 0;
 
-	if (
-		(b1 >= VTSF08 && b2 < VTSF08)
-		|| (b2 >= VTSF08 && b1 < VTSF08)
-	) Trap0(RE_NOT_SAME_TYPE);
+	REBOOL float1 = (b1 >= VTSF08);
+	REBOOL float2 = (b2 >= VTSF08);
+	if (float1 != float2) Trap0(RE_NOT_SAME_TYPE);
 
 	for (n = 0; n < len; n++) {
 		get_vect(b1, d1, n + VAL_INDEX(a), &v1);
 		get_vect(b2, d2, n + VAL_INDEX(b), &v2);
-		if (VAL_UNT64(&v1) != VAL_UNT64(&v2)) break;
+
+		if (float1) {
+			REBDEC f1 = VAL_DECIMAL(&v1), f2 = VAL_DECIMAL(&v2);
+			cmp = (f1 > f2) - (f1 < f2);   // -0.0 == 0.0 falls out naturally: cmp == 0
+		}
+		else {
+			REBOOL uns1 = (b1 >= VTUI08 && b1 <= VTUI64);
+			REBOOL uns2 = (b2 >= VTUI08 && b2 <= VTUI64);
+
+			if (!uns1 && !uns2) {
+				REBI64 i1 = VAL_INT64(&v1), i2 = VAL_INT64(&v2);
+				cmp = (i1 > i2) - (i1 < i2);
+			}
+			else if (uns1 && uns2) {
+				REBU64 u1 = VAL_UNT64(&v1), u2 = VAL_UNT64(&v2);
+				cmp = (u1 > u2) - (u1 < u2);
+			}
+			else {
+				REBOOL neg1 = !uns1 && VAL_INT64(&v1) < 0;
+				REBOOL neg2 = !uns2 && VAL_INT64(&v2) < 0;
+				if (neg1 != neg2) cmp = neg1 ? -1 : 1;
+				else if (neg1) {
+					REBI64 i1 = VAL_INT64(&v1), i2 = VAL_INT64(&v2);
+					cmp = (i1 > i2) - (i1 < i2);
+				}
+				else {
+					REBU64 u1 = VAL_UNT64(&v1), u2 = VAL_UNT64(&v2);
+					cmp = (u1 > u2) - (u1 < u2);
+				}
+			}
+		}
+		if (cmp != 0) break;
 	}
 
-	if (n != len) {
-		if (VAL_UNT64(&v1) > VAL_UNT64(&v2)) return 1;
-		return -1;
-	}
-
+	if (cmp != 0) return cmp;
 	return l1 - l2;
 }
 
@@ -1236,7 +1273,12 @@ data_spec:
 
 	if (IS_INTEGER(sel) || IS_DECIMAL(sel)) {
 		n = Int32(sel);
-		if (n == 0) return (pvs->setval) ? PE_BAD_RANGE : PE_NONE; // allow PICK with zero index but not for POKE
+		// allow PICK with zero index but not for POKE
+		if (n == 0) return (pvs->setval) ? PE_BAD_RANGE : PE_NONE;
+		// Negative selector is relative to the vector's current position (VAL_INDEX),
+		// not the tail: e.g. pick (skip v 2) -1 addresses the element right before
+		// the current one. The ++ here aligns it with the "index = n + VAL_INDEX - 1"
+		// formula used below for positive selectors, so both branches share one path.
 		if (n < 0) n++;
 	} else if (IS_WORD(sel)) {
 		if (set == 0) {
@@ -1255,7 +1297,8 @@ data_spec:
 
 	if (pvs->setval == 0) {
 
-		// Check range:
+		// Check range: n <= 0 means the (possibly negative) selector landed
+		// at or before the head of the series -- nothing to pick there.
 		if (n <= 0 || (REBCNT)n > vect->tail) return PE_NONE;
 
 		// Get element value:
@@ -1267,6 +1310,7 @@ data_spec:
 	//--- Set Value...
 	TRAP_PROTECT(vect);
 
+	// Same range rule as PICK above, but out-of-range is an error for POKE.
 	if (n <= 0 || (REBCNT)n > vect->tail) return PE_BAD_RANGE;
 	Set_Vector_Value(bits, vp, n-1, set);
 	return PE_OK;
@@ -1502,6 +1546,7 @@ static void reverse_vector(REBVAL *value, REBCNT len)
 			Query_Vector_Field(vect, SYM_MEAN, OFV(obj, STD_VECTOR_INFO_MEAN), &results);
 			Query_Vector_Field(vect, SYM_MEDIAN, OFV(obj, STD_VECTOR_INFO_MEDIAN), &results);
 			Query_Vector_Field(vect, SYM_VARIANCE, OFV(obj, STD_VECTOR_INFO_VARIANCE), &results);
+			Query_Vector_Field(vect, SYM_SAMPLE_VARIANCE, OFV(obj, STD_VECTOR_INFO_SAMPLE_VARIANCE), &results);
 			Query_Vector_Field(vect, SYM_POPULATION_DEVIATION, OFV(obj, STD_VECTOR_INFO_POPULATION_DEVIATION), &results);
 			Query_Vector_Field(vect, SYM_SAMPLE_DEVIATION, OFV(obj, STD_VECTOR_INFO_SAMPLE_DEVIATION), &results);
 			SET_OBJECT(value, obj);
@@ -1520,6 +1565,51 @@ static void reverse_vector(REBVAL *value, REBCNT len)
 		index = Modify_Vector(action, VAL_SERIES(value), index, arg, args, len, DS_REF(AN_DUP) ? Int32(DS_ARG(AN_COUNT)) : 1);
 		VAL_INDEX(value) = index;
 		break;
+
+	case A_TAKE:
+		bits = VECT_TYPE(vect);
+		index = VAL_INDEX(value);
+		REBOOL do_part = D_REF(ARG_TAKE_PART);
+		REBCNT tail = SERIES_TAIL(vect);
+		REBCNT start;
+
+		if (index > tail) index = tail;
+
+		len = do_part ? Partial1(value, D_ARG(ARG_TAKE_RANGE)) : 1;
+
+		if (D_REF(ARG_TAKE_LAST)) {
+			if (len > tail) len = tail;
+			start = tail - len;
+		}
+		else {
+			if (index + len > tail) len = tail - index;
+			start = index;
+		}
+
+		if (len == 0) {
+			if (do_part) {
+				ser = Make_Vector(0, 0, 1, VECT_BIT_SIZE(bits), 0);
+				// NOTE: Make_Vector's `type`/`sign` params need deriving from
+				// bits the same way Make_Vector_Spec does -- it's not just bit-width.
+				SET_VECTOR(D_RET, ser);
+			}
+			else {
+				SET_NONE(D_RET);
+			}
+			return R_RET;
+		}
+		if (do_part) {
+			ser = Copy_Series_Part(vect, start, len);
+			ser->size = vect->size; // preserve type/sign/dims attributes
+			SET_VECTOR(D_RET, ser);
+		}
+		else {
+			get_vect(bits, vect->data, start, D_RET);
+			SET_TYPE(D_RET, (bits >= VTSF08) ? REB_DECIMAL : REB_INTEGER);
+		}
+		Remove_Series(vect, start, len);
+		return R_RET;
+
 
 	case A_CLEAR:
 		index = VAL_INDEX(value);

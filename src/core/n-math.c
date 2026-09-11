@@ -1079,6 +1079,55 @@ static REBDEC lerp_decimal(REBDEC s, REBDEC e, REBDEC t) {
 
 /***********************************************************************
 **
+*/	REBNATIVE(clamp)
+/*
+//	clamp: native [
+//		{Restricts a value to be within the specified minimum-maximum range}
+//		value   [number! tuple! pair! money!] "Value to clamp"
+//		minimum [number! tuple! pair! money!] "Lower bound"
+//		maximum [number! tuple! pair! money!] "Upper bound"
+//	]
+***********************************************************************/
+{
+	REBVAL* val  = D_ARG(1);
+	REBVAL* vmin = D_ARG(2);
+	REBVAL* vmax = D_ARG(3);
+	if (VAL_TYPE(vmin) != VAL_TYPE(val)) Trap2(RE_TYPE_MISMATCH, val, vmin);
+	if (VAL_TYPE(vmax) != VAL_TYPE(val)) Trap2(RE_TYPE_MISMATCH, val, vmax);
+	switch (VAL_TYPE(val)) {
+		case REB_DECIMAL:
+		case REB_PERCENT:
+			VAL_DECIMAL(val) = Clip_Dec(VAL_DECIMAL(val), VAL_DECIMAL(vmin), VAL_DECIMAL(vmax));
+			break;
+		case REB_INTEGER:
+			VAL_INT64(val) = Clip_Int(VAL_INT64(val), VAL_INT64(vmin), VAL_INT64(vmax));
+			break;
+		case REB_MONEY:
+			if (deci_is_lesser_or_equal(VAL_DECI(val), VAL_DECI(vmin))) return R_ARG2;
+			if (deci_is_lesser_or_equal(VAL_DECI(vmax), VAL_DECI(val))) return R_ARG3;
+			return R_ARG1;
+		case REB_PAIR:
+			VAL_PAIR_X(val) = Clip_Dec(VAL_PAIR_X(val), VAL_PAIR_X(vmin), VAL_PAIR_X(vmax));
+			VAL_PAIR_Y(val) = Clip_Dec(VAL_PAIR_Y(val), VAL_PAIR_Y(vmin), VAL_PAIR_Y(vmax));
+			break;
+		case REB_TUPLE: {
+			REBLEN len = VAL_TUPLE_LEN(val);
+			REBYTE* b = VAL_TUPLE(val);
+			REBYTE* b1 = VAL_TUPLE(vmin);
+			REBYTE* b2 = VAL_TUPLE(vmax);
+			for (REBLEN i = 0; i < len; i++) {
+				REBYTE lo = i < VAL_TUPLE_LEN(vmin) ? b1[i] : 0;
+				REBYTE hi = i < VAL_TUPLE_LEN(vmax) ? b2[i] : 0;
+				b[i] = (REBYTE)MAX(lo, MIN(hi, b[i]));
+			}
+			break;
+		}
+	}
+	return R_ARG1;
+}
+
+/***********************************************************************
+**
 */	REBNATIVE(integer_divide)
 /*
 //	integer-divide: native [
@@ -1119,5 +1168,53 @@ static REBDEC lerp_decimal(REBDEC s, REBDEC e, REBDEC t) {
 		dist = hypot(dx, dy);
 	}
 	SET_DECIMAL(D_RET, dist);
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(factorial)
+/*
+//	factorial: native [
+//		{Calculate the factorial of given value}
+//		value  [integer!]
+//		return: [integer! decimal!] "Exact for n <= 20, approximate (double) for n <= 170"
+//	]
+***********************************************************************/
+{
+	REBI64 n = VAL_INT64(D_ARG(1));
+	if (n < 0)
+		Trap1(RE_OUT_OF_RANGE, D_ARG(1)); // or your existing negative-arg error
+	if (n > 170) {
+		// Beyond this, result exceeds a double's range (170! < DBL_MAX < 171!)
+		// and would silently produce +inf. Reject until bignum! is implemented.
+		Trap1(RE_OUT_OF_RANGE, D_ARG(1));
+	}
+	else if (n > 20) {
+		REBDEC result = 1.0;
+		for (REBI64 i = 2; i <= n; i++) result *= i;
+		SET_DECIMAL(D_RET, result);
+	}
+	else {
+		REBU64 result = 1;
+		for (REBI64 i = 2; i <= n; i++) result *= i;
+		SET_INTEGER(D_RET, result);
+	}
+	return R_RET;
+}
+
+/***********************************************************************
+**
+*/	REBNATIVE(cube_root)
+/*
+//	cube-root: native [
+//		{Returns the real cube root of a number}
+//		value  [decimal! integer!]
+//		return: [decimal!] "The cube root of the value"
+//	]
+***********************************************************************/
+{
+	REBDEC v = IS_INTEGER(D_ARG(1)) ? (REBDEC)VAL_INT64(D_ARG(1)) : VAL_DECIMAL(D_ARG(1));
+	SET_DECIMAL(D_RET, cbrt(v));
 	return R_RET;
 }
