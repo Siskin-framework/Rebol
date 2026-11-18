@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: REBOL Host/Extension API
-**  Build: 3.21.15
-**  Date:  14-Apr-2026
+**  Build: 3.22.18
+**  Date:  18-Nov-2026
 **  File:  reb-lib-lib.reb
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-reb-lib.reb)
@@ -71,4 +71,12 @@ RL_LIB Ext_Lib = {
 	RL_Mem_Alloc,
 	RL_Mem_Free,
 	RL_Register_Compress_Method,
+	RL_Struct_Info,
+	RL_Make_Struct,
+	RL_Alloc,
+	RL_Free,
+	RL_Register_Device,
+	RL_Port_State,
+	RL_Do_Device,
+	RL_Form_Value,
 };

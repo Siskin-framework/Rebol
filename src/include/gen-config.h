@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Build configuration
-**  Build: 3.21.15
-**  Date:  14-Apr-2026
+**  Build: 3.22.18
+**  Date:  18-Nov-2026
 **  File:  config.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -27,6 +27,7 @@
 #define DEBUG_HASH_COLLISIONS
 #define INCLUDE_TASK
 #define INCLUDE_DEFLATE
+#define INCLUDE_LZMA
 #define INCLUDE_CRYPTOGRAPHY
 #define MBEDTLS_CTR_DRBG_C
 #define MBEDTLS_AES_C

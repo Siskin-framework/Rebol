@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Error Structure and Constants
-**  Build: 3.21.15
-**  Date:  14-Apr-2026
+**  Build: 3.22.18
+**  Date:  18-Nov-2026
 **  File:  errnums.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -65,6 +65,8 @@
 	RE_MALCONSTRUCT,              // 205 ["invalid construction spec:" :arg1]
 	RE_BAD_CHAR,                  // 206 ["invalid character in:" :arg1]
 	RE_NEEDS,                     // 207 ["this script needs" :arg1 :arg2 "or better to run correctly"]
+	RE_RECURSIVE_NEEDS,           // 208 ["module needs itself:" :arg1]
+	RE_BAD_COMPRESS,              // 209 ["script decompression failed:" :arg1]
 	RE_SYNTAX_MAX,
 
 	RE_NO_VALUE = 300,            // 300 [:arg1 "has no value"]
@@ -134,6 +136,14 @@
 	RE_HANDLE_EXISTS,             // 364 ["handle already exists under id" :arg1 "and have different size"]
 	RE_VECTOR_NOT_COMPATIBLE,     // 365 ["Vectors not compatible for operation"]
 	RE_TYPE_MISMATCH,             // 366 ["type mismatch:" :arg2 "must be same type as" :arg1]
+	RE_FIXED_SIZED_SERIES,        // 367 "cannot change the length of a fixed-size series"
+	RE_BAD_EVENT_TYPE,            // 368 ["incompatible event type:" :arg1 "- the event is" :arg2]
+	RE_NO_EVENT_KEY,              // 369 ["not a valid event key:" :arg1]
+	RE_RECURSIVE_VALUE,           // 370 ["cannot use construction syntax for" :arg1 "which contains itself"]
+	RE_NEWER_MODULE,              // 371 ["module" :arg1 "is already imported in a newer version:" :arg2]
+	RE_MODULE_STOPPED,            // 372 ["module" :arg1 "stopped its initialization using" :arg2]
+	RE_NOT_EXPORTED,              // 373 ["module" :arg1 "does not export:" :arg2]
+	RE_PROTECT_LOCAL,             // 374 ["cannot protect or hide a function local:" :arg1]
 	RE_SCRIPT_MAX,
 
 	RE_ZERO_DIVIDE = 400,         // 400 "attempt to divide by zero"
@@ -176,11 +186,12 @@
 	RE_NO_EXTENSION,              // 532 ["cannot open extension:" :arg1 "reason:" :arg2]
 	RE_BAD_EXTENSION,             // 533 ["invalid extension format:" :arg1]
 	RE_EXTENSION_INIT,            // 534 ["extension cannot be initialized (check version):" :arg1]
-	RE_CALL_FAIL,                 // 535 ["external process failed:" :arg1]
-	RE_PERMISSION_DENIED,         // 536 ["permission denied"]
-	RE_PROCESS_NOT_FOUND,         // 537 ["process not found:" :arg1]
-	RE_INVALID_UTF,               // 538 ["invalid Unicode encoding:" :arg1]
-	RE_INVALID_CHAR,              // 539 ["invalid UTF-8 character:" :arg1]
+	RE_EXTENSION_ABI,             // 535 ["extension" :arg1 "built for ABI" :arg2 "while this Rebol needs" :arg3]
+	RE_CALL_FAIL,                 // 536 ["external process failed:" :arg1]
+	RE_PERMISSION_DENIED,         // 537 ["permission denied"]
+	RE_PROCESS_NOT_FOUND,         // 538 ["process not found:" :arg1]
+	RE_INVALID_UTF,               // 539 ["invalid Unicode encoding:" :arg1]
+	RE_INVALID_CHAR,              // 540 ["invalid UTF-8 character:" :arg1]
 	RE_ACCESS_MAX,
 
 	RE_COMMAND_FAIL = 600,        // 600 [:arg1]

@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Datatype Makers
-**  Build: 3.21.15
-**  Date:  14-Apr-2026
+**  Build: 3.22.18
+**  Date:  18-Nov-2026
 **  File:  maketypes.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -36,7 +36,6 @@ extern REBFLG MT_Datatype(REBVAL *, REBVAL *, REBCNT);
 extern REBFLG MT_Typeset(REBVAL *, REBVAL *, REBCNT);
 extern REBFLG MT_Function(REBVAL *, REBVAL *, REBCNT);
 extern REBFLG MT_Object(REBVAL *, REBVAL *, REBCNT);
-extern REBFLG MT_Gob(REBVAL *, REBVAL *, REBCNT);
 extern REBFLG MT_Event(REBVAL *, REBVAL *, REBCNT);
 extern REBFLG MT_Struct(REBVAL *, REBVAL *, REBCNT);
 
@@ -101,7 +100,6 @@ extern REBFLG MT_Struct(REBVAL *, REBVAL *, REBCNT);
 	MT_Object,                    // error
 	MT_Object,                    // task
 	0,                            // port
-	MT_Gob,                       // gob
 	MT_Event,                     // event
 	0,                            // handle
 	MT_Struct,                    // struct

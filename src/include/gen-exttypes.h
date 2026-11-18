@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Extension Type Equates
-**  Build: 3.21.15
-**  Date:  14-Apr-2026
+**  Build: 3.22.18
+**  Date:  18-Nov-2026
 **  File:  tmp-exttypes.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -76,9 +76,8 @@
 	RXT_MODULE,                   // module
 	0,                            // error
 	0,                            // task
-	0,                            // port
-	RXT_GOB,                      // gob
-	0,                            // event
+	RXT_PORT,                     // port
+	RXT_EVENT,                    // event
 	RXT_HANDLE,                   // handle
 	RXT_STRUCT,                   // struct
 	0,                            // library
@@ -138,14 +137,15 @@
 	0,                            // 44
 	0,                            // 45
 	0,                            // 46
-	REB_GOB,                      // 47
+	0,                            // 47
 	REB_OBJECT,                   // 48
 	REB_MODULE,                   // 49
-	0,                            // 50
+	REB_PORT,                     // 50
 	0,                            // 51
 	0,                            // 52
 	0,                            // 53
-	REB_STRUCT                    // 54
+	REB_STRUCT,                   // 54
+	REB_EVENT                     // 55
 };
 
 /***********************************************************************
@@ -196,19 +196,20 @@
 	0,                            // 39
 	RXE_SER,                      // binary
 	RXE_SER,                      // bitset
-	RXE_SER,                      // vector
+	RXE_VECTOR,                   // vector
 	RXE_IMAGE,                    // image
 	0,                            // 44
 	0,                            // 45
 	0,                            // 46
-	RXE_SER,                      // gob
+	0,                            // 47
 	RXE_OBJECT,                   // object
 	RXE_OBJECT,                   // module
-	0,                            // 50
+	RXE_OBJECT,                   // port
 	0,                            // 51
 	0,                            // 52
 	0,                            // 53
-	RXE_STRUCT                    // struct
+	RXE_STRUCT,                   // struct
+	RXE_EVENT                     // event
 };
 
 #define RXT_ALLOWED_TYPES (((u64)1<<REB_UNSET) \
@@ -245,8 +246,9 @@
 |((u64)1<<REB_BITSET) \
 |((u64)1<<REB_VECTOR) \
 |((u64)1<<REB_IMAGE) \
-|((u64)1<<REB_GOB) \
 |((u64)1<<REB_OBJECT) \
 |((u64)1<<REB_MODULE) \
+|((u64)1<<REB_PORT) \
 |((u64)1<<REB_STRUCT) \
+|((u64)1<<REB_EVENT) \
 )

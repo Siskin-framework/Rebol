@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Function Prototypes
-**  Build: 3.21.15
-**  Date:  14-Apr-2026
+**  Build: 3.22.18
+**  Date:  18-Nov-2026
 **  File:  funcs.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: pre-make)
@@ -34,6 +34,7 @@ extern void Init_Core(REBARGS *rargs); // src/core/b-init.c
 extern void Dispose_Core(void); // src/core/b-init.c
 extern void Do_Op(REBVAL *func); // src/core/c-do.c
 extern void Expand_Stack(REBCNT amount); // src/core/c-do.c
+extern void Shrink_Stack(); // src/core/c-do.c
 extern void DS_Ret_Int(REBINT n); // src/core/c-do.c
 extern void DS_Ret_Val(REBVAL *value); // src/core/c-do.c
 extern REBINT Eval_Depth(void); // src/core/c-do.c
@@ -105,10 +106,12 @@ extern REB_NORETURN void Trap_Port(REBCNT errnum, REBSER *port, REBINT err_code)
 extern REBINT Check_Error(REBVAL *val); // src/core/c-error.c
 extern void Init_Errors(REBVAL *errors); // src/core/c-error.c
 extern REBYTE *Security_Policy(REBCNT sym, REBVAL *name); // src/core/c-error.c
-extern void Trap_Security(REBCNT flag, REBCNT sym, REBVAL *value); // src/core/c-error.c
+extern void Trap_Security(REBYTE *flags, REBCNT sym, REBVAL *value, REBCNT policy); // src/core/c-error.c
 extern void Check_Security(REBCNT sym, REBCNT policy, REBVAL *value); // src/core/c-error.c
 extern void Check_Bind_Table(void); // src/core/c-frame.c
 extern REBSER *Make_Frame(REBINT len); // src/core/c-frame.c
+extern REBSER *Clone_Frame(REBSER *frame); // src/core/c-frame.c
+extern void Unshare_Frame_Words(REBSER *frame); // src/core/c-frame.c
 extern void Expand_Frame(REBSER *frame, REBCNT delta, REBCNT copy); // src/core/c-frame.c
 extern REBVAL *Append_Frame(REBSER *frame, REBVAL *word, REBCNT sym); // src/core/c-frame.c
 extern void Collect_Start(REBCNT modes); // src/core/c-frame.c
@@ -145,6 +148,7 @@ extern REBVAL *Get_Var(REBVAL *word); // src/core/c-frame.c
 extern REBVAL *Get_Var_Safe(REBVAL *word); // src/core/c-frame.c
 extern REBVAL *Get_Var_No_Trap(REBVAL *word); // src/core/c-frame.c
 extern REBVAL *Get_Any_Var(REBVAL *item); // src/core/c-frame.c
+extern void Query_Fields(REBVAL *value, REBVAL *field, REBVAL *spec, REB_QUERY_FN query_field, void *ctx, REBVAL *ret); // src/core/c-frame.c
 extern void Set_Var(REBVAL *word, REBVAL *value); // src/core/c-frame.c
 extern void Set_Var_Series(REBVAL *var, REBCNT type, REBSER *series, REBCNT index); // src/core/c-frame.c
 extern void Set_Var_Basic(REBVAL *var, REBCNT type, ...); // src/core/c-frame.c
@@ -179,7 +183,8 @@ extern REBINT Wait_Ports(REBSER *ports, REBCNT timeout, REBINT only); // src/cor
 extern void Sieve_Ports(REBSER *ports); // src/core/c-port.c
 extern REBCNT Find_Action(REBVAL *object, REBCNT action); // src/core/c-port.c
 extern int Do_Port_Action(REBVAL *port_value, REBCNT action); // src/core/c-port.c
-extern void Secure_Port(REBCNT kind, REBREQ *req, REBVAL *name, REBSER *path); // src/core/c-port.c
+extern void Secure_Port(REBCNT kind, REBREQ *req, REBVAL *path); // src/core/c-port.c
+extern REBFLG Is_Port_Frame(REBSER *port); // src/core/c-port.c
 extern REBSER *Validate_Port_Value(REBVAL *value); // src/core/c-port.c
 extern REBSER *Validate_Port_With_Request(REBVAL *port_value, REBCNT device, REBREQ**req); // src/core/c-port.c
 extern void Release_Port_State(REBSER *port); // src/core/c-port.c
@@ -247,6 +252,7 @@ extern REBSER *Make_Block(REBCNT length); // src/core/f-blocks.c
 extern REBSER *Copy_Block(REBSER *block, REBCNT index); // src/core/f-blocks.c
 extern REBSER *Copy_Block_Len(REBSER *block, REBCNT index, REBCNT len); // src/core/f-blocks.c
 extern REBSER *Copy_Values(REBVAL *blk, REBCNT length); // src/core/f-blocks.c
+extern void Copy_Deep_Values_Loop(REBSER *block, REBCNT index, REBCNT tail, REBU64 types, REB_COPY_LOOP *loop); // src/core/f-blocks.c
 extern void Copy_Deep_Values(REBSER *block, REBCNT index, REBCNT tail, REBU64 types); // src/core/f-blocks.c
 extern REBSER *Copy_Block_Values(REBSER *block, REBCNT index, REBCNT tail, REBU64 types); // src/core/f-blocks.c
 extern REBSER *Clone_Block(REBSER *block); // src/core/f-blocks.c
@@ -289,9 +295,13 @@ extern REBDEC Round_Dec(REBDEC dec, REBCNT flags, REBDEC scale); // src/core/f-r
 extern REBI64 Round_Int(REBI64 num, REBCNT flags, REBI64 scale); // src/core/f-round.c
 extern REBDCI Round_Deci(REBDCI num, REBCNT flags, REBDCI scale); // src/core/f-round.c
 extern REBINT Do_Series_Action(REBCNT action, REBVAL *value, REBVAL *arg); // src/core/f-series.c
+extern REBFLG In_Cmp_Loop(REB_CMP_LOOP *loop, REBVAL *a, REBVAL *b); // src/core/f-series.c
+extern REBINT Cmp_Block_Loop(REBVAL *sval, REBVAL *tval, REBFLG is_case, REB_CMP_LOOP *loop); // src/core/f-series.c
 extern REBINT Cmp_Block(REBVAL *sval, REBVAL *tval, REBFLG is_case); // src/core/f-series.c
 extern REBINT Cmp_Value(REBVAL *s, REBVAL *t, REBFLG is_case); // src/core/f-series.c
+extern REBINT Cmp_Value_Loop(REBVAL *s, REBVAL *t, REBFLG is_case, REB_CMP_LOOP *loop); // src/core/f-series.c
 extern REBCNT Find_Block_Simple(REBSER *series, REBCNT index, REBVAL *target); // src/core/f-series.c
+extern REBFLG Swap_Endian(REBYTE *data, REBCNT len, REBCNT width); // src/core/f-series.c
 extern void REBCNT_To_Bytes(REBYTE *out, REBCNT in); // src/core/f-stubs.c
 extern REBCNT Bytes_To_REBCNT(REBYTE const *in); // src/core/f-stubs.c
 extern REBCNT Find_Int(REBINT *array, REBINT num); // src/core/f-stubs.c
@@ -388,10 +398,11 @@ extern void *Make_Node(REBCNT pool_id); // src/core/m-pools.c
 extern void Free_Node(REBCNT pool_id, REBNOD *node); // src/core/m-pools.c
 extern REBSER *Make_Series_Data(REBSER *series, REBCNT length); // src/core/m-pools.c
 extern REBSER *Make_Series(REBCNT length, REBCNT wide, REBOOL powerof2); // src/core/m-pools.c
+extern REBSER* Make_Slice(REBSER* ser, REBLEN index, REBLEN size, REBLEN wide); // src/core/m-pools.c
 extern void Free_Series_Data(REBSER *series, REBOOL protect); // src/core/m-pools.c
 extern void Free_Series(REBSER *series); // src/core/m-pools.c
-extern void Free_Gob(REBGOB *gob); // src/core/m-pools.c
 extern int Free_Hob(REBHOB *hob); // src/core/m-pools.c
+extern void Release_Hob(REBHOB *hob); // src/core/m-pools.c
 extern void Prop_Series(REBSER *newser, REBSER *oldser); // src/core/m-pools.c
 extern REBFLG Series_In_Pool(REBSER *series); // src/core/m-pools.c
 extern REBCNT Check_Memory(void); // src/core/m-pools.c
@@ -407,7 +418,9 @@ extern void Extend_Series(REBSER *series, REBCNT delta); // src/core/m-series.c
 extern REBCNT Insert_Series(REBSER *series, REBCNT index, REBYTE *data, REBCNT len); // src/core/m-series.c
 extern void Append_Series(REBSER *series, const REBYTE *data, REBCNT len); // src/core/m-series.c
 extern void Append_Mem_Extra(REBSER *series, const REBYTE *data, REBCNT len, REBCNT extra); // src/core/m-series.c
+extern REBSER* Copy_Binary(REBSER* source); // src/core/m-series.c
 extern REBSER *Copy_Series(REBSER *source); // src/core/m-series.c
+extern REBSER* Copy_Binary_Part(REBSER* source, REBCNT index, REBCNT length); // src/core/m-series.c
 extern REBSER *Copy_Series_Part(REBSER *source, REBCNT index, REBCNT length); // src/core/m-series.c
 extern REBSER *Copy_Series_Value(REBVAL *value); // src/core/m-series.c
 extern REBINT Clone_Series(REBVAL *dst, REBVAL *src); // src/core/m-series.c
@@ -433,30 +446,34 @@ extern REBCNT Hash_Word(const REBYTE* str, REBLEN len); // src/core/n-hash.c
 extern REBSER* Make_Hash_Array(REBCNT len); // src/core/n-hash.c
 extern REBSER* Hash_Block(REBVAL* block, REBCNT cased); // src/core/n-hash.c
 extern REBSER *Block_To_String_List(REBVAL *blk); // src/core/n-io.c
-extern void modulus(REBVAL *ret, REBVAL *val1, REBVAL *val2, REBOOL round); // src/core/n-math.c
+extern void modulus(REBVAL* ret, REBVAL* val1, REBVAL* val2, REBINT mode); // src/core/n-math.c
 extern REBINT Compare_Values(REBVAL *a, REBVAL *b, REBINT strictness); // src/core/n-math.c
 extern REBOOL Message_Digest(REBYTE *output, REBYTE *input, REBCNT length, REBCNT method, REBCNT *olen); // src/core/n-strings.c
+extern REBSER* Dehex_String(REBYTE* input, REBLEN length, const REBCHR escape_char, REBFLG as_uri); // src/core/n-strings.c
 extern void Init_Checksum_Scheme(void); // src/core/p-checksum.c
-extern void Ret_Query_Console(REBREQ *req, REBVAL *ret, REBVAL *info, REBVAL *spec); // src/core/p-console.c
 extern void Init_Console_Scheme(void); // src/core/p-console.c
 extern void Init_Dir_Scheme(void); // src/core/p-dir.c
 extern void Init_DNS_Scheme(void); // src/core/p-dns.c
 extern REBVAL *Append_Event(void); // src/core/p-event.c
 extern REBVAL *Find_Event (REBINT model, REBINT type, void* ser); // src/core/p-event.c
+extern void Remove_Device_Events(REBREQ *req, REBCNT count); // src/core/p-event.c
 extern void Init_Event_Scheme(void); // src/core/p-event.c
-extern void Ret_Query_File(REBSER *port, REBREQ *file, REBVAL *ret, REBVAL *info); // src/core/p-file.c
+extern void Ret_Query_File(REBSER *port, REBREQ *file, REBVAL *ret, REBVAL *field); // src/core/p-file.c
 extern void Ret_File_Modes(REBSER *port, REBVAL *ret); // src/core/p-file.c
 extern void Init_File_Scheme(void); // src/core/p-file.c
 extern void Ret_Net_Modes(REBSER *port, REBVAL *ret); // src/core/p-net.c
 extern void Init_TCP_Scheme(void); // src/core/p-net.c
 extern void Init_UDP_Scheme(void); // src/core/p-net.c
+extern void Sweep_Timers(void); // src/core/p-timer.c
+extern REBCNT Check_Timers(void); // src/core/p-timer.c
+extern void Init_Timer_Scheme(void); // src/core/p-timer.c
 extern void Init_Char_Cases(void); // src/core/s-cases.c
 extern void Dispose_Char_Cases(void); // src/core/s-cases.c
-extern REBINT Compute_CRC24(REBYTE *str, REBCNT len); // src/core/s-crc.c
+extern REBCNT Compute_CRC24(const REBYTE *str, REBCNT len); // src/core/s-crc.c
 extern void Init_CRC(void); // src/core/s-crc.c
 extern void Dispose_CRC(void); // src/core/s-crc.c
 extern REBCNT CRC_Word(const REBYTE* str, REBCNT len); // src/core/s-crc.c
-extern REBINT Compute_IPC(REBYTE *data, REBCNT length); // src/core/s-crc.c
+extern REBCNT Compute_IPC(const REBYTE *data, REBCNT length); // src/core/s-crc.c
 extern REBCNT CRC32(REBYTE *buf, REBCNT len); // src/core/s-crc.c
 extern REBSER *To_REBOL_Path(REBYTE *bp, REBCNT len, REBINT uni, REBFLG dir); // src/core/s-file.c
 extern REBSER *Value_To_REBOL_Path(REBVAL *val, REBOOL dir); // src/core/s-file.c
@@ -466,11 +483,14 @@ extern REBSER *Value_To_OS_Path(REBVAL *val, REBFLG full); // src/core/s-file.c
 extern REBINT Compare_Binary_Vals(REBVAL *v1, REBVAL *v2); // src/core/s-find.c
 extern REBINT Compare_Bytes(const REBYTE *b1, const REBYTE *b2, REBCNT len, REBOOL uncase); // src/core/s-find.c
 extern const REBYTE *Match_Bytes(const REBYTE *src, const REBYTE *pat); // src/core/s-find.c
-extern REBFLG Match_Sub_Path(REBSER *s1, REBSER *s2); // src/core/s-find.c
+extern REBFLG Match_Sub_Path(REBSER *s1, REBSER *s2, REBFLG uncase); // src/core/s-find.c
 extern REBINT Compare_Uni_Byte(REBUNI *u1, REBYTE *b2, REBCNT len, REBOOL uncase); // src/core/s-find.c
 extern REBINT Compare_Uni_Str(REBUNI *u1, REBUNI *u2, REBCNT len, REBOOL uncase); // src/core/s-find.c
+extern REBCNT Val_Str_Index(REBVAL *val); // src/core/s-find.c
+extern REBCNT Val_Snapped_Index(REBVAL *val); // src/core/s-find.c
 extern REBINT Compare_String_Vals(REBVAL *v1, REBVAL *v2, REBOOL uncase); // src/core/s-find.c
 extern REBINT Compare_UTF8(const REBYTE *s1, const REBYTE *s2, REBCNT l2); // src/core/s-find.c
+extern REBINT Compare_UTF8_Len(const REBYTE *s1, REBCNT l1, const REBYTE *s2, REBCNT l2); // src/core/s-find.c
 extern REBCNT Find_Byte_Str(REBSER *series, REBCNT index, REBYTE *b2, REBCNT l2, REBFLG uncase, REBFLG match); // src/core/s-find.c
 extern REBCNT Find_Str_Str(REBSER *ser1, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBSER *ser2, REBCNT index2, REBCNT len, REBCNT flags); // src/core/s-find.c
 extern REBCNT Find_Str_Tag(REBSER *ser1, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBSER *ser2, REBCNT index2, REBCNT len, REBCNT flags); // src/core/s-find.c
@@ -549,7 +569,6 @@ extern REBCNT UTF8_Decode_Step(REBCNT* state, REBCNT* codep, REBCNT byte); // sr
 extern REBCNT UTF8_Prev_Char_Position(const REBYTE *str, REBLEN index); // src/core/s-unicode.c
 extern REBLEN UTF8_Prev_Char_Size(const REBYTE *str, REBLEN index); // src/core/s-unicode.c
 extern REBCNT UTF8_Index_To_Position(const REBYTE *str, REBLEN index); // src/core/s-unicode.c
-extern REBCNT UTF8_Skip_Forward(const REBYTE *str, REBLEN chars); // src/core/s-unicode.c
 extern REBCNT UTF8_Skip(const REBSER *ser, REBCNT index, REBINT chars); // src/core/s-unicode.c
 extern REBCNT UTF8_Validate_Index(const REBYTE *str, REBLEN index); // src/core/s-unicode.c
 extern REBLEN UTF8_Bytes_For_Char_Count(const REBYTE *str, REBLEN tail, REBLEN len); // src/core/s-unicode.c
@@ -568,6 +587,7 @@ extern REBINT What_UTF(const REBYTE *bp, REBCNT len); // src/core/s-unicode.c
 extern int Decode_UTF8(REBUNI *dst, const REBYTE *src, REBCNT len, REBFLG ccr); // src/core/s-unicode.c
 extern REBSER *Decode_UTF_String(const REBYTE *bp, REBCNT len, REBINT utf, REBFLG ccr, REBCNT *err); // src/core/s-unicode.c
 extern REBCNT Length_As_UTF8_Code_Points(REBYTE *src); // src/core/s-unicode.c
+extern REBCNT UTF8_Length(const REBYTE *src, REBLEN len); // src/core/s-unicode.c
 extern REBLEN Length_As_Terminal_Width(const REBYTE* str, const REBYTE* end); // src/core/s-unicode.c
 extern REBCNT Length_As_UTF8(REBUNI *src, REBCNT len, REBOOL uni, REBOOL ccr); // src/core/s-unicode.c
 extern REBCNT Encode_UTF8_Char(REBYTE *dst, REBU32 chr); // src/core/s-unicode.c
@@ -594,6 +614,7 @@ extern REBINT CT_Block(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-block.c
 extern REBFLG MT_Block(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-block.c
 extern REBCNT Find_Block(REBSER *series, REBCNT index, REBCNT end, REBVAL *target, REBCNT len, REBCNT flags, REBINT skip); // src/core/t-block.c
 extern REBCNT Find_Block_Key(REBSER* series, REBVAL* key, REBCNT skip, REBOOL cased); // src/core/t-block.c
+extern REBCNT Find_Hash_Block(REBSER *ser, REBCNT index, REBVAL *key, REBFLG cased); // src/core/t-block.c
 extern void Modify_Blockx(REBCNT action, REBVAL *block, REBVAL *arg); // src/core/t-block.c
 extern void Make_Block_Type(REBFLG make, REBVAL *value, REBVAL *arg); // src/core/t-block.c
 extern void Shuffle_Block(REBVAL *value, REBFLG secure); // src/core/t-block.c
@@ -643,13 +664,6 @@ extern void Mold_Event(REBVAL *value, REB_MOLD *mold); // src/core/t-event.c
 extern REBINT CT_Function(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-function.c
 extern REBFLG MT_Function(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-function.c
 extern REBTYPE(Function); // src/core/t-function.c
-extern REBINT CT_Gob(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-gob.c
-extern REBGOB *Make_Gob(void); // src/core/t-gob.c
-extern REBINT Cmp_Gob(REBVAL *g1, REBVAL *g2); // src/core/t-gob.c
-extern REBSER *Gob_To_Block(REBGOB *gob); // src/core/t-gob.c
-extern REBFLG MT_Gob(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-gob.c
-extern REBINT PD_Gob(REBPVS *pvs); // src/core/t-gob.c
-extern REBTYPE(Gob); // src/core/t-gob.c
 extern REBINT Cmp_Handle(REBVAL *a, REBVAL *b); // src/core/t-handle.c
 extern REBINT CT_Handle(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-handle.c
 extern REBFLG MT_Handle(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-handle.c
@@ -666,7 +680,7 @@ extern void Fill_Channel_Line(REBYTE *rgba, REBYTE value, REBINT len, REBCNT sym
 extern void Fill_Alpha_Rect(REBCNT *ip, REBYTE alpha, REBINT w, REBINT dupx, REBINT dupy); // src/core/t-image.c
 extern REBCNT *Find_Color(REBCNT *ip, REBCNT color, REBCNT len, REBOOL only); // src/core/t-image.c
 extern REBCNT *Find_Alpha(REBCNT *ip, REBCNT alpha, REBCNT len); // src/core/t-image.c
-extern REBYTE Luminosity(REBYTE r, REBYTE g, REBYTE b); // src/core/t-image.c
+extern REBYTE Luminosity(REBYTE r, REBYTE g, REBYTE b, REBFLG luma); // src/core/t-image.c
 extern REBCNT Grayscale(REBCNT r, REBCNT g, REBCNT b); // src/core/t-image.c
 extern void Color_To_Bin(REBYTE *bin, REBYTE *rgba, REBINT len, REBCNT format); // src/core/t-image.c
 extern void Bin_To_Color(REBYTE *trg, REBYTE *src, REBINT len, REBCNT format); // src/core/t-image.c
@@ -700,10 +714,13 @@ extern REBINT PD_Logic(REBPVS *pvs); // src/core/t-logic.c
 extern REBTYPE(Logic); // src/core/t-logic.c
 extern REBINT CT_Map(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-map.c
 extern REBINT Cmp_Map(REBVAL* sval, REBVAL* tval, REBFLG is_case); // src/core/t-map.c
+extern REBINT Cmp_Map_Loop(REBVAL* sval, REBVAL* tval, REBFLG is_case, REB_CMP_LOOP *loop); // src/core/t-map.c
+extern REBINT Cmp_Key_Value(REBVAL *key, REBVAL *val, REBFLG cased); // src/core/t-map.c
 extern REBCNT Find_Key(REBSER *series, REBSER *hser, REBVAL *key, REBINT wide, REBCNT cased, REBYTE mode); // src/core/t-map.c
 extern REBCNT Find_Entry(REBSER *series, REBVAL *key, REBVAL *val, REBOOL cased); // src/core/t-map.c
 extern REBCNT Length_Map(REBSER *series); // src/core/t-map.c
 extern REBINT PD_Map(REBPVS *pvs); // src/core/t-map.c
+extern REBSER *Copy_Map_Loop(REBVAL *val, REBU64 types, REB_COPY_LOOP *loop); // src/core/t-map.c
 extern REBSER *Copy_Map(REBVAL *val, REBU64 types); // src/core/t-map.c
 extern REBFLG MT_Map(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-map.c
 extern REBSER *Map_To_Block(REBSER *mapser, REBINT what); // src/core/t-map.c
@@ -718,6 +735,7 @@ extern REBTYPE(Money); // src/core/t-money.c
 extern REBINT CT_None(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-none.c
 extern REBFLG MT_None(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-none.c
 extern REBTYPE(None); // src/core/t-none.c
+extern REBFLG Equal_Object_Loop(REBVAL *val, REBVAL *arg, REBFLG is_case, REB_CMP_LOOP *loop); // src/core/t-object.c
 extern REBINT CT_Object(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-object.c
 extern REBINT CT_Frame(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-object.c
 extern REBFLG MT_Object(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-object.c
@@ -741,11 +759,16 @@ extern REBINT PD_String(REBPVS *pvs); // src/core/t-string.c
 extern REBINT PD_File(REBPVS *pvs); // src/core/t-string.c
 extern REBTYPE(String); // src/core/t-string.c
 extern void Get_Struct_Reflect(REBVAL *ret, REBSTU *stu, REBCNT type); // src/core/t-struct.c
+extern REBOOL Same_Struct_Fields(REBSER *tgt, REBSER *src); // src/core/t-struct.c
+extern REBVAL *Find_Struct_Spec(REBVAL *key); // src/core/t-struct.c
 extern REBFLG MT_Struct(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-struct.c
 extern REBFLG Prepare_Struct(REBVAL *out, REBVAL *data); // src/core/t-struct.c
 extern REBINT PD_Struct(REBPVS *pvs); // src/core/t-struct.c
 extern REBINT Cmp_Struct(REBVAL *s, REBVAL *t); // src/core/t-struct.c
 extern REBINT CT_Struct(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-struct.c
+extern void Copy_Struct_Value(REBVAL *src, REBVAL *dst); // src/core/t-struct.c
+extern REBCNT Struct_Fields_Count(REBSER *fields); // src/core/t-struct.c
+extern void Set_Struct_Values(REBVAL *stru, REBVAL *values); // src/core/t-struct.c
 extern REBTYPE(Struct); // src/core/t-struct.c
 extern void Split_Time(REBI64 t, REB_TIMEF *tf); // src/core/t-time.c
 extern REBI64 Join_Time(REB_TIMEF *tf); // src/core/t-time.c
@@ -774,25 +797,33 @@ extern REBINT CT_Utype(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-utype.c
 extern REBFLG MT_Utype(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-utype.c
 extern REBTYPE(Utype); // src/core/t-utype.c
 extern REBCNT Normalize_Vector_Type_Symbol(REBCNT sym); // src/core/t-vector.c
+extern void Set_Vector_Row(REBSER *ser, REBVAL *blk, REBCNT type); // src/core/t-vector.c
 extern REBSER *Make_Vector_Block(REBVAL *vect); // src/core/t-vector.c
 extern void Math_Op_Vector(REBVAL *out, REBVAL *v1, REBVAL *v2, REBCNT action); // src/core/t-vector.c
 extern void Math_Op_Vector_Vector(REBVAL *out, REBVAL *v1, REBVAL *v2, REBCNT action); // src/core/t-vector.c
+extern void Clamp_Vector(REBVAL *vec, REBVAL *vmin, REBVAL *vmax); // src/core/t-vector.c
 extern REBINT Compare_Vector(REBVAL *a, REBVAL *b); // src/core/t-vector.c
 extern void Shuffle_Vector(REBVAL *vect, REBFLG secure); // src/core/t-vector.c
-extern void Sort_Vector(REBVAL *vect, REBLEN len, REBFLG reversed); // src/core/t-vector.c
-extern void Get_Vector_Value(REBVAL *var, REBSER *series, REBCNT index); // src/core/t-vector.c
-extern REBSER *Make_Vector(REBINT type, REBINT sign, REBINT dims, REBINT bits, REBINT size); // src/core/t-vector.c
-extern REBSER *Make_Vector_From_Word(REBCNT sym, REBINT size); // src/core/t-vector.c
+extern void Sort_Vector(REBVAL *vec, REBLEN len, REBINT skip, REBVAL *compv, REBFLG all, REBFLG rev); // src/core/t-vector.c
+extern void Set_Vector_Struct(REBVAL *val, REBVAL *vec, REBCNT index); // src/core/t-vector.c
+extern void Get_Vector_Value(REBVAL *var, REBVAL *vec, REBCNT index); // src/core/t-vector.c
+extern REBSER* Make_Vector_Series(REBINT cols, REBCNT wide, REBINT rows); // src/core/t-vector.c
+extern REBINT Make_Vector(REBVAL* val, REBCNT vtype, REBINT cols, REBINT rows); // src/core/t-vector.c
+extern REBINT Make_Vector_Struct(REBVAL* val, REBSER* fields, REBINT cols, REBINT rows); // src/core/t-vector.c
+extern void Make_Vector_From_Word(REBVAL *val, REBCNT sym, REBINT size); // src/core/t-vector.c
 extern REBVAL *Construct_Vector(REBVAL *bp, REBVAL *value); // src/core/t-vector.c
+extern REBFLG As_Vector(REBVAL *type, REBVAL *vec); // src/core/t-vector.c
 extern REBVAL *Make_Vector_Spec(REBVAL *spec, REBVAL *value); // src/core/t-vector.c
 extern REBFLG MT_Vector(REBVAL *out, REBVAL *data, REBCNT type); // src/core/t-vector.c
 extern REBINT CT_Vector(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-vector.c
 extern REBINT PD_Vector(REBPVS *pvs); // src/core/t-vector.c
 extern REBTYPE(Vector); // src/core/t-vector.c
-extern REBCNT Modify_Vector(REBCNT action, REBSER *vect, REBCNT index, REBVAL *src_val, REBCNT flags, REBINT dst_len, REBINT dups); // src/core/t-vector.c
+extern REBCNT Find_Vector(REBVAL *vec, REBVAL *target, REBCNT index, REBCNT tail, REBCNT flags, REBINT skip); // src/core/t-vector.c
+extern REBCNT Modify_Vector(REBCNT action, REBVAL *vec, REBCNT index, REBVAL *src_val, REBCNT flags, REBINT dst_len, REBINT dups); // src/core/t-vector.c
 extern void Mold_Vector(REBVAL *value, REB_MOLD *mold, REBFLG molded); // src/core/t-vector.c
 extern REBINT CT_Word(REBVAL *a, REBVAL *b, REBINT mode); // src/core/t-word.c
 extern REBTYPE(Word); // src/core/t-word.c
+extern void Init_Bincode(void); // src/core/u-bincode.c
 extern int CompressDeflate(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output, REBINT* error); // src/core/u-compress.c
 extern int CompressGzip(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output, REBINT* error); // src/core/u-compress.c
 extern int CompressZlib(const REBYTE* input, REBLEN len, REBCNT level, REBSER** output, REBINT* error); // src/core/u-compress.c
@@ -812,8 +843,6 @@ extern int DecompressLzav(const REBYTE* input, REBLEN len, REBLEN limit, REBSER*
 extern REBOOL Register_Compress_Method(REBINT sym, void* encode, void* decode); // src/core/u-compress.c
 extern void Init_Compression(void); // src/core/u-compress.c
 extern void Dispose_Compression(void); // src/core/u-compress.c
-extern REBSER *Parse_String(REBSER *series, REBCNT index, REBVAL *rules, REBCNT flags); // src/core/u-parse.c
-extern REBSER *Parse_Lines(REBSER *src); // src/core/u-parse.c
 extern REBYTE *MD4(REBYTE *d, REBCNT n, REBYTE *md); // src/core/u-mbedtls.c
 extern REBYTE *MD5(REBYTE *d, REBCNT n, REBYTE *md); // src/core/u-mbedtls.c
 extern REBYTE *SHA1(REBYTE *d, REBCNT n, REBYTE *md); // src/core/u-mbedtls.c
@@ -826,6 +855,7 @@ extern REBYTE* SHA3_224(REBYTE* d, REBCNT n, REBYTE* md); // src/core/u-mbedtls.
 extern REBYTE* SHA3_256(REBYTE* d, REBCNT n, REBYTE* md); // src/core/u-mbedtls.c
 extern REBYTE* SHA3_384(REBYTE* d, REBCNT n, REBYTE* md); // src/core/u-mbedtls.c
 extern REBYTE* SHA3_512(REBYTE* d, REBCNT n, REBYTE* md); // src/core/u-mbedtls.c
+extern void Random_Secure_Bytes(REBYTE *dest, REBCNT length); // src/core/n-crypt.c
 extern void Init_Crypt(void); // src/core/n-crypt.c
 extern void Dispose_Crypt(void); // src/core/n-crypt.c
 extern void crypt_context_free(void *ctx); // src/core/p-crypt.c

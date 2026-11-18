@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: REBOL Constants Strings
-**  Build: 3.21.15
-**  Date:  14-Apr-2026
+**  Build: 3.22.18
+**  Date:  18-Nov-2026
 **  File:  str-consts.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: pre-make)

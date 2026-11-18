@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Datatype Definitions
-**  Build: 3.21.15
-**  Date:  14-Apr-2026
+**  Build: 3.22.18
+**  Date:  18-Nov-2026
 **  File:  reb-types.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -79,12 +79,11 @@
 	REB_ERROR,                    // 49
 	REB_TASK,                     // 50
 	REB_PORT,                     // 51
-	REB_GOB,                      // 52
-	REB_EVENT,                    // 53
-	REB_HANDLE,                   // 54
-	REB_STRUCT,                   // 55
-	REB_LIBRARY,                  // 56
-	REB_UTYPE,                    // 57
+	REB_EVENT,                    // 52
+	REB_HANDLE,                   // 53
+	REB_STRUCT,                   // 54
+	REB_LIBRARY,                  // 55
+	REB_UTYPE,                    // 56
     REB_MAX
 };
 
@@ -145,7 +144,6 @@
 #define IS_ERROR(v)			(VAL_TYPE(v)==REB_ERROR)
 #define IS_TASK(v)			(VAL_TYPE(v)==REB_TASK)
 #define IS_PORT(v)			(VAL_TYPE(v)==REB_PORT)
-#define IS_GOB(v)			(VAL_TYPE(v)==REB_GOB)
 #define IS_EVENT(v)			(VAL_TYPE(v)==REB_EVENT)
 #define IS_HANDLE(v)		(VAL_TYPE(v)==REB_HANDLE)
 #define IS_STRUCT(v)		(VAL_TYPE(v)==REB_STRUCT)

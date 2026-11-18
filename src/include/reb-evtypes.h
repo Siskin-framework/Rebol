@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Event Types
-**  Build: 3.21.15
-**  Date:  14-Apr-2026
+**  Build: 3.22.18
+**  Date:  18-Nov-2026
 **  File:  reb-evtypes.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -19,55 +19,76 @@
 ***********************************************************************/
 
 
+#ifndef REB_EVTYPES_H
+#define REB_EVTYPES_H
+
 enum event_types {
-	EVT_IGNORE,
-	EVT_INTERRUPT,
-	EVT_DEVICE,
-	EVT_CALLBACK,
-	EVT_CUSTOM,
-	EVT_ERROR,
-	EVT_INIT,
-	EVT_OPEN,
-	EVT_CLOSE,
-	EVT_CONNECT,
-	EVT_ACCEPT,
-	EVT_READ,
-	EVT_WRITE,
-	EVT_WROTE,
-	EVT_LOOKUP,
-	EVT_READY,
-	EVT_DONE,
-	EVT_TIME,
-	EVT_SHOW,
-	EVT_HIDE,
-	EVT_OFFSET,
-	EVT_RESIZE,
-	EVT_ACTIVE,
-	EVT_INACTIVE,
-	EVT_MINIMIZE,
-	EVT_MAXIMIZE,
-	EVT_RESTORE,
-	EVT_MOVE,
-	EVT_DOWN,
-	EVT_UP,
-	EVT_ALT_DOWN,
-	EVT_ALT_UP,
-	EVT_AUX_DOWN,
-	EVT_AUX_UP,
-	EVT_KEY,
-	EVT_KEY_UP,
-	EVT_SCROLL_LINE,
-	EVT_SCROLL_PAGE,
-	EVT_DROP_FILE,
-	EVT_CLICK,
-	EVT_CHANGE,
-	EVT_FOCUS,
-	EVT_UNFOCUS,
-	EVT_SCROLL,
-	EVT_CONTROL,
-	EVT_CONTROL_UP,
-	EVT_CHAR,
-	EVT_MAX
+	EVT_IGNORE,                   // 0
+	EVT_INTERRUPT,                // 1
+	EVT_CUSTOM,                   // 2
+	EVT_ERROR,                    // 3
+	EVT_INIT,                     // 4
+	EVT_DEVICE,                   // 5
+	EVT_CALLBACK,                 // 6
+	EVT_SHUTDOWN,                 // 7
+	EVT_SUSPEND,                  // 8
+	EVT_RESUME,                   // 9
+	EVT_THEME_CHANGE,             // 10
+	EVT_OPEN = 32,                // 32
+	EVT_CLOSE,                    // 33
+	EVT_CONNECT,                  // 34
+	EVT_ACCEPT,                   // 35
+	EVT_READ,                     // 36
+	EVT_WRITE,                    // 37
+	EVT_WROTE,                    // 38
+	EVT_LOOKUP,                   // 39
+	EVT_READY,                    // 40
+	EVT_DONE,                     // 41
+	EVT_TIME,                     // 42
+	EVT_PENDING,                  // 43
+	EVT_SHOW = 64,                // 64
+	EVT_HIDE,                     // 65
+	EVT_OFFSET,                   // 66
+	EVT_RESIZE,                   // 67
+	EVT_ACTIVE,                   // 68
+	EVT_INACTIVE,                 // 69
+	EVT_MINIMIZE,                 // 70
+	EVT_MAXIMIZE,                 // 71
+	EVT_RESTORE,                  // 72
+	EVT_FOCUS,                    // 73
+	EVT_UNFOCUS,                  // 74
+	EVT_CLOSE_REQUEST,            // 75
+	EVT_DPI_CHANGE,               // 76
+	EVT_MOVE = 96,                // 96
+	EVT_DOWN,                     // 97
+	EVT_UP,                       // 98
+	EVT_ALT_DOWN,                 // 99
+	EVT_ALT_UP,                   // 100
+	EVT_AUX_DOWN,                 // 101
+	EVT_AUX_UP,                   // 102
+	EVT_CLICK,                    // 103
+	EVT_ENTER,                    // 104
+	EVT_LEAVE,                    // 105
+	EVT_SCROLL_LINE,              // 106
+	EVT_SCROLL_PAGE,              // 107
+	EVT_TOUCH_DOWN,               // 108
+	EVT_TOUCH_UP,                 // 109
+	EVT_TOUCH_MOVE,               // 110
+	EVT_TOUCH_CANCEL,             // 111
+	EVT_KEY = 128,                // 128
+	EVT_KEY_UP,                   // 129
+	EVT_NAMED_KEY,                // 130
+	EVT_NAMED_KEY_UP,             // 131
+	EVT_CHAR,                     // 132
+	EVT_CHANGE = 160,             // 160
+	EVT_SCROLL,                   // 161
+	EVT_MENU_SELECT,              // 162
+	EVT_MENU_OPEN,                // 163
+	EVT_MENU_CLOSE,               // 164
+	EVT_DROP_FILE,                // 165
+	EVT_DROP_TEXT,                // 166
+	EVT_SORT,                     // 167
+	EVT_MAX = 192
 };
 
 enum event_keys {
@@ -108,3 +129,5 @@ enum event_keys {
 	EVK_MAX
 };
 
+
+#endif // REB_EVTYPES_H

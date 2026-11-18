@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Evaluation Maps
-**  Build: 3.21.15
-**  Date:  14-Apr-2026
+**  Build: 3.22.18
+**  Date:  18-Nov-2026
 **  File:  evaltypes.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -79,7 +79,6 @@
 	ET_SELF,                      // error
 	ET_SELF,                      // task
 	ET_SELF,                      // port
-	ET_SELF,                      // gob
 	ET_SELF,                      // event
 	ET_SELF,                      // handle
 	ET_SELF,                      // struct
@@ -164,7 +163,6 @@
 	T_Object,                     // error
 	T_Object,                     // task
 	T_Port,                       // port
-	T_Gob,                        // gob
 	T_Event,                      // event
 	T_Handle,                     // handle
 	T_Struct,                     // struct
@@ -232,7 +230,6 @@
 	PD_Object,                    // error
 	PD_Object,                    // task
 	PD_Object,                    // port
-	PD_Gob,                       // gob
 	PD_Event,                     // event
 	PD_Handle,                    // handle
 	PD_Struct,                    // struct

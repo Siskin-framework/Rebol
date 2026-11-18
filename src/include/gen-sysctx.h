@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Sys Context
-**  Build: 3.21.15
-**  Date:  14-Apr-2026
+**  Build: 3.22.18
+**  Date:  18-Nov-2026
 **  File:  sysctx.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -47,6 +47,9 @@ enum SYS_CTX_object {
 	SYS_CTX_BIND_LIB,
 	SYS_CTX_EXPORT_WORDS,
 	SYS_CTX_MIXINQ,
+	SYS_CTX_PROTECT_HEADER,
+	SYS_CTX_IMPORT_PAIRS,
+	SYS_CTX_IMPORT_WORDS,
 	SYS_CTX_LOAD_HEADER,
 	SYS_CTX_LOAD_EXT_MODULE,
 	SYS_CTX_LOAD_BOOT_EXTS,
@@ -57,6 +60,8 @@ enum SYS_CTX_object {
 	SYS_CTX_LOCATE_EXTENSION,
 	SYS_CTX_DOWNLOAD_EXTENSION,
 	SYS_CTX_IMPORT,
+	SYS_CTX_UNLOAD,
+	SYS_CTX_FIND_IN_PATH,
 	SYS_CTX_START,
 	SYS_CTX_MAX
 };

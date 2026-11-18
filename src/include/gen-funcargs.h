@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Function Argument Enums
-**  Build: 3.21.15
-**  Date:  14-Apr-2026
+**  Build: 3.22.18
+**  Date:  18-Nov-2026
 **  File:  func-args.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: pre-make)
@@ -442,8 +442,6 @@ enum act_try_arg {
 	ARG_TRY_ALL,
 	ARG_TRY_WITH,
 	ARG_TRY_HANDLER,
-	ARG_TRY_EXCEPT,
-	ARG_TRY_CODE,
 };
 
 enum act_try_mask {
@@ -451,9 +449,7 @@ enum act_try_mask {
 	AM_TRY_ALL = 1 << 1,
 	AM_TRY_WITH = 1 << 2,
 	AM_TRY_HANDLER = 1 << 3,
-	AM_TRY_EXCEPT = 1 << 4,
-	AM_TRY_CODE = 1 << 5,
 };
 
-#define ALL_TRY_REFS (AM_TRY_ALL|AM_TRY_WITH|AM_TRY_EXCEPT)
+#define ALL_TRY_REFS (AM_TRY_ALL|AM_TRY_WITH)
 

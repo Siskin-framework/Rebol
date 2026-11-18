@@ -176,6 +176,7 @@ OBJS = \
 	$O/src/core/p-event.o \
 	$O/src/core/p-file.o \
 	$O/src/core/p-net.o \
+	$O/src/core/p-timer.o \
 	$O/src/core/s-cases.o \
 	$O/src/core/s-crc.o \
 	$O/src/core/s-file.o \
@@ -193,7 +194,6 @@ OBJS = \
 	$O/src/core/t-decimal.o \
 	$O/src/core/t-event.o \
 	$O/src/core/t-function.o \
-	$O/src/core/t-gob.o \
 	$O/src/core/t-handle.o \
 	$O/src/core/t-image.o \
 	$O/src/core/t-integer.o \
@@ -215,6 +215,7 @@ OBJS = \
 	$O/src/core/u-bincode.o \
 	$O/src/core/u-compress.o \
 	$O/src/core/u-iconv.o \
+	$O/src/core/u-lzma.o \
 	$O/src/core/u-mbedtls.o \
 	$O/src/core/u-parse.o \
 	$O/src/core/u-xxhash.o \
@@ -513,6 +514,9 @@ $O/src/core/p-file.o: $R/src/core/p-file.c
 $O/src/core/p-net.o: $R/src/core/p-net.c
 	$(CC) $R/src/core/p-net.c $(CFLAGS) -o $O/src/core/p-net.o
 
+$O/src/core/p-timer.o: $R/src/core/p-timer.c
+	$(CC) $R/src/core/p-timer.c $(CFLAGS) -o $O/src/core/p-timer.o
+
 $O/src/core/s-cases.o: $R/src/core/s-cases.c
 	$(CC) $R/src/core/s-cases.c $(CFLAGS) -o $O/src/core/s-cases.o
 
@@ -563,9 +567,6 @@ $O/src/core/t-event.o: $R/src/core/t-event.c
 
 $O/src/core/t-function.o: $R/src/core/t-function.c
 	$(CC) $R/src/core/t-function.c $(CFLAGS) -o $O/src/core/t-function.o
-
-$O/src/core/t-gob.o: $R/src/core/t-gob.c
-	$(CC) $R/src/core/t-gob.c $(CFLAGS) -o $O/src/core/t-gob.o
 
 $O/src/core/t-handle.o: $R/src/core/t-handle.c
 	$(CC) $R/src/core/t-handle.c $(CFLAGS) -o $O/src/core/t-handle.o
@@ -629,6 +630,9 @@ $O/src/core/u-compress.o: $R/src/core/u-compress.c
 
 $O/src/core/u-iconv.o: $R/src/core/u-iconv.c
 	$(CC) $R/src/core/u-iconv.c $(CFLAGS) -o $O/src/core/u-iconv.o
+
+$O/src/core/u-lzma.o: $R/src/core/u-lzma.c
+	$(CC) $R/src/core/u-lzma.c $(CFLAGS) -o $O/src/core/u-lzma.o
 
 $O/src/core/u-mbedtls.o: $R/src/core/u-mbedtls.c
 	$(CC) $R/src/core/u-mbedtls.c $(CFLAGS) -o $O/src/core/u-mbedtls.o

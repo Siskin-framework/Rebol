@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: REBOL Host and Extension API
-**  Build: 3.21.15
-**  Date:  14-Apr-2026
+**  Build: 3.22.18
+**  Date:  18-Nov-2026
 **  File:  reb-lib.reb
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-reb-lib.reb)
@@ -22,14 +22,23 @@
 // These constants are created by the release system and can be used to check
 // for compatiblity with the reb-lib DLL (using RL_Version.)
 #define RL_VER 3
-#define RL_REV 21
-#define RL_UPD 15
+#define RL_REV 22
+#define RL_UPD 18
+
+// Bumped ONLY when an existing RL_API function's signature/semantics
+// change in a way that breaks old extension binaries calling it - i.e.
+// exactly the cases the "append new functions at the end, never modify
+// existing ones" convention (see a-lib.c header) is meant to avoid.
+// Extensions compiled against ABI N remain loadable by any host whose
+// RL_MIN_SUPPORTED_ABI <= N <= RL_ABI_VERSION.
+#define RL_ABI_VERSION        1   // bump only on a break like this one
+#define RL_MIN_SUPPORTED_ABI  1   // floor; raise only when dropping support for an old break-era
 
 // Compatiblity with the lib requires that structs are aligned using the same
 // method. This is concrete, not abstract. The macro below uses struct
 // sizes to inform the developer that something is wrong.
 #if defined(__LP64__) || defined(__LLP64__)
-#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 116 && sizeof(REBEVT) == 16)
+#define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 120 && sizeof(REBEVT) == 16)
 #else
 #define CHECK_STRUCT_ALIGN (sizeof(REBREQ) == 96 && sizeof(REBEVT) == 12)
 #endif
@@ -55,7 +64,7 @@ typedef struct rebol_ext_api {
 	void (*expand_series)(REBSER *series, REBCNT index, REBCNT delta);
 	void *(*make_string)(u32 size, int unicode);
 	void *(*make_image)(u32 width, u32 height);
-	void *(*make_vector)(REBINT type, REBINT sign, REBINT dims, REBINT bits, REBINT size);
+	int (*make_vector)(RXIARG *out, REBCNT type, REBINT cols, REBINT rows);
 	void (*protect_gc)(REBSER *series, u32 flags);
 	int (*get_string)(REBSER *series, u32 index, void **str, REBOOL needs_wide);
 	int (*get_utf8_string)(REBSER *series, u32 index, void **str);
@@ -88,22 +97,40 @@ typedef struct rebol_ext_api {
 	void* (*mem_alloc)(void *opaque, size_t size);
 	void (*mem_free)(void* opaque, void* address);
 	int (*register_compress_method)(const REBYTE* name, COMPRESS_FUNC encoder, DECOMPRESS_FUNC decoder);
+	REBFLG (*struct_info)(RXIARG *arg, RXISTRU *out);
+	REBFLG (*make_struct)(RXIARG *out, REBCNT id, RXISTRU *info);
+	void* (*alloc)(size_t size);
+	void (*free)(void *mem, size_t size);
+	int (*register_device)(REBDEV *dev, u32 dev_size);
+	REBREQ *(*port_state)(REBSER *port, REBCNT device);
+	int (*do_device)(REBREQ *req, REBCNT command);
+	REBINT (*form_value)(REBSER *dst, RXIARG val, REBCNT type, REBCNT limit, REBCNT flags);
 } RL_LIB;
+
+#ifndef API_EXPORT
+# define RL_API API_EXPORT
+# ifdef TO_WINDOWS
+#  define API_EXPORT __declspec(dllexport)
+# else
+#  define API_EXPORT __attribute__((visibility("default")))
+# endif
+#endif
 
 // Extension entry point functions:
 #ifdef TO_WINDOWS
 #ifdef __cplusplus
-#define RXIEXT extern "C" __declspec(dllexport)
+#define RXIEXT extern "C" API_EXPORT
 #else
-#define RXIEXT __declspec(dllexport)
+#define RXIEXT API_EXPORT
 #endif
 #else
-#define RXIEXT extern
+#define RXIEXT extern API_EXPORT
 #endif
 
 RXIEXT const char *RX_Init(int opts, RL_LIB *lib);
 RXIEXT int RX_Quit(int opts);
 RXIEXT int RX_Call(int cmd, RXIFRM *frm, void *data);
+RXIEXT int RX_Abi(void);
 
 // The macros below will require this base pointer:
 extern RL_LIB *RL;  // is passed to the RX_Init() function
@@ -460,24 +487,36 @@ extern RL_LIB *RL;  // is passed to the RX_Init() function
 **		no references to them from REBOL code (C code does nothing.)
 */
 
-#define RL_MAKE_VECTOR(a,b,c,d,e)   RL->make_vector(a,b,c,d,e)
+#define RL_MAKE_VECTOR(a,b,c,d)     RL->make_vector(a,b,c,d)
 /*
-**	void *RL_Make_Vector(REBINT type, REBINT sign, REBINT dims, REBINT bits, REBINT size)
+**	int RL_Make_Vector(RXIARG *out, REBCNT type, REBINT cols, REBINT rows)
 **
-**	Allocate a new vector of the given attributes.
+**	Allocate a new vector series with the given element type and shape.
 **
 **	Returns:
-**		A pointer to a vector series or zero.
+**		1 on success, 0 on failure. On failure `out` is left untouched.
+**		Fails if `type` is not a valid element type, if `cols` is
+**		negative, if `rows` is less than 1 or too large to encode, or
+**		if the total element count cannot be allocated.
 **	Arguments:
-**		type: the datatype
-**		sign: signed or unsigned
-**		dims: number of dimensions
-**		bits: number of bits per unit (8, 16, 32, 64)
-**		size: number of values
+**		out:  RXIARG to receive the vector (series, index and info)
+**		type: element type, one of the VT* values (VTSI08..VTSF64)
+**		cols: number of columns (0 makes an empty vector)
+**		rows: number of rows; 1 for an unshaped (plain) vector
 **	Notes:
-**		Allocated with REBOL's internal memory manager.
-**		Vectors are automatically garbage collected if there are
-**		no references to them from REBOL code (C code does nothing.)
+**		Contents are zero-filled. The element type and row count are
+**		encoded together in `out->vector.info`; use the VECT_* macros
+**		rather than unpacking it by hand. The VT* numbering is part of
+**		the extension ABI and must not be reordered.
+**
+**		A vector with more than one row is length-locked, matching
+**		vectors shaped from Rebol: rows travel with the value while the
+**		buffer length is shared, so APPEND/INSERT/CLEAR on it will error.
+**
+**		Allocated with REBOL's internal memory manager and garbage
+**		collected once no REBOL value references it. Until the returned
+**		RXIARG reaches REBOL, nothing references the series -- do not
+**		call other RL_ functions that may allocate in between.
 */
 
 #define RL_PROTECT_GC(a,b)          RL->protect_gc(a,b)
@@ -709,7 +748,7 @@ extern RL_LIB *RL;  // is passed to the RX_Init() function
 **	Arguments:
 **		obj  - object pointer (e.g. from RXA_OBJECT)
 **	Notes:
-**		Returns a word array similar to MAP_WORDS().
+**		Returns a word array similar to MAP_WORDS (first element is size).
 **		The array is allocated with OS_MAKE. You can OS_FREE it any time.
 */
 
@@ -859,6 +898,10 @@ extern RL_LIB *RL;  // is passed to the RX_Init() function
 **		nothing
 **	Arguments:
 **		hob - handle's context
+**	Notes:
+**		The resources are released now, but the context itself stays
+**		allocated until no value refers to it. A released handle can
+**		therefore never be mistaken for a handle created later.
 **
 */
 
@@ -992,6 +1035,175 @@ extern RL_LIB *RL;  // is passed to the RX_Init() function
 **		encoder - external compress function
 */
 
+#define RL_STRUCT_INFO(a,b)         RL->struct_info(a,b)
+/*
+**	REBFLG RL_Struct_Info(RXIARG *arg, RXISTRU *out)
+**
+**	Resolve a struct argument into a directly usable description.
+**
+**	A struct value is a view into a shared data series, so its size and
+**	flags live in the specification, not in the series. This performs the
+**	spec lookup once and validates that the view fits into the data.
+**
+**	Returns:
+**		TRUE when the argument describes a usable struct, else FALSE
+**		(no data series, unknown spec id, or the view runs past the data).
+**	Arguments:
+**		arg - struct argument as received in a command frame
+**		out - filled with data pointer, size, count, id, flags, field list
+*/
+
+#define RL_MAKE_STRUCT(a,b,c)       RL->make_struct(a,b,c)
+/*
+**	REBFLG RL_Make_Struct(RXIARG *out, REBCNT id, RXISTRU *info)
+**
+**	Create a new struct value of an already registered specification.
+**
+**	The specification must already exist in system/catalog/structs, where
+**	Prepare_Struct interns it when Rebol code evaluates `make struct!
+**	[...]` - so an extension instantiates a shape its own module declared
+**	rather than defining one in C. The data series is allocated zeroed and
+**	is owned by the struct.
+**
+**	The zeroing is required, not incidental: a zeroed `rebval!` field reads
+**	as END, which get_scalar reports as none and Mark_Struct_Fields skips.
+**	Uninitialized bytes there would be marked by the GC as garbage values.
+**
+**	Like RL_Make_String and RL_Make_Block, the result is protected from the
+**	GC only as a recently allocated series. Store it into a command frame
+**	argument and return it; do not hold it across a large number of other
+**	allocations.
+**
+**	Returns:
+**		TRUE when the struct was created, else FALSE (unknown spec id or
+**		a zero-sized specification).
+**	Arguments:
+**		out  - command frame argument which receives the new struct
+**		id   - spec id (hash of the specification block)
+**		info - filled like RL_Struct_Info; may be NULL
+*/
+
+#define RL_ALLOC(a)                 RL->alloc(a)
+/*
+**	void* RL_Alloc(size_t size)
+**
+**	Allocate memory that the interpreter itself may free.
+**
+**	Unlike RL_Mem_Alloc, this is the interpreter's plain accounted
+**	allocator - the same one used internally by Make_Mem - so a buffer
+**	handed back to the core (for example a codec's output, freed by
+**	DO-CODEC with a known size) must come from here, not from
+**	RL_Mem_Alloc, whose result carries a hidden header and may live in
+**	a memory pool. Free with RL_Free and the size passed to RL_Alloc.
+**
+**	Returns:
+**		Pointer to uninitialized memory, or 0 on failure.
+**	Arguments:
+**		size - number of bytes
+*/
+
+#define RL_FREE(a,b)                RL->free(a,b)
+/*
+**	void RL_Free(void *mem, size_t size)
+**
+**	Frees memory allocated with RL_Alloc. The size must match.
+**
+**	Returns:
+**		nothing
+**	Arguments:
+**		mem  - pointer to initialized memory
+**		size - number of bytes
+*/
+
+#define RL_REGISTER_DEVICE(a,b)     RL->register_device(a,b)
+/*
+**	int RL_Register_Device(REBDEV *dev, u32 dev_size)
+**
+**	Add a device to the device table at run time.
+**
+**	Returns:
+**		The assigned device id (>= RDI_MAX), or a negative RDR_ code:
+**		RDR_TABLE_FULL, RDR_BAD_DEVICE or RDR_BAD_REBDEV.
+**	Arguments:
+**		dev      - device structure, usually from DEFINE_DEV
+**		dev_size - sizeof(REBDEV) as the caller sees it
+**	Notes:
+**		The device and its command table must stay valid for the life
+**		of the process - devices cannot be unregistered, so a library
+**		which registers one must not be unloaded.
+**
+**		Pass the id as req->device to reach the device; events are
+**		posted with EVM_DEVICE and evt.req, as for built-in devices.
+*/
+
+#define RL_PORT_STATE(a,b)          RL->port_state(a,b)
+/*
+**	REBREQ *RL_Port_State(REBSER *port, REBCNT device)
+**
+**	Get the native request of a port, creating it if it does not exist.
+**
+**	This is the handle the event machinery recognizes: the request it
+**	returns has req->port set, so an EVM_DEVICE event carrying it wakes
+**	that port. An extension must not improvise one - Pending_Port reads
+**	port/state as a REBREQ without checking the handle type, so a handle
+**	of any other type parked there is read as a request.
+**
+**	Returns:
+**		The port's request, or 0 if `port` is not a usable port frame.
+**	Arguments:
+**		port   - port frame, as received in a port! command argument
+**		device - device id from RL_Register_Device
+**	Notes:
+**		The state holds the port's request followed by a second request
+**		used internally by net ports for WRITE (see PORT_STATE_REQS in
+**		c-port.c). The returned request is the first one; it has the size
+**		sizeof(REBREQ), so a device needing more must keep it behind
+**		req->handle, the way dev-midi.c does.
+**
+**		Allocating the handle can trap on out of memory, which longjmps
+**		out of the extension - do not hold resources that only a return
+**		would release across this call.
+*/
+
+#define RL_DO_DEVICE(a,b)           RL->do_device(a,b)
+/*
+**	int RL_Do_Device(REBREQ *req, REBCNT command)
+**
+**	Run a device command, as OS_Do_Device does for the built-in ports.
+**
+**	Returns:
+**		=0 command succeeded
+**		>0 command is pending (the request was attached for polling)
+**		<0 command failed; req->error holds the code
+**	Arguments:
+**		req     - request, usually from RL_Port_State
+**		command - RDC_ command code
+**	Notes:
+**		Only devices added by RL_Register_Device can be driven this way.
+**		The built-in devices are reached through their own port schemes,
+**		which apply the security policy (Secure_Port) before dispatching;
+**		an extension must not route around that.
+*/
+
+#define RL_FORM_VALUE(a,b,c,d,e)    RL->form_value(a,b,c,d,e)
+/*
+**	REBINT RL_Form_Value(REBSER *dst, RXIARG val, REBCNT type, REBCNT limit, REBCNT flags)
+**
+**	Form (or mold) a value into a UTF-8 string series.
+**
+**	Returns:
+**		Number of bytes written, or -1 when dst is not a byte string.
+**	Arguments:
+**		dst   - target string; reset first unless RXF_APPEND is set
+**		val   - the value, as RXIARG + its RXT_ type
+**		limit - max chars (0 = no limit); longer output ends with "..."
+**		flags - RXF_MOLD: mold instead of form
+**		        RXF_APPEND: append to dst instead of replacing it
+**	Notes:
+**		Uses the shared mold buffer, so it must not be called while
+**		another mold is in progress (e.g. from a handle's mold callback).
+*/
+
 
 
 #define RL_MAKE_BINARY(s) RL_MAKE_STRING(s, FALSE)
@@ -1017,7 +1229,7 @@ RL_API void *RL_Make_Block(u32 size);
 RL_API void RL_Expand_Series(REBSER *series, REBCNT index, REBCNT delta);
 RL_API void *RL_Make_String(u32 size, int unicode);
 RL_API void *RL_Make_Image(u32 width, u32 height);
-RL_API void *RL_Make_Vector(REBINT type, REBINT sign, REBINT dims, REBINT bits, REBINT size);
+RL_API int RL_Make_Vector(RXIARG *out, REBCNT type, REBINT cols, REBINT rows);
 RL_API void RL_Protect_GC(REBSER *series, u32 flags);
 RL_API int RL_Get_String(REBSER *series, u32 index, void **str, REBOOL needs_wide);
 RL_API int RL_Get_UTF8_String(REBSER *series, u32 index, void **str);
@@ -1050,5 +1262,13 @@ RL_API REBCNT RL_Encode_UTF8_Char(REBYTE *dst, REBU32 chr);
 RL_API void* RL_Mem_Alloc(void *opaque, size_t size);
 RL_API void RL_Mem_Free(void* opaque, void* address);
 RL_API int RL_Register_Compress_Method(const REBYTE* name, COMPRESS_FUNC encoder, DECOMPRESS_FUNC decoder);
+RL_API REBFLG RL_Struct_Info(RXIARG *arg, RXISTRU *out);
+RL_API REBFLG RL_Make_Struct(RXIARG *out, REBCNT id, RXISTRU *info);
+RL_API void* RL_Alloc(size_t size);
+RL_API void RL_Free(void *mem, size_t size);
+RL_API int RL_Register_Device(REBDEV *dev, u32 dev_size);
+RL_API REBREQ *RL_Port_State(REBSER *port, REBCNT device);
+RL_API int RL_Do_Device(REBREQ *req, REBCNT command);
+RL_API REBINT RL_Form_Value(REBSER *dst, RXIARG val, REBCNT type, REBCNT limit, REBCNT flags);
 
 #endif

@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Host Access Library
-**  Build: 3.21.15
-**  Date:  14-Apr-2026
+**  Build: 3.22.18
+**  Date:  18-Nov-2026
 **  File:  host-lib.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-os-ext.reb)
@@ -21,13 +21,14 @@
 #define Host_Crash(reason) OS_Crash(cb_cast("REBOL Host Failure"), cb_cast(reason))
 OS_API void OS_Parse_Args(int argc, REBCHR **argv, REBARGS *rargs);    // src/os/host-args.c
 OS_API void OS_Signal_Device(REBREQ *req, REBINT type);    // src/os/host-device.c
-OS_API int OS_Call_Device(REBINT device, REBCNT command);    // src/os/host-device.c
+OS_API int OS_Call_Device(REBCNT device, REBCNT command);    // src/os/host-device.c
 OS_API int OS_Do_Device(REBREQ *req, REBCNT command);    // src/os/host-device.c
-OS_API REBREQ *OS_Make_Devreq(int device);    // src/os/host-device.c
+OS_API REBREQ *OS_Make_Devreq(REBCNT device);    // src/os/host-device.c
 OS_API int OS_Abort_Device(REBREQ *req);    // src/os/host-device.c
-OS_API int OS_Poll_Devices(void);    // src/os/host-device.c
+OS_API REBCNT OS_Poll_Devices(void);    // src/os/host-device.c
 OS_API int OS_Quit_Devices(int flags);    // src/os/host-device.c
 OS_API REBINT OS_Wait(REBCNT millisec, REBCNT res);    // src/os/host-device.c
+OS_API REBCNT OS_Register_Device(REBDEV *dev, u32 dev_size);    // src/os/host-device.c
 OS_API REBREQ *OS_Open_StdIO(REBOOL cgi);    // src/os/host-stdio.c
 OS_API void OS_Close_StdIO(void);    // src/os/host-stdio.c
 RL_API REBYTE *OS_Read_Line(void);    // src/os/host-stdio.c

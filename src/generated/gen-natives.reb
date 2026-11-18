@@ -49,6 +49,13 @@ did: native [
 ;-- src/core/n-data.c
 
 
+slice: native [
+        "Make a lazy slice view into a series - no data is copied."
+        series [any-block! string! binary! vector!]  "Source series"
+        length [integer!] "Number of elements to include"
+    ]
+
+
 collect-words: native [
         "Collect unique words used in a block (used for context construction)."
         block [block!]
@@ -188,16 +195,19 @@ number?: native [
 
 
 mod: native [
-        {Compute a nonnegative remainder of A divided by B.}
-        a [number! money! char! time!]
-        b [number! money! char! time!] "Must be nonzero."
+        {Returns the remainder of dividing two numbers using truncated division.}
+        {The sign of the result follows the sign of the dividend.}
+        a [number! money! char! time!] "Dividend"
+        b [number! money! char! time!] "Divisor (must be nonzero)"
     ]
 
 
 modulo: native [
-        {Wrapper for MOD that handles errors like REMAINDER. Negligible values (compared to A and B) are rounded to zero.}
-        a [number! money! char! time!]
-        b [number! money! char! time!] "Absolute value will be used."
+        {Returns the modulo of dividing two numbers using Euclidean division.}
+        {The result is always non-negative: 0 <= result < abs(divisor).}
+        a [number! money! char! time!] "Dividend"
+        b [number! money! char! time!] "Divisor (must be nonzero)"
+        /floor "Use floor division; the sign of the result follows the sign of the divisor"
     ]
 
 
@@ -261,10 +271,40 @@ lerp: native [
     ]
 
 
-idivide: native [
+clamp: native [
+        {Restricts a value to be within the specified minimum-maximum range}
+        value   [number! tuple! pair! money! vector!] "Value to clamp (a vector is modified)"
+        minimum [number! tuple! pair! money!] "Lower bound"
+        maximum [number! tuple! pair! money!] "Upper bound"
+    ]
+
+
+integer-divide: native [
         {Returns the first integer divided by the second}
-        value1  [integer!]
-        value2  [integer!]
+        value1  [number!]
+        value2  [number!]
+    ]
+
+
+distance: native [
+        {Returns the distance between two points}
+        value1  [pair!]
+        value2  [pair!]
+        /taxicab "Use Manhattan distance (sum of absolute differences)"
+    ]
+
+
+factorial: native [
+        {Calculate the factorial of given value}
+        value  [integer!]
+        return: [integer! decimal!] "Exact for n <= 20, approximate (double) for n <= 170"
+    ]
+
+
+cube-root: native [
+        {Returns the real cube root of a number}
+        value  [decimal! integer!]
+        return: [decimal!] "The cube root of the value"
     ]
 
 ;-- src/core/n-strings.c
@@ -295,6 +335,39 @@ register: native [
 complement?: native [
         "Returns TRUE if the bitset is complemented"
         value [bitset!]
+    ]
+
+;-- src/core/t-vector.c
+
+
+interpolate: native [
+        "Samples values given at ascending positions, linearly between them"
+        positions [vector!] "Ascending positions of the values"
+        values    [vector!] "The values at them; with /stride, `width` for each position"
+        at        [integer! vector!] {How many samples, evenly spaced from the first position to the last - or the positions to sample at}
+        /stride   "Values for each position (default 1) - 3 for RGB colors"
+         width    [integer!]
+        /into     "Write into an existing vector (from its index) instead of a new one"
+         target   [vector!]
+    ]
+
+;-- src/core/u-bincode.c
+
+
+binary: native [
+        "Entry point of the binary DSL (Bincode)"
+
+        ctx [handle! binary! integer! none!] "Bincode context. If none, it will create a new one."
+        /init    "Initializes buffers in the context"
+            spec [binary! integer! none!]
+        /write   "Write data into output buffer"
+            data [binary! block!] "Data dialect"
+        /read    "Read data from the input buffer"
+            code [word! block! integer! binary! struct!]   "Input encoding"
+        /into    "Put READ results in out block, instead of creating a new block"
+            out  [block! struct! vector!] "Target block for results, or a struct/vector to be filled, when /into is used"
+        /with    "Additional input argument"
+            num  [integer!] "Bits/bytes number used with WORD! code type to resolve just single value"
     ]
 
 ;-- src/core/u-compress.c
@@ -405,25 +478,6 @@ ecdsa: native [
         /curve "Used if key is just a binary"
             type [word!] "One of supported curves: system/catalog/elliptic-curves"
   ]
-
-;-- src/core/u-bincode.c
-
-
-binary: native [
-        "Entry point of the binary DSL (Bincode)"
-
-        ctx [object! binary! integer! none!] "Bincode context. If none, it will create a new one."
-        /init    "Initializes buffers in the context"
-            spec [binary! integer! none!]
-        /write   "Write data into output buffer"
-            data [binary! block!] "Data dialect"
-        /read    "Read data from the input buffer"
-            code [word! block! integer! binary!]   "Input encoding"
-        /into    "Put READ results in out block, instead of creating a new block"
-            out  [block!] "Target block for results, when /into is used"
-        /with    "Additional input argument"
-            num  [integer!] "Bits/bytes number used with WORD! code type to resolve just single value"
-    ]
 
 ;-- src/core/u-iconv.c
 

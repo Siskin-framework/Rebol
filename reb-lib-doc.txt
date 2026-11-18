@@ -2,7 +2,7 @@ Host/Extension API
 
 =r3
 
-=*Updated for 3.21.15 on 14-Apr-2026
+=*Updated for 3.22.18 on 18-Nov-2026
 
 =*Describes the functions of reb-lib, the REBOL API (both the DLL and extension library.)
 
@@ -366,22 +366,34 @@ no references to them from REBOL code (C code does nothing.)
 
 ===RL_Make_Vector
 
-:Function: - <tt class=word>void *RL_Make_Vector(REBINT type, REBINT sign, REBINT dims, REBINT bits, REBINT size)</tt>
+:Function: - <tt class=word>int RL_Make_Vector(RXIARG *out, REBCNT type, REBINT cols, REBINT rows)</tt>
 
-:Summary: - Allocate a new vector of the given attributes.
+:Summary: - Allocate a new vector series with the given element type and shape.
 
-:Returns: - A pointer to a vector series or zero.
+:Returns: - 1 on success, 0 on failure. On failure `out` is left untouched.
+Fails if `type` is not a valid element type, if `cols` is
+negative, if `rows` is less than 1 or too large to encode, or
+if the total element count cannot be allocated.
 
-:Arguments: - type: the datatype
-sign: signed or unsigned
-dims: number of dimensions
-bits: number of bits per unit (8, 16, 32, 64)
-size: number of values
+:Arguments: - out:  RXIARG to receive the vector (series, index and info)
+type: element type, one of the VT* values (VTSI08..VTSF64)
+cols: number of columns (0 makes an empty vector)
+rows: number of rows; 1 for an unshaped (plain) vector
 
 
-:Notes: - Allocated with REBOL's internal memory manager.
-Vectors are automatically garbage collected if there are
-no references to them from REBOL code (C code does nothing.)
+:Notes: - Contents are zero-filled. The element type and row count are
+encoded together in `out->vector.info`; use the VECT_* macros
+rather than unpacking it by hand. The VT* numbering is part of
+the extension ABI and must not be reordered.
+
+A vector with more than one row is length-locked, matching
+vectors shaped from Rebol: rows travel with the value while the
+buffer length is shared, so APPEND/INSERT/CLEAR on it will error.
+
+Allocated with REBOL's internal memory manager and garbage
+collected once no REBOL value references it. Until the returned
+RXIARG reaches REBOL, nothing references the series -- do not
+call other RL_ functions that may allocate in between.
 
 
 ===RL_Protect_GC
@@ -613,7 +625,7 @@ will be appended.
 :Arguments: - <tt class=word>obj </tt> - object pointer (e.g. from RXA_OBJECT)
 
 
-:Notes: - Returns a word array similar to MAP_WORDS().
+:Notes: - Returns a word array similar to MAP_WORDS (first element is size).
 The array is allocated with OS_MAKE. You can OS_FREE it any time.
 
 
@@ -762,6 +774,10 @@ or NOT_FOUND if handle with give ID is already registered.
 :Arguments: - <tt class=word>hob</tt> - handle's context
 
 
+:Notes: - The resources are released now, but the context itself stays
+allocated until no value refers to it. A released handle can
+therefore never be mistaken for a handle created later.
+
 
 ===RL_Decode_UTF8_Char
 
@@ -888,5 +904,174 @@ Such allocated memory must be freed using `RL_Mem_Free` function!
 :Arguments: - <tt class=word>name</tt> - null ternimanted name of the compression method
 <br><tt class=word>encoder</tt> - external compress function
 
+
+
+===RL_Struct_Info
+
+:Function: - <tt class=word>REBFLG RL_Struct_Info(RXIARG *arg, RXISTRU *out)</tt>
+
+:Summary: - Resolve a struct argument into a directly usable description.
+
+A struct value is a view into a shared data series, so its size and
+flags live in the specification, not in the series. This performs the
+spec lookup once and validates that the view fits into the data.
+
+:Returns: - TRUE when the argument describes a usable struct, else FALSE
+(no data series, unknown spec id, or the view runs past the data).
+
+:Arguments: - <tt class=word>arg</tt> - struct argument as received in a command frame
+<br><tt class=word>out</tt> - filled with data pointer, size, count, id, flags, field list
+
+
+
+===RL_Make_Struct
+
+:Function: - <tt class=word>REBFLG RL_Make_Struct(RXIARG *out, REBCNT id, RXISTRU *info)</tt>
+
+:Summary: - Create a new struct value of an already registered specification.
+
+The specification must already exist in system/catalog/structs, where
+Prepare_Struct interns it when Rebol code evaluates `make struct!
+[...]` - so an extension instantiates a shape its own module declared
+rather than defining one in C. The data series is allocated zeroed and
+is owned by the struct.
+
+The zeroing is required, not incidental: a zeroed `rebval!` field reads
+as END, which get_scalar reports as none and Mark_Struct_Fields skips.
+Uninitialized bytes there would be marked by the GC as garbage values.
+
+Like RL_Make_String and RL_Make_Block, the result is protected from the
+GC only as a recently allocated series. Store it into a command frame
+argument and return it; do not hold it across a large number of other
+allocations.
+
+:Returns: - TRUE when the struct was created, else FALSE (unknown spec id or
+a zero-sized specification).
+
+:Arguments: - <tt class=word>out </tt> - command frame argument which receives the new struct
+<br><tt class=word>id  </tt> - spec id (hash of the specification block)
+<br><tt class=word>info</tt> - filled like RL_Struct_Info; may be NULL
+
+
+
+===RL_Alloc
+
+:Function: - <tt class=word>void* RL_Alloc(size_t size)</tt>
+
+:Summary: - Allocate memory that the interpreter itself may free.
+
+Unlike RL_Mem_Alloc, this is the interpreter's plain accounted
+allocator - the same one used internally by Make_Mem - so a buffer
+handed back to the core (for example a codec's output, freed by
+DO-CODEC with a known size) must come from here, not from
+RL_Mem_Alloc, whose result carries a hidden header and may live in
+a memory pool. Free with RL_Free and the size passed to RL_Alloc.
+
+:Returns: - Pointer to uninitialized memory, or 0 on failure.
+
+:Arguments: - <tt class=word>size</tt> - number of bytes
+
+
+
+===RL_Free
+
+:Function: - <tt class=word>void RL_Free(void *mem, size_t size)</tt>
+
+:Summary: - Frees memory allocated with RL_Alloc. The size must match.
+
+:Returns: - nothing
+
+:Arguments: - <tt class=word>mem </tt> - pointer to initialized memory
+<br><tt class=word>size</tt> - number of bytes
+
+
+
+===RL_Register_Device
+
+:Function: - <tt class=word>int RL_Register_Device(REBDEV *dev, u32 dev_size)</tt>
+
+:Summary: - Add a device to the device table at run time.
+
+:Returns: - The assigned device id (>= RDI_MAX), or a negative RDR_ code:
+RDR_TABLE_FULL, RDR_BAD_DEVICE or RDR_BAD_REBDEV.
+
+:Arguments: - <tt class=word>dev     </tt> - device structure, usually from DEFINE_DEV
+<br><tt class=word>dev_size</tt> - sizeof(REBDEV) as the caller sees it
+
+
+:Notes: - The device and its command table must stay valid for the life
+<br><tt class=word>of the process</tt> - devices cannot be unregistered, so a library
+which registers one must not be unloaded.
+
+Pass the id as req->device to reach the device; events are
+posted with EVM_DEVICE and evt.req, as for built-in devices.
+
+
+===RL_Port_State
+
+:Function: - <tt class=word>REBREQ *RL_Port_State(REBSER *port, REBCNT device)</tt>
+
+:Summary: - Get the native request of a port, creating it if it does not exist.
+
+This is the handle the event machinery recognizes: the request it
+returns has req->port set, so an EVM_DEVICE event carrying it wakes
+that port. An extension must not improvise one - Pending_Port reads
+port/state as a REBREQ without checking the handle type, so a handle
+of any other type parked there is read as a request.
+
+:Returns: - The port's request, or 0 if `port` is not a usable port frame.
+
+:Arguments: - <tt class=word>port  </tt> - port frame, as received in a port! command argument
+<br><tt class=word>device</tt> - device id from RL_Register_Device
+
+
+:Notes: - The state holds the port's request followed by a second request
+used internally by net ports for WRITE (see PORT_STATE_REQS in
+c-port.c). The returned request is the first one; it has the size
+sizeof(REBREQ), so a device needing more must keep it behind
+req->handle, the way dev-midi.c does.
+
+Allocating the handle can trap on out of memory, which longjmps
+<br><tt class=word>out of the extension</tt> - do not hold resources that only a return
+would release across this call.
+
+
+===RL_Do_Device
+
+:Function: - <tt class=word>int RL_Do_Device(REBREQ *req, REBCNT command)</tt>
+
+:Summary: - Run a device command, as OS_Do_Device does for the built-in ports.
+
+:Returns: - =0 command succeeded
+>0 command is pending (the request was attached for polling)
+<0 command failed; req->error holds the code
+
+:Arguments: - <tt class=word>req    </tt> - request, usually from RL_Port_State
+<br><tt class=word>command</tt> - RDC_ command code
+
+
+:Notes: - Only devices added by RL_Register_Device can be driven this way.
+The built-in devices are reached through their own port schemes,
+which apply the security policy (Secure_Port) before dispatching;
+an extension must not route around that.
+
+
+===RL_Form_Value
+
+:Function: - <tt class=word>REBINT RL_Form_Value(REBSER *dst, RXIARG val, REBCNT type, REBCNT limit, REBCNT flags)</tt>
+
+:Summary: - Form (or mold) a value into a UTF-8 string series.
+
+:Returns: - Number of bytes written, or -1 when dst is not a byte string.
+
+:Arguments: - <tt class=word>dst  </tt> - target string; reset first unless RXF_APPEND is set
+<br><tt class=word>val  </tt> - the value, as RXIARG + its RXT_ type
+<br><tt class=word>limit</tt> - max chars (0 = no limit); longer output ends with "..."
+<br><tt class=word>flags</tt> - RXF_MOLD: mold instead of form
+RXF_APPEND: append to dst instead of replacing it
+
+
+:Notes: - Uses the shared mold buffer, so it must not be called while
+another mold is in progress (e.g. from a handle's mold callback).
 
 

@@ -10,8 +10,8 @@
 ************************************************************************
 **
 **  Title: Datatype Comparison Functions
-**  Build: 3.21.15
-**  Date:  14-Apr-2026
+**  Build: 3.22.18
+**  Date:  18-Nov-2026
 **  File:  comptypes.h
 **
 **  AUTO-GENERATED FILE - Do not modify. (From: make-boot.reb)
@@ -42,7 +42,6 @@ extern REBINT CT_Function(REBVAL *, REBVAL *, REBINT);
 extern REBINT CT_Frame(REBVAL *, REBVAL *, REBINT);
 extern REBINT CT_Object(REBVAL *, REBVAL *, REBINT);
 extern REBINT CT_Port(REBVAL *, REBVAL *, REBINT);
-extern REBINT CT_Gob(REBVAL *, REBVAL *, REBINT);
 extern REBINT CT_Event(REBVAL *, REBVAL *, REBINT);
 extern REBINT CT_Handle(REBVAL *, REBVAL *, REBINT);
 extern REBINT CT_Struct(REBVAL *, REBVAL *, REBINT);
@@ -108,7 +107,6 @@ extern REBINT CT_Utype(REBVAL *, REBVAL *, REBINT);
 	CT_Object,                    // error
 	CT_Object,                    // task
 	CT_Port,                      // port
-	CT_Gob,                       // gob
 	CT_Event,                     // event
 	CT_Handle,                    // handle
 	CT_Struct,                    // struct
