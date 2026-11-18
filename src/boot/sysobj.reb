@@ -3,7 +3,7 @@ REBOL [
 	Title: "System object"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2024 Rebol Open Source Contributors
+		Copyright 2012-2026 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -22,7 +22,7 @@ product:  'core
 ; Next four fields are updated during build:
 platform: none
 version:  0.0.0
-build:    object [os: os-version: abi: sys: arch: libc: vendor: target: compiler: date: git: none]
+build:    object [os: os-version: abi: sys: arch: libc: vendor: target: compiler: date: git: extension-abi: none]
 
 user: construct [
 	name: none
@@ -53,6 +53,7 @@ options: object [  ; Options supplied to REBOL during startup
 	binary-base: 16    ; Default base for FORMed binary values (64, 16, 2)
 	decimal-digits: 15 ; Max number of decimal digits to print.
 	probe-limit: 16000 ; Max probed output size
+	http-redirects: 10 ; Max HTTP redirects allowed
 	module-paths: none ;@@ DEPRECATED!
 	default-suffix: %.reb ; Used by IMPORT if no suffix is provided
 	result-types: none
@@ -69,15 +70,53 @@ options: object [  ; Options supplied to REBOL during startup
 	domain-name: none ; Specifies system's domain name (used in SMTP scheme so far)
 	no-color: false
 	ansi: #[
-		gray:   "^[[1;30m"
-		red:    "^[[1;31m"
-		green:  "^[[1;32m"
-		yellow: "^[[1;33m"
-		blue:   "^[[1;34m"
-		purple: "^[[1;35m"
-		cyan:   "^[[1;36m"
-		white:	"^[[1;37m"
-		reset:  "^[[0m"
+		reset:             "^[[0m"
+		bold:              "^[[1m"
+		italic:            "^[[3m"
+		underline:         "^[[4m"
+		invert:            "^[[7m"
+		bold-off:          "^[[22m"
+		italic-off:        "^[[23m"
+		underline-off:     "^[[24m"
+		invert-off:        "^[[27m"
+		foreground:        "^[[39m" ;= Default foreground color
+		background:        "^[[49m" ;= Default background color
+		gray:              "^[[38;5;244m"
+		;; Basic foreground terminal palette
+		black:             "^[[30m"
+		red:               "^[[31m"
+		green:             "^[[32m"
+		yellow:            "^[[33m"
+		blue:              "^[[34m"
+		magenta:           "^[[35m"
+		cyan:              "^[[36m"
+		white:             "^[[37m"
+		bright-red:        "^[[91m"
+		bright-green:      "^[[92m"
+		bright-yellow:     "^[[93m"
+		bright-blue:       "^[[94m"
+		bright-magenta:    "^[[95m"
+		bright-cyan:       "^[[96m"
+		bright-white:      "^[[97m"
+		;; Basic background terminal palette
+		black-bg:          "^[[40m"
+		red-bg:            "^[[41m"
+		green-bg:          "^[[42m"
+		yellow-bg:         "^[[43m"
+		blue-bg:           "^[[44m"
+		magenta-bg:        "^[[45m"
+		cyan-bg:           "^[[46m"
+		white-bg:          "^[[47m"
+		bright-red-bg:     "^[[101m"
+		bright-green-bg:   "^[[102m"
+		bright-yellow-bg:  "^[[103m"
+		bright-blue-bg:    "^[[104m"
+		bright-magenta-bg: "^[[105m"
+		bright-cyan-bg:    "^[[106m"
+		bright-white-bg:   "^[[107m"
+		;; Some common color combinations
+		error:    "^[[38;5;201m"
+		banner:   "^[[30;107m"
 	]
 ]
 
@@ -92,7 +131,7 @@ catalog: object [
 	reflectors: [
 		spec   [any-function! any-object! vector! datatype! struct!]
 		body   [any-function! any-object! map! struct!]
-		words  [any-function! any-object! map! date! handle! struct!]
+		words  [any-function! any-object! map! date! handle! struct! image!]
 		values [any-object! map! struct!]
 		types  [any-function!]
 		title  [any-function! datatype! module!]
@@ -102,7 +141,7 @@ catalog: object [
 	boot-flags: [
 		script args do import version debug secure
 		help vers quiet verbose
-		secure-min secure-max trace halt cgi boot-level no-window no-color
+		secure-min secure-max trace halt cgi boot-level no-window no-color legacy-repl
 	]
 	bitsets: object [
 		crlf:          #(bitset! #{0024})                             ;charset "^/^M"
@@ -136,16 +175,27 @@ catalog: object [
 		; will be filled on boot from `Init_Crypt` in `n-crypt.c`
 	]
 	event-types: [
-		; Event types. Order dependent for C and REBOL.
-		; Due to fixed C constants, this list cannot be reordered after release!
+		; Event types. The type code indexes this block, so the reserved
+		; slots must stay - see Get_Event_Var. Groups are 32 codes wide;
+		; 192..255 is left to extensions and reported as a plain integer.
+
+		;-- system (0) --
 		ignore			; ignore event (0)
 		interrupt		; user interrupt
-		device			; misc device request
-		callback		; callback event
 		custom			; custom events
 		error
-		init
+		init			; startup finished (not used yet)
+		device			; misc device request
+		callback		; callback event
+		shutdown		; the OS or session is ending - save and quit
+		suspend			; the machine is going to sleep
+		resume
+		theme-change	; system appearance changed (light/dark, colors)
+		_ _ _ _ _ _ _	; 11..31 reserved
+		_ _ _ _ _ _ _
+		_ _ _ _ _ _ _
 
+		;-- port / device (32) --
 		open
 		close
 		connect
@@ -154,46 +204,76 @@ catalog: object [
 		write
 		wrote
 		lookup
-
 		ready
 		done
 		time
+		pending			; the source has queued events - drain it
+		_ _ _ _ _ _ _ _ _ _	; 44..63 reserved
+		_ _ _ _ _ _ _ _ _ _
 
+		;-- window (64) --
 		show
 		hide
-		offset
+		offset			; the window moved (pairs with resize)
 		resize
 		active
-		inactive 
+		inactive
 		minimize
 		maximize
 		restore
+		focus			; also used for widgets
+		unfocus
+		close-request	; the user asked to close it (not a port close)
+		dpi-change		; this window's scale changed (per-monitor DPI)
+		_ _ _ _ _ _ _ _ _ _	; 77..95 reserved
+		_ _ _ _ _ _ _ _ _
 
-		move
+		;-- pointer (96) --
+		move			; the pointer moved
 		down
 		up
-		alt-down 
-		alt-up 
-		aux-down 
-		aux-up 
-		key    ;; Key down event (with a physical key information)
-		key-up ;; Key up event
-
+		alt-down
+		alt-up
+		aux-down
+		aux-up
+		click
+		enter
+		leave
 		scroll-line
 		scroll-page
+		touch-down		; contact id may be carried in the event's `win`
+		touch-up
+		touch-move
+		touch-cancel	; the system took the gesture over
+		_ _ _ _ _ _ _ _	; 112..127 reserved
+		_ _ _ _ _ _ _ _
 
-		drop-file
+		;-- keyboard (128) --
+		key				; character key down
+		key-up
+		named-key		; a key named in event-keys (F1, arrows, ...)
+		named-key-up
+		char
+		_ _ _ _ _ _ _ _ _	; 133..159 reserved
+		_ _ _ _ _ _ _ _ _
+		_ _ _ _ _ _ _ _ _
 
-		click
+		;-- widget / data (160) --
 		change
-		focus
-		unfocus
 		scroll
+		menu-select		; a menu item was chosen; its id is in `code`
+		menu-open		; the menu is about to be shown (populate/enable)
+		menu-close
+		drop-file
+		drop-text
+		sort            ; list-view sort request
+		_ _ _ _	_	    ; 168..191 reserved
+		_ _ _ _ _
+		_ _ _ _ _
+		_ _ _ _ _
+		_ _ _ _
 
-		control    ;; used to pass control key events to a console port
-		control-up ;; only on Windows?
-
-		char ;; 
+		;-- 192..255 reserved for extension-defined types --
 	]
 	event-keys: [
 		; Event types. Order dependent for C and REBOL.
@@ -246,19 +326,21 @@ state: object [
 	; Mutable system state variables
 	note: "contains protected hidden fields"
 	policies: construct [ ; Security policies
-		file:    ; file access
-		net:     ; network access
-		eval:    ; evaluation limit
-		memory:  ; memory limit
-		secure:  ; secure changes
-		protect: ; protect function
-		debug:   ; debugging features
-		envr:    ; read/write
-		call:    ; execute only
-		browse:  ; execute only
-			0.0.0
-		extension: 2.2.2 ; execute only
+		file:      ; file access
+		net:       ; network access
+		eval:      ; evaluation limit
+		memory:    ; memory limit
+		secure:    ; secure changes	
+		protect:   ; protect/unprotect functions
+		debug:     ; debugging features
+		envr:      ; read/write
+		call:      ; execute only
+		browse:    ; execute only
+		extension: ; execute only
+			0.0.0  ;= ALLOW
+		
 	]
+	confirm-policy: none ; used to hold secure's confirmation function (used from C side, hidden to user)
 	last-error:  none ; used by WHY?
 	last-result: none ; used to store last console result
 	;; The following 3 flags are updated by the `read-key` call
@@ -268,12 +350,15 @@ state: object [
 	wait-list: [] ;; List of ports to add to 'wait
 ]
 
-modules: object [
-	help:    none
+modules: #[
+	;; Holds imported modules using their names and also files or urls, from which
+	;; these were loaded. An url value means a known module, which was not loaded yet.
+
 	;; external native extensions
 	blend2d:       https://github.com/Siskin-framework/Rebol-Blend2D/releases/download/0.12.0/
 	blurhash:      https://github.com/Siskin-framework/Rebol-BlurHash/releases/download/1.0.0/
 	brotli:        https://github.com/Oldes/Rebol-Brotli/releases/download/0.1.0/
+	bzip2:         https://github.com/Oldes/Rebol-Bzip2/releases/download/1.1.0/
 	deflate:       https://github.com/Oldes/Rebol-Deflate/releases/download/0.1.0/
 	easing:        https://github.com/Siskin-framework/Rebol-Easing/releases/download/1.0.0/
 	mathpresso:    https://github.com/Siskin-framework/Rebol-MathPresso/releases/download/0.1.0/
@@ -303,6 +388,7 @@ modules: object [
 	css:              https://src.rebol.tech/mezz/codec-css.reb
 	csv:              https://src.rebol.tech/mezz/codec-csv.reb
 	ico:              https://src.rebol.tech/mezz/codec-ico.reb
+	pdb:              https://src.rebol.tech/mezz/codec-pdb.reb
 	pdf:              https://src.rebol.tech/mezz/codec-pdf.reb
 	srt:              https://src.rebol.tech/mezz/codec-srt.reb
 	swf:              https://src.rebol.tech/mezz/codec-swf.reb
@@ -316,8 +402,6 @@ modules: object [
 	quoted-printable: https://src.rebol.tech/mezz/codec-quoted-printable.reb
 	webdriver:        https://src.rebol.tech/modules/webdriver.reb
 	websocket:        https://src.rebol.tech/modules/websocket.reb
-	;; and..
-	window: none ;- internal extension for gui (on Windows so far!)
 ]
 
 codecs: object []
@@ -334,7 +418,6 @@ schemes: make block! 20 ; Block only before init-scheme! Than it is an object.
 
 ports: object [
 	system:         ; Port for system events
-	event:          ; Port for GUI
 	input:          ; Port for user input.
 	output:         ; Port for user output
 	echo:           ; Port for echoing output
@@ -455,6 +538,13 @@ standard: object [
 		target: 
 		query:  
 		fragment: none
+		local-ip: none ; address to listen on (none = all interfaces)
+	]
+
+	port-spec-timer: make port-spec-head [
+		scheme:  'timer
+		timeout: none ; delay before the first event (seconds or time!)
+		repeat:  none ; interval of the following events (none = only one event)
 	]
 
 	port-spec-checksum: make port-spec-head [
@@ -495,6 +585,16 @@ standard: object [
 		loop-count: 0
 	]
 
+	image-info: construct [
+		size:        ;; pair! width and height
+		width:
+		height:
+		length:      ;; pixels from the current position to the tail
+		position:    ;; pair! 1-based xy of the current position
+		opaque:      ;; true if all pixels are fully opaque
+		color:       ;; average color
+	]
+
 	file-info: construct [
 		name:
 		size:
@@ -521,17 +621,22 @@ standard: object [
 	]
 
 	vector-info: construct [
-		signed:     ; false if unsigned (always true for decimals)
-		type:       ; integer! or decimal! so far
-		size:       ; size per value in bits
-		length:     ; number of values
+		element-type: ; concrete vector element datatype (uint8!, int32!, float64!, ...)
+		signed:       ; false if unsigned (always true for decimals)
+		type:         ; integer! or decimal! so far
+		size:         ; size per value in bits
+		length:       ; number of values
+		shape:        ; cols and rows as a pair
+		shaped:       ; returns TRUE whether the vector has more than one row
 		minimum:
 		maximum:
-		range:      ; maximum - minimum
+		range:        ; maximum - minimum
 		sum:
-		mean:       ; average
+		mean:         ; average
 		median:
+		mode:
 		variance:
+		sample-variance:
 		population-deviation:
 		sample-deviation:
 	]
@@ -599,21 +704,9 @@ standard: object [
 	para: none	; mezz-graphics.h
 ]
 
-view: object [
-	screen-gob: none
-	handler: none
-	metrics: construct [
-		screen-size:
-		border-size:
-		border-fixed:
-		title-size:
-		work-origin:
-		work-size: 0x0
-	]
-]
-
 console: construct [
 	history: []
+	current: none
 ]
 
 license: none

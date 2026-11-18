@@ -51,7 +51,7 @@ do*: func [
 	mark [word!]
 	"Variable updated with new block position"
 
-	/local body file spec current-path header saved-script is-module
+	/local body file spec current-path header saved-script is-module result
 ][
 	; This code is only called for urls, files, and strings.
 	; DO of functions, blocks, paths, and other do-able types is done in the
@@ -150,7 +150,11 @@ do*: func [
 			; Eval the block or make the module, returned
 
 			either is-module [
-				; Import the module and set the var
+				; The script is evaluated as an isolated module: it is made
+				; every time, it is not registered in the system modules
+				; and nothing is exported from it (not even to the user
+				; context). The result is the result of its body.
+				; Use IMPORT to get the module and its exports.
 
 				spec: reduce [
 					header
@@ -158,15 +162,16 @@ do*: func [
 					do-needs/no-user header
 				]
 
-				also
-				import (
-					catch/quit [
-						make module! spec
-					]
-				)
+				set/any 'result catch/quit [
+					make-module*/result spec 'result
+					:result
+				]
+
 				if mark [
 					set mark tail body
 				]
+
+				:result
 			][
 				do-needs header
 				; Load the script requirements
@@ -203,6 +208,12 @@ make-module*: func [
 	spec [block!]
 	"As [spec-block body-block opt-mixins-object]"
 
+	/result
+	"Provides also the result of the body evaluation"
+
+	var [word!]
+	"Variable set to the result"
+
 	/local body context mixins hidden words
 ][
 	set [spec body mixins] spec
@@ -221,8 +232,8 @@ make-module*: func [
 		spec object!
 		body block!
 		mixins [object! none!]
-		spec/name [any-word! none!]
-		spec/type [any-word! none!]
+		spec/name [word! lit-word! none!]
+		spec/type [word! lit-word! none!]
 		spec/version [tuple! none!]
 		spec/options [block! none!]
 	]
@@ -232,18 +243,19 @@ make-module*: func [
 	context: make object! 7
 	; arbitrary starting size
 
-	either find spec/options 'extension [
+	if find spec/options 'extension [
 		bind/new [
 			lib-base
 			; specific runtime values MUST BE FIRST
 
 			lib-file
-			lib-local
 			words
 		] context
-	][
+	]
+
+	if object? mixins [
 		append context 'lib-local
-		; local import library for the module
+		; local import library, only for a module with private imports
 	]
 
 	if spec/name [
@@ -355,10 +367,12 @@ make-module*: func [
 
 	bind body context
 
-	context/lib-local: any [
-		; always set, always overrides
-		mixins
-		make object! 0
+	if object? mixins [
+		context/lib-local: mixins
+		; always overrides
+
+		protect/hide in context 'lib-local
+		; internal value, available only to the code of the module
 	]
 
 	if block? hidden [
@@ -369,7 +383,25 @@ make-module*: func [
 		spec context
 	]
 
-	do body
+	either result [
+		set/any var do body
+	][
+		do body
+	]
+
+	if find spec/options 'extension [
+		; Internal values of an extension (set by its body above),
+		; not to be changed or seen from outside.
+		; Done here, so it is the same for extensions loaded on boot.
+
+		if in context 'lib-base [
+			protect in context 'lib-base
+		]
+
+		if in context 'lib-boot [
+			protect/hide in context 'lib-boot
+		]
+	]
 
 	;print ["Module created" spec/name spec/version]
 
@@ -422,12 +454,6 @@ assert-utf8: function [
 	source
 ]
 
-system/options/ansi/bold: "^[[1m"
-system/options/ansi/regular-yellow: "^[[33m"
-system/options/ansi/regular-cyan: "^[[36m"
-system/options/ansi/reset-green: "^[[0;32m"
-system/options/ansi/reset-cyan: "^[[0;36m"
-
 log: func [
 	"Prints out debug message"
 
@@ -456,7 +482,7 @@ log: func [
 
 		foreach line split-lines message [
 			print ajoin [
-				" " ansi/purple "[" id "] " ansi/bold
+				" " ansi/error "[" id "] " ansi/bold
 
 				either line/1 = #"*" [] [
 					"** Error: "
@@ -492,7 +518,7 @@ log: func [
 		info  [
 			if level > 0 [
 				print ajoin [
-					#" " ansi/yellow "[" id "] " ansi/regular-cyan message ansi/reset
+					#" " ansi/bright-yellow "[" id "] " ansi/cyan message ansi/reset
 				]
 			]
 		]
@@ -500,7 +526,7 @@ log: func [
 		more  [
 			if level > 1 [
 				print ajoin [
-					#" " ansi/regular-yellow "[" id "] " ansi/reset-cyan message ansi/reset
+					#" " ansi/yellow "[" id "] " ansi/cyan message ansi/reset
 				]
 			]
 		]
@@ -508,7 +534,7 @@ log: func [
 		debug [
 			if level > 2 [
 				print ajoin [
-					#" " ansi/regular-yellow "[" id "] " ansi/reset-green message ansi/reset
+					#" " ansi/yellow "[" id "] " ansi/green message ansi/reset
 				]
 			]
 		]
@@ -516,7 +542,7 @@ log: func [
 		#(true)  [
 			if level > 0 [
 				print ajoin [
-					#" " ansi/regular-yellow "[" id "] " message ansi/reset
+					#" " ansi/yellow "[" id "] " message ansi/reset
 				]
 			]
 		]

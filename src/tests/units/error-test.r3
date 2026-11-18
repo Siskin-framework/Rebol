@@ -24,6 +24,26 @@ Rebol [
 	--assert none? attempt first [(1 / 0)]
 ===end-group===
 
+===start-group=== "BIND"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2704
+	--test-- "bind error!"
+	--assert error? e: try [read %nonsense]
+	--assert ["cannot open:" %nonsense "reason:" 3] = reduce bind system/catalog/errors/(e/type)/(e/id) e
+===end-group===
+
+
+===start-group=== "Actions"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2704
+	e: try [read %nonsense]
+	--test-- "select error!"
+	--assert %nonsense == select e 'arg1
+	--assert none? select e 'arg1111
+	
+	--test-- "find error!"
+	--assert true? find e 'arg1
+	--assert none? find e 'arg1111
+===end-group===
+
 
 ===start-group=== "make error!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/835
@@ -141,6 +161,37 @@ Rebol [
 
 ===end-group===
 
+===start-group=== "fail"
+	--test-- "fail with message"
+		--assert all [
+			error? e: try [fail "Something went wrong."]
+			e/type = 'User
+			e/id   = 'message
+			e/arg1 = "Something went wrong."
+		]
+
+	--test-- "fail with error"
+		--assert all [
+			error? e: try [fail make error! "Something went wrong."]
+			e/type = 'User
+			e/id   = 'message
+			e/arg1 = "Something went wrong."
+		]
+
+	--test-- "fail propagates error"
+		--assert all [
+			error? e: try [fail try [1 / 0]]
+			e/type = 'Math
+			e/id   = 'zero-divide
+		]
+
+	--test-- "fail requires string or error"
+		--assert all [
+			error? e: try [fail 123]
+			e/id = 'expect-arg
+		]
+===end-group===
+
 ===start-group=== "Error issues"
 	--test-- "issue-553"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/553
@@ -165,6 +216,19 @@ Rebol [
 		--assert all [error? e: try [system/catalog/errors: none] e/id = 'locked-word]
 		--assert all [error? e: try [system/catalog/errors/Math: none] e/id = 'locked-word]
 
+	--test-- "find/compare different errors"
+		e1: try [1 / 0]
+		e2: try [no-such-word-xyz]
+		--assert none? find reduce [e1] e2
+		--assert same? e1 first find reduce [e2 e1] e1
+
+	--test-- "error near with infix operators"
+		;@@ https://github.com/Oldes/Rebol3/issues/252
+		--assert all [error? e: try [1 / 0]      e/near = [1 / 0]]
+		--assert all [error? e: try [1 + 2 / 0]  e/near = [1 + 2 / 0]]
+		--assert all [error? e: try [abs 1 / 0]  e/near = [1 / 0]]
+		--assert all [error? e: try [a: 1 / 0]   e/near = [1 / 0]]
 ===end-group===
+
 
 ~~~end-file~~~

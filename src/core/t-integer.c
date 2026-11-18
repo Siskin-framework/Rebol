@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2024 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -302,7 +302,10 @@
 			bp = Qualify_String(val, MAX_INT_LEN, &len, FALSE);
 			if (memchr(bp, '.', len)) {
 				if (Scan_Decimal(bp, len, DS_RETURN, TRUE)) {
-					num = (REBINT)VAL_DECIMAL(DS_RETURN);
+					REBDEC dec = VAL_DECIMAL(DS_RETURN);
+					if (dec < MIN_D64 || dec >= MAX_D64 || isnan(dec))
+						Trap0(RE_OVERFLOW);
+					num = (REBI64)dec;
 					break;
 				}
 			}

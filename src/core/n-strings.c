@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -246,9 +246,9 @@ static struct digest {
 	REBVAL *method = D_ARG(ARG_CHECKSUM_METHOD);
 	REBVAL *spec   = D_ARG(ARG_CHECKSUM_SPEC);
 	REBINT sym;
-	REBINT sum;
-	REBINT i = 0;
-	REBCNT j;
+	REBCNT sum = 0;
+	REBLEN i = 0;
+	REBLEN j;
 	REBSER *digest;
 	REBCNT len, keylen;
 	REBYTE *bin;
@@ -354,26 +354,25 @@ static struct digest {
 		Trap0(RE_BAD_REFINES);
 
 	if (sym == SYM_CRC32 || sym == SYM_ADLER32) {
-		i = (sym == SYM_CRC32) ? CRC32(bin, len) : ADLER32_FUNC(0x00000001L, bin, len);
+		sum = (sym == SYM_CRC32) ? CRC32(bin, len) : ADLER32_FUNC(0x00000001L, bin, len);
 	}
 	else if (sym == SYM_HASH) {  // /hash
 		if(!D_REF(ARG_CHECKSUM_WITH)) Trap0(RE_MISSING_ARG);
 		if (!IS_INTEGER(spec)) Trap1(RE_BAD_REFINE, D_ARG(ARG_CHECKSUM_SPEC));
-		sum = VAL_INT32(spec); // size of the hash table
-		if (sum <= 1) sum = 1;
-		i = Hash_Value(data) % sum;
+		sum = (REBCNT)MAX(1, VAL_INT64(spec)); // size of the hash table
+		sum = Hash_Value(data) % sum;
 	}
 	else if (sym == SYM_CRC24) {
-		i = Compute_CRC24(bin, len);
+		sum = Compute_CRC24(bin, len);
 	}
 	else if (sym == SYM_TCP) {
-		i = Compute_IPC(bin, len);
+		sum = Compute_IPC(bin, len);
 	}
 	else {
 		Trap_Arg(D_ARG(ARG_CHECKSUM_METHOD));
 	}
 
-	DS_RET_INT(i);
+	DS_RET_INT(sum);
 	return R_RET;
 }
 
@@ -401,7 +400,7 @@ static struct digest {
 	if (D_REF(2)) parent = VAL_OBJ_FRAME(D_ARG(3));
 
 	frame = Construct_Object(parent, VAL_BLK_DATA(value), D_REF(4));
-	SET_OBJECT(D_RET, frame);
+	SET_OBJECT(DS_RETURN, frame); // stack may have been expanded, so not D_RET
 
 	return R_RET;
 }
@@ -456,12 +455,19 @@ static struct digest {
 	REBOOL brk = !D_REF(6);
 
 	if (IS_INTEGER(arg)) {
-		// Convert integer to binary...
-		SET_BINARY(arg, Make_Binary_BE64(arg));
-		// ...and trim leading zeros...
-		REBCNT i = 0;
-		while (i <= 7 && VAL_BIN_HEAD(arg)[i]==0) { ++i; }
-		VAL_INDEX(arg) = i;
+		if (VAL_INT64(arg) != 0) {
+			// Convert integer to binary...
+			SET_BINARY(arg, Make_Binary_BE64(arg));
+			// ...and trim leading zeros...
+			REBCNT i = 0;
+			while (i <= 7 && VAL_BIN_HEAD(arg)[i] == 0) { ++i; }
+			VAL_INDEX(arg) = i;
+		}
+		else {
+			// Special case for e.g.: enbase 0 16 ;== "00"
+			SET_BINARY(arg, Make_Binary(1));
+			VAL_TAIL(arg) = 1;
+		}
 	}
 	if (D_REF(4)) {
 		limit = Partial(arg, 0, part, 0); // Can modify value index.
@@ -547,33 +553,22 @@ static struct digest {
 
 /***********************************************************************
 **
-*/	REBNATIVE(dehex)
+*/	REBSER* Dehex_String(REBYTE* input, REBLEN length, const REBCHR escape_char, REBFLG as_uri)
 /*
-**		Works for any string.
-**
 ***********************************************************************/
 {
-	REBVAL *arg        = D_ARG(1);
-//	REBOOL  ref_escape = D_REF(2);
-//	REBVAL *val_escape = D_ARG(3);
-	REBOOL as_uri      = D_REF(4);
-	REBINT len = (REBINT)VAL_LEN(arg); // due to len -= 2 below
 	REBU32 n;
-	REBSER *ser;
-	REBYTE *bp, *dp;
-
-	const REBCHR escape_char = D_REF(2) ? VAL_CHAR(D_ARG(3)) : '%';
+	REBYTE* bp, * dp;
+	REBI64 len = (REBI64)length;
 	const REBCHR space_char = escape_char == '=' ? '_' : '+';
 
-	ASSERT1(VAL_BYTE_SIZE(arg), RP_BAD_SIZE);
-	bp = VAL_BIN_DATA(arg);
-
-	dp = Reset_Buffer(BUF_SCAN, len+1); // count also the terminating null byte
+	bp = input;
+	dp = Reset_Buffer(BUF_SCAN, len + 1); // count also the terminating null byte
 
 	for (; len > 0; len--) {
-		if (*bp == escape_char && len > 2 && Scan_Hex2(bp+1, &n)) {
+		if (*bp == escape_char && len > 2 && Scan_Hex2(bp + 1, &n)) {
 			*dp++ = (REBYTE)n;
-			bp  += 3;
+			bp += 3;
 			len -= 2;
 		}
 		else if (*bp == space_char && as_uri) {
@@ -584,10 +579,28 @@ static struct digest {
 			*dp++ = *bp++;
 		}
 	}
-
 	*dp = 0;
-	ser = Copy_String(BUF_SCAN, 0, AS_REBLEN(dp - BIN_HEAD(BUF_SCAN)));
+	return Copy_String(BUF_SCAN, 0, AS_REBLEN(dp - BIN_HEAD(BUF_SCAN)));
+}
 
+/***********************************************************************
+**
+*/	REBNATIVE(dehex)
+/*
+**		Works for any string.
+**
+***********************************************************************/
+{
+	REBVAL *arg        = D_ARG(1);
+//	REBOOL  ref_escape = D_REF(2);
+//	REBVAL *val_escape = D_ARG(3);
+//	REBOOL as_uri      = D_REF(4);
+	REBSER *ser;
+
+	const REBCHR escape_char = D_REF(2) ? VAL_CHAR(D_ARG(3)) : '%';
+
+	ASSERT1(VAL_BYTE_SIZE(arg), RP_BAD_SIZE);
+	ser = Dehex_String(VAL_BIN_DATA(arg), VAL_LEN(arg), escape_char, D_REF(4));
 	Set_Series(VAL_TYPE(arg), D_RET, ser);
 
 	return R_RET;

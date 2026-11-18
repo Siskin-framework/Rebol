@@ -702,6 +702,20 @@ Rebol [
 	--test-- "get on path"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/248
 		--assert tuple? get 'system/version
+
+	--test-- "path block index resolve"
+		b: [1 2]
+		--assert none? b/-1
+		--assert none? b/0
+		--assert  1 == b/1
+		--assert none? b/10
+
+	--test-- "path string index resolve"
+		s: "12"
+		--assert none? s/0
+		--assert #"1" == s/1
+		--assert none? s/10
+
 ===end-group===
 
 ===start-group=== "SET-PATH"
@@ -720,6 +734,21 @@ Rebol [
 			error? e: try [data/c: 30]
 			e/id = 'invalid-path
 		]
+	--test-- "set-path block with index"
+		b: [1 2]
+		--assert all [error? e: try [b/-2: 10] e/id = 'out-of-range]
+		--assert all [error? e: try [b/-1: 10] e/id = 'out-of-range]
+		--assert all [error? e: try [b/0:  10] e/id = 'out-of-range]
+		--assert all [error? e: try [b/10: 10] e/id = 'out-of-range]
+		--assert all [b/1: 10  b/1 == 10]
+
+	--test-- "set-path string with index"
+		s: "12"
+		--assert all [error? e: try [s/-2: 10] e/id = 'out-of-range]
+		--assert all [error? e: try [s/-1: 10] e/id = 'out-of-range]
+		--assert all [error? e: try [s/0:  10] e/id = 'out-of-range]
+		--assert all [error? e: try [s/10: 10] e/id = 'out-of-range]
+		--assert all [s/1: #"x"  s/1 == #"x"]
 ===end-group===
 
 
@@ -1794,6 +1823,63 @@ Rebol [
 		e/id = 'protected
 	]
 
+	;; comparator error inside merge must not leak the stable sort buffer
+	b: append collect [repeat i 50 [keep i + 50]] collect [repeat i 50 [keep i]]
+	n: 0
+	--assert all [
+		error? e: try [
+			sort/compare b func [a b] [
+				n: n + 1
+				if n > 110 [1 / 0]
+				a < b
+			]
+		]
+		e/id = 'zero-divide
+		n = 111
+	]
+	--assert 100 = length? b
+	--assert (sort copy b) = sort/compare copy b func [a b] [a < b]
+
+--test-- "SORT/compare block! (#2707)"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2707
+	blk: clear []
+	repeat i 32 [repend blk [i 0]] sort/skip/all/compare blk 2 func [a b] [a/2 < b/2] pa: pb: -1
+	--assert foreach [a b] blk [if b > pb [pa: a] if any [a < pa b < pb][break/return false] pa: a pb: b true]
+
+	clear blk repeat i 64 [repend blk [i 0]] sort/skip/all/compare blk 2 func [a b] [a/2 < b/2] pa: pb: -1
+	--assert foreach [a b] blk [if b > pb [pa: a] if any [a < pa b < pb][break/return false] pa: a pb: b true]
+
+	clear blk repeat i 264 [repend blk [i random 6]] sort/skip/all/compare blk 2 func [a b] [a/2 < b/2] pa: pb: -1
+	--assert foreach [a b] blk [if b > pb [pa: a] if any [a < pa b < pb][break/return false] pa: a pb: b true]
+
+	clear blk repeat i 264 [repend blk [100 - i random 6]] sort/skip/all/compare blk 2 func [a b] [a/2 < b/2] pa: 9999 pb: -1
+	--assert foreach [a b] blk [if b > pb [pa: a] if any [a > pa b < pb][break/return false] pa: a pb: b true]
+
+	clear blk repeat i 264 [repend blk [i random 6]] sort/skip/compare blk 2 2 pa: pb: -1
+	--assert foreach [a b] blk [if b > pb [pa: a] if any [a < pa b < pb][break/return false] pa: a pb: b true]
+
+	clear blk repeat i 264 [repend blk [i random 6]] sort/skip/all/compare/reverse blk 2 func [a b] [a/2 < b/2] pa: -1 pb: 999
+	--assert foreach [a b] blk [if b < pb [pa: a] if any [a > pa b > pb][break/return false] pa: a pb: b true]
+
+	clear blk repeat i 264 [repend blk [i random 6]] sort/skip/compare/reverse blk 2 2 pa: -1 pb: 999
+	--assert foreach [a b] blk [if b < pb [pa: a] if any [a < pa b > pb][break/return false] pa: a pb: b true]
+
+	clear blk repeat i 32 [repend blk [i 0]]
+	sorted: sort/skip/all/compare copy blk 2 func [a b] [a/2 < b/2]
+	--assert sorted = blk  ; equal keys → original order must be preserved
+
+	clear blk repeat i 34 [repend blk [i i]]
+	--assert blk = sort/skip/all/compare copy blk 2 func [a b] [a/2 < b/2]
+
+	clear blk          repeat i 34 [repend blk [35 - i  35 - i]]
+	expected: clear [] repeat i 34 [repend expected [i i]]
+	--assert expected = sort/skip/all/compare blk 2 func [a b] [a/2 < b/2]
+
+	; pairs [key original-index]: sort by key, verify ties preserve original order
+	blk: [3 1  1 2  2 3  1 4  3 5  2 6]
+	sorted: sort/skip/all/compare copy blk 2 func [a b] [a/1 < b/1]
+	--assert sorted = [1 2  1 4  2 3  2 6  3 1  3 5]
+
 --test-- "SORT/compare string!"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1100
 	comp: func [a b] [a > b]
@@ -1956,6 +2042,16 @@ try/with [
 		[Bob 25 Carol 30 Alice 30] == sort/unstable/skip/compare [Carol 30 Bob 25 Alice 30] 2 2
 	]
 
+	;; unstable sort (Adaptive Symmetry Partition Sort) correctness
+	b: collect [repeat i 10000 [keep (i * 7919) // 1013]]   ; many duplicates
+	--assert (sort copy b) = sort/unstable copy b
+	b: collect [repeat i 1000 [keep i]]                     ; ascending run
+	--assert b = sort/unstable copy b
+	b: collect [repeat i 1000 [keep 1001 - i]]              ; descending run
+	--assert (sort copy b) = sort/unstable copy b
+	b: collect [repeat i 500 [keep (i * 37) // 101 keep i]] ; records
+	--assert (sort/skip copy b 2) = sort/skip/unstable copy b 2
+
 
 --test-- "SORT vectors"
 	--assert #(uint8! [1 2 3 3 3 4 4 5 7]) == sort #(uint8! [1 4 3 2 3 5 7 4 3])
@@ -2023,10 +2119,29 @@ try/with [
 		--assert all [
 			"b🙂" == swap s1: "🙂b" next s1
 		]
-	--test-- "swap invalidating index (known issue)"
+	--test-- "swap invalidating index"
 		--assert all [
 			"b🙂" == swap s1: "🙂b" s2: next s1
-			"🙂" == length? s2 ;@@ Known issue!!! The index is not valid anymore.
+			1 == length? s2
+			2 == index? s2
+			#"🙂" == pick s2 1
+			"🙂" == copy s2
+		]
+	--test-- "poke invalidating index"
+		;; the index stays valid, but not on the same character!
+		--assert all [
+			s2: next s1: "ab"
+			#"🙂" == poke s1 1 #"🙂"
+			2 == length? s2
+			"🙂b" == copy s2
+		]
+	--test-- "comparing string with invalidated index"
+		--assert all [
+			"b🙂" == swap s1: "🙂b" s2: next s1
+			"🙂" == s2
+			"🙂" =  s2
+			s2 == next s1
+			(reduce [s2]) = ["🙂"]
 		]
 	--test-- "swap binary"
 		--assert all [
@@ -2207,6 +2322,21 @@ try/with [
 	--assert none? foreach [x x x] [1 2 3] [context? 'x]
 	--assert  3 == foreach [x x x] [1 2 3] [x]
 
+--test-- "FOREACH with data stack expansion in body"
+	;; the body expands (moves) the data stack, then reuses the freed memory
+	blk: [a b c d e]
+	out: copy []
+	foreach w blk [
+		append out w
+		if w = 'b [
+			reduce append/dup make block! 0 1 100 + stack/limit 0
+			loop 200 [make binary! 300000 make string! 100000]
+			recycle
+		]
+	]
+	--assert out = blk
+	unset [blk out]
+
 ===end-group===
 
 ===start-group=== "MAP-EACH"
@@ -2304,57 +2434,57 @@ try/with [
 
 ; additional tests which also contain CRLF
 --test-- "issue-2186 read UCS16-LE"
-	bin: read %units/files/issue-2186-UTF16-LE.txt
+	bin: read %files/issue-2186-UTF16-LE.txt
 	--assert all [
 		string? try [str: to-string bin]
-		3160989 = checksum str 'crc24
+		8206283 = checksum str 'crc24
 	]
 --test-- "issue-2186 read UCS16-BE"
-	bin: read %units/files/issue-2186-UTF16-BE.txt
+	bin: read %files/issue-2186-UTF16-BE.txt
 	--assert all [
 		string? try [str: to-string bin]
-		3160989 = checksum str 'crc24
+		8206283 = checksum str 'crc24
 	]
 --test-- "issue-2186 read UCS32-LE"
-	bin: read %units/files/issue-2186-UTF32-LE.txt
+	bin: read %files/issue-2186-UTF32-LE.txt
 	--assert all [
 		string? try [str: to-string bin]
-		3160989 = checksum str 'crc24
+		8206283 = checksum str 'crc24
 	]
 --test-- "issue-2186 read UCS32-BE"
-	bin: read %units/files/issue-2186-UTF32-BE.txt
+	bin: read %files/issue-2186-UTF32-BE.txt
 	--assert all [
 		string? try [str: to-string bin]
-		3160989 = checksum str 'crc24
+		8206283 = checksum str 'crc24
 	]
 ;- read/string converts CRLF to LF, so the checksum is different
 --test-- "issue-2186 read/string UCS16-LE"
 	--assert all [
-		string? try [str: read/string %units/files/issue-2186-UTF16-LE.txt]
-		11709824 = checksum str 'crc24
+		string? try [str: read/string %files/issue-2186-UTF16-LE.txt]
+		5408699 = checksum str 'crc24
 	]
 --test-- "issue-2186 read/string UCS16-BE"
 	--assert all [
-		string? try [str: read/string %units/files/issue-2186-UTF16-BE.txt]
-		11709824 = checksum str 'crc24
+		string? try [str: read/string %files/issue-2186-UTF16-BE.txt]
+		5408699 = checksum str 'crc24
 	]
 --test-- "issue-2186 read/string UCS32-LE"
 	--assert all [
-		string? try [str: read/string %units/files/issue-2186-UTF32-LE.txt]
-		11709824 = checksum str 'crc24
+		string? try [str: read/string %files/issue-2186-UTF32-LE.txt]
+		5408699 = checksum str 'crc24
 	]
 --test-- "issue-2186 read/string UCS32-BE"
 	--assert all [
-		string? try [str: read/string %units/files/issue-2186-UTF32-BE.txt]
-		11709824 = checksum str 'crc24
+		string? try [str: read/string %files/issue-2186-UTF32-BE.txt]
+		5408699 = checksum str 'crc24
 	]
 
 --test-- "invalid UTF8 char"
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1064
 ;@@ https://github.com/Oldes/Rebol-issues/issues/1216
 	--assert all [error? e: try [to-string #{C2E0}] e/id = 'invalid-utf]
-	--assert all [error? e: try [to-string #{C3}] e/id = 'invalid-utf]
-	--assert all [error? e: try [to-string #{EF}] e/id = 'invalid-utf]
+	--assert all [error? e: try [to-string #{C3}]   e/id = 'invalid-utf]
+	--assert all [error? e: try [to-string #{EF}]   e/id = 'invalid-utf]
 	--assert all [error? e: try [to-string #{EFBF}] e/id = 'invalid-utf]
 
 	--assert #{C2E0} = invalid-utf? #{C2E0}
@@ -2367,10 +2497,10 @@ try/with [
 	--assert "^(FFFD)" = to-string #{EFBFBD}
 
 	;- using quickbrown.bin instead of quickbrown.txt beacause GIT modifies CRLF to LF on posix
-	--assert none? invalid-utf? bin: read %units/files/quickbrown.bin
-	--assert 13806406 = checksum str: to-string bin 'crc24 ; does not normalize CRLF
-	--assert  5367801 = checksum deline str 'crc24
-	--assert  5367801 = checksum read/string %units/files/quickbrown.bin 'crc24 ;converts CRLF to LF
+	--assert none? invalid-utf? bin: read %files/quickbrown.bin
+	--assert  1872109 = checksum str: to-string bin 'crc24 ; does not normalize CRLF
+	--assert 16295532 = checksum deline str 'crc24
+	--assert 16295532 = checksum read/string %files/quickbrown.bin 'crc24 ;converts CRLF to LF
 
 --test-- "invalid utf16"
 	--assert try ["á🙂" == to-string #{FEFF00E1D83DDE42}]
@@ -2709,6 +2839,66 @@ try/with [
 
 ===end-group===
 
+===start-group=== "EMAIL"
+--test-- "email getters"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1489
+	e: someone@rebol.tech
+	--assert e/user = "someone"
+	--assert e/host = "rebol.tech"
+	;; when not at head...
+	e: find e ".tech"
+	--assert e/user = "someone"
+	--assert e/host = "rebol.tech"
+	;; when @ is missing
+	e: as email! "foo"
+	--assert e/user = "foo"
+	--assert e/host = none
+	;; with multiple @
+	e: as email! "aaa@bbb@ccc"
+	--assert e/user = "aaa"
+	--assert e/host = "bbb@ccc"
+--test-- "email setters"
+	e: someone@rebol.tech
+	e/host: "gmail.com"
+	--assert e = someone@gmail.com
+	e/user: "foo"
+	--assert e = foo@gmail.com
+	;; when @ is missing
+	clear e
+	e/user: "bob"
+	--assert e = #(email! "bob")
+	clear e
+	e/host: %rebol.tech
+	--assert e = #(email! "@rebol.tech")
+	;; unicode...
+	e/user: "šiška"
+	--assert e = šiška@rebol.tech
+
+--test-- "make email! block!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2708
+	--assert (make email! [aaa]) = #(email! "aaa")
+	--assert (make email! [aaa bbb]) = aaa@bbb
+	--assert (make email! [aaa bbb cc]) = aaa@bbb.cc
+	--assert (make email! [aaa bbb cc dd]) = aaa@bbb.cc.dd
+	--assert all [error? e: try [make email! []] e/id = 'bad-make-arg]
+
+===end-group===
+
+===start-group=== "URL"
+--test-- "make url! block!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2709
+	--assert (make url! [http]) = http://
+	--assert (make url! [http www.rebol.com %reboldoc.html]) = http://www.rebol.com/reboldoc.html
+	--assert all [error? e: try [make email! []] e/id = 'bad-make-arg]
+--test-- "form url!"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2710
+	;; `form` does not perform implicit dehexing like Rebol 2!
+	--assert {http://www.somesite.dom/odd%28dir%29/odd%7Bfile%20+%7D.txt} = form http://www.somesite.dom/odd%28dir%29/odd%7Bfile%20+%7D.txt
+	--assert "http://www.somesite.dom/odd%28dir%29/odd%7Bfile%7D.txt" = mold http://www.somesite.dom/odd%28dir%29/odd%7Bfile%7D.txt
+	--assert "odd(dir)/odd{file}.txt" = form %odd%28dir%29/odd%7Bfile%7D.txt
+===end-group===
+
+
 
 ===start-group=== "BINARY"
 
@@ -2918,6 +3108,11 @@ try/with [
 ===start-group=== "SPLIT-LINES"
 --test-- "split-lines string!"
 	--assert ["a" "b" "c"]  = split-lines "a^/b^M^/c"
+--test-- "split-lines with non-head index"
+	--assert ["b" "cd"] = split-lines next "ab^/cd"
+	--assert ["b" "c"]  = split-lines next "ab^M^/c^/"
+	--assert ["Ψ" "x"]  = split-lines next "aΨ^/x"
+	--assert []         = split-lines tail "ab^/cd"
 ===end-group===
 
 
@@ -3341,6 +3536,87 @@ try/with [
 	--assert 2 = average #(uint8! [1 2 3])
 	--assert 17.5 = average #(uint8! [10 25])  
 
+===end-group===
+
+
+===start-group=== "HASH!"
+	--test-- "hash! find/select"
+		h: make hash! []
+		repeat i 1000 [append h reduce [ajoin ["k" i] i]]
+		--assert 500 = select h "k500"
+		--assert 500 = select h "K500"
+		--assert none? select/case h "K500"
+		--assert "k1000" = first find h "k1000"
+		--assert none? find h "k1001"
+		k: "k500"
+		--assert 500 = h/:k
+		;; map-like equality
+		append h [1 one 1.0 dec]
+		--assert 'one = select skip h 4 1
+		--assert 'dec = select h 1.0
+		;; words match by canon (any word type), /case needs exact word
+		append h [foo: 1 Bar 2]
+		--assert 1 = select h 'foo
+		--assert 2 = select h 'bar
+		--assert none? select/case h 'bar
+		;; block semantics kept for sequences
+		--assert "k2" = first find h ["k2" 2]
+
+	--test-- "copy hash!"
+		small: make hash! [1 a 1.0 b]
+		--assert 4 = length? copy small
+		--assert small = copy small
+		--assert hash? copy small
+		--assert [a 1.0] = to block! copy/part next small 2
+		--assert 2 = length? copy/part small 2
+		--assert 'b = select copy small 1.0
+	--test-- "to hash!"
+		--assert hash? to hash! 1
+		--assert 1 = length? to hash! 1
+		--assert [1 2] = to block! to hash! [1 2]
+
+	--test-- "hash! small and large behave the same"
+		small: make hash! [1 a 1.0 b]
+		large: copy small
+		repeat i 100 [append large reduce [i + 1000 none]]
+		--assert 'a = select small 1
+		--assert 'a = probe select large 1
+		--assert 'b = select small 1.0
+		--assert 'b = select large 1.0
+
+	--test-- "hash! duplicates and position"
+		h: make hash! []
+		repeat i 100 [append h 'x]
+		append h 'y
+		--assert 1 = index? find h 'x
+		--assert 50 = index? find at h 50 'x
+		--assert 101 = index? find h 'y
+		--assert none? find next find h 'y 'x
+
+	--test-- "hash! after modification"
+		h: make hash! []
+		repeat i 100 [append h i]
+		--assert 50 = index? find h 50
+		insert h 0
+		--assert 51 = index? find h 50
+		--assert 1 = index? find h 0
+		remove h
+		--assert 50 = index? find h 50
+		h/50: 'changed
+		--assert none? find h 50
+		--assert 50 = index? find h 'changed
+		poke h 1 'first
+		--assert none? find h 1
+		reverse h
+		--assert 1 = index? find h 100
+		clear at h 51
+		--assert none? find h 'first
+		--assert 50 = index? find h 51
+		change h 'a
+		--assert 1 = index? find h 'a
+		--assert none? find h 100
+		append h 1000
+		--assert 51 = index? find h 1000
 ===end-group===
 
 ~~~end-file~~~

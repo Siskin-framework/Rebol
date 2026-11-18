@@ -77,6 +77,19 @@ Rebol [
 	--assert  2.0 = round/half-ceiling  1.5
 	--assert -1.0 = round/half-ceiling -1.5
 
+	--test-- "round/to"
+	x: 11.6543212345679
+	--assert 11 == round/to x 0
+	--assert 12 == round/to x 1
+	--assert 12.0 == round/to x 1.0
+	--assert 11.7 == round/to x 0.1
+	--assert 11.65 == round/to x 0.01
+	--assert 11.654 == round/to x 0.001
+	--assert 11.65432123 == round/to x 1e-8
+	--assert 11.6543212345679 == round/to x 1e-300
+	--assert 11.6543212345679 == round/to x 1e-400
+	--assert 11.6543212345679 == round/to x 0.0
+
 	--test-- "round/even/to"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2324
 	--assert 2 = round/even/to 1.555555 1
@@ -143,6 +156,74 @@ Rebol [
 			e/arg3 = integer!
 		]
 		--assert 2.0 = sqrt 4.0
+===end-group===
+
+===start-group=== "cube-root number"
+	--test-- "cube-root positive integers"
+		--assert  0.0 = cube-root 0
+		--assert  1.0 = cube-root 1
+		--assert  2.0 = cube-root 8
+		--assert  3.0 = cube-root 27
+		--assert 10.0 = cube-root 1000
+
+	--test-- "cube-root negative integers"
+		--assert  -1.0 = cube-root -1
+		--assert  -2.0 = cube-root -8
+		--assert  -3.0 = cube-root -27
+		--assert -10.0 = cube-root -1000
+
+	--test-- "cube-root decimals"
+		--assert  0.5 = cube-root 0.125
+		--assert  1.5 = cube-root 3.375
+		--assert -0.5 = cube-root -0.125
+		--assert -1.5 = cube-root -3.375
+
+	--test-- "cube-root with not compatible types"
+		--assert all [error? e: try [cube-root "27"] e/id = 'expect-arg]
+		--assert all [error? e: try [cube-root 10x10] e/id = 'expect-arg]
+===end-group===
+
+===start-group=== "nth-root"
+	--test-- "nth-root positive integers"
+		--assert  1.0 = nth-root 1 2
+		--assert  2.0 = nth-root 4 2
+		--assert  3.0 = nth-root 27 3
+		--assert  4.0 = nth-root 256 4
+		--assert  5.0 = nth-root 3125 5
+
+	--test-- "nth-root negative integers with odd degree"
+		--assert -1.0 = nth-root -1 3
+		--assert -2.0 = nth-root -8 3
+		--assert -3.0 = nth-root -27 3
+		--assert -4.0 = nth-root -64 3
+		--assert -2.0 = nth-root -32 5
+
+	--test-- "nth-root decimals"
+		--assert  0.5 = nth-root 0.25 2
+		--assert  0.5 = nth-root 0.125 3
+		--assert  1.5 = nth-root 3.375 3
+		--assert -0.5 = nth-root -0.125 3
+		--assert -1.5 = nth-root -3.375 3
+
+	--test-- "nth-root with degree one"
+		--assert  27.0 == nth-root 27 1
+		--assert -27.0 == nth-root -27 1
+
+	--test-- "nth-root zero"
+		--assert 0.0 == nth-root 0 2
+		--assert 0.0 == nth-root 0 3
+
+	--test-- "nth-root negative number with even degree"
+		--assert error? e: try [nth-root -16 2]
+
+	--test-- "nth-root with non-positive degree"
+		--assert error? e: try [nth-root 16 0]
+		--assert error? e: try [nth-root 16 -2]
+
+	--test-- "nth-root with not compatible types"
+		--assert error? e: try [nth-root "27" 3]
+		--assert error? e: try [nth-root 27 3.0]
+
 ===end-group===
 
 
@@ -310,6 +391,12 @@ Rebol [
 		--assert not equiv? 1.#NaN 1.0
 		--assert not strict-equal? 1.#NaN 1.0
 
+	--test-- "almost_equal with distant values (UBSan overflow)"
+		--assert not equal?  1.#INF -1.0
+		--assert not equal? -1.#INF  1.0
+		--assert not equal?  1.#INF -1.#INF
+		--assert equal? [-1.#INF -1.0 0.0 1.0 1.#INF] sort [1.#INF -1.0 1.0 -1.#INF 0.0]
+		--assert equal? 0.0 -0.0
 ===end-group===
 
 ===start-group=== "trigonometric function"
@@ -363,8 +450,10 @@ Rebol [
 ===end-group===
 
 ===start-group=== "modulo / remainder"
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2698
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2450
 	;@@ https://github.com/Oldes/Rebol-issues/issues/1332
+	;@@ https://github.com/Oldes/Rebol-issues/issues/1331
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2311
 	;@@ https://github.com/metaeducation/ren-c/issues/843
 	;@@ https://github.com/red/red/issues/1515
@@ -375,39 +464,52 @@ Rebol [
 		--assert b = [-1 0 -2 -1 0 -2 -1 0 1 2 0 1 2 0 1]
 		--assert all [error? e: try [7 % 0] e/id = 'zero-divide]
 		--assert 1.222090944E+33 % -2147483648.0 = 0.0
+		--assert 1.1 = remainder 3.3 1.1
+		--assert 0.0999999999999996 = remainder 3.4 1.1
 	--test-- "mod"
 		b: copy [] for i -7 7 1 [append b mod i 3] b
-		--assert b = [2 0 1 2 0 1 2 0 1 2 0 1 2 0 1]
+		--assert b = [-1 0 -2 -1 0 -2 -1 0 1 2 0 1 2 0 1]
 		b: copy [] for i -7 7 1 [append b mod i -3] b
-		--assert b = [-1 0 -2 -1 0 -2 -1 0 -2 -1 0 -2 -1 0 -2]
+		--assert b = [-1 0 -2 -1 0 -2 -1 0 1 2 0 1 2 0 1]
 		--assert all [error? e: try [mod 7 0] e/id = 'zero-divide]
 		--assert 0.25 = mod 562949953421311.25 1
 		--assert 5.55111512312578e-17 = mod 0.1 + 0.1 + 0.1 0.3
 		--assert -3 == mod -8 -5
 		--assert -3.0 == mod -8.0 -5
+		--assert 1.1 = mod 3.3 1.1
+		--assert 0.0999999999999996 = mod 3.4 1.1
 
 	--test-- "modulo"
-		b: copy [] for i -7 7 1 [append b i // 3] b
+		b: copy [] for i -7 7 1 [append b i %% 3] b
 		--assert b = [2 0 1 2 0 1 2 0 1 2 0 1 2 0 1]
-		b: copy [] for i -7 7 1 [append b i // -3] b
+		b: copy [] for i -7 7 1 [append b i %% -3] b
+		--assert b = [2 0 1 2 0 1 2 0 1 2 0 1 2 0 1]
+
+		;; F-definition modulo (compatible with Python)
+		b: copy [] for i -7 7 1 [append b modulo/floor i  3] b
+		--assert b = [2 0 1 2 0 1 2 0 1 2 0 1 2 0 1]
+		b: copy [] for i -7 7 1 [append b modulo/floor i -3] b
 		--assert b = [-1 0 -2 -1 0 -2 -1 0 -2 -1 0 -2 -1 0 -2]
-		--assert 0.0 = (1.222090944E+33 // -2147483648.0)
+
+		--assert 0.0 = (1.222090944E+33 %% -2147483648.0)
 		--assert 0.0 = modulo 562949953421311.25 1
 		--assert 0.0 = modulo  0.1 + 0.1 + 0.1 0.3
 		--assert $0 == modulo $0.1 + $0.1 + $0.1 $0.3
 		--assert $0 == modulo $0.3 $0.1 + $0.1 + $0.1
 		--assert  0 == modulo 1 0.1
-		--assert   -3 //  2   ==  1
-		--assert    3 // -2   == -1
-		--assert 1000 // #"a" == 30
-		--assert #"a" // 3    == #"^A"
-		--assert 10:0 // 3:0  == 1:0
-		--assert not (100% // 3% == 1%)
-		--assert     (100% // 3%  = 1%)
-		--assert not ( 10% // 3% == 1%)
-		--assert     ( 10% // 3%  = 1%)
-		--assert  10  // 3%   == 0  ; because result A was integer, result is also integer!
-		--assert 0.01 = round/to (10.0 // 3%) 0.00001
+		--assert   -3 %%  2   ==  1
+		--assert    3 %% -2   ==  1
+		--assert 1000 %% #"a" == 30
+		--assert #"a" %% 3    == #"^A"
+		--assert 10:0 %% 3:0  == 1:0
+		--assert not (100% %% 3% == 1%)
+		--assert     (100% %% 3%  = 1%)
+		--assert not ( 10% %% 3% == 1%)
+		--assert     ( 10% %% 3%  = 1%)
+		--assert  10  %% 3%   == 0  ; because result A was integer, result is also integer!
+		--assert 0.01 = round/to (10.0 %% 3%) 0.00001
+		--assert 1.1 = modulo 3.3 1.1
+		--assert 0.0999999999999996 = modulo 3.4 1.1
 
 ===end-group===
 

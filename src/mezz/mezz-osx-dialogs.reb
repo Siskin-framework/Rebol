@@ -2,7 +2,7 @@ REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Rights: {
         Copyright 2012 REBOL Technologies
-        Copyright 2012-2025 Rebol Open Source Contributors
+        Copyright 2012-2026 Rebol Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
     License: {
@@ -11,7 +11,7 @@ REBOL [
     }
     Title:  "macOS AppleScript dialogs"
     Name:    osx-dialogs
-    Version: 1.0.0
+    Version: 1.2.0
     type: module
     Exports: [request-dir request-file request-color]
 ]
@@ -20,6 +20,7 @@ REBOL [
 do in lib [
     unset 'request-dir
     unset 'request-file
+    unset 'request-color
 ]
 
 applescript-ctx: make object! [
@@ -30,7 +31,27 @@ applescript-ctx: make object! [
     out:        ""   ;; Command output buffer
     err:        ""   ;; Command error buffer
     last-dir:   _    ;; Previous directory path
-    
+
+    ;; Convert a Windows-style filter block (description/pattern pairs, e.g.
+    ;; ["Text" "*.txt;*.md" "All" "*.*"]) into an AppleScript `of type {...}`
+    ;; clause. Returns an empty string when no filtering should apply.
+    build-filters: function [list [block!]][
+        types: copy []
+        foreach [desc pattern] list [
+            unless any-string? pattern [continue]
+            foreach ext split to string! pattern #";" [
+                ext: trim ext
+                if ext = "*.*" [return copy ""]   ;; "any file" => no filter
+                if find/match ext "*." [ext: copy skip ext 2]
+                if empty? ext [continue]
+                append types ajoin [#"^"" double-escape ext #"^""]
+            ]
+        ]
+        either empty? types [copy ""][
+            ajoin ["of type {" combine/with types #"," "}"]
+        ]
+    ]
+
     ;; AppleScript for multiple file selection
     script-multi:
     %%{osascript -e 'set AppleScript'\''s text item delimiters to linefeed' \
@@ -73,18 +94,16 @@ double-escape: function/with [
         collect into out  ;; Collect results into output string
         any [
             ;; Keep sequences of normal characters
-            keep tmp: normal-chars any [
-                ;; Handle line feed character - convert to literal \n
-                lf keep ("\n")
-                ;; Handle special characters - prefix with backslash
-                | ahead special-char keep (#"\") keep skip
-            ]
+            keep some normal-chars
+            ;; Handle line feed character - convert to literal \n
+            | lf keep ("\n")
+            ;; Handle special characters - prefix with backslash
+            | keep (#"\") keep skip
         ]
     ]
     out  ;; Return escaped string
 ][
-    special-char: make bitset! {$`"\^/}
-    normal-chars: complement special-char
+    normal-chars: complement make bitset! {$`'"\^/}
 ]
 
 request-file: function/with [
@@ -115,18 +134,7 @@ request-file: function/with [
     ]
     
     ;; Build filter string for AppleScript
-    self/filters: clear ""
-    if filter [
-        append self/filters "of type {"
-        ;; Process each filter pair (name, filter)
-        foreach filter list [
-            if any-string? filter [
-                append self/filters ajoin [#"^"" double-escape filter {", }]
-            ]
-        ]
-        ;; Replace final comma with closing brace
-        change skip tail self/filters -2 #"}"
-    ]
+    self/filters: either filter [build-filters list][copy ""]
     
     ;; Generate final AppleScript command by substituting variables
     cmd: reword script self
@@ -243,10 +251,6 @@ request-color: function/with [
     ]
     to-rebol-color: func[c [block!]][
         ;; Scale down channels 0–65535 to 0–255
-        to tuple! reduce [
-            c/1 / 257
-            c/2 / 257
-            c/3 / 257
-        ]
+        as-color c/1 / 257 c/2 / 257 c/3 / 257
     ]
 ]

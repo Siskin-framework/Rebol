@@ -3,7 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
-**  Copyright 2012-2025 Rebol Open Source Contributors
+**  Copyright 2012-2026 Rebol Open Source Contributors
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -101,17 +101,35 @@
 ***********************************************************************/
 {
 	REBINT len;
+	REBSER *os_path;
 	REBSER *ser;
+	REBVAL val = { 0 };
 	//REBYTE *flags;
 
 	SET_FLAG(dir->modes, RFM_DIR);
+	SET_FLAG(dir->modes, policy & ~REMOVE_TAIL_SLASH); // policy is a bit number, REMOVE_TAIL_SLASH a mask
 
 	// We depend on To_Local_Path giving us 2 extra chars for / and *
-	ser = Value_To_OS_Path(path, TRUE);
-	len = SERIES_TAIL(ser);
-	dir->file.path = (REBCHR*)(ser->data);
+	os_path = Value_To_OS_Path(path, TRUE);
+	len = SERIES_TAIL(os_path);
+	dir->file.path = (REBCHR*)(os_path->data);
 
-	Secure_Port(SYM_FILE, dir, path, ser);
+	// Convert full OS path back to Rebol format.
+	// (fails on Windows with colon not used as a volume separator, like: c:\aaa\c:\)
+	ser = To_REBOL_Path(BIN_HEAD(os_path), BIN_LEN(os_path), OS_WIDE, !wild);
+	if (!ser) Trap1(RE_BAD_FILE_PATH, path);
+	if (wild) {
+		for (REBLEN i = 0; i < ser->tail; i++) {
+			if (ser->data[i] == '*') {
+				ser->tail = i;
+				break;
+			}
+		}
+	}
+
+	SET_FILE(&val, ser);
+
+	Secure_Port(SYM_FILE, dir, &val);
 
 	if (len == 0) return;
 	if (len == 1 && dir->file.path[0] == '.') {
@@ -264,7 +282,7 @@ create:
 
 	case A_QUERY:
 		if (IS_NONE(D_ARG(ARG_QUERY_FIELD))) {
-			Ret_File_Modes(port, D_RET);
+			Ret_Query_File(port, dir, D_RET, D_ARG(ARG_QUERY_FIELD));
 			return R_RET;
 		}
 		SET_NONE(data);

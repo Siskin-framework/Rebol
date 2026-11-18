@@ -171,9 +171,10 @@ Rebol [
 		--assert b = mold a
 
 	--test-- "mold/part string!"
-		--assert     {"a} = mold/part "abcd" 2
-		--assert       "" = mold/part "abcd" 0
 		--assert       "" = mold/part "abcd" -2
+		--assert       "" = mold/part "abcd"  0
+		--assert      {"} = mold/part "abcd"  1
+		--assert     {"a} = mold/part "abcd"  2
 		--assert {"abcd"} = mold/part "abcd" 10
 
 	--test-- "mold/form string with a special chars"
@@ -212,6 +213,16 @@ Rebol [
 	--test-- "mold string with null char"
 		--assert {"^^@a"} == mold {^@a}
 		--assert {{^^@"}} == mold {^@"}
+
+	--test-- "mold/all of UTF-8 string not at head"
+		--assert {#(string! "🙂b" 2)} == mold/all next "🙂b"
+		--assert "b" == #(string! "🙂b" 2)
+		--assert 2 == index? #(string! "🙂b" 2)
+		--assert "b" == load mold/all next "🙂b"
+		--assert tail? #(string! "🙂b" 3)
+		--assert tail? #(string! "🙂b" 100)
+		;; binary keeps index in bytes
+		--assert {#(binary! #{F09F998262} 5)} == mold/all skip #{F09F998262} 4
 
 
 ===end-group=== 
@@ -265,9 +276,42 @@ Rebol [
 		--assert "%%5E" == mold to-file "^^"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/1442
 		--assert "%a%02c" == mold to-file "a^Bc"
-		--assert "%a%20b" == mold to-file "a^ b"
+		--assert {%"a b"} == mold to-file "a^ b"
 
 		--assert "%a@b" == mold to-file "a@b"
+
+	--test-- "mold file with colon"
+		--assert "%c:/foo" == mold %c:/foo
+		--assert "%c:/foo" == mold %c:\foo
+		--assert "%c:/foo" == mold %"c:/foo"
+		--assert "%c:/foo" == mold %"c:\foo"
+		--assert "%a:b"    == mold %a:b
+		--assert "%x:"     == mold %x:
+		--assert "%x:"     == mold %"x:"
+		--assert {%":"}    == mold to-file ":"
+		foreach s ["c:/foo" "x:" ":" ":a" "a::b" "a:b:" "%:"] [
+			--assert (to-file s) == load mold to-file s
+		]
+
+	--test-- "mold file with quoted notation"
+		--assert {%"a b"}             == mold as file! "a b"
+		--assert {%"my file (1).txt"} == mold as file! "my file (1).txt"
+		--assert {%"[a]{b}<c>"}       == mold as file! "[a]{b}<c>"
+		--assert {%":"}               == mold as file! ":"
+		--assert {%"a b%25"}          == mold as file! "a b%"
+		--assert {%"a b%5C"}          == mold as file! "a b\"
+		--assert {%"a%22b c"}         == mold as file! {a"b c}
+		--assert {%"a%3Bb c"}         == mold as file! "a;b c"
+		--assert {%"a%5Eb c"}         == mold as file! "a^^b c"
+		--assert {%"a%09b c"}         == mold as file! "a^-b c"
+		--assert "%c:%5C"             == mold as file! "c:\"
+		--assert "%a%3Bb"             == mold as file! "a;b"
+		--assert "%abc"               == mold %abc
+	--test-- "mold quoted file escaping"
+		for i 0 255 1 [
+			f1: as file! rejoin ["a b" to char! i]
+			--assert f1 == try [load mold f1]
+		]
 
 ===end-group=== 
 
@@ -391,7 +435,7 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2362
 		p: make object! [x: "foo"]
 		e: make event! [type: 'lookup port: p]
-		--assert (mold/flat e) = {make event! [type: 'lookup port: make object! [x: "foo"]]}
+		--assert (mold/flat e) = {make event! [type: 'lookup source: make object! [x: "foo"]]}
 		e: make event! [type: 'move offset: 10x20]
 		--assert (mold/flat e) = {make event! [type: 'move offset: 10x20]}
 		
@@ -471,6 +515,24 @@ Rebol [
 	--test-- "mold with recursive value"
 		m/c: m
 		--assert "#[a: 1 b: 2 c: #[...]]" = mold/flat m
+		;; there is no construction syntax for a value which contains itself
+		--assert all [
+			error? e: try [mold/all m]
+			e/id = 'recursive-value
+			e/arg1 = map!
+		]
+		o: object [a: 1 b: none]
+		o/b: o
+		--assert "make object! [a: 1 b: make object! [...]]" = mold/flat o
+		--assert all [
+			error? e: try [mold/all o]
+			e/id = 'recursive-value
+			e/arg1 = object!
+		]
+		--assert "make object! [a: 1 b: make object! [...]]" = mold/flat o ;; still usable after the error
+		;; path, which must be molded using construction syntax, must not switch it on for the next values
+		--assert "[#(path! [1 2]) make object! [a: 1 b: make object! [...]]]" = mold/flat reduce [to path! [1 2] o]
+		--assert "[#(path! [1 2]) #[a: 1]]" = mold/flat reduce [to path! [1 2] #[a: 1]]
 
 	--test-- "mold #[]"
 		;@@ https://github.com/Oldes/Rebol-issues/issues/725
@@ -542,6 +604,16 @@ Rebol [
 		--assert {#(email! "a@@")} == mold as email! "a@@"
 		--assert {#(email! "a@b@")} == mold as email! "a@b@"
 		--assert {#(email! "%@b")} == mold as email! "%@b"
+
+	--test-- "mold email starting with a prefix char"
+	;@@ https://github.com/Oldes/Rebol3/issues/1481
+		--assert {#(email! "#a@b")} == mold as email! "#a@b"
+		--assert {#(email! "'a@b")} == mold as email! "'a@b"
+		--assert {#(email! ":a@b")} == mold as email! ":a@b"
+		--assert {#(email! "<a@b")} == mold as email! "<a@b"
+		--assert {#(email! "#a@b")} == mold/all as email! "#a@b"
+		--assert "a#b@c" == mold as email! "a#b@c"
+		--assert (e: as email! "#a@b") == load mold e
 ===end-group===
 
 ===start-group=== "mold ref!"
@@ -594,17 +666,6 @@ Rebol [
 	;@@ https://github.com/Oldes/Rebol-issues/issues/23
 		x: closure [a] [print a]
 		--assert "make closure! [[a /local][print a]]" = mold/flat :x
-
-===end-group===
-
-===start-group=== "mold gob!"
-
-	--test-- "mold gob!"
-		--assert "make gob! [offset: 0x0 size: 100x100]" = mold make gob! []
-
-	--test-- "mold/all gob!"
-	;@@ https://github.com/Oldes/Rebol-issues/issues/989
-		--assert "#(gob! [offset: 0x0 size: 100x100])" = mold/all make gob! []
 
 ===end-group===
 

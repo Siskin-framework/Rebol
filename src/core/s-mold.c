@@ -59,11 +59,13 @@ REBYTE *URL_Escapes;
 #define MAX_URL_CHAR (0x80-1)
 #define IS_URL_ESC(c)  ((c) <= MAX_URL_CHAR && (URL_Escapes[c] & ESC_URL))
 #define IS_FILE_ESC(c) ((c) <= MAX_URL_CHAR && (URL_Escapes[c] & ESC_FILE))
+#define IS_QFILE_ESC(c) ((c) <= MAX_URL_CHAR && (URL_Escapes[c] & ESC_QFILE))
 
 enum {
 	ESC_URL = 1,
 	ESC_FILE = 2,
 	ESC_EMAIL = 4,
+	ESC_QFILE = 8, // must be escaped even in quoted file notation %"..."
 };
 
 /***********************************************************************
@@ -220,6 +222,16 @@ enum {
 }
 
 
+static REBCNT Mold_Index(REBVAL *value)
+{
+	// 1-based index for the construction syntax (in chars for UTF-8 strings)
+	REBCNT idx = VAL_INDEX(value);
+	if (ANY_STR(value) && IS_UTF8_SERIES(VAL_SERIES(value))) {
+		if (idx > VAL_TAIL(value)) idx = VAL_TAIL(value);
+		idx = UTF8_Length(VAL_BIN_HEAD(value), idx);
+	}
+	return idx + 1;
+}
 /***********************************************************************
 **
 */  void Post_Mold(REBVAL *value, REB_MOLD *mold)
@@ -231,7 +243,7 @@ enum {
 {
 	if (VAL_INDEX(value)) {
 		Append_Byte(mold->series, ' ');
-		Append_Int(mold->series, VAL_INDEX(value)+1);
+		Append_Int(mold->series, Mold_Index(value));
 	}
 	if (GET_MOPT(mold, MOPT_MOLD_ALL)) Append_Byte(mold->series, ')');
 }
@@ -284,26 +296,27 @@ typedef struct REB_Str_Flags {
 	REBCNT malign;
 	REBLEN chars;
 	REBLEN invalid;
+	REBFLG has_unicode;
+	REBLEN bytes;
 } REB_STRF;
 
 
 
-STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
+STOID Sniff_String(REBSER* ser, REBCNT idx, REB_STRF* sf, REB_MOLD* mold)
 {
-	// Scan to find out what special chars the string contains?
-	REBYTE *bp;
-	REBYTE *ep;
-	REBYTE *acc;
-	REBCNT c=0;
-	REBCNT state = 0;
+	// Scan to find out what special chars the string contains.
+	REBYTE* bp = STR_SKIP(ser, idx);
+	REBYTE* ep = STR_TAIL(ser);
+	REBCNT  c = 0;
+	REBCNT  state = 0;
+	REBLEN clen;
+	// Account for opening delimiter
+	REBCNT  limit = MOLD_HAS_LIMIT(mold) ? mold->limit - 1 : NO_LIMIT;
+	if (limit == 0) return;
 
-	bp = STR_SKIP(ser, idx);
-	ep = STR_TAIL(ser);
-
-	sf->invalid = 0;// NOT_FOUND;
+	sf->invalid = 0;
 
 	while (bp < ep) {
-		acc = bp;
 		for (; bp < ep; ++bp) {
 			if (UTF8_Decode_Step(&state, &c, *bp)) {
 				if (state != UTF8_REJECT)
@@ -314,12 +327,14 @@ STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 		if (state != UTF8_ACCEPT) {
 			while (bp < ep && (*bp & 0xC0) == 0x80) {
 				c = *bp++;
-				if (c >= 0x7f || c == 0x1e) {  // non ASCII or ^ must be (00) escaped
+				if (c >= 0x7f || c == 0x1e) { // non ASCII or ^ must be (00) escaped
 					if (c < 0xA0 || c == 0x1e) { // do not AND with above
 						sf->invalid += 4;
 					}
-					else
-						sf->invalid += UTF8_Codepoint_Size(c)-1;
+					else {
+						sf->has_unicode = 1; // replacement char will be UTF-8 encoded
+						sf->invalid += UTF8_Codepoint_Size(c) - 1;
+					}
 				}
 				else if (IS_CHR_ESC(c)) {
 					sf->invalid += 1;
@@ -329,7 +344,18 @@ STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 			continue;
 		}
 		bp++;
+		clen = UTF8_Codepoint_Size(c);
+		// Check limit before counting this char
+		if (limit != NO_LIMIT) {
+			if ((sf->chars + sf->newline + sf->escape + sf->paren) >= limit) break;
+			if (clen > 1) {
+				mold->limit += clen - 1;
+			}
+		}
+
 		sf->chars++;
+		sf->bytes += clen;
+
 		switch (c) {
 		case '{':
 			sf->brace_in++;
@@ -346,10 +372,13 @@ STOID Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 			break;
 		default:
 			if (c == 0x7f || c == 0x1e)
-				sf->paren += 4; // ^(7f) - 1 byte is already as UTF-8 codepoint + 3 for additional ^ ()
+				sf->paren += 4;
 			else if (c > 0x7f && c < 0xA0)
-				sf->paren += 3; // ^(12) - 2 bytes are already as UTF-8 codepoint + 3 for additional ^()
-			else if (IS_CHR_ESC(c)) sf->escape++;
+				sf->paren += 3;
+			else if (IS_CHR_ESC(c))
+				sf->escape++;
+			else if (c > 0x7f)
+				sf->has_unicode = 1;
 		}
 	}
 	if (sf->brace_in != sf->brace_out) sf->malign++;
@@ -408,7 +437,6 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 	const REBYTE *ep;
 	REBYTE *dp;
 	REBU32 c;
-	REBLEN len;
 	REBLEN dlen;
 	REBYTE *dend;
 
@@ -417,32 +445,34 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 		Append_Bytes(mold->series, "\"\"");  //Trap0(RE_PAST_END);
 		return;
 	}
-	len = VAL_LEN(value);
-	//TODO: check limit!!!
-	CHECK_MOLD_LIMIT(mold, len);
+	
+	if (MOLD_HAS_LIMIT(mold) && MOLD_OVER_LIMIT(mold)) return;
 
-	Sniff_String(ser, idx, &sf);
+	Sniff_String(ser, idx, &sf, mold);
+	if (sf.has_unicode)
+		UTF8_SERIES(mold->series); // Mark mold result as UTF8.
 
 	bp = STR_SKIP(ser, idx);
-	ep = STR_TAIL(ser);
-	REBLEN bytes = AS_REBLEN(ep - bp);
+	ep = bp + sf.bytes;
+	REBLEN bytes = sf.bytes;
 
 	// If it is a short quoted string, emit it as "string":
 	if (sf.chars <= MAX_QUOTED_STR && sf.quote == 0 && sf.newline < 3) {
 
-		dlen = len + sf.newline + sf.escape + sf.paren + 2 + sf.invalid;
+		dlen = bytes + sf.newline + sf.escape + sf.paren + 2 + sf.invalid;
 		dp = Prep_Mold_Series(mold, dlen);
 		dend = dp + dlen;
 
 		*dp++ = '"';
 		while (bp < ep && dp < dend) {
 			c = UTF8_Decode_Codepoint(&bp, &bytes);
-			if (c == UNI_ERROR)
-				c = bp[-1]; // UNI_REPLACEMENT_CHAR;
+			if (c == UNI_ERROR) c = UNI_REPLACEMENT_CHAR;
 			dp = Emit_Mold_Char(dp, c);
 		}
-
-		*dp++ = '"';
+		if (bp >= ep) {
+			// only close if we emitted everything within limit
+			*dp++ = '"';
+		}
 		*dp = 0;
 		return;
 	}
@@ -450,7 +480,7 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 	// It is a braced string, emit it as {string}:
 	if (!sf.malign) sf.brace_in = sf.brace_out = 0;
 
-	dlen = len + sf.brace_in + sf.brace_out + sf.escape + sf.paren + 2 + sf.invalid;
+	dlen = bytes + sf.brace_in + sf.brace_out + sf.escape + sf.paren + 2 + sf.invalid;
 	dp = Prep_Mold_Series(mold, dlen);
 	dend = dp + dlen;
 
@@ -466,16 +496,22 @@ STOID Mold_String_Series(REBVAL *value, REB_MOLD *mold)
 				*dp++ = c;
 				break;
 			}
+			// fall through
 		case '\n':
 		case '"':
 			*dp++ = c;
 			break;
+		case UNI_ERROR:
+			c = UNI_REPLACEMENT_CHAR;
+			// fall thru
 		default:
 			dp = Emit_Mold_Char(dp, c);
 		}
 	}
-
-	*dp++ = '}';
+	if (bp >= ep) {
+		// only close if we emitted everything within limit
+		*dp++ = '}';
+	}
 	*dp = 0;
 }
 
@@ -512,7 +548,7 @@ STOID Mold_All_Constr_String(REBVAL *value, REB_MOLD *mold)
 	// post...
 	if (VAL_INDEX(value)) {
 		Append_Byte(mold->series, ' ');
-		Append_Int(mold->series, VAL_INDEX(value) + 1);
+		Append_Int(mold->series, Mold_Index(value));
 	}
 	Append_Byte(mold->series, ')');
 }
@@ -560,7 +596,7 @@ mold_constr:
 	// 2. contains a delimiter or invalid required chars
 	for (n = idx; n < VAL_TAIL(value); n++) {
 		c = bp[n];
-		if (c < 0x7F && IS_LEX_DELIMIT(c)) {
+		if (IS_LEX_DELIMIT(c)) {
 			// allow / inside urls...
 			if (c == '/' && required == ':') continue;
 			goto mold_constr;
@@ -590,28 +626,38 @@ STOID Mold_File(REBVAL *value, REB_MOLD *mold)
 	REBCNT len = VAL_LEN(value);
 	const REBYTE *bp;
 	REBCNT bytes = len;
+	REBCNT esc = 0;   // chars escaped in %file notation
+	REBCNT qesc = 0;  // chars escaped in %"file" notation
+	REBOOL quote;
 
-
-	// Compute extra space needed for hex encoded characters:
+	// Count chars which must be hex encoded in each notation:
 	bp = VAL_DATA(value);
 	while (bytes > 0) {
 		c = UTF8_Decode_Codepoint(&bp, &bytes);
-		if (IS_FILE_ESC(c)) len += 2;
+		if (IS_FILE_ESC(c))  esc++;
+		if (IS_QFILE_ESC(c)) qesc++;
 	}
 
-	len++; // room for % at start
+	// Use %"..." when some chars may stay literal only inside quotes (space, ()[]{}<>),
+	// or when the file is just a colon (%: is a set-word).
+	// (ESC_QFILE chars are a subset of ESC_FILE chars)
+	quote = (esc > qesc) || (len == 1 && VAL_DATA(value)[0] == ':');
+
+	len += 1 + (quote ? 2 + 2 * qesc : 2 * esc); // % (+ quotes) + hex escapes
 
 	dp = Prep_Mold_Series(mold, len);
 	*dp++ = '%';
+	if (quote) *dp++ = '"';
 
 	// reset input
 	bp = VAL_DATA(value);
 	bytes = VAL_LEN(value);
 	while (bytes > 0) {
 		c = UTF8_Decode_Codepoint(&bp, &bytes);
-		if (IS_FILE_ESC(c)) dp = Form_Hex_Esc(dp, c);  // c => %xx
+		if (quote ? IS_QFILE_ESC(c) : IS_FILE_ESC(c)) dp = Form_Hex_Esc(dp, c);  // c => %xx
 		else dp += Encode_UTF8_Char(dp, c);
 	}
+	if (quote) *dp++ = '"';
 	*dp = 0; // tail already set from Prep.
 }
 
@@ -725,7 +771,7 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 
 	if (!sep) sep = b_cast("[]");
 
-	if (IS_END(value)) {
+	if (SERIES_TAIL(series) <= index) { // empty
 		Append_Bytes(out, cs_cast(sep));
 		return;
 	}
@@ -741,12 +787,15 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 	Set_Block(value, series);
 
 	if (sep[1]) {
-		Append_Byte(out, sep[0]);
+		Append_Byte(out, sep[0]); // Opening bracket.
 	}
-//	else out->tail--;  // why?????
+
+	// I'm not using the original IS_END macro because the series may be sliced (and thus not null-terminated).
+	// SERIES_TAIL value is validated above.
+	REBLEN len = SERIES_TAIL(series) - index;
 
 	value = BLK_SKIP(series, index);
-	while (NOT_END(value)) {
+	while (len-- > 0) {
 		// check if we can end sooner with molding..
 		if (MOLD_HAS_LIMIT(mold) && MOLD_OVER_LIMIT(mold)) return;
 		if (VAL_GET_LINE(value)) {
@@ -762,7 +811,7 @@ STOID Mold_Block_Series(REB_MOLD *mold, REBSER *series, REBCNT index, REBYTE *se
 		line_flag = TRUE;
 		Mold_Value(mold, value, TRUE);
 		value++;
-		if (NOT_END(value))
+		if (len > 0)
 			Append_Byte(out, (sep[0] == '/') ? '/' : ' ');
 	}
 
@@ -810,10 +859,14 @@ STOID Mold_Block(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 
 	if (all) {
+		REBOOL was_all = GET_MOPT(mold, MOPT_MOLD_ALL);
 		SET_FLAG(mold->opts, MOPT_MOLD_ALL);
 		Pre_Mold(value, mold); // #(block! part
 		Mold_Block_Series(mold, VAL_SERIES(value), 0, 0);
 		Post_Mold(value, mold);
+		// Construction syntax may be forced only for this value (special path cases),
+		// so don't let it leak to the values which follow.
+		if (!was_all) CLR_FLAG(mold->opts, MOPT_MOLD_ALL);
 	}
 	else
 	{
@@ -995,6 +1048,8 @@ STOID Mold_Map(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 
 	// Prevent endless mold loop:
 	if (Find_Same_Block(MOLD_LOOP, value) > 0) {
+		// Value containing itself cannot be expressed in the construction syntax
+		if (all) Trap1(RE_RECURSIVE_VALUE, Get_Type(VAL_TYPE(value)));
 		Append_Bytes(mold->series, "#[...]");
 		return;
 	}
@@ -1059,13 +1114,16 @@ STOID Form_Object(REBVAL *value, REB_MOLD *mold)
 	Remove_Last(MOLD_LOOP);
 }
 
-STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
+STOID Mold_Object_Block(REBVAL *value, REB_MOLD *mold, REBOOL no_none)
 {
+	// Mold words and values of the object as a block: [word: value ...]
+	// Hidden words are not included; none values are skipped when requested.
 	REBSER *wser;
 	REBVAL *words;
 	REBVAL *vals; // first value is context
 	REBCNT n;
 	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
+	REBOOL first = TRUE;
 
 	ASSERT(VAL_OBJ_FRAME(value), RP_NO_OBJECT_FRAME);
 
@@ -1076,12 +1134,12 @@ STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
 
 	vals  = VAL_OBJ_VALUES(value); // first value is context
 
-	Pre_Mold(value, mold);
-
 	Append_Byte(mold->series, '[');
 
 	// Prevent infinite looping:
 	if (Find_Same_Block(MOLD_LOOP, value) > 0) {
+		// Value containing itself cannot be expressed in the construction syntax
+		if (GET_MOPT(mold, MOPT_MOLD_ALL)) Trap1(RE_RECURSIVE_VALUE, Get_Type(VAL_TYPE(value)));
 		Append_Bytes(mold->series, "...]");
 		return;
 	}
@@ -1091,12 +1149,13 @@ STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
 	for (n = 1; n < SERIES_TAIL(wser); n++) {
 		if (
 			!VAL_GET_OPT(words+n, OPTS_HIDE) &&
-			((VAL_TYPE(vals+n) > REB_NONE) || !GET_MOPT(mold, MOPT_NO_NONE))
+			((VAL_TYPE(vals+n) > REB_NONE) || !(no_none || GET_MOPT(mold, MOPT_NO_NONE)))
 		){
 			if(indented)
 				New_Indented_Line(mold);
-			else if (n > 1)
+			else if (!first)
 				Append_Byte(mold->series, ' ');
+			first = FALSE;
 
 			Append_UTF8(mold->series, Get_Sym_Name(VAL_WORD_SYM(words+n)), -1);
 			//Print("Slot: %s", Get_Sym_Name(VAL_WORD_SYM(words+n)));
@@ -1113,8 +1172,46 @@ STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
 	mold->indent--;
 	if (indented) New_Indented_Line(mold);
 	Append_Byte(mold->series, ']');
-	End_Mold(mold);
 	Remove_Last(MOLD_LOOP);
+}
+
+STOID Mold_Object(REBVAL *value, REB_MOLD *mold)
+{
+	Pre_Mold(value, mold);
+	Mold_Object_Block(value, mold, FALSE);
+	if (MOLD_HAS_LIMIT(mold) && MOLD_OVER_LIMIT(mold)) return;
+	End_Mold(mold);
+}
+
+STOID Mold_Module(REBVAL *value, REB_MOLD *mold)
+{
+	// Module is molded as its spec (header) and body (words and values):
+	//     make module! [[title: "..." ...] [word: value ...]]
+	// Only used (not none) fields of the spec are included.
+	REBVAL spec;
+	REBOOL indented = !GET_MOPT(mold, MOPT_INDENT);
+
+	Pre_Mold(value, mold);
+	Append_Byte(mold->series, '[');
+	mold->indent++;
+
+	if (indented) New_Indented_Line(mold);
+	if (VAL_MOD_SPEC(value)) {
+		SET_OBJECT(&spec, VAL_MOD_SPEC(value));
+		Mold_Object_Block(&spec, mold, TRUE);
+	}
+	else Append_Bytes(mold->series, "[]");
+	if (MOLD_HAS_LIMIT(mold) && MOLD_OVER_LIMIT(mold)) return;
+
+	if (indented) New_Indented_Line(mold);
+	else Append_Byte(mold->series, ' ');
+	Mold_Object_Block(value, mold, FALSE);
+	if (MOLD_HAS_LIMIT(mold) && MOLD_OVER_LIMIT(mold)) return;
+
+	mold->indent--;
+	if (indented) New_Indented_Line(mold);
+	Append_Byte(mold->series, ']');
+	End_Mold(mold);
 }
 
 STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
@@ -1194,18 +1291,38 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 	REBYTE buf[60];
 	REBINT len;
 	REBSER *ser = mold->series;
+	REBVAL snapped;
 
 	CHECK_STACK(&len);
 
 	ASSERT2(SERIES_WIDE(mold->series) == sizeof(REBUNI), RP_BAD_SIZE);
 	ASSERT2(ser, RP_NO_BUFFER);
 
+	// Index may be inside of a multi-byte sequence (invalidated by a modification
+	// made through another reference), use a value with a valid index instead.
+	if (ANY_STR(value) && VAL_INDEX(value) < VAL_TAIL(value)) {
+		REBCNT idx = Val_Str_Index(value);
+		if (idx != VAL_INDEX(value)) {
+			snapped = *value;
+			VAL_INDEX(&snapped) = idx;
+			value = &snapped;
+		}
+	}
+
 	// Special handling of string series: {
 	if (ANY_STR(value) && !IS_TAG(value)) { // tag! has different rules!
 
 		// Forming a string:
 		if (!molded) {
-			Insert_String(ser, NO_LIMIT, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
+			//@@ `form` does not perform implicit dehexing like Rebol 2!
+			//@@ https://github.com/Oldes/Rebol-issues/issues/2710
+			//if (IS_URL(value)) {
+			//	REBSER* tmp = Dehex_String(VAL_BIN_DATA(value), VAL_LEN(value), '%', FALSE);
+			//	Append_Bytes(ser, SERIES_DATA(tmp));
+			//}
+			//else {
+				Insert_String(ser, NO_LIMIT, VAL_SERIES(value), VAL_INDEX(value), VAL_LEN(value), 0);
+			//}
 			return;
 		}
 
@@ -1293,18 +1410,22 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		break;
 
 	case REB_EMAIL:
-	case REB_URL:
+	case REB_URL: {
+		REBYTE c0 = VAL_DATA(value)[0];
 		if ((GET_MOPT(mold, MOPT_MOLD_ALL) && VAL_INDEX(value) != 0)
 			|| VAL_TAIL(value) == 0
 			|| NOT_FOUND == Find_Str_Char(VAL_SERIES(value), 0, 0,
 				VAL_TAIL(value), 1, VAL_TYPE(value) == REB_EMAIL ? '@' : ':', 0)
-			|| VAL_DATA(value)[0] == '%')
+			|| c0 == '%'
+			|| (VAL_TYPE(value) == REB_EMAIL
+				&& (c0 == '#' || c0 == '\'' || c0 == ':' || c0 == '<')))
 		{
 			Mold_All_Constr_String(value, mold);
 			return;
 		}
 		Mold_Url(value, mold);
 		break;
+	}
 
 	case REB_TAG:
 		if (GET_MOPT(mold, MOPT_MOLD_ALL)
@@ -1426,8 +1547,12 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		Mold_Function(value, mold);
 		break;
 
-	case REB_OBJECT:
 	case REB_MODULE:
+		if (!molded) Form_Object(value, mold);
+		else Mold_Module(value, mold);
+		break;
+
+	case REB_OBJECT:
 	case REB_PORT:
 		if (!molded) Form_Object(value, mold);
 		else Mold_Object(value, mold);
@@ -1451,17 +1576,6 @@ STOID Mold_Error(REBVAL *value, REB_MOLD *mold, REBFLG molded)
 		else
 			Form_Block_Series(VAL_SERIES(value), VAL_INDEX(value), mold, 0);
 		break;
-
-	case REB_GOB:
-	{
-		REBSER *blk;
-		Pre_Mold(value, mold);
-		blk = Gob_To_Block(VAL_GOB(value));
-		Mold_Block_Series(mold, blk, 0, 0);
-		End_Mold(mold);
-	}
-		break;
-
 	
 	case REB_EVENT:
 		Mold_Event(value, mold);
@@ -1711,10 +1825,15 @@ append:
 	// so include also folowing chars for url escaping...
 	URL_Escapes['\x60'] |= ESC_URL;
 	URL_Escapes['\x7C'] |= ESC_URL;
-	// required file escaping... https://github.com/Oldes/Rebol-issues/issues/2491
-	URL_Escapes['\x3A'] |= ESC_FILE;
-	//URL_Escapes['\x40'] |= ESC_FILE;
-	
+
+	// colon is not escaped in files (the lexer accepts it), file ":" is molded as %":"
+	//URL_Escapes['\x3A'] |= ESC_FILE;
+
+	// chars which must be escaped also in quoted file notation %"..."
+	// (control chars, quote, and chars with special meaning inside quoted file)
+	for (c = 0; c < ' '; c++) cp[c] |= ESC_QFILE;
+	dc = b_cast("\"%;\x5C\x5E\x7F");
+	for (c = (REBYTE)LEN_BYTES(dc); c > 0; c--) URL_Escapes[*dc++] |= ESC_QFILE;
 }
 
 

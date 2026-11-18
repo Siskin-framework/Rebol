@@ -222,7 +222,7 @@ quit: native [
 
 protect: native [
 	"Protect a series or a variable from being modified."
-	value [word! series! bitset! map! object! module!]
+	value [word! series! bitset! map! object! module! struct!]
 	/deep "Protect all sub-series/objects as well"
 	/words  "Process list as words (and path words)"
 	/values "Process list of values (implied GET)"
@@ -232,7 +232,7 @@ protect: native [
 
 unprotect: native [
 	"Unprotect a series or a variable (it can again be modified)."
-	value [word! series! bitset! map! object! module!]
+	value [word! series! bitset! map! object! module! struct!]
 	/deep "Protect all sub-series as well"
 	/words "Block is a list of words"
 	/values "Process list of values (implied GET)"
@@ -240,7 +240,7 @@ unprotect: native [
 
 protected?: native [
 	"Return true if immediate argument is protected from modification."
-	value [word! series! bitset! map! object! module!]
+	value [word! series! bitset! map! object! module! struct!]
 ]
 
 recycle: native [
@@ -251,6 +251,7 @@ recycle: native [
 	size [integer!]
 	/torture {Constant recycle (for internal debugging)}
 	/pools {Release empty memory pool segments}
+	/stack {Signal datastack shrinking request}
 ]
 
 release: native [
@@ -318,8 +319,6 @@ try: native [
 	/all    "Catch also BREAK, CONTINUE, RETURN, EXIT and THROW exceptions."
 	/with   "On error, evaluate the handler and return its result"
 	handler [block! any-function!]
-	/except "** DEPRERCATED **"
-	code [block! any-function!]
 ]
 
 unless: native [
@@ -361,14 +360,14 @@ while: native [
 
 as: native [
 	{Coerce a series into a compatible datatype without copying it.}
-	type [any-block! any-string! datatype!] "The datatype or example value"
-	spec [any-block! any-string!] "The series to coerce"
+	type [any-block! any-string! datatype! word! struct!] "The datatype or example value"
+	spec [any-block! any-string! vector!] "The series to coerce"
 ]
 
 bind: native [
 	{Binds words to the specified context.}
 	word [block! any-word!] {A word or block (modified) (returned)}
-	context [any-word! object! module! port!] {A reference to the target context}
+	context [any-word! any-object!] {A reference to the target context}
 	/copy {Bind and return a deep copy of a block, don't modify original}
 	/only {Bind only first block (not deep)}
 	/new {Add to context any new words found}
@@ -675,8 +674,8 @@ transcode: native [
 ]
 
 echo: native [
-    {Copies console output to a file.}
-    target [file! none! logic!]
+	{Copies console output to a file.}
+	target [file! none! logic!]
 ]
 
 now: native [
@@ -770,7 +769,7 @@ tenth: native [
 
 last: native [
 	{Returns the last value of a series.}
-	value [series! tuple! gob!]
+	value [series! tuple!]
 ]
 
 ;-- Math Natives - nat_math.c
@@ -910,15 +909,30 @@ list-env: native [
 ]
 
 call: native [
-	{Run another program; return immediately with the process ID.}
-	command [any-string! block! file!] "An OS-local command line (quoted as necessary), a block with arguments, or an executable file"
-	/wait "Wait for command to terminate and then return the exit code"
-	/console "Runs command with I/O redirected to console"
-	/shell "Forces command to be run from shell"
-	/info {Returns process information object containing the ID of the process (or 0 if failed to run), includes the exit code when used with /wait}
-	/input in [string! binary! file! none!] "Redirects stdin to in"
-	/output out [string! binary! file! none!] "Redirects stdout to out"
-	/error err [string! binary! file! none!] "Redirects stderr to err"
+	{Execute an external process.}
+	{Returns the process ID by default, or the exit code with /wait.}
+	command [any-string! block! file!] {
+		Command to execute. Use a string for shell-style commands (e.g. "ls -la"),
+		a block for pre-split argument lists (e.g. ["ffmpeg" "-i" %in.mp4 %out.mp4]),
+		or a file! for direct executable paths without shell interpretation.}
+	/wait    "Block until the process exits and return its exit code"
+	/console "Attach the process to the current console for interactive I/O"
+	/shell   "Run the command through the system shell (e.g. cmd.exe or /bin/sh)"
+	/info    {
+		Return a process-info object instead of a plain integer.
+		Fields: id (PID), exit-code (only with /wait), error (OS error string, if any).}
+	/input "Redirect stdin."
+	in [string! binary! file! none!] {
+		string!/binary! pipes data directly (implies /wait);
+		file! reads from a file path; none! closes stdin.}
+	/output "Redirect stdout."
+	out [string! binary! file! none!] { 
+		string!/binary! captures output into the value (implies /wait);
+		file! writes to a file path; none! discards output.}
+	/error "Redirect stderr."
+	err [string! binary! file! none!] {
+		string!/binary! captures errors into the value (implies /wait);
+		file! writes to a file path; none! discards stderr.}
 ]
 
 
@@ -1019,26 +1033,21 @@ limit-usage: native [
 ]
 
 selfless?: native [
-    "Returns true if the context doesn't bind 'self."
-    context [any-word! any-object!] "A reference to the target context"
-]
-
-map-event: native [
-	"Returns event with inner-most graphical object and coordinate."
-	event [event!]
-]
-
-map-gob-offset: native [
-	"Translates a gob and offset to the deepest gob and offset in it, returned as a block."
-	gob [gob!] "Starting object"
-	xy [pair!] "Staring offset"
-	/reverse "Translate from deeper gob to top gob."
+	"Returns true if the context doesn't bind 'self."
+	context [any-word! any-object!] "A reference to the target context"
 ]
 
 as-pair: native [
 	"Combine X and Y values into a pair."
 	x [number!]
 	y [number!]
+]
+
+as-color: native [
+	"Combine R, G and B values into a tuple."
+	r [integer! decimal! percent!]
+	g [integer! decimal! percent!]
+	b [integer! decimal! percent!]
 ]
 
 ;read-file: native [f [file!]]

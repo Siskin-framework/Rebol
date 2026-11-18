@@ -3,6 +3,7 @@
 **  REBOL [R3] Language Interpreter and Run-time Environment
 **
 **  Copyright 2012 REBOL Technologies
+**  Copyright 2012-2026 Rebol Open Source Developers
 **  REBOL is a trademark of REBOL Technologies
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
@@ -169,7 +170,7 @@
 /*
 ***********************************************************************/
 {
-	//Print("Make_Native: %s spec %d", Get_Sym_Name(type+1), SERIES_TAIL(spec));
+	//Debug_Fmt("Make_Native: %s spec %d", Get_Sym_Name(type+1), SERIES_TAIL(spec));
 	VAL_FUNC_SPEC(value) = spec;
 	VAL_FUNC_ARGS(value) = Check_Func_Spec(spec);
 	VAL_FUNC_CODE(value) = func;
@@ -218,7 +219,7 @@
 		REBVAL *args = BLK_HEAD(VAL_FUNC_ARGS(value))+1;
 		REBCNT w = 0;
 		for (; NOT_END(args); args++) {
-			if(IS_REFINEMENT(args) && VAL_WORD_CANON(args) == SYM_LOCAL) break;
+			if(IS_REFINEMENT(args)) break;
 			else if(IS_WORD(args))
 				w++;
 		}
@@ -472,6 +473,8 @@
 	// Copy stack frame args as the closure object (one extra at head)
 	frame = Copy_Values(BLK_SKIP(DS_Series, DS_ARG_BASE), SERIES_TAIL(VAL_FUNC_ARGS(func)));
 	SET_FRAME(BLK_HEAD(frame), 0, VAL_FUNC_ARGS(func));
+	// The frame uses the function's word list, so it must not be modified:
+	SHARE_SERIES(VAL_FUNC_ARGS(func));
 
 	// Rebind the body to the new context (deeply):
 	Rebind_Block(VAL_FUNC_ARGS(func), frame, BLK_HEAD(body), REBIND_TYPE);

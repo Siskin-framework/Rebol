@@ -38,16 +38,12 @@
 // --------------------------------------------------------------------------
 static void
 sm_insertion_sort(unsigned char *base, size_t sorted, size_t nmemb,
-                  const size_t size, cmp_t* cmp)
+                  const size_t size, cmp_t* cmp, unsigned char *tmp)
 {
     size_t i, j;
-    unsigned char *tmp;
 
     if (sorted < 1) sorted = 1;
     if (nmemb <= sorted) return;
-
-    tmp = (unsigned char *)Make_Mem(size);
-    if (!tmp) return;
 
     for (i = sorted; i < nmemb; i++) {
         memcpy(tmp, base + i * size, size);
@@ -58,8 +54,6 @@ sm_insertion_sort(unsigned char *base, size_t sorted, size_t nmemb,
         }
         memcpy(base + j * size, tmp, size);
     }
-
-    Free_Mem(tmp, size);
 }
 
 // --------------------------------------------------------------------------
@@ -67,15 +61,11 @@ sm_insertion_sort(unsigned char *base, size_t sorted, size_t nmemb,
 // Used to fix descending runs into ascending order.
 // --------------------------------------------------------------------------
 static void
-sm_reverse(unsigned char *base, size_t nmemb, const size_t size)
+sm_reverse(unsigned char *base, size_t nmemb, const size_t size, unsigned char *tmp)
 {
-    unsigned char *tmp;
     size_t lo, hi;
 
     if (nmemb <= 1) return;
-
-    tmp = (unsigned char *)Make_Mem(size);
-    if (!tmp) return;
 
     lo = 0;
     hi = nmemb - 1;
@@ -86,8 +76,6 @@ sm_reverse(unsigned char *base, size_t nmemb, const size_t size)
         lo++;
         hi--;
     }
-
-    Free_Mem(tmp, size);
 }
 
 // --------------------------------------------------------------------------
@@ -98,7 +86,7 @@ static void
 sm_merge(unsigned char *base,
          size_t left, size_t mid, size_t right,
          size_t size,
-	     cmp_t* cmp,
+         cmp_t* cmp,
          unsigned char *tmp)
 {
     size_t n_left = mid - left;
@@ -165,29 +153,29 @@ sm_collapse(unsigned char *base, sm_run *stack, size_t *depth,
         size_t n = *depth;
 
         if (!force) {
-			// Invariant A: stack[n-3] > stack[n-2] + stack[n-1]
-			// Checked first - a violation here can require merging the
-			// middle pair even when invariant B looks satisfied.
-			// Using if/else if ensures B is always evaluated independently,
-			// matching the fix applied to CPython after the 2015 formal
-			// verification finding (de Gouw et al.).
+            // Invariant A: stack[n-3] > stack[n-2] + stack[n-1]
+            // Checked first - a violation here can require merging the
+            // middle pair even when invariant B looks satisfied.
+            // Using if/else if ensures B is always evaluated independently,
+            // matching the fix applied to CPython after the 2015 formal
+            // verification finding (de Gouw et al.).
             if (n >= 3 &&
                 stack[n-3].len <= stack[n-2].len + stack[n-1].len) {
                 if (stack[n-3].len < stack[n-1].len) {
-					// Merge middle pair (n-3 with n-2)
+                    // Merge middle pair (n-3 with n-2)
                     sm_merge_at(base, stack, n-1, size, cmp, tmp);
                     stack[n-2] = stack[n-1];
                 } else {
-					// Merge top pair (n-2 with n-1)
+                    // Merge top pair (n-2 with n-1)
                     sm_merge_at(base, stack, n, size, cmp, tmp);
                 }
                 (*depth)--;
             } else if (stack[n-2].len <= stack[n-1].len) {
-				// Invariant B: stack[n-2] > stack[n-1]
+                // Invariant B: stack[n-2] > stack[n-1]
                 sm_merge_at(base, stack, n, size, cmp, tmp);
                 (*depth)--;
             } else {
-				// both invariants satisfied
+                // both invariants satisfied
                 break;
             }
         } else {
@@ -204,7 +192,7 @@ sm_collapse(unsigned char *base, sm_run *stack, size_t *depth,
 // --------------------------------------------------------------------------
 static size_t
 sm_find_run(unsigned char *base, size_t pos, const size_t nmemb,
-            const size_t size, cmp_t* cmp)
+            const size_t size, cmp_t* cmp, unsigned char *tmp)
 {
     size_t run_end;
 
@@ -213,16 +201,17 @@ sm_find_run(unsigned char *base, size_t pos, const size_t nmemb,
 
     run_end = pos + 1;
 
-    if (cmp(base + run_end * size, base + pos * size) < 0) {
+    if (cmp(base + pos * size, base + run_end * size) > 0) {
         // Strictly descending: extend and reverse
         while (run_end < nmemb &&
-               cmp(base + run_end * size, base + (run_end-1) * size) < 0)
+            cmp(base + (run_end - 1) * size, base + run_end * size) > 0)
             run_end++;
-        sm_reverse(base + pos * size, run_end - pos, size);
-    } else {
+        sm_reverse(base + pos * size, run_end - pos, size, tmp);
+    }
+    else {
         // Non-descending (ascending): just extend
         while (run_end < nmemb &&
-               cmp(base + run_end * size, base + (run_end-1) * size) >= 0)
+            cmp(base + (run_end - 1) * size, base + run_end * size) <= 0)
             run_end++;
     }
 
@@ -240,14 +229,27 @@ sm_mergesort(unsigned char *base, const size_t nmemb, const size_t size,
     size_t depth = 0;
     size_t pos   = 0;
     size_t min_run;
+    size_t bytes;
     unsigned char *tmp;
+    REBSER *buf;
 
     if (nmemb <= 1) return 0;
 
-    // Tiny arrays: insertion sort and done, no malloc needed
+    // One scratch buffer for the whole sort (insertion, reverse and merges
+    // never use it at the same time). It is a GC series held in GC_Protect,
+    // so it is not leaked when the comparator throws an error
+    // (POP_STATE restores the GC_Protect tail).
+    bytes = (nmemb <= (size_t)SM_MIN_RUN) ? size : nmemb * size;
+    if (bytes > MAX_I32) Trap0(RE_NO_MEMORY);
+    buf = Make_Series((REBCNT)bytes, 1, FALSE);
+    BARE_SERIES(buf);
+    Save_Series(buf);
+    tmp = BIN_HEAD(buf);
+
+    // Tiny arrays: insertion sort and done
     if (nmemb <= (size_t)SM_MIN_RUN) {
-        sm_insertion_sort(base, 1, nmemb, size, cmp);
-        return 0;
+        sm_insertion_sort(base, 1, nmemb, size, cmp, tmp);
+        goto done;
     }
 
     // Compute min_run in [SM_MIN_RUN, 2*SM_MIN_RUN) using CPython's formula:
@@ -259,17 +261,13 @@ sm_mergesort(unsigned char *base, const size_t nmemb, const size_t size,
         min_run = n + r;
     }
 
-    /* One allocation for the entire sort */
-    tmp = (unsigned char *)Make_Mem(nmemb * size);
-    if (!tmp) return -1;
-
     while (pos < nmemb) {
-        size_t run_len = sm_find_run(base, pos, nmemb, size, cmp);
+        size_t run_len = sm_find_run(base, pos, nmemb, size, cmp, tmp);
 
         // Extend short runs to min_run with insertion sort
         if (run_len < min_run) {
             size_t extend = (pos + min_run < nmemb) ? min_run : nmemb - pos;
-            sm_insertion_sort(base + pos * size, run_len, extend, size, cmp);
+            sm_insertion_sort(base + pos * size, run_len, extend, size, cmp, tmp);
             run_len = extend;
         }
 
@@ -285,7 +283,10 @@ sm_mergesort(unsigned char *base, const size_t nmemb, const size_t size,
     // Final merge of all remaining runs
     sm_collapse(base, stack, &depth, size, cmp, tmp, 1);
 
-    Free_Mem(tmp, nmemb * size);
+done:
+    ASSERT1(GC_Protect->tail > 0 && ((REBSER **)GC_Protect->data)[GC_Protect->tail - 1] == buf, RP_MISC);
+    GC_Protect->tail--;
+    Free_Series(buf);
     return 0;
 }
 

@@ -3,7 +3,7 @@ REBOL [
 	Title: "Make primary boot files"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2024 Rebol Open Source Contributors
+		Copyright 2012-2026 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -11,7 +11,7 @@ REBOL [
 		See: http://www.apache.org/licenses/LICENSE-2.0
 	}
 	Author: "Carl Sassenrath"
-	Version: 2.100.0
+	Version: 3.22.0
 	Needs: 3.5.0
 	Purpose: {
 		A lot of the REBOL system is built by REBOL, and this program
@@ -38,7 +38,7 @@ src: root-dir/src/core
 Title:
 {REBOL
 Copyright 2012 REBOL Technologies
-Copyright 2012-2024 Rebol Open Source Contributors
+Copyright 2012-2026 Rebol Open Source Contributors
 REBOL is a trademark of REBOL Technologies
 Licensed under the Apache License, Version 2.0
 }
@@ -762,7 +762,7 @@ make-obj-defs ob/ports "PORTS_" 4
 make-obj-defs ob/options "OPTIONS_" 4
 ;make-obj-defs ob/intrinsic "INTRINSIC_" 4
 make-obj-defs ob/locale "LOCALE_" 4
-make-obj-defs ob/view "VIEW_" 4
+;make-obj-defs ob/view "VIEW_" 4
 make-obj-defs ob/console "CONSOLE_" 4
 
 write-generated inc/gen-sysobj.h out
@@ -794,13 +794,22 @@ write-generated inc/reb-dialect.h out
 ;----------------------------------------------------------------------------
 
 emit-head "Event Types" %reb-evtypes.h
+emit {^/#ifndef REB_EVTYPES_H^/#define REB_EVTYPES_H^/}
 emit newline
 
+;; A reserved slot carries no name - the next named type gets an explicit
+;; value instead, the same way %types-ext.reb numbers the RXT_ enum.
 emit ["enum event_types {" newline]
+n: 0
+gap: false
 foreach field ob/catalog/event-types [
-	emit-line "EVT_" field none
+	either word? field [
+		emit-line "EVT_" either gap [rejoin [field " = " n]][field] n
+		gap: false
+	][	gap: true ]
+	++ n
 ]
-emit [tab "EVT_MAX^/"]
+emit [tab "EVT_MAX = " n lf]
 emit "};^/^/"
 
 emit ["enum event_keys {" newline]
@@ -810,6 +819,7 @@ foreach field ob/catalog/event-keys [
 ]
 emit [tab "EVK_MAX^/"]
 emit "};^/^/"
+emit {^/#endif // REB_EVTYPES_H^/}
 
 write-generated inc/reb-evtypes.h out
 
@@ -1097,11 +1107,14 @@ boot-task: load-boot %task.reb
 boot-ops:  load-boot %ops.reb
 ;boot-script: load-boot %script.reb
 
-write-generated gen-dir/gen-boot-code.reb entab mold reduce sections
+data: reduce sections
+data: either find [on true #(true)] select spec 'remove-docstrings [
+	mold/flat remove-docstrings data
+][	entab mold data ] ;; keep the original indentation (source is user readable)
 
-data: mold reduce sections
 insert data reduce ["; Copyright (C) REBOL Technologies " now newline]
-insert tail data make char! 0 ; scanner requires zero termination
+;write-generated gen-dir/gen-boot-code.reb data
+append data make char! 0 ; scanner requires zero termination
 
 data: to binary! map-conv-if-needed data
 comp-data: compress/level data 'zlib 9

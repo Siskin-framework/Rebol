@@ -47,8 +47,9 @@ enum {
 	RDI_CRYPT,
 	RDI_SERIAL,
 	RDI_AUDIO,
-	RDI_MAX,
-	RDI_LIMIT = 32
+	RDI_MAX,		// number of built-in devices
+	RDI_LIMIT = 32	// size of the device table; RDI_MAX..RDI_LIMIT-1
+					// are assigned at run time by RL_Register_Device
 };
 
 
@@ -117,6 +118,14 @@ enum {
 	RDE_NO_INIT,	// device has not been inited
 };
 
+// Device registration results (OS_Register_Device / RL_Register_Device).
+// A non-negative result is the assigned device id.
+enum {
+	RDR_TABLE_FULL   = -1,	// no free slot in the device table
+	RDR_BAD_DEVICE   = -2,	// device structure is not usable
+	RDR_BAD_REBDEV   = -3,	// caller built against a different REBDEV layout
+};
+
 enum {
 	RDM_NULL,		// Null device
 	RDM_READ_LINE,	// Read line mode
@@ -163,13 +172,20 @@ struct rebol_device {
 	u32 date;				// year, month, day, hour
 	DEVICE_CMD_FUNC *commands;	// command dispatch table
 	u32 max_command;		// keep commands in bounds
-	REBREQ *pending;		// pending requests
 	u32 flags;				// state: open, signal
+	REBREQ *pending;		// pending requests
 	i32 req_size;			// size of request struct
 };
-
-// Inializer (keep ordered same as above)
-#define DEFINE_DEV(w,t,v,c,m,s) REBDEV w = {t, v, 0, c, m, 0, 0, s}
+#define DEFINE_DEV(w,t,v,c,m,s) REBDEV w = { \
+	.title = t, \
+	.version = v, \
+	.date = 0, \
+	.commands = c, \
+	.max_command = m, \
+	.flags = 0, \
+	.pending = 0, \
+	.req_size = s \
+}
 
 // Request structure:		// Allowed to be extended by some devices
 // NOTE: when size of this struct is modified, reflect it in the make-reb-lib.reb file! (CHECK_STRUCT_ALIGN)
@@ -193,6 +209,9 @@ struct rebol_devreq {
 	u16  flags;				// request flags
 	u16  state;				// device process flags
 	i32  timeout;			// request timeout
+#if defined(__LP64__) || defined(__LLP64__)
+	i32 _pad;
+#endif
 //	int (*prewake)(void *);	// callback before awake
 
 	// Common fields:

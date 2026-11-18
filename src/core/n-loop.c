@@ -244,6 +244,8 @@ enum loop_each_mode {
 	REBINT idx;
 	REBINT inc = 1;
 	REBCNT type;
+	REBINT o_var;
+	REBVAL *res;
 
 	var = Get_Var(D_ARG(1));
 	if (IS_NONE(var)) return R_NONE;
@@ -276,14 +278,16 @@ enum loop_each_mode {
 				VAL_INDEX(var) = idx;
 			}
 			//----------------------------------------------------
-			ds = Do_Blk(body, bodi); // (may move stack)
-			if (THROWN(ds)) {	// Break, throw, continue, error.
-				if (Check_Error(ds) >= 0) {
+			o_var = DS_OFFSET(var);
+			res = Do_Blk(body, bodi); // may move the data stack
+			DS_REBASE(var, o_var);
+			if (THROWN(res)) {	// Break, throw, continue, error.
+				if (Check_Error(res) >= 0) {
 					*DS_RETURN = *DS_NEXT; // use thrown result as a return
-					return R_RET; // does not resets series position
+					return R_RET; // does not reset series position
 				}
 			}
-			*DS_RETURN = *ds;
+			*DS_RETURN = *res;
 			// Evaluation may swap the var series...
 			if (VAL_TYPE(var) != type) Trap_Arg(var);
 			//----------------------------------------------------
@@ -306,14 +310,16 @@ cont_utf8:
 				VAL_INDEX(var) = idx;
 			}
 			//----------------------------------------------------
-			ds = Do_Blk(body, bodi); // (may move stack)
-			if (THROWN(ds)) {	// Break, throw, continue, error.
-				if (Check_Error(ds) >= 0) {
+			o_var = DS_OFFSET(var);
+			res = Do_Blk(body, bodi); // may move the data stack
+			DS_REBASE(var, o_var);
+			if (THROWN(res)) {	// Break, throw, continue, error.
+				if (Check_Error(res) >= 0) {
 					*DS_RETURN = *DS_NEXT; // use thrown result as a return
-					return R_RET; // does not resets series position
+					return R_RET; // does not reset series position
 				}
 			}
-			*DS_RETURN = *ds;
+			*DS_RETURN = *res;
 			// Evaluation may swap the var series...
 			if (VAL_TYPE(var) != type) Trap_Arg(var);
 			//----------------------------------------------------
@@ -346,6 +352,7 @@ cont_utf8:
 	REBVAL *words;
 	REBSER *frame;
 	REBVAL *value;
+	REBVAL series_val;
 	REBSER *series;
 	REBSER *out = NULL;	// output block (for LM_MAP, mode = 2)
 
@@ -361,7 +368,10 @@ cont_utf8:
 
 	ASSERT2(mode >= 0 && mode < 4, RP_MISC);
 
-	value = D_ARG(2); // series
+	// The body may expand (move) the data stack, so do not keep
+	// a pointer to the series argument; use a local copy.
+	series_val = *D_ARG(2);
+	value = &series_val;
 	if (IS_NONE(value)) return R_NONE;
 
 	body = Init_Loop(D_ARG(1), D_ARG(3), &frame); // vars, body
@@ -456,7 +466,7 @@ cont_utf8:
 					}
 
 					else if (IS_VECTOR(value)) {
-						Get_Vector_Value(vars, series, index);
+						Get_Vector_Value(vars, value, index);
 					}
 
 					else if (IS_MAP(value)) {

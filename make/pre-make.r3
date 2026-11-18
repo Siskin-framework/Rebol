@@ -3,7 +3,7 @@ REBOL [
 	Title: "Generate headers and boot code"
 	Rights: {
 		Copyright 2012 REBOL Technologies
-		Copyright 2012-2021 Rebol Open Source Contributors
+		Copyright 2012-2026 Rebol Open Source Contributors
 		REBOL is a trademark of REBOL Technologies
 	}
 	License: {
@@ -23,10 +23,12 @@ do %tools/form-header.reb
 do %tools/utils.reb
 
 args: system/script/args
-
-spec-file: try/except [
-	to-rebol-file either block? args [first args][args]
-][ clean-path %spec-core.reb ]
+if block? args [args: first args]   ;; `first []` is none
+spec-file: either args [
+	try/with [ to-rebol-file args ][
+		do error ["Invalid spec file:" mold args]
+	]
+][	clean-path %spec-core.reb ]
 
 unless 'file = exists? spec-file [
 	do error ["Spec file not found:" mold spec-file]
@@ -97,7 +99,7 @@ if file? src-dir [
 c-core-files: unique c-core-files
 c-host-files: unique c-host-files
 
-mezz-files: reduce [
+mezz-files: unique reduce [
 	;Boot Mezzanine Functions
 	unique mezz-base-files
 	unique mezz-sys-files
@@ -216,7 +218,7 @@ build-date/time: build-time
 
 
 ;- resolving current git commit
-try/except [
+try/with [
 	parse read/string %../.git/HEAD [thru "ref: " copy git-header to lf]
 	git-commit: mold debase read/string join %../.git/ git-header 16
 ][	git-commit: none]
@@ -242,10 +244,12 @@ str-version: reform [
 	git-commit
 	get-libc-version ;; musl, glibc_2.28,... or just none
 	select os-info 'VERSION_ID
+	select spec 'extension-abi
 ]
 
-;;format-date-time may not be available in older Builder tools!
-;;format-date-time now/utc "(yyyy-MM-dd hh:mm:ss UTC)"
+;;format-datetime may not be available in older Builder tools!
+if function? :format-date-time [format-datetime: :format-date-time]
+try [build-date: format-datetime build-date "yyyy-MM-dd hh:mm:ss"]
 
 short-str-version: next ajoin [{
 Rebol/} product SP version " (" build-date { UTC)

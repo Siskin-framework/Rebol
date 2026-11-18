@@ -376,8 +376,10 @@ static dbgout(char *fmt, int d, char *s)
 		if (GetConsoleScreenBufferInfo(Std_Out, &csbiInfo))
 			wOriginalAttributes = csbiInfo.wAttributes;
 
-		Redir_Out = (GetFileType(Std_Out) != FILE_TYPE_CHAR);
-		Redir_Inp = (GetFileType(Std_Inp) != FILE_TYPE_CHAR);
+		// A handle is a console only if GetConsoleMode succeeds.
+		// (GetFileType returns FILE_TYPE_CHAR for NUL, COM ports, etc.)
+		Redir_Out = !GetConsoleMode(Std_Out, &dwOriginalOutMode);
+		Redir_Inp = !GetConsoleMode(Std_Inp, &dwOriginalInpMode);
 
 #ifdef _WINDOWS
 // This code is needed only when the app is not compiled with Console subsystem
@@ -401,10 +403,6 @@ static dbgout(char *fmt, int d, char *s)
 		Std_Buf = OS_Make(BUF_SIZE * sizeof(REBCHR));
 		if (!Std_Buf) goto error;
 
-		// store original modes
-		GetConsoleMode(Std_Out, &dwOriginalOutMode);
-		GetConsoleMode(Std_Inp, &dwOriginalInpMode);
-
 		if (!Redir_Inp) {
 			//
 			// Windows offers its own "smart" line editor (with history
@@ -420,7 +418,7 @@ static dbgout(char *fmt, int d, char *s)
 
 			if (!SetConsoleMode(Std_Inp, dwInpMode)) goto error;
 
-			if (!Emulate_ANSI) {
+			if (dwOutMode && !Emulate_ANSI) {
 				dwOutMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 				if (!SetConsoleMode(Std_Out, dwOutMode)) {
 					Emulate_ANSI = 1; // failed to use VIRTUAL_TERMINAL_PROCESSING, so force emulation
@@ -475,7 +473,6 @@ error:
 	}
 
 	if (hOutput) {
-
 		bp = req->data;
 		ep = bp + req->length;
 
@@ -502,17 +499,20 @@ error:
 					}
 				}
 				else { // for Windows SubSystem - must be converted to Win32 wide-char format
-					//if found, write to the console content before it starts, else everything
-					if (cp) {
-						len = AS_REBLEN(Write_UTF8_To_Console(cs_cast(bp), cp-bp, 0, hOutput));
-					}
-					else {
-						len = AS_REBLEN(Write_UTF8_To_Console(cs_cast(bp), ep-bp, 0, hOutput));
-						bp = ep;
-					}
-					if (len < 0) {
-						req->error = GetLastError();
-						return DR_ERROR;
+					// When GetConsoleMode fails (at init), there is no real console attached, so output will be ignored.
+					if (dwOriginalOutMode) {
+						//if found, write to the console content before it starts, else everything
+						if (cp) {
+							len = AS_REBLEN(Write_UTF8_To_Console(cs_cast(bp), cp - bp, 0, hOutput));
+						}
+						else {
+							len = AS_REBLEN(Write_UTF8_To_Console(cs_cast(bp), ep - bp, 0, hOutput));
+							bp = ep;
+						}
+						if (len < 0) {
+							req->error = GetLastError();
+							return DR_ERROR;
+						}
 					}
 					//is escape char was found, parse the ANSI sequence...
 					if (cp) {
@@ -521,11 +521,12 @@ error:
 				}
 			} while (bp < ep);
 		} else {
-			// using MS built in ANSI processing
+			// Using MS built in ANSI processing
 			if (Redir_Out) { // Always UTF-8
 				ok = WriteFile(hOutput, req->data, req->length, &total, 0);
 			}
-			else {
+			else if (dwOriginalOutMode) {
+				// When dwOriginalOutMode is zero, there is no real console attached, so output will be ignored.
 				len = AS_REBLEN(Write_UTF8_To_Console(cs_cast(req->data), req->length, req->actual, hOutput));
 				if (len < 0) {
 					req->error = GetLastError();
@@ -708,14 +709,14 @@ error:
 					if (GetKeyState(VK_CONTROL) < 0) SET_FLAG(evt.flags, EVF_CONTROL);
 
 					if (evt.data == 0) {
-						evt.type = ker.bKeyDown ? EVT_CONTROL : EVT_CONTROL_UP;
+						evt.type = ker.bKeyDown ? EVT_NAMED_KEY : EVT_NAMED_KEY_UP;
 						// Map the virtual key code to a supported Rebol control key event code
 						int vk = Normalize_Virtual_Key(ker.wVirtualKeyCode);
 						if (vk) evt.data = vk;
 						else continue; // ignore not supported keys
 					}
 					else if (evt.data == 3 || evt.data == 27) {
-						evt.type = EVT_CONTROL;
+						evt.type = EVT_NAMED_KEY;
 						evt.data = EVK_ESCAPE;
 					} else {
 						evt.type = ker.bKeyDown ? EVT_KEY : EVT_KEY_UP;

@@ -37,18 +37,22 @@ Rebol [
 
 ===start-group=== "enbase integer"
 	;@@ https://github.com/Oldes/Rebol-issues/issues/2667
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2718
 	--test-- "enbase-2"
+		--assert "00000000" == enbase 0 2
 		--assert "00010111" == enbase 2#00010111 2
 		--assert "0000000100000000" == enbase 256 2
 	--test-- "enbase-16"
+		--assert   "00" == enbase 0 16
 		--assert   "17" == enbase 0#17 16
 		--assert "01FF" == enbase 0#01FF 16
 	--test-- "enbase-64"
+		--assert "AA==" == enbase 0 64
 		--assert "AQA=" == enbase 256 64
 ===end-group===
 
 ===start-group=== "enbase/flat"
-	bin: read/binary %units/files/rbgw.gif
+	bin: read/binary %files/rbgw.gif
 	--test-- "enbase/flat 2"
 		--assert (enbase bin 2) == {
 0100011101001001010001100011100000110111011000010000001000000000
@@ -154,6 +158,8 @@ AAACAAIAAAMDCCGTADs=}
 		--assert #{1234} = debase <1234> 16
 		--assert #{1234} = debase @1234  16
 		--assert #{01}   = debase @00000001 2
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2699
+		--assert #{010400} = debase "10400" 16
 
 
 ===end-group===
@@ -167,6 +173,9 @@ AAACAAIAAAMDCCGTADs=}
 		--assert strict-equal? 
 			"^(04)^(01)" 
 			to string! debase "0000010000000001" 2
+	;@@ https://github.com/Oldes/Rebol-issues/issues/2699
+		--assert #{01} = debase "01" 2
+		--assert #{01} = debase "00001" 2
 
 ===end-group===
 

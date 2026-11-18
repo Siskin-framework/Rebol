@@ -18,18 +18,42 @@ REBOL [
 	}
 ]
 
+find-in-path: func [
+    "Returns full path of the file found in one of PATH directories, else NONE."
+    file [file!]
+    /with paths [string!] "Directories to search instead of PATH env variable"
+    /local delimiter dir result
+][
+    ;; Not using SPLIT, as it is not available during the boot!
+    delimiter: pick ";:" system/platform = 'Windows
+    unless with [paths: any [get-env "PATH" ""]]
+    parse paths [
+        any [
+            copy dir [to delimiter | some skip] opt skip (
+                ;; empty entries are skipped (not resolved as a root dir)
+                if all [none? result  not empty? dir] [
+                    dir: append dirize to-rebol-file dir file
+                    if exists? dir [result: dir]
+                ]
+            )
+        ]
+    ]
+    result
+]
+
 start: func [
 	"INIT: Completes the boot sequence. Loads extras, handles args, security, scripts."
-	/local file dir tmp script-path script-args code delimiter ver
+	/local tmp script-path script-args code ver name module options exports
 ] bind [ ; context is: system/options (must use full path sys/log/.. as there is options/log too!)
 
 	;** Note ** We need to make this work for lower boot levels too!
 
 	if any [
+		;; can come from user's startup option
 		no-color
-		no-color: get-env 'NO_COLOR ;; https://no-color.org/
-	][
-		;; remove ANSI escape color sequences
+		;; https://no-color.org/ - only when present and not an empty string
+		no-color: not empty? get-env 'NO_COLOR 
+	][	;; remove ANSI escape color sequences
 		foreach [k v] ansi [clear v]
 	]
 
@@ -37,8 +61,7 @@ start: func [
 	sys/log/debug 'REBOL ["Starting... boot level:" boot-level]
 	;trace 1
 	;crash-here ; test error handling (undefined word)
-
-	boot-level: any [boot-level 'full]
+	boot-level: any [boot-level 'start]
 	start: 'done ; only once
 	init-schemes ; only once
 
@@ -57,13 +80,14 @@ start: func [
 	system/build/git:      ver/13
 	system/build/libc:     ver/14
 	system/build/os-version: ver/15
+	system/build/extension-abi: ver/16
 
 	if flags/verbose [system/options/log/rebol: 3] ;maximum log output for system messages
 
 	;-- Print minimal identification banner if needed:
 	if all [
 		not quiet
-		any [flags/verbose flags/usage flags/help]
+		any [flags/verbose flags/help]
 	][
 		; basic boot banner only
 		print boot-banner: lib/version
@@ -81,21 +105,10 @@ start: func [
 	; NOTE: this may be considered as not secure!
 	boot: any [to-real-file boot boot]
 	unless exists? boot [
-		file: second split-path boot
-		;; Using parse rules instead of splitting all PATH values into a block as it was before.
-		delimiter: pick ";:" system/platform = 'Windows
-		parse any [get-env "PATH" ""][
-			any [copy tmp to delimiter skip (
-				dir: to-rebol-file dirize as file! tmp
-				if exists? tmp: dir/:file [
-					boot: file: tmp
-					break
-				]
-			)]
-		]
-		if boot <> file [
-			sys/log/error 'REBOL "Path to executable was not resolved!"
-			boot: none
+		boot: find-in-path second split-path boot
+		unless boot [
+			;; WebAssebly builds does not have any executable!
+			sys/log/debug 'REBOL "Path to executable was not resolved!"
 		]
 	]
 	;-  3. /home - preferably one of environment variables or current starting dir
@@ -212,22 +225,49 @@ start: func [
 	]
 
 	;-- Setup SECURE configuration
-	if select lib 'secure [
-		lib/secure (case [
-			flags/secure [secure]
-			flags/secure-min ['allow]
-			flags/secure-max ['quit]
-			file? script [
-				compose [
-					file throw
-					(path) [allow read]
-					(home) [allow read]
-					(data) allow
-					(first script-path) allow
+	if find lib 'secure [
+		case [
+			flags/secure-min [lib/secure allow]
+			flags/secure-max [lib/secure ask]
+			flags/secure     [
+				;; missing or invalid value of the --secure option is a usage error
+				unless secure [lib/usage quit/return 1]
+				lib/secure (secure)
+			]
+			true [
+				;; main exceptions...
+				;; allow reading everywhere, ask on write/execute outside the trusted folders
+				lib/secure [file [allow read ask write ask execute]]
+				;; (data, home, modules and boot may be NONE, when not resolved)
+				;; read+exe in home
+				if home [lib/secure (reduce [home [allow read allow execute]])]
+				if data [
+					lib/secure (reduce [
+						;; full access in the data directory..
+						data 'allow
+						;; ..except the startup script, which must not be modified silently
+						data/user.reb [allow read ask write allow execute]
+					])
+				]
+				;; modules are imported later, so these must not be modified silently too
+				if modules [lib/secure (reduce [modules [allow read ask write allow execute]])]
+				;; startup script next to the executable must not be modified silently
+				if boot [
+					lib/secure (reduce [
+						join first split-path boot %rebol.reb [allow read ask write allow execute]
+					])
+				]
+				if file? script [
+					lib/secure (
+						compose [
+							;; full control in the startup and script's directory
+							(path) allow
+							(first script-path) allow 
+						]
+					)
 				]
 			]
-			'else ['none] ;compose [file throw (file) [allow read] %. allow]] ; default
-		])
+		]
 	]
 
 	;-- Evaluate rebol.reb script:
@@ -236,10 +276,9 @@ start: func [
 	if boot [
 		tmp: first split-path boot
 		sys/log/info 'REBOL ["Checking for rebol.reb file in" tmp]
-		
 		if all [
 			#"/" = first tmp ; only if we know absolute path
-			exists? tmp/rebol.reb
+			attempt [exists? tmp/rebol.reb] ;; may be denied by user's security policy
 		][
 			try/with [do tmp/rebol.reb][sys/log/error 'REBOL system/state/last-error]
 		]
@@ -247,16 +286,32 @@ start: func [
 
 	;-- Make the user's global context:
 	tmp: make object! 320
-	append tmp reduce ['REBOL :system 'lib-local :tmp]
+	append tmp reduce ['REBOL :system]
 	system/contexts/user: tmp
 
+	;-- Export private extensions loaded on boot (there was no user context then):
+	foreach [name module] system/modules [
+		if all [
+			module? :module
+			options: query module 'options
+			find options 'extension
+			find options 'private
+			block? exports: query module 'exports
+		][
+			resolve/extend/only tmp module exports
+		]
+	]
+
 	sys/log/info 'REBOL ["Checking for user.reb file in" data]
-	if all [data exists? data/user.reb] [
+	if all [
+		data
+		attempt [exists? data/user.reb] ;; may be denied by user's security policy
+	][
 		try/with [do data/user.reb][sys/log/error 'REBOL system/state/last-error]
 	]
 
-
-	;if :lib/secure [protect-system-object]
+	boot-level: 'full
+	protect 'system/options/boot-level
 
 	; Import module?
 	if import [lib/import :import]
@@ -292,7 +347,9 @@ start: func [
 			either 'module = select first code 'type [
 				code: reduce [first+ code code]
 				if object? tmp: do-needs/no-user first code [append code tmp]
-				import make module! code
+				;; `import` is here the value of the --import option (system/options/import),
+				;; so the function from lib must be used!
+				lib/import (make module! code)
 			][
 				do-needs first+ code
 				do intern code
@@ -305,4 +362,4 @@ start: func [
 
 	exit
 
-] system/options
+] system/options

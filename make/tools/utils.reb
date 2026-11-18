@@ -25,10 +25,29 @@ load-file: func[file [file!] /header][
 	the-file: find/tail file root-dir ; shortened version
 	print rejoin [" [pre-make.r3] ^[[0;36mProcessing: ^[[0;31m" the-file "^[[m"]
 	if needs-map-syntax-swap? [ file: map-conv read file]
-	try/except [either header [load/header/all file][ load file ]][
+	try/with [either header [load/header/all file][ load file ]][
 		sys/log/error 'pre-make.r3 system/state/last-error
 		quit/return 3
 	]
+]
+
+remove-docstrings: function [code [block!]][
+    rule-block: [
+        any [
+            [
+                'action | 'native
+                | 'func | 'function | 'function/with
+                | 'closure | 'closure/with
+            ] ahead block! into rule-spec
+            | ahead [block! | paren!] into rule-block
+            | skip 
+        ]
+    ]
+    rule-spec: [
+        any [remove string! | skip]
+    ]
+    parse code rule-block
+    code
 ]
 
 
@@ -175,9 +194,9 @@ get-os-info: function[
 			system/platform = 'Windows
 			0 = call/shell/wait/output/error "ver" :tmp :err
 			parse tmp [
-				to num copy v: [some num #"." some num] to end (
+				to num copy v: [some num any [#"." some num]] to end (
 					out/ID: 'windows
-					out/VERSION_ID: to decimal! v
+					out/VERSION_ID: v
 				)
 			]
 		]

@@ -29,7 +29,7 @@ to-cstr: either system/version/4 = 3 [
 		out: insert out tab
 		forall str [
 			out: insert out reduce [to-integer first str ", "]
-			if zero? ((index? str) // 10) [out: insert out "^/^-"]
+			if zero? mod 10 index? str [out: insert out "^/^-"]
 		]
 		;remove/part out either (pick out -1) = #" " [-2][-4]
 		head out
@@ -151,27 +151,5 @@ emit-file: func [
 ;	write rejoin [%os/ file %.c] out
 ]
 
-;-- Create Files -------------------------------------------------------------
 
-emit-file %host-ext-window [
-	%src/boot/window.reb
-	%src/mezz/view-funcs.reb
-]
-
-;;emit-file %host-ext-graphics [
-;;	%boot/graphics.reb
-;;	%mezz/view-funcs.reb
-;;]
-
-;;emit-file %host-ext-draw [
-;;	%boot/draw.reb
-;;]
-;;
-;;emit-file %host-ext-shape [
-;;	%boot/shape.reb
-;;]
-;;
-;;emit-file %host-ext-text [
-;;	%boot/text.reb
-;;]
 ] ; end of context

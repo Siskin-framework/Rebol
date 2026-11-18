@@ -110,6 +110,10 @@
 	if (D_REF(1))
 		GC_Active = FALSE;
 
+	if (D_REF(7)) { // stack
+		SET_SIGNAL(SIG_SHRINK_STACK);
+	}
+
 	DS_Ret_Int(released_bytes);
 	return R_RET;
 }
@@ -194,7 +198,9 @@
 
 	if (D_REF(5)) {
 		REBVAL *pool_id = D_ARG(6);
+#ifdef DEBUG
 		Dump_Series_In_Pool(VAL_INT32(pool_id));
+#endif
 		return R_NONE;
 	}
 
@@ -426,11 +432,15 @@ err:
 /*
 ***********************************************************************/
 {
+#ifdef DEBUG
 	Dump_Stack(0, 0);
 	return R_UNSET;
 
 	Dump_All(sizeof(REBVAL));
 	return R_RET;
+#else
+	return R_UNSET;
+#endif
 }
 
 
